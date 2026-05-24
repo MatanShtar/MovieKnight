@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieKnight - Home</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body">
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <img src="assets/movie-knight-logo.svg" alt="MovieKnight" class="nav-logo">
+            </div>
+            
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link active">Home</a>
+                <a href="#" class="nav-link">Explore</a>
+                <a href="#" class="nav-link">Profile</a>
+                <a href="#" class="nav-link about-link">About</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <div class="search-container">
+                    <input type="text" id="movieSearch" placeholder="|Search movies...">
+                    <button class="ai-mode-btn">✨ AI mode</button>
+                </div>
+                
+                <div class="header-actions">
+                    <button class="surprise-btn">🎲 SURPRISE ME</button>
+                    <a href="login.html" class="login-btn-header">Login</a>
+                </div>
+            </header>
+
+            <div class="controls-bar">
+                <button class="filter-btn">Filters</button>
+                <div class="sort-dropdown">
+                    <label>Sort by</label>
+                    <select>
+                        <option>Popular</option>
+                        <option>Top Rated</option>
+                        <option>Newest</option>
+                    </select>
+                </div>
+            </div>
+
+            <section class="movie-grid" id="movieGrid">
+                
+                <article class="movie-card">
+                    <img src="assets/images/placeholder-poster.jpg" alt="Movie Poster" class="poster-img">
+                    <div class="rating-badge">7.4 ★</div>
+                    
+                    <div class="card-overlay">
+                        <button class="icon-btn">👁️</button>
+                        <button class="icon-btn">❤️</button>
+                        <button class="icon-btn">➕</button>
+                    </div>
+                </article>
+                </section>
+        </main>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
