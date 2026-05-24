@@ -11,28 +11,57 @@
     <div class="app-container">
         <aside class="sidebar">
             <div class="sidebar-logo">
-                <img src="assets/movie-knight-logo.svg" alt="MovieKnight" class="nav-logo">
+                <img src="assets/images/movie-knight-logo-sidebar.svg" alt="MovieKnight" class="nav-logo">
             </div>
             
             <nav class="main-nav">
-                <a href="index.html" class="nav-link active">Home</a>
-                <a href="#" class="nav-link">Explore</a>
-                <a href="#" class="nav-link">Profile</a>
-                <a href="#" class="nav-link about-link">About</a>
+                
+                <a href="index.html" class="nav-link active">
+                    <img src="assets/images/home-icon.svg" alt="Home Icon" class="nav-logo">
+                    Home
+                </a>
+                
+                <a href="#" class="nav-link">
+                    <img src="assets/images/explore-icon.svg" alt="Explore Icon" class="nav-logo">
+                    Explore
+                </a>
+                <a href="#" class="nav-link">
+                    <img src="assets/images/profile-icon.svg" alt="Profile Icon" class="nav-logo">
+                    Profile
+                </a>
+                <a href="#" class="nav-link">
+                    <img src="assets/images/home-icon.svg" alt="Home Icon" class="nav-logo">
+                    About
+                </a>
             </nav>
         </aside>
 
         <main class="main-content">
             <header class="top-header">
-                <div class="search-container">
-                    <input type="text" id="movieSearch" placeholder="|Search movies...">
-                    <button class="ai-mode-btn">✨ AI mode</button>
-                </div>
+                <div class="header-left-group">
+                    <div class="search-container">
+                        <img src="assets/images/search-icon.svg" alt="Search Icon" class="nav-search-icon">
+                        <input type="text" id="movieSearch" placeholder="Search movies...">
+                        <button class="ai-mode-btn">
+                            <img src="assets/images/ai-icon.svg" alt="Search Icon" class="nav-search-icon">
+                            AI mode
+                        </button>
+                    </div>
                 
-                <div class="header-actions">
-                    <button class="surprise-btn">🎲 SURPRISE ME</button>
-                    <a href="login.html" class="login-btn-header">Login</a>
+                    <div class="surprise-container">
+                        <button class="surprise-btn">
+                            <img src="assets/images/dice-icon.svg" alt="Search Icon" class="nav-search-icon">
+                        </button>
+                        <p>SURPRISE ME</p>
+                    </div>
                 </div>
+                    <div class="header-login-container">
+                        <button class="header-login-btn" onclick="window.location.href='login.html'">
+                            <p> Login </p>
+                        </button>
+                    </div>
+
+                
             </header>
 
             <div class="controls-bar">

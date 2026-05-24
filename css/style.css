@@ -2,12 +2,22 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Update to your Figma font */
 }
 
+@font-face {
+    font-family: 'Lao Sangam MN'; 
+    src: url('../assets/fonts/Lao Sangam MN.ttf') format('truetype'); 
+    font-weight: normal;
+    font-style: normal;
+}
+
+body{
+    font-family: 'Lao Sangam MN', sans-serif;
+}
+/*  ----------------------LOGIN----------------------------*/
 /* Background */
 .login-body {
-    background-image: url('../assets/movie-knight-gradient-bg.svg'); 
+    background-image: url('../assets/images/movie-knight-gradient-bg.svg'); 
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -121,8 +131,7 @@
 /* -------------------------HOME PAGE----------------------------*/
 /* --- APP LAYOUT (Sidebar + Main Content) --- */
 .app-body {
-    /* Uses the same background gradient from your login page */
-    background-image: url('../assets/movie-knight-gradient-bg.svg');
+    background-image: url('../assets/images/movie-knight-gradient-bg.svg');
     background-size: cover;
     background-attachment: fixed;
     color: white;
@@ -136,17 +145,16 @@
 
 /* --- SIDEBAR --- */
 .sidebar {
-    width: 250px;
-
-    padding: 30px 20px;
+    width: 350px;
     display: flex;
     flex-direction: column;
 }
 
 .sidebar-logo .nav-logo {
-    width: 100%;
-    max-width: 150px;
-    margin-bottom: 40px;
+    padding: 30px 20px;
+    min-width:137px;
+    min-height: 182.66px;
+    margin-bottom: 10px;
 }
 
 .main-nav {
@@ -157,6 +165,12 @@
 }
 
 .nav-link {
+    max-width:194.13px;
+    min-height: 66.59px;
+    font-size: 25px;
+    display: flex;
+    align-items: center;
+    background-color: rgba(255,136,179,0.03);
     color: #ccc;
     text-decoration: none;
     padding: 12px 15px;
@@ -164,7 +178,15 @@
     transition: background-color 0.2s, color 0.2s;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link img{
+    padding-right: 15px;
+}
+
+.nav-link:hover{
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+.nav-link.active{
     background-color: rgba(255, 255, 255, 0.1);
     color: white;
 }
@@ -185,23 +207,125 @@
     align-items: center;
 }
 
+.header-left-group{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .search-container {
     display: flex;
     align-items: center;
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
+    background-color: rgba(255, 136, 179, 0.13);
+    border-radius: 10px;
     padding: 5px 15px;
-    width: 50%;
+    width: 1121.39px;
+    height: 66.59px;
 }
 
 .search-container input {
     background: transparent;
+    font-size: 30px;
     border: none;
     color: white;
     width: 100%;
     padding: 10px;
     outline: none;
+}
+
+.ai-mode-btn{
+    display:flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    appearance: none;
+    background: transparent;
+    border: 1px;
+    background-color: rgba(243,135,177,0.12);
+    width:116.04px;
+    height: 42.69px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 100;
+    color: rgba(255,255,255,0.7);
+    transition: background-color 0.3s ease,border-color 0.7s ease,box-shadow 0.7s ease;
+}
+
+.ai-mode-btn img {
+    width: 18px; 
+    height: auto; 
+}
+
+.ai-mode-btn:hover{
+    background-color: rgba(243,135,177,0.3);
+    cursor:pointer;
+}
+
+.ai-mode-btn:active{
+    border-color: rgba(255, 136, 179, 1);
+    box-shadow: 0 0 12px rgba(255, 136, 179, 0.8);
+    background: rgba(243, 135, 177, 0.3);
+}
+
+.surprise-container{
+    margin-top:44px;
+    margin-left: 17px;
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width:92px;
+    height: 101px;
+}
+
+.surprise-btn{
+    appearance: none;
+    border: 0px;
+    border-radius: 12px;
+    min-width:92px;
+    min-height: 66.59px;
+    justify-content: center;
+    background-color: rgba(243,135,177,0.13);
+    transition: background-color 0.4s;
+}
+
+.surprise-btn:hover{
+    background-color: rgba(243,135,177,0.3);
+    cursor:pointer;
+}
+
+.surprise-btn:active{
+    background: rgba(243, 135, 177, 0.7);
+}
+
+.surprise-container p{
+    padding-top: 3px;
+    color: rgba(255,255,255,0.7)
+}
+
+.header-login-btn{
+    appearance: none;
+    border: 0px;
+    border-radius: 12px;
+    min-width:129.63px;
+    min-height: 48.85px;
+    justify-content: center;
+    background-color: rgba(243,135,177,0.13);
+    color: rgba(226,226,226,1);
+    font-size: 30px;
+    margin-bottom: 70px;
+    transition: background-color 0.4s;
+}
+
+.header-login-btn:hover{
+    background-color: rgba(243,135,177,0.3);
+    cursor:pointer;
+}
+
+.header-login-btn:active{
+    background: rgba(243, 135, 177, 0.7);
 }
 
 .header-actions {
@@ -240,4 +364,128 @@
     padding: 4px 8px;
     border-radius: 5px;
     font-size: 12px;
+}
+
+/*---------------------SIGNUP--------------------*/
+.signup-body {
+    background-image: url('../assets/images/movie-knight-gradient-bg.svg'); 
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* Fallback color just in case the image loads slowly */
+    background-color: #1a1a2e; 
+    
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Wrapper */
+.signup-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+}
+
+/* Logo */
+.main-logo {
+    width: 614.48px; 
+    height: 205.49px;
+    margin-bottom: 35px;
+}
+
+/*SignUp Box */
+.signup-box {
+    background-color: rgba(255, 136, 179, 0.13); 
+    width: 540px;
+    height: 692px;
+    padding: 40px ;  
+    border-radius: 12px; 
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+}
+
+.signup-box h2 {
+    color: #C2B5B4;
+    font-size: 60px;
+    letter-spacing: 15px;
+    margin-bottom: 10px;
+    font-weight: 300;
+}
+
+/* Input Fields */
+
+.input-group input::placeholder {
+    color: rgba(226,226,226,0.7); 
+    font-weight: 300;
+}
+
+.input-group input {
+    width: 432.13px;
+    height: 41.76px;
+    padding: 12px 15px;
+    background-color: rgba(255, 136, 179, 0.07);
+    box-shadow: none;
+    border-radius: 12px; 
+    color: white;
+    font-size: 20px;
+}
+
+.input-group input:focus {
+    outline: none; 
+}
+
+.input-group input[type="date"] {
+    color: rgba(226, 226, 226, 0.7); 
+    font-weight: 300;
+    text-transform: uppercase; 
+    font-family: inherit;
+}
+.input-group input[type="date"]::-webkit-calendar-picker-indicator {
+
+    display: none;
+}
+
+
+
+/* Submit Button */
+.submit-btn {
+    width: 133px;
+    height: 47px;
+    margin: 10px auto;
+    padding: 10px;
+    background-color: rgba(188,102,118,0.5); 
+    color: white;
+    border: none;
+    border-radius: 50px; 
+    cursor: pointer;
+    font-size: 20px;
+    transition: background-color 0.3s ease;
+    margin-bottom: 0px;
+}
+
+.submit-btn:hover {
+    background-color: rgba(188,102,118,0.7);
+}
+
+/* Bottom Links */
+.form-links p {
+    color: white;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+.form-links a {
+    color: white;
+    text-decoration: underline;
+}
+
+.form-links a:hover {
+    color: white;
 }
