@@ -1,0 +1,243 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Update to your Figma font */
+}
+
+/* Background */
+.login-body {
+    background-image: url('../assets/movie-knight-gradient-bg.svg'); 
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* Fallback color just in case the image loads slowly */
+    background-color: #1a1a2e; 
+    
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Wrapper */
+.login-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    width: 100%;
+    transform:translateY(-100px);
+}
+
+/* Logo */
+.main-logo {
+    width: 614.48px; 
+    height: 205.49px;
+    margin-bottom: 100px;
+}
+
+/*Login Box */
+.login-box {
+    background-color: rgba(255, 136, 179, 0.13); 
+    width: 540px;
+    height: 447px;
+    padding: 40px ;  
+    border-radius: 12px; 
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+}
+
+.login-box h2 {
+    color: #C2B5B4;
+    font-size: 60px;
+    letter-spacing: 15px;
+    margin-bottom: 10px;
+    font-weight: 300;
+}
+
+/* Input Fields */
+
+.input-group input::placeholder {
+    color: rgba(226,226,226,0.7); 
+    font-weight: 300;
+}
+
+.input-group input {
+    width: 432.13px;
+    height: 41.76px;
+    padding: 12px 15px;
+    background-color: rgba(255, 136, 179, 0.07);
+    border: 0px solid rgba(255, 136, 179, 0.07);
+    box-shadow: none;
+    border-radius: 12px; 
+    color: white;
+    font-size: 20px;
+}
+
+.input-group input:focus {
+    outline: none; 
+}
+
+
+/* Submit Button */
+.submit-btn {
+    width: 133px;
+    height: 47px;
+    margin: 10px auto;
+    padding: 10px;
+    background-color: rgba(188,102,118,0.5); 
+    color: white;
+    border: none;
+    border-radius: 50px; 
+    cursor: pointer;
+    font-size: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: rgba(188,102,118,0.7);
+}
+
+/* Bottom Links */
+.form-links p {
+    color: white;
+    font-size: 16px;
+    margin-bottom: 25px;
+}
+
+.form-links a {
+    color: white;
+    text-decoration: underline;
+}
+
+.form-links a:hover {
+    color: white;
+}
+
+/* -------------------------HOME PAGE----------------------------*/
+/* --- APP LAYOUT (Sidebar + Main Content) --- */
+.app-body {
+    /* Uses the same background gradient from your login page */
+    background-image: url('../assets/movie-knight-gradient-bg.svg');
+    background-size: cover;
+    background-attachment: fixed;
+    color: white;
+    overflow-x: hidden;
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --- SIDEBAR --- */
+.sidebar {
+    width: 250px;
+
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-logo .nav-logo {
+    width: 100%;
+    max-width: 150px;
+    margin-bottom: 40px;
+}
+
+.main-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-grow: 1; /* Pushes the "About" link to the bottom if needed */
+}
+
+.nav-link {
+    color: #ccc;
+    text-decoration: none;
+    padding: 12px 15px;
+    border-radius: 8px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-link:hover, .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* --- MAIN CONTENT AREA --- */
+.main-content {
+    flex-grow: 1;
+    padding: 30px 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* --- HEADER & SEARCH --- */
+.top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 5px 15px;
+    width: 50%;
+}
+
+.search-container input {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 100%;
+    padding: 10px;
+    outline: none;
+}
+
+.header-actions {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+/*  Movie Posters */
+.movie-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 25px;
+}
+
+.movie-card {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    aspect-ratio: 2 / 3; /* Keeps standard movie poster dimensions */
+    background-color: #2a1a20; /* Placeholder color before image loads */
+    border: 1px solid rgba(255,255,255, 0.1);
+}
+
+.poster-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rating-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 4px 8px;
+    border-radius: 5px;
+    font-size: 12px;
+}
