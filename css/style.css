@@ -24,7 +24,6 @@ body{
     
     /* Fallback color just in case the image loads slowly */
     background-color: #1a1a2e; 
-    
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -150,6 +149,8 @@ body{
     flex-direction: column;
 }
 
+
+
 .sidebar-logo .nav-logo {
     padding: 30px 20px;
     min-width:137px;
@@ -161,11 +162,26 @@ body{
     display: flex;
     flex-direction: column;
     gap: 15px;
-    flex-grow: 1; /* Pushes the "About" link to the bottom if needed */
+    flex-grow: 1;
+}
+
+.about-link{
+    margin-top: auto;
+    margin-bottom: 76px;
+
+}
+
+.about-link img{
+    opacity: 70%;
+    padding-left: 18px;
+}
+
+.about-link span{
+    padding-left: 10px;
 }
 
 .nav-link {
-    max-width:194.13px;
+    width:194.13px;
     min-height: 66.59px;
     font-size: 25px;
     display: flex;
@@ -334,20 +350,139 @@ body{
     align-items: center;
 }
 
+/* Controls Bar */
+
+.controls-bar{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1230px;
+}
+
+.filter-btn{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:9px;
+    width: 97.78px;
+    height: 45.3px;
+    background-color: rgba(255,136,179,0.13);
+    border-radius: 12px;
+    border:none;
+    text-align: center;
+    color: rgba(255,255,255,0.7);
+    font-size: 15px;
+    transition: background-color 0.3s ease;
+}
+
+.filter-btn img{
+    width: 19.67px;
+    height: 18.69px;
+}
+
+.filter-btn:hover{
+    cursor:pointer;
+    background:rgba(255,136,179,0.3);
+}
+
+.sort-dropdown{
+    appearance: none;
+    opacity: 70%;
+}
+.sort-dropdown select{
+    cursor: pointer;
+    color-scheme: dark;
+    width: 97.78px;
+    height: 45.3px;
+    border-radius: 12px;
+    border:none;
+    background-color: rgba(255,136,179,0.13);
+}
+
+.sort-dropdown option{
+    background-color: black;
+}
+
+
 /*  Movie Posters */
 .movie-grid {
+    max-width: 1231px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 60px;
 }
 
 .movie-card {
+    display:flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
-    border-radius: 10px;
     overflow: hidden;
-    aspect-ratio: 2 / 3; /* Keeps standard movie poster dimensions */
-    background-color: #2a1a20; /* Placeholder color before image loads */
-    border: 1px solid rgba(255,255,255, 0.1);
+    aspect-ratio: 2 / 3;
+    border: 3px solid rgba(188,102,118, 1);
+    width: 262.31px;
+    height: 378.36px;
+    transition: transform 0.3s ease;
+}
+
+.movie-card:hover{
+    transform: translateY(-5px);
+}
+
+.card-overlay{
+    opacity: 0%;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap:20px;
+    padding: 30px;
+    position: absolute;
+    transition: opacity 0.3s ease;
+}
+
+.card-overlay:hover{
+    opacity: 100%;
+    cursor: pointer;
+    
+}
+
+.card-overlay button{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(73,8,15,1);
+    border-radius: 100px;
+    border:none;
+    width:53.7px;
+    height:53.7px;
+    transition: background-color 0.3s ease;
+}
+
+.card-overlay button:hover{
+    background-color: rgba(188,102,118,0.8);
+    cursor: pointer;
+}
+
+.card-overlay button:active{
+    background-color: rgba(188,102,118,1);
+}
+
+.movie-title-pill{
+    font-size: 12px;
+    display: flex;
+    position: absolute;
+    bottom: 10px;
+    border-radius: 30px;
+    width: 227.95px;
+    height: 24.21px;
+    background-color: rgba(255,136,179,0.2);
+    text-transform: uppercase;
+    align-items: center;
+    justify-content: center;
 }
 
 .poster-img {
@@ -357,13 +492,26 @@ body{
 }
 
 .rating-badge {
+    min-width: 55px;
+    min-height: 29px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: rgba(0, 0, 0, 0.7);
-    padding: 4px 8px;
-    border-radius: 5px;
-    font-size: 12px;
+    padding-right: 7px;
+    padding-left: 7px;
+    padding-top: 3px;
+    top: -3px;
+    right: -3px;
+    background-color: rgba(91, 91, 91, 0.55);
+    border-radius: 10px;
+}
+
+.rating-badge img{
+    min-width: 15px;
+    min-height: 14px;
+    padding-bottom: 2px;
 }
 
 /*---------------------SIGNUP--------------------*/
@@ -444,9 +592,11 @@ body{
 .input-group input[type="date"] {
     color: rgba(226, 226, 226, 0.7); 
     font-weight: 300;
-    text-transform: uppercase; 
+    text-transform: uppercase;
     font-family: inherit;
 }
+
+
 .input-group input[type="date"]::-webkit-calendar-picker-indicator {
 
     display: none;
