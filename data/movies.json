@@ -1,0 +1,53 @@
+{
+    "totalMovies": 8,
+    "movies": [
+        {
+            "title": "Bugonia",
+            "rating": 7.4,
+            "releaseYear": 2025,
+            "posterPath": "assets/images/posters/bugonia-poster.svg"
+        },
+        {
+            "title": "One Battle After Another",
+            "rating": 7.4,
+            "releaseYear": 2025,
+            "posterPath": "assets/images/posters/one-battle-after-another-poster.svg"
+        },
+        {
+            "title": "Marty Supreme",
+            "rating": 7.8,
+            "releaseYear": 2025,
+            "posterPath": "assets/images/posters/marty-supreme-poster.svg"
+        },
+        {
+            "title": "Housemaid",
+            "rating": 7.1,
+            "releaseYear": 2025,
+            "posterPath": "assets/images/posters/housemaid-poster.svg"
+        },
+        {
+            "title": "10 Things I Hate About You",
+            "rating": 7.6,
+            "releaseYear": 1999,
+            "posterPath": "assets/images/posters/ten-things-i-hate-about-you-poster.svg"
+        },
+        {
+            "title": "Interstellar",
+            "rating": 8.5,
+            "releaseYear": 2014,
+            "posterPath": "assets/images/posters/interstellar-poster.svg"
+        },
+        {
+            "title": "Frankenstein",
+            "rating": 7.7,
+            "releaseYear": 2025,
+            "posterPath": "assets/images/posters/frankenstein-poster.svg"
+        },
+        {
+            "title": "Kill Bill: Volume 1",
+            "rating": 8.0,
+            "releaseYear": 2003,
+            "posterPath": "assets/images/posters/kill-bill-poster.svg"
+        }
+    ]
+}

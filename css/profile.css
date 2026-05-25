@@ -1,0 +1,396 @@
+/* ============================================================
+   PROFILE PAGE (Collection Menu)
+
+   Pixel-precise to Figma frame "Profile Page - Collection Menu"
+   (1920 × 1084). Sidebar / nav rules above (.sidebar / .main-nav
+   / .nav-link) are reused. Profile content lives inside
+   .profile-stage with Figma coords offset by −194 (Figma sidebar
+   width).
+
+   Responsive: the whole .app-container is scaled to fit any
+   viewport via CSS transform so the user never has to scroll
+   horizontally.
+   ============================================================ */
+
+/* --- Responsive scale ----------------------------------------
+   Design canvas = 350 (sidebar) + 1726 (stage) wide × 1084 tall.
+   Scale = min(1, vw/2076, vh/1084) — fits both axes, never zooms
+   past 1× on big monitors.
+------------------------------------------------------------- */
+.profile-body {
+    margin: 0;
+    overflow: hidden;
+    background-image: url('../assets/images/movie-knight-gradient-bg.svg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.profile-body .app-container {
+    width: 2076px;
+    height: 1084px;
+    transform-origin: top left;
+    transform: scale(min(1, calc(100vw / 2076), calc(100vh / 1084)));
+}
+
+.profile-stage {
+    position: relative;
+    flex: 0 0 1726px;
+    width: 1726px;
+    height: 1084px;
+    padding: 0;
+}
+
+/* --- Avatar — Figma (290, 153) 229 × 229 --------------------- */
+.profile-stage .avatar {
+    position: absolute;
+    left: 96px;
+    top: 153px;
+    width: 229px;
+    height: 229px;
+    border: 10px solid #FFFFFF;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #4a2632;
+    box-sizing: content-box;
+}
+
+/* --- Username + bio — Figma (573, 153) ----------------------- */
+.profile-stage .profile-info {
+    position: absolute;
+    left: 379px;
+    top: 153px;
+    width: 700px;
+}
+
+.profile-stage .username {
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 44.66px;
+    color: #FFFFFF;
+    margin: 0;
+    min-height: 44.66px;
+}
+
+.profile-stage .bio {
+    margin-top: 16px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.profile-stage .bio p {
+    font-size: 22px;
+    line-height: 32px;
+    margin: 0;
+    padding: 3px 0;
+    min-height: 32px;
+}
+
+/* --- Medals — Figma (1315/1482/1649, 240), each 118 × 140 ---- */
+.profile-stage .medals {
+    position: absolute;
+    left: 1121px;
+    top: 240px;
+    display: flex;
+    gap: 49px;
+}
+
+.profile-stage .medal {
+    width: 118px;
+    height: 140px;
+    border: 0.5px solid #FFFFFF;
+    border-radius: 50% 50% 35% 35% / 60% 60% 40% 40%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.profile-stage .medal__label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: rgba(0, 0, 0, 0.65);
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 1);
+}
+
+.profile-stage .medal--bronze {
+    background: linear-gradient(90deg,
+        rgba(84,21,19,1) 0%,
+        rgba(141,80,39,1) 21%,
+        rgba(203,149,82,1) 45%,
+        rgba(255,242,219,1) 56%,
+        rgba(215,177,137,1) 70%,
+        rgba(171,107,45,1) 84%,
+        rgba(156,83,13,1) 89%);
+}
+
+.profile-stage .medal--silver {
+    background: linear-gradient(90deg,
+        rgba(222,217,214,1) 0%,
+        rgba(207,202,200,1) 6%,
+        rgba(168,164,166,1) 18%,
+        rgba(139,135,141,1) 26%,
+        rgba(243,244,244,1) 52%,
+        rgba(228,229,229,1) 58%,
+        rgba(191,190,192,1) 70%,
+        rgba(132,127,132,1) 86%,
+        rgba(167,169,172,1) 100%);
+}
+
+.profile-stage .medal--gold {
+    background: linear-gradient(90deg,
+        rgba(251,201,38,1) 0%,
+        rgba(255,251,204,1) 25%,
+        rgba(248,239,186,1) 30%,
+        rgba(231,209,141,1) 41%,
+        rgba(204,162,70,1) 55%,
+        rgba(195,146,46,1) 60%,
+        rgba(238,214,136,1) 87%,
+        rgba(255,251,204,1) 100%);
+}
+
+/* --- "X Collections" label — Figma (271, 434) ---------------- */
+.profile-stage .collections-count {
+    position: absolute;
+    left: 77px;
+    top: 434px;
+    width: 183px;
+    height: 29px;
+    font-size: 22px;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    line-height: 29px;
+}
+
+/* --- Pill buttons — 253 × 53, #F387B1 18%, 24px text --------- */
+.profile-stage .pill-btn {
+    position: absolute;
+    width: 253px;
+    height: 53px;
+    border: none;
+    border-radius: 12px;
+    background-color: rgba(243, 135, 177, 0.18);
+    color: #FFFFFF;
+    font-family: 'Lao Sangam MN', sans-serif;
+    font-size: 24px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0 16px;
+    transition: background-color 0.25s ease;
+}
+
+.profile-stage .pill-btn:hover {
+    background-color: rgba(243, 135, 177, 0.3);
+}
+
+.profile-stage .pill-btn__icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.profile-stage .pill-btn--new {
+    left: 96px;
+    top: 477px;
+}
+
+.profile-stage .pill-btn--badges {
+    left: 1219px;
+    top: 413px;
+    opacity: 0.9;
+}
+
+/* --- Collections row — Figma (295, 593) ---------------------- */
+.profile-stage .collections {
+    position: absolute;
+    left: 101px;
+    top: 593px;
+    width: 1508.07px;
+    height: 365px;
+    display: flex;
+    gap: 61.27px;
+}
+
+.profile-stage .collection-card {
+    position: relative;
+    width: 252.6px;
+    height: 364.16px;
+    border-radius: 8px;
+    overflow: visible;
+    background-color: #1a0a0e;
+    box-shadow: -7px 9px 7px 0px rgba(0, 0, 0, 0.25);
+}
+
+/* Single poster image filling the card */
+.profile-stage .card__poster {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+    /* Fallback dark fill while JS hasn't set the src */
+    background-color: #2a1a20;
+    background-image: linear-gradient(135deg, #4a2632 0%, #20101a 100%);
+}
+
+/* Collection name overlay */
+.profile-stage .card__name {
+    position: absolute;
+    left: 12px;
+    right: 40px;
+    bottom: 56px;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 400;
+    color: #FFFFFF;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+    min-height: 24px;
+}
+
+/* Stats row overlay (movies / likes / saves) */
+.profile-stage .card__stats {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    display: flex;
+    gap: 14px;
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.profile-stage .stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+.profile-stage .stat__icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.profile-stage .stat__value {
+    line-height: 1;
+    min-width: 12px;
+}
+
+/* 3-dots button — 27 × 26 at (226.03, 0.35) inside each card */
+.profile-stage .dots-btn {
+    position: absolute;
+    top: 0.35px;
+    left: 226.03px;
+    width: 27px;
+    height: 26px;
+    background-color: rgba(91, 91, 91, 0.6);
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 0.2s ease;
+}
+
+.profile-stage .dots-btn:hover {
+    background-color: rgba(91, 91, 91, 0.85);
+}
+
+.profile-stage .dots-btn--active {
+    background-color: rgba(91, 91, 91, 0.85);
+}
+
+.profile-stage .dots-btn__icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+/* --- Collection menu popover — Figma (1462, 620) 243 × 260 --- */
+.profile-stage .collection-menu {
+    position: absolute;
+    left: 1268px;
+    top: 620px;
+    width: 243px;
+    height: 260px;
+    background-color: rgba(33, 33, 33, 0.95);
+    border-radius: 10px;
+    padding: 0;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.profile-stage .collection-menu[hidden] {
+    display: none;
+}
+
+.profile-stage .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    height: 52px;
+    padding: 0 18px 0 30px;
+    background: transparent;
+    border: none;
+    color: #FFFFFF;
+    font-family: 'Lao Sangam MN', sans-serif;
+    font-size: 18px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    border-bottom: 1px solid #6A6A6A;
+}
+
+.profile-stage .menu-item:first-child {
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+.profile-stage .menu-item:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.profile-stage .menu-item:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Icon slot — fixed size so labels align even when item has no icon */
+.profile-stage .menu-item__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.profile-stage img.menu-item__icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.profile-stage .menu-item__label {
+    line-height: 1;
+}
+
+.profile-stage .menu-item--danger .menu-item__label {
+    color: #9C3442;
+}
+
+.profile-stage .menu-item--danger:hover {
+    background-color: rgba(156, 52, 66, 0.12);
+}
+

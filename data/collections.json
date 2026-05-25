@@ -1,0 +1,60 @@
+{
+    "totalCollections": 5,
+    "collections": [
+        {
+            "name": "Favorites",
+            "default": true,
+            "published": true,
+            "totalMovies": 92,
+            "totalLikes": 241,
+            "totalSaves": 55,
+            "author": "Yuviverse",
+            "posterPath": "assets/images/posters/favorites-collection.svg",
+            "movies": []
+        },
+        {
+            "name": "Already Watched",
+            "default": true,
+            "published": false,
+            "totalMovies": 255,
+            "totalLikes": null,
+            "totalSaves": null,
+            "author": "Yuviverse",
+            "posterPath": "assets/images/posters/already-watched-collection.svg",
+            "movies": []
+        },
+        {
+            "name": "Watchlist",
+            "default": true,
+            "published": false,
+            "totalMovies": 63,
+            "totalLikes": null,
+            "totalSaves": null,
+            "author": "Yuviverse",
+            "posterPath": "assets/images/posters/watchlist-collection.svg",
+            "movies": []
+        },
+        {
+            "name": "Horror Films",
+            "default": false,
+            "published": true,
+            "totalMovies": 19,
+            "totalLikes": 2362,
+            "totalSaves": 539,
+            "author": "Yuviverse",
+            "posterPath": "assets/images/posters/horror-films-collection.svg",
+            "movies": []
+        },
+        {
+            "name": "Actual Horror Films...",
+            "default": false,
+            "published": true,
+            "totalMovies": 35,
+            "totalLikes": 241,
+            "totalSaves": 55,
+            "author": "Yuviverse",
+            "posterPath": "assets/images/posters/actual-horror-films-collection.svg",
+            "movies": []
+        }
+    ]
+}
