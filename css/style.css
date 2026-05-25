@@ -190,7 +190,8 @@ body{
     color: #ccc;
     text-decoration: none;
     padding: 12px 15px;
-    border-radius: 8px;
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
     transition: background-color 0.2s, color 0.2s;
 }
 
