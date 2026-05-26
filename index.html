@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MovieKnight - Home</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body class="app-body">
 
     <div class="app-container">
@@ -13,14 +15,14 @@
             <div class="sidebar-logo">
                 <img src="assets/images/movie-knight-logo-sidebar.svg" alt="MovieKnight" class="nav-logo">
             </div>
-            
+
             <nav class="main-nav">
-                
+
                 <a href="index.html" class="nav-link active">
                     <img src="assets/images/home-icon.svg" alt="Home Icon" class="nav-logo">
                     Home
                 </a>
-                
+
                 <a href="#" class="nav-link">
                     <img src="assets/images/explore-icon.svg" alt="Explore Icon" class="nav-logo">
                     Explore
@@ -47,7 +49,7 @@
                             AI mode
                         </button>
                     </div>
-                
+
                     <div class="surprise-container">
                         <button class="surprise-btn">
                             <img src="assets/images/dice-icon.svg" alt="Search Icon" class="nav-search-icon">
@@ -55,20 +57,63 @@
                         <p>SURPRISE ME</p>
                     </div>
                 </div>
-                    <div class="header-login-container">
-                        <button class="header-login-btn" onclick="window.location.href='login.html'">
-                            <p> Login </p>
-                        </button>
-                    </div>
+                <div class="header-login-container">
+                    <button class="header-login-btn" onclick="window.location.href='login.html'">
+                        <p> Login </p>
+                    </button>
+                </div>
 
-                
+
             </header>
 
             <div class="controls-bar">
-                <button class="filter-btn">
-                    <img src="assets/images/filters-icon.svg" alt="Search Icon" class="nav-search-icon">
-                    Filters
-                </button>
+                <div class="filter-wrapper">
+                    <button class="filter-btn" id="filterToggleBtn">
+                        <img src="assets/images/filters-icon.svg" alt="Filters Icon">
+                        Filters
+                    </button>
+
+                    <div class="filter-dropdown" id="filterMenu">
+                        <div class="filter-titles">
+                            <p>Release Year</p>
+                            <p>Genres</p>
+                            <p>Rating</p>
+                            <p>Filter By Actor</p>
+                            <p>Filter By Director</p>
+                            <p>Age Rating</p>
+                            <p>Where To Watch</p>
+                        </div>
+
+                        <div class="filter-choices" id="filterChoices">
+                            <div class="year-filter">
+                                <div class="from-year-dropdown">
+                                    <label>From</label>
+                                    <select id="fromYear">
+                                        <option value="">Any</option>
+                                    </select>
+                                </div>
+
+                                <div class="till-year-dropdown">
+                                    <label>Till</label>
+                                    <select id="tillYear">
+                                        <option value="">Any</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="movie-genre-row" id="movieGenreRow">
+                                <div class="movie-genre-list" id="movieGenreList"></div>
+                                <div class="movie-genre-add-container">
+                                    <button class="movie-genre-add-btn" id="addGenreBtn">+</button>
+                                    <div class="movie-genre-dropdown" id="movieGenreDropdown"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+
+                </div>
                 <div class="sort-dropdown">
                     <label>Sort by</label>
                     <select>
@@ -80,14 +125,14 @@
             </div>
 
             <section class="movie-grid" id="movieGrid">
-                
+
                 <article class="movie-card">
                     <img src="assets/images/bugonia-movie-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.4 
+                        7.4
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -103,14 +148,14 @@
                         </div>
                     </div>
                 </article>
-                
+
                 <article class="movie-card">
                     <img src="assets/images/one-battle-after-another-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.4 
+                        7.4
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -130,10 +175,10 @@
                 <article class="movie-card">
                     <img src="assets/images/marty-supreme-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.8 
+                        7.8
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -153,10 +198,10 @@
                 <article class="movie-card">
                     <img src="assets/images/housemaid-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.1 
+                        7.1
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -174,12 +219,13 @@
                 </article>
 
                 <article class="movie-card">
-                    <img src="assets/images/ten-things-i-hate-about-you-poster.svg" alt="Movie Poster" class="poster-img">
+                    <img src="assets/images/ten-things-i-hate-about-you-poster.svg" alt="Movie Poster"
+                        class="poster-img">
                     <div class="rating-badge">
-                        7.6 
+                        7.6
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -202,7 +248,7 @@
                         8.5
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -222,10 +268,10 @@
                 <article class="movie-card">
                     <img src="assets/images/frankenstein-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.7 
+                        7.7
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -240,15 +286,15 @@
                             Frankenstein (2025)
                         </div>
                     </div>
-                </article> 
+                </article>
 
                 <article class="movie-card">
                     <img src="assets/images/kill-bill-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        8.0 
+                        8.0
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -264,13 +310,14 @@
                         </div>
                     </div>
 
-                    
+
                 </article>
-                
+
             </section>
         </main>
     </div>
 
     <script src="js/main.js"></script>
 </body>
+
 </html>

@@ -140,6 +140,7 @@ body{
 .app-container {
     display: flex;
     min-height: 100vh;
+    align-items: flex-start;
 }
 
 /* --- SIDEBAR --- */
@@ -147,6 +148,11 @@ body{
     width: 350px;
     display: flex;
     flex-direction: column;
+    position: sticky;
+    overflow-y: auto;
+    flex-shrink: 0;
+    top:0;
+    height: 100vh;
 }
 
 
@@ -211,24 +217,29 @@ body{
 /* --- MAIN CONTENT AREA --- */
 .main-content {
     flex-grow: 1;
+    width: 100%;
     padding: 30px 50px;
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 20px;
+    align-items: flex-start;
+    min-width: 0;
+    
 }
 
 /* --- HEADER & SEARCH --- */
 .top-header {
+    margin-top: 42px;
+    width: 100%;
+    max-width: 1221px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
-.header-left-group{
+.header-left-group {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
+    align-items: flex-start; 
+    width: 100%;
+    gap: 30px;
 }
 
 .search-container {
@@ -237,8 +248,10 @@ body{
     background-color: rgba(255, 136, 179, 0.13);
     border-radius: 10px;
     padding: 5px 15px;
-    width: 1121.39px;
     height: 66.59px;
+    flex-grow: 1; 
+    max-width: 100%;
+
 }
 
 .search-container input {
@@ -249,6 +262,7 @@ body{
     width: 100%;
     padding: 10px;
     outline: none;
+    
 }
 
 .ai-mode-btn{
@@ -260,7 +274,7 @@ body{
     background: transparent;
     border: 1px;
     background-color: rgba(243,135,177,0.12);
-    width:116.04px;
+    min-width:10%;
     height: 42.69px;
     border-radius: 12px;
     font-size: 15px;
@@ -286,15 +300,13 @@ body{
 }
 
 .surprise-container{
-    margin-top:44px;
-    margin-left: 17px;
     display:flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     width:92px;
-    height: 101px;
+    gap:8px;
 }
 
 .surprise-btn{
@@ -322,18 +334,29 @@ body{
     color: rgba(255,255,255,0.7)
 }
 
-.header-login-btn{
+.header-login-btn {
     appearance: none;
     border: 0px;
     border-radius: 12px;
-    min-width:129.63px;
+    min-width: 129.63px;
     min-height: 48.85px;
+    display: flex; /* Centers the text inside */
+    align-items: center;
     justify-content: center;
     background-color: rgba(243,135,177,0.13);
-    color: rgba(226,226,226,1);
+    color: rgba(226,226,226,0.7);
     font-size: 30px;
-    margin-bottom: 70px;
     transition: background-color 0.4s;
+
+    position: absolute;
+    top: 46px;
+    right: 62px;
+    margin: 0;
+    z-index: 100; 
+}
+.header-login-btn p {
+    margin: 0;
+    padding: 0;
 }
 
 .header-login-btn:hover{
@@ -358,7 +381,8 @@ body{
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    max-width: 1230px;
+    width: 100%;
+    max-width: 1221px;
 }
 
 .filter-btn{
@@ -387,10 +411,177 @@ body{
     background:rgba(255,136,179,0.3);
 }
 
-.sort-dropdown{
+.filter-wrapper {
+    position: relative;
+}
+
+/* 2. The hidden menu */
+.filter-dropdown {
+    display: none; /* Hidden by default! */
+    position: absolute; 
+    top: 55px; 
+    left: 0;
+    z-index: 200;
+    font-size: 20px;
+    line-height: 53px;
+    text-align: start;
+    background-color: rgba(132, 52, 63, 0.75);
+    border-radius: 12px;
+    padding: 20px;
+    width: 409.5px; 
+    height: 414.57px;
+    
+}
+
+/* 3. The Toggle Class */
+.filter-dropdown.show {
+    display: flex; 
+    flex-direction: row;
+}
+
+
+.filter-choices{
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+}
+
+.year-filter{
+    display: flex;
+    flex-direction: row;
+    gap:30px;
+    align-items: center;
+    justify-content:center;
+}
+
+.from-year-dropdown, .till-year-dropdown{
+    display:flex;
+    flex-direction: row;
+    align-items: center;
+    gap:5px;
+}
+
+.from-year-dropdown select, .till-year-dropdown select{
     appearance: none;
+    width: 58.34px;
+    height: 21.26px;
+    background-color: rgba(89,30,38,0.7);
+    color: white;
+    border: none;
+    border-radius: 3px;
+    padding: 3px;
+}
+/* ----------------------GENRES--------------- */
+.movie-genre-row {
+    width: 100%; /* Force this row to take full width */
+    display: flex;
+    flex-wrap: nowrap; /* Prevent wrapping */
+    align-items: center;
+    margin-top: 15px;
+    margin-left: 25px;
+    gap:12px;
+}
+
+.movie-genre-label {
+    margin: 0;
+    font-size: 14px;
+    /* Forces label to sit perfectly aligned with pills */
+    line-height: normal; 
+}
+
+/* The List: Holds pills and overflow dots */
+.movie-genre-list {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    height: 100%;
+}
+
+.movie-genre-pill {
+    background-color: rgba(89, 30, 38, 0.7);
+    color: white;
+    padding: 2px 10px;
+    height: 25px; /* Fixed height is key to vertical alignment */
+    font-size: 14px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.movie-genre-overflow {
+    position: relative; /* Tooltip needs this */
+    display: flex;
+    align-items: center;
+    padding: 0 5px;
+    height: 25px;
+    cursor: default;
+}
+
+.movie-genre-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 120%; /* Pushed above the dots */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(89, 30, 38, 0.7);
+    max-height: 35px;
+    text-align: center;
+    padding: 5px 10px;
+    white-space: nowrap;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 9999; /* Force to top */
+}
+
+/* Trigger the hover */
+.movie-genre-overflow:hover .movie-genre-tooltip {
+    display: block;
+}   
+
+.movie-genre-add-container {
+    position: relative; 
+}
+
+.movie-genre-add-btn {
+    background-color: rgba(89, 30, 38, 0.7);
+    color: white;
+    border: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0; /* Ensures button never squishes */
+}
+
+/* The Dropdown */
+.movie-genre-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%; 
+    left: 0;   
+    background-color: rgba(89, 30, 38, 0.95);
+    border-radius: 8px;
+    z-index: 999;
+    width: 120px;
+    margin-top: 5px; 
+    cursor: pointer;
+    text-align: center;
+}
+.movie-genre-dropdown.show { display: block; }
+
+/* ----------------------------SORT BY----------------------------- */
+
+.sort-dropdown label{
     opacity: 70%;
 }
+
 .sort-dropdown select{
     cursor: pointer;
     color-scheme: dark;
@@ -399,6 +590,9 @@ body{
     border-radius: 12px;
     border:none;
     background-color: rgba(255,136,179,0.13);
+    color: white;
+    font-size: 15px;
+    padding-left: 3px;
 }
 
 .sort-dropdown option{
@@ -408,10 +602,13 @@ body{
 
 /*  Movie Posters */
 .movie-grid {
-    max-width: 1231px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 60px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    row-gap: 20px; 
+    column-gap: 40px;
+    width: 100%;
+    max-width: 1231px;
+
 }
 
 .movie-card {
