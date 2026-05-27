@@ -74,44 +74,96 @@
                     </button>
 
                     <div class="filter-dropdown" id="filterMenu">
-                        <div class="filter-titles">
-                            <p>Release Year</p>
-                            <p>Genres</p>
-                            <p>Rating</p>
-                            <p>Filter By Actor</p>
-                            <p>Filter By Director</p>
-                            <p>Age Rating</p>
-                            <p>Where To Watch</p>
-                        </div>
 
-                        <div class="filter-choices" id="filterChoices">
+                        <div class="pill-selector-row">
+                            <label class="filter-label">Release Year</label>
                             <div class="year-filter">
                                 <div class="from-year-dropdown">
-                                    <label>From</label>
+                                    <label style="font-size: 14px;">From</label>
                                     <select id="fromYear">
                                         <option value="">Any</option>
                                     </select>
                                 </div>
-
                                 <div class="till-year-dropdown">
-                                    <label>Till</label>
+                                    <label style="font-size: 14px;">Till</label>
                                     <select id="tillYear">
                                         <option value="">Any</option>
                                     </select>
                                 </div>
                             </div>
-                            <div class="movie-genre-row" id="movieGenreRow">
-                                <div class="movie-genre-list" id="movieGenreList"></div>
-                                <div class="movie-genre-add-container">
-                                    <button class="movie-genre-add-btn" id="addGenreBtn">+</button>
-                                    <div class="movie-genre-dropdown" id="movieGenreDropdown"></div>
-                                </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="movieGenreRow">
+                            <label class="filter-label">Genres</label>
+                            <div class="pill-list" id="movieGenreList"></div>
+                            <div class="pill-add-container">
+                                <button class="pill-add-btn" id="addGenreBtn">+</button>
+                                <button class="pill-clear-btn" id="clearGenreBtn">Clear</button>
+                                <div class="pill-dropdown" id="movieGenreDropdown"></div>
                             </div>
                         </div>
+
+                        <div class="pill-selector-row" id="ratingRow">
+                            <label class="filter-label">Rating</label>
+                            <div class="star-rating" id="starRatingContainer">
+                                <img class="star" data-value="1" src="assets/images/empty-star-icon.svg" alt="Star 1">
+                                <img class="star" data-value="2" src="assets/images/empty-star-icon.svg" alt="Star 2">
+                                <img class="star" data-value="3" src="assets/images/empty-star-icon.svg" alt="Star 3">
+                                <img class="star" data-value="4" src="assets/images/empty-star-icon.svg" alt="Star 4">
+                                <img class="star" data-value="5" src="assets/images/empty-star-icon.svg" alt="Star 5">
+                                <img class="star" data-value="6" src="assets/images/empty-star-icon.svg" alt="Star 6">
+                                <img class="star" data-value="7" src="assets/images/empty-star-icon.svg" alt="Star 7">
+                                <img class="star" data-value="8" src="assets/images/empty-star-icon.svg" alt="Star 8">
+                                <img class="star" data-value="9" src="assets/images/empty-star-icon.svg" alt="Star 9">
+                                <img class="star" data-value="10" src="assets/images/empty-star-icon.svg" alt="Star 10">
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="actorRow">
+                            <label class="filter-label">Filter By Actor</label>
+                            <div class="pill-list" id="actorList"></div>
+                            <div class="pill-add-container">
+                                <button class="pill-add-btn" id="addActorBtn">+</button>
+                                <button class="pill-clear-btn" id="clearActorBtn">Clear</button>
+                                <div class="pill-dropdown" id="actorDropdown"></div>
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="directorRow">
+                            <label class="filter-label">Filter By Director</label>
+                            <div class="pill-list" id="directorList"></div>
+                            <div class="pill-add-container">
+                                <button class="pill-add-btn" id="addDirectorBtn">+</button>
+                                <button class="pill-clear-btn" id="clearDirectorBtn">Clear</button>
+                                <div class="pill-dropdown" id="directorDropdown"></div>
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="ageRatingRow">
+                            <label class="filter-label">Age Rating</label>
+                            <div class="from-year-dropdown">
+                                <select id="ageRatingSelect">
+                                    <option value="Any">Any</option>
+                                    <option value="G">G</option>
+                                    <option value="PG">PG</option>
+                                    <option value="PG-13">PG-13</option>
+                                    <option value="R">R</option>
+                                    <option value="NC-17">NC-17</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="platformRow">
+                            <label class="filter-label">Where To Watch</label>
+                            <div class="pill-list" id="platformList"></div>
+                            <div class="pill-add-container">
+                                <button class="pill-add-btn" id="addPlatformBtn">+</button>
+                                <button class="pill-clear-btn" id="clearPlatformBtn">Clear</button>
+                                <div class="pill-dropdown" id="platformDropdown"></div>
+                            </div>
+                        </div>
+
                     </div>
-
-
-
 
                 </div>
                 <div class="sort-dropdown">

@@ -417,28 +417,24 @@ body{
 
 /* 2. The hidden menu */
 .filter-dropdown {
-    display: none; /* Hidden by default! */
+    display: none; 
     position: absolute; 
     top: 55px; 
     left: 0;
     z-index: 200;
-    font-size: 20px;
-    line-height: 53px;
-    text-align: start;
-    background-color: rgba(132, 52, 63, 0.75);
+    background-color: rgba(132, 52, 63, 0.75); 
     border-radius: 12px;
-    padding: 20px;
-    width: 409.5px; 
-    height: 414.57px;
+    padding: 25px;
+    width: 500px; 
     
+    flex-direction: column;
+    gap: 15px; /* Spaces the rows perfectly */
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
 }
 
-/* 3. The Toggle Class */
 .filter-dropdown.show {
     display: flex; 
-    flex-direction: row;
 }
-
 
 .filter-choices{
     font-size: 14px;
@@ -447,51 +443,113 @@ body{
     width: 90%;
 }
 
-.year-filter{
+.year-filter {
     display: flex;
     flex-direction: row;
-    gap:30px;
+    gap: 30px;
     align-items: center;
-    justify-content:center;
+    justify-content: center;
 }
 
-.from-year-dropdown, .till-year-dropdown{
-    display:flex;
+.from-year-dropdown, .till-year-dropdown {
+    display: flex;
     flex-direction: row;
     align-items: center;
-    gap:5px;
+    gap: 5px;
 }
 
-.from-year-dropdown select, .till-year-dropdown select{
+.from-year-dropdown select, 
+.till-year-dropdown select, 
+#ageRatingSelect {
+    text-align: center;
     appearance: none;
-    width: 58.34px;
-    height: 21.26px;
-    background-color: rgba(89,30,38,0.7);
+    height: 25px; /* Matches the pill height exactly */
+    background-color: rgba(89, 30, 38, 0.7);
     color: white;
-    border: none;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
     border-radius: 3px;
-    padding: 3px;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    
+    /* Balances the text so "Any" sits dead center */
+    padding-left: 12px; 
+    padding-right: 24px !important; 
+    
+    /* Shrunk the SVG width/height from 14 to 10 for a sleeker look */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+}
+
+/* 1. Colors the opened menu list */
+.from-year-dropdown select option, 
+.till-year-dropdown select option {
+    background-color: rgb(89, 30, 38); 
+    color: white;
+}
+
+/* 2. The Minimalistic Scrollbar (Works in Chrome/Edge/Safari) */
+.from-year-dropdown select::-webkit-scrollbar,
+.till-year-dropdown select::-webkit-scrollbar {
+    width: 6px; /* Makes it thin */
+}
+
+.from-year-dropdown select::-webkit-scrollbar-track,
+.till-year-dropdown select::-webkit-scrollbar-track {
+    background: transparent;
+    border: none;
+}
+
+.from-year-dropdown select::-webkit-scrollbar-thumb,
+.till-year-dropdown select::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px; 
+}
+
+.from-year-dropdown select::-webkit-scrollbar-thumb:hover,
+.till-year-dropdown select::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5); 
 }
 /* ----------------------GENRES--------------- */
-.movie-genre-row {
-    width: 100%; /* Force this row to take full width */
+.pill-selector-row {
+    width: 100%; 
     display: flex;
-    flex-wrap: nowrap; /* Prevent wrapping */
+    flex-wrap: nowrap; 
     align-items: center;
-    margin-top: 15px;
-    margin-left: 25px;
-    gap:12px;
+    gap: 15px; /* Space between label and controls */
+    min-height: 35px; /* Keeps empty rows stable */
 }
 
-.movie-genre-label {
+.filter-label {
+    width: 150px; 
+    min-width: 150px; 
+    max-width: 150px; /* Rigid lock */
+    font-size: 18px;
+    color: white;
+    flex-shrink: 0; 
     margin: 0;
-    font-size: 14px;
-    /* Forces label to sit perfectly aligned with pills */
-    line-height: normal; 
+    padding: 0;
 }
 
-/* The List: Holds pills and overflow dots */
-.movie-genre-list {
+
+.pill-option {
+    cursor: pointer;
+    /* Massive padding increase to space the names out */
+    padding: 12px 18px; 
+    text-align: left; /* Aligns them to the left like your screenshot */
+    color: white;
+    transition: background-color 0.2s ease;
+}
+
+.pill-option:hover {
+    background-color: rgba(150, 50, 65, 0.9); 
+}
+
+/* 2. The List (Holds pills and dots) */
+.pill-list {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -499,53 +557,92 @@ body{
     height: 100%;
 }
 
-.movie-genre-pill {
+.pill-list:empty {
+    display: none;
+}
+
+.pill-item {
     background-color: rgba(89, 30, 38, 0.7);
     color: white;
-    padding: 2px 10px;
-    height: 25px; /* Fixed height is key to vertical alignment */
+    padding: 0 24px 0 10px; /* 24px on the right gives the absolute X room */
+    height: 25px;
     font-size: 14px;
     border-radius: 5px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 5px;
+    position: relative; 
+    white-space: nowrap;
 }
 
-.movie-genre-overflow {
-    position: relative; /* Tooltip needs this */
-    display: flex;
-    align-items: center;
-    padding: 0 5px;
-    height: 25px;
-    cursor: default;
-}
-
-.movie-genre-tooltip {
-    display: none;
+.pill-item .pill-remove {
     position: absolute;
-    bottom: 120%; /* Pushed above the dots */
+    top: 50%;
+    transform: translateY(-50%); /* Pulls the X up by exactly half its height */
+    right: 6px; 
+    font-size: 14px; 
+    line-height: 1; 
+    cursor: pointer;
+    opacity: 0.8;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pill-item .pill-remove:hover {
+    opacity: 1;
+}
+/* 4. Overflow Dots & Tooltip */
+.pill-overflow {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+    padding: 0 5px;
+    cursor: default;
+    height: 25px; 
+    line-height: 1;
+}
+
+.pill-tooltip {
+    visibility: hidden; 
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    position: absolute;
+    bottom: 120%;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(89, 30, 38, 0.7);
-    max-height: 35px;
-    text-align: center;
-    padding: 5px 10px;
-    white-space: nowrap;
+    background-color: rgba(89, 30, 38, 0.95); 
+    color: white;
+    text-shadow: none; 
+    line-height: 1; 
+    padding: 6px 10px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 4px;
-    font-size: 12px;
-    z-index: 9999; /* Force to top */
+    white-space: nowrap;
+    font-size: 13px;
+    z-index: 1000;
+    pointer-events: none;
 }
 
-/* Trigger the hover */
-.movie-genre-overflow:hover .movie-genre-tooltip {
-    display: block;
-}   
+.pill-overflow:hover .pill-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
 
-.movie-genre-add-container {
+/* 5. The Add Button & Dropdown Wrapper */
+.pill-add-container {
     position: relative; 
+    display: flex;
+    align-items: center; /* Vertically centers the + and Clear */
+    gap: 10px; /* Precise spacing between them */
 }
 
-.movie-genre-add-btn {
+.pill-add-btn {
     background-color: rgba(89, 30, 38, 0.7);
     color: white;
     border: none;
@@ -557,11 +654,17 @@ body{
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0; /* Ensures button never squishes */
+    flex-shrink: 0; 
 }
 
-/* The Dropdown */
-.movie-genre-dropdown {
+.pill-add-btn:focus,
+.pill-add-btn:active {
+    outline: none !important; /* Removes the white clicking box */
+    border: none !important;
+}
+
+/* 6. The Dropdown Menu */
+.pill-dropdown {
     display: none;
     position: absolute;
     top: 100%; 
@@ -569,12 +672,70 @@ body{
     background-color: rgba(89, 30, 38, 0.95);
     border-radius: 8px;
     z-index: 999;
-    width: 120px;
+    /* Auto-expands so "Christopher Nolan" never wraps */
+    width: max-content; 
+    min-width: 140px; 
+    white-space: nowrap; 
+    
     margin-top: 5px; 
-    cursor: pointer;
-    text-align: center;
+    overflow: hidden; /* Keeps the hover colors inside the rounded corners */
 }
-.movie-genre-dropdown.show { display: block; }
+
+.pill-dropdown.show { 
+    display: block; 
+}
+
+.pill-dropdown-option {
+    cursor: pointer;
+    padding: 12px 15px; 
+    text-align: center; /* Puts the text back in the middle */
+    color: white;
+    transition: background-color 0.2s ease;
+}
+
+.pill-dropdown-option:hover {
+    background-color: rgba(150, 50, 65, 0.9); 
+}
+
+.pill-clear-btn {
+    background: transparent;
+    color: white;
+    text-decoration: underline;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    margin: 0; /* Removed margin, using the gap above instead */
+    padding: 0;
+    line-height: 1; /* Prevents invisible font boxes from pushing it down */
+    transition: color 0.2s ease;
+    display: none; 
+}
+
+.pill-clear-btn:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+
+
+/* -------------RATING STARS----------- */
+
+.star-rating {
+    display: flex;
+    gap: 8px; 
+    align-items: center;
+}
+
+.star {
+    width: 20px; 
+    height: 20px;
+    cursor: pointer;
+    transition: transform 0.1s ease; 
+}
+
+.star:hover {
+    transform: scale(1.1); 
+}
 
 /* ----------------------------SORT BY----------------------------- */
 
