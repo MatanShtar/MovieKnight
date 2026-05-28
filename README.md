@@ -1,9 +1,9 @@
 # MovieKnight
 
 ## TODO:
-    -touch-ups on the html/css
-    -get claude to do his job on the profile page!!
-    -javascript
-    -beautify some things
+    -fix the login/signup boxes (they got deformed a bit)
+    -profile page
+    -final polishes/fun add-ins
+    -test for bugs
     -done? :)
 
