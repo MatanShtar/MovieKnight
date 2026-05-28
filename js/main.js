@@ -650,3 +650,72 @@ if (surpriseBtn && movieSearchInput) {
         }
     });
 }
+
+// Unique variable names prevent 'already declared' crashes!
+const toggleBtn_UI = document.getElementById('settingsToggleBtn');
+const submenu_UI = document.getElementById('settingsSubmenu');
+const container_UI = document.getElementById('sidebarSettings'); 
+
+if (toggleBtn_UI && container_UI && submenu_UI) {
+    toggleBtn_UI.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // This single toggle controls the background and the sliding animation
+        container_UI.classList.toggle('open');
+        
+        // Rotate the arrow icon
+        const arrow = toggleBtn_UI.querySelector('.settings-arrow');
+        if (arrow) {
+            arrow.style.transform = container_UI.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const headerProfileBtn = document.getElementById('headerProfileBtn');
+    const headerDropdown = document.getElementById('headerDropdown');
+
+    if (headerProfileBtn && headerDropdown) {
+        // Toggle the menu when clicking the profile picture
+        headerProfileBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); 
+            headerDropdown.classList.toggle('show');
+        });
+
+        // Close the menu if you click anywhere else on the screen
+        document.addEventListener('click', (e) => {
+            if (!headerDropdown.contains(e.target) && e.target !== headerProfileBtn) {
+                headerDropdown.classList.remove('show');
+            }
+        });
+    }
+});
+
+// --- AUTHENTICATION STATE CHECK (Run this when index.html loads) ---
+document.addEventListener('DOMContentLoaded', () => {
+    const loginBtn = document.getElementById('loginBtn');
+    const userProfileDisplay = document.getElementById('userProfileDisplay');
+    const displayUsername = document.getElementById('displayUsername');
+
+    // 1. Check the browser's memory for a logged-in user
+    const savedUser = localStorage.getItem('movieKnightUser');
+
+    if (savedUser && loginBtn && userProfileDisplay) {
+        // --- LOGGED IN STATE ---
+        // Hide the Login button, show the Profile display
+        loginBtn.style.display = 'none';
+        userProfileDisplay.style.display = 'flex';
+        
+        // Update the name dynamically
+        if (displayUsername) {
+            displayUsername.textContent = savedUser;
+        }
+    } else if (loginBtn && userProfileDisplay) {
+        // --- GUEST STATE ---
+        // Show the Login button, hide the Profile display
+        loginBtn.style.display = 'flex'; // Or 'block', depending on your CSS
+        userProfileDisplay.style.display = 'none';
+    }
+});

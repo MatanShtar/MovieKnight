@@ -15,6 +15,31 @@
 body{
     font-family: 'Lao Sangam MN', sans-serif;
 }
+
+
+
+/* --- GLOBAL PAGE SCROLLBAR --- */
+
+/* 1. Width of the scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+/* 2. Track (the background path) */
+::-webkit-scrollbar-track {
+    background: rgba(26, 26, 46, 0.8);
+}
+
+/* 3. Thumb (the part you drag) */
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+/* 4. Hover effect */
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
 /*  ----------------------LOGIN----------------------------*/
 /* Background */
 .login-body {
@@ -136,6 +161,35 @@ body{
     color: white;
 }
 
+.input-error {
+    /* The !important tag ensures this overrides your normal input borders */
+    border: 1px solid #ff4757 !important;
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.3) !important; /* Soft red glow */
+    background-color: rgba(255, 71, 87, 0.05) !important; /* Very slight red tint inside the box */
+}
+
+
+/* --- THE ERROR TEXT (FIXED LAYOUT) --- */
+.error-message {
+    color: #ff6b6b;
+    font-size: 13px;
+    text-align: center;
+    background-color: rgba(255, 107, 107, 0.1);
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+
+    /* THE MAGIC FIX: Reserves the space without showing the text */
+    visibility: hidden; 
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.error-message.show {
+    visibility: visible;
+    opacity: 1;
+}
+
 /* -------------------------HOME PAGE----------------------------*/
 .app-body {
     background-image: url('../assets/images/movie-knight-gradient-bg.svg');
@@ -202,6 +256,75 @@ body{
     width: 45px;
     height: 45px;
 }
+
+.user-profile-display {
+    position: absolute; 
+    display: flex;
+    align-items: center;
+    gap: 15px; 
+}
+
+
+.header-profile-btn {
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.profile-pic {
+    width: 42px;  
+    height: 42px;
+    border-radius: 50% !important; 
+    object-fit: cover;
+}
+
+/* The Dropdown Menu Box */
+.header-dropdown {
+    position: absolute;
+    top: calc(100% + 10px); 
+    right: 0; 
+    width: 100px;
+    background-color: #492828; 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 8px 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000; 
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px); 
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* The class JS adds to show the menu */
+.header-dropdown.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0); 
+}
+
+/* Menu Links */
+.header-dropdown a {
+    padding: 10px 20px;
+    color: rgba(226, 226, 226, 0.7);
+    text-decoration: none;
+    font-size: 14px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.header-dropdown a:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.danger-text { color: #ff6b6b !important; }
+.danger-text:hover { background-color: rgba(255, 107, 107, 0.1) !important; }
 /* --- SIDEBAR --- */
 .sidebar {
     width: 350px;
@@ -221,6 +344,19 @@ body{
     margin-bottom: 10px;
 }
 
+.nav-link {
+    display: flex;
+    align-items: center; 
+    gap: 10px;
+}
+
+.nav-logo {
+    transition: transform 0.7s ease;
+    transform-origin: center; 
+    display: block; 
+}
+
+
 .main-nav {
     display: flex;
     flex-direction: column;
@@ -231,33 +367,40 @@ body{
 .settings-container {
     display: flex;
     flex-direction: column;
-    width: 100%;
+    border-radius: 12px;
+    transition: background-color 0.3s ease;
+    width:fit-content;
 }
 
-.settings-submenu {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease-out, padding 0.3s ease;
+.settings-container.open {
+    background-color: rgba(255, 255, 255, 0.05); 
+}
 
-    background-color: rgba(255, 255, 255, 0.03);
+.settings-container.open .nav-link {
     border-bottom-left-radius: 0;
-    border-bottom-right-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding-left: 40px; 
+    border-bottom-right-radius: 0;
+    background-color: transparent; 
 }
 
+#settingsToggleBtn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
-.settings-submenu.show {
-    max-height: 200px;
-    padding-top: 15px;
-    padding-bottom: 20px;
+.custom-gear {
+    transition: transform 1s ease;
+    transform-origin: 50% 50%;
+    opacity: 0.7;
+}
+
+.settings-container.open .custom-gear {
+    transform: rotate(360deg);
 }
 
 .settings-submenu a {
-    color: rgba(226, 226, 226, 0.7);
-    text-decoration: none;
+    color: rgba(255, 255, 255, 0.7); /* Nice soft gray */
+    text-decoration: none;           /* Removes the underline */
     font-size: 14px;
     display: flex;
     align-items: center;
@@ -269,12 +412,40 @@ body{
     color: white;
 }
 
-.settings-submenu img {
-    width: 16px;
-    height: 16px;
-    opacity: 0.7;
+.settings-arrow {
+    margin-left: auto; 
+    width: 14px;
+    height: 14px;
+    display: inline-block; 
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain; 
+    
+    transition: transform 0.6s ease; 
+    opacity: 0.7; 
 }
 
+.settings-submenu {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden; 
+    transition: max-height 0.8s ease-out, opacity 0.7s ease, padding 0.7s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding-left: 50px; 
+}
+
+
+
+/* The open state for the links */
+.settings-container.open .settings-submenu {
+    max-height: 200px; 
+    opacity: 1;
+    padding-top: 5px;
+    padding-bottom: 20px;
+}
 .about-link{
     margin-top: auto;
     margin-bottom: 110px;
@@ -918,7 +1089,6 @@ body{
     align-items: center;
     padding-left: 10px;
     padding-right: 32px; 
-    margin-right: 4px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
