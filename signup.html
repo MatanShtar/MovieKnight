@@ -1,4 +1,4 @@
-!<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -13,38 +13,40 @@
             <img src="assets/images/login-logo-text.svg" alt="MovieKnight Logo" class="main-logo" >
         </div>
 
-        <form class="signup-box" id="signupForm" autocomplete="off">
+        <form class="signup-box" id="signupForm" autocomplete="off" novalidate>
             <h2>SIGN UP</h2>
             
             <div class="input-group">
-                <input type="text" id="name" placeholder="Full Name" required>
+                <input type="text" id="signupName" placeholder="Full Name" required>
             </div>
 
             <div class="input-group">
-                <input type="date" id="dob" placeholder="DD / MM / YYYY" required>
+                <input type="date" id="signupDob" placeholder="DD / MM / YYYY" required>
             </div>
 
             <div class="input-group">
-                <input type="email" id="email" placeholder="Email" required>
+                <input type="email" id="signupEmail" placeholder="Email" required>
             </div>
 
             <div class="input-group">
-                <input type="text" id="username" placeholder="Username" required>
+                <input type="text" id="signupUsername" placeholder="Username" required>
             </div>
             
             <div class="input-group">
-                <input type="password" id="password" placeholder="Password" required>
+                <input type="password" id="signupPassword" placeholder="Password" required>
             </div>
 
             <div class="input-group">
-                <input type="password" id="confirm-password" placeholder="Confirm Password" required>
+                <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
             </div>
+            
+            <div id="signupErrorMsg" class="error-message"></div>
             
             <button type="submit" class="submit-btn">SIGN UP</button>
             
             <div class="form-links">
                 <p>already a member? LOGIN <a href="login.html">here</a></p>
-                <p>or continue as a <a href="index.html">guest</a></p>
+                <p>or continue as a <a href="#" onclick="continueAsGuest(event)">guest</a></p>
             </div>
         </form>
     </div>

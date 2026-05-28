@@ -13,22 +13,24 @@
             <img src="assets/images/login-logo-text.svg" alt="MovieKnight Logo" class="main-logo" >
         </div>
 
-        <form class="login-box" id="loginForm">
+        <form class="login-box" id="loginForm" novalidate>
             <h2>LOGIN</h2>
             
             <div class="input-group">
-                <input type="text" id="username" placeholder="Email or Username" required>
+                <input type="text" id="loginUsername" placeholder="Email or Username" required>
             </div>
             
             <div class="input-group">
-                <input type="password" id="password" placeholder="Password" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
             </div>
+            
+            <div id="loginErrorMsg" class="error-message"></div>
             
             <button type="submit" class="submit-btn">LOGIN</button>
             
             <div class="form-links">
                 <p>not a member? SIGN UP <a href="signup.html">here</a></p>
-                <p>or continue as a <a href="index.html">guest</a></p>
+                <p>or continue as a <a href="#" onclick="continueAsGuest(event)">guest</a></p>
             </div>
         </form>
     </div>
