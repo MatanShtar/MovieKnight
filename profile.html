@@ -1,236 +1,100 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MovieKnight - Profile</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/profile.css">
-</head>
-<body class="app-body profile-body">
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/profile.css" />
+  </head>
 
+  <body class="app-body">
     <div class="app-container">
+      <aside class="sidebar">
+        <div class="sidebar-logo">
+          <img
+            src="assets/images/movie-knight-logo-sidebar.svg"
+            alt="MovieKnight"
+            class="nav-logo"
+          />
+        </div>
+        <nav class="main-nav">
+          <a href="index.html" class="nav-link">
+            <img
+              src="assets/images/home-icon.svg"
+              alt="Home Icon"
+              class="nav-logo"
+            />
+            Home
+          </a>
 
-        <!-- ============ SIDEBAR — exact copy from index.html ============ -->
-        <aside class="sidebar">
-            <div class="sidebar-logo">
-                <img src="assets/images/movie-knight-logo-sidebar.svg" alt="MovieKnight" class="nav-logo">
+          <a href="#" class="nav-link">
+            <img
+              src="assets/images/explore-icon.svg"
+              alt="Explore Icon"
+              class="nav-logo"
+            />
+            Explore
+          </a>
+          <a href="profile.html" class="nav-link active">
+            <img
+              src="assets/images/profile-icon.svg"
+              alt="Profile Icon"
+              class="nav-logo"
+            />
+            Profile
+          </a>
+          <div
+            class="settings-container"
+            id="sidebarSettings"
+          >
+            <a href="#" class="nav-link" id="settingsToggleBtn">
+              <svg
+                class="nav-logo custom-gear"
+                width="42"
+                height="42"
+                viewBox="0 0 42 42"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21 30C25.9706 30 30 25.9705 30 21C30 16.0294 25.9706 12 21 12C16.0294 12 12 16.0294 12 21C12 25.9705 16.0294 30 21 30Z"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-miterlimit="10"
+                />
+                <path
+                  d="M32.2273 37.5584C33.8076 36.4882 35.2079 35.2079 36.3881 33.7676L31.8072 31.6072L36.0581 22.6053L40.639 24.7658C40.9891 22.9354 41.0891 21.045 40.9191 19.1446L36.1481 20.855L32.7874 11.4831L37.5584 9.7727C36.4882 8.19238 35.2079 6.79212 33.7676 5.61188L31.6072 10.1928L22.6053 5.9419L24.7658 1.36101C22.9354 1.01094 21.045 0.910888 19.1446 1.08092L20.915 6.01192L11.5431 9.37266L9.7727 4.44159C8.19238 5.51181 6.7921 6.79211 5.61186 8.23241L10.1928 10.3928L5.94192 19.3947L1.36099 17.2342C1.01091 19.0646 0.910895 20.955 1.08093 22.8554L5.8519 21.145L9.21259 30.5169L4.44162 32.2273C5.51184 33.8076 6.79209 35.2079 8.23239 36.3881L10.3928 31.8072L19.3947 36.0581L17.2342 40.639C19.0646 40.9891 20.955 41.0891 22.8554 40.9191L21.205 36.3082L30.577 32.9474L32.2273 37.5584Z"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-miterlimit="10"
+                />
+              </svg>
+              Settings
+              <span class="settings-arrow"></span>
+            </a>
+            <div class="settings-submenu" id="settingsSubmenu">
+              <a href="#"
+                ><img src="assets/images/preferences-icon.svg" alt="Pref" />
+                Preferences</a
+              >
+              <a href="#"
+                ><img src="assets/images/account-icon.svg" alt="Account" />
+                Account Settings</a
+              >
             </div>
+          </div>
 
-            <nav class="main-nav">
-                <a href="index.html" class="nav-link">
-                    <img src="assets/images/home-icon.svg" alt="Home Icon" class="nav-logo">
-                    Home
-                </a>
-                <a href="#" class="nav-link">
-                    <img src="assets/images/explore-icon.svg" alt="Explore Icon" class="nav-logo">
-                    Explore
-                </a>
-                <a href="#" class="nav-link active">
-                    <img src="assets/images/profile-icon.svg" alt="Profile Icon" class="nav-logo">
-                    Profile
-                </a>
-                <a href="#" class="nav-link">
-                    <img src="assets/images/home-icon.svg" alt="About Icon" class="nav-logo">
-                    About
-                </a>
-            </nav>
-        </aside>
-
-        <!-- ============ MAIN — Profile stage ============ -->
-        <main class="profile-stage">
-
-            <!-- Avatar — JS fills `src` (optionally `alt`) -->
-            <img class="avatar"
-                 src=""
-                 alt=""
-                 data-bind="profilePic">
-
-            <!-- Username + 3-line bio — JS fills text -->
-            <div class="profile-info">
-                <h1 class="username" data-bind="username"></h1>
-                <div class="bio">
-                    <p data-bind="bioLine1"></p>
-                    <p data-bind="bioLine2"></p>
-                    <p data-bind="bioLine3"></p>
-                </div>
-            </div>
-
-            <!-- Three medals (badges) -->
-            <div class="medals">
-                <div class="medal medal--bronze"><span class="medal__label" data-bind="bronzeLabel">BRONZE</span></div>
-                <div class="medal medal--silver"><span class="medal__label" data-bind="silverLabel">SILVER</span></div>
-                <div class="medal medal--gold"><span class="medal__label" data-bind="goldLabel">GOLD</span></div>
-            </div>
-
-            <!-- Total collections count — JS fills <span> -->
-            <p class="collections-count">
-                <span data-bind="totalCollections"></span> Collections
-            </p>
-
-            <!-- New Collection button -->
-            <button type="button" class="pill-btn pill-btn--new">
-                <img src="assets/images/plus-icon.svg" alt="" class="pill-btn__icon">
-                <span>New Collection</span>
-            </button>
-
-            <!-- View All Badges button -->
-            <button type="button" class="pill-btn pill-btn--badges">
-                <img src="assets/images/shield-badge-icon.svg" alt="" class="pill-btn__icon">
-                <span>View All Badges</span>
-            </button>
-
-            <!-- ============ COLLECTIONS ROW ============
-                 5 empty cards. JS reads data/collections.json and fills every
-                 element marked with data-bind="..." (or you can rebuild the
-                 section from a <template> — your call).
-            ===================================================== -->
-            <section class="collections" id="collectionsRoot">
-
-                <article class="collection-card" data-card-idx="0">
-                    <img class="card__poster" src="" alt="" data-bind="posterPath">
-                    <h3 class="card__name" data-bind="name"></h3>
-                    <div class="card__stats">
-                        <span class="stat">
-                            <img src="assets/images/movie-clap-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalMovies"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/heart-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalLikes"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/download-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalSaves"></span>
-                        </span>
-                    </div>
-                    <button type="button" class="dots-btn" data-menu-trigger="0" aria-label="Collection options">
-                        <img src="assets/images/vertical-3-dots-icon.svg" alt="" class="dots-btn__icon">
-                    </button>
-                </article>
-
-                <article class="collection-card" data-card-idx="1">
-                    <img class="card__poster" src="" alt="" data-bind="posterPath">
-                    <h3 class="card__name" data-bind="name"></h3>
-                    <div class="card__stats">
-                        <span class="stat">
-                            <img src="assets/images/movie-clap-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalMovies"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/heart-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalLikes"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/download-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalSaves"></span>
-                        </span>
-                    </div>
-                    <button type="button" class="dots-btn" data-menu-trigger="1" aria-label="Collection options">
-                        <img src="assets/images/vertical-3-dots-icon.svg" alt="" class="dots-btn__icon">
-                    </button>
-                </article>
-
-                <article class="collection-card" data-card-idx="2">
-                    <img class="card__poster" src="" alt="" data-bind="posterPath">
-                    <h3 class="card__name" data-bind="name"></h3>
-                    <div class="card__stats">
-                        <span class="stat">
-                            <img src="assets/images/movie-clap-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalMovies"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/heart-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalLikes"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/download-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalSaves"></span>
-                        </span>
-                    </div>
-                    <button type="button" class="dots-btn" data-menu-trigger="2" aria-label="Collection options">
-                        <img src="assets/images/vertical-3-dots-icon.svg" alt="" class="dots-btn__icon">
-                    </button>
-                </article>
-
-                <article class="collection-card" data-card-idx="3">
-                    <img class="card__poster" src="" alt="" data-bind="posterPath">
-                    <h3 class="card__name" data-bind="name"></h3>
-                    <div class="card__stats">
-                        <span class="stat">
-                            <img src="assets/images/movie-clap-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalMovies"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/heart-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalLikes"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/download-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalSaves"></span>
-                        </span>
-                    </div>
-                    <button type="button" class="dots-btn" data-menu-trigger="3" aria-label="Collection options">
-                        <img src="assets/images/vertical-3-dots-icon.svg" alt="" class="dots-btn__icon">
-                    </button>
-                </article>
-
-                <article class="collection-card" data-card-idx="4">
-                    <img class="card__poster" src="" alt="" data-bind="posterPath">
-                    <h3 class="card__name" data-bind="name"></h3>
-                    <div class="card__stats">
-                        <span class="stat">
-                            <img src="assets/images/movie-clap-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalMovies"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/heart-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalLikes"></span>
-                        </span>
-                        <span class="stat">
-                            <img src="assets/images/download-icon.svg" alt="" class="stat__icon">
-                            <span class="stat__value" data-bind="totalSaves"></span>
-                        </span>
-                    </div>
-                    <button type="button" class="dots-btn" data-menu-trigger="4" aria-label="Collection options">
-                        <img src="assets/images/vertical-3-dots-icon.svg" alt="" class="dots-btn__icon">
-                    </button>
-                </article>
-
-            </section>
-
-            <!-- Collection Menu (hidden until a 3-dots button is clicked) -->
-            <div class="collection-menu" id="collectionMenu" hidden>
-                <button type="button" class="menu-item" data-action="add">
-                    <img src="assets/images/plus-icon.svg" alt="" class="menu-item__icon">
-                    <span class="menu-item__label">Add to Collection</span>
-                </button>
-
-                <button type="button" class="menu-item" data-action="rename">
-                    <span class="menu-item__icon"></span>
-                    <span class="menu-item__label">Rename</span>
-                </button>
-
-                <button type="button" class="menu-item" data-action="toggle-publish">
-                    <img src="assets/images/lock-icon.svg" alt="" class="menu-item__icon">
-                    <span class="menu-item__label" data-bind="publishLabel">Unpublish</span>
-                </button>
-
-                <button type="button" class="menu-item" data-action="copy-link">
-                    <img src="assets/images/globus-icon.svg" alt="" class="menu-item__icon">
-                    <span class="menu-item__label">Copy Link</span>
-                </button>
-
-                <button type="button" class="menu-item menu-item--danger" data-action="delete">
-                    <span class="menu-item__icon"></span>
-                    <span class="menu-item__label">Delete Collection</span>
-                </button>
-            </div>
-
-        </main>
-
+          <a href="#" class="nav-link about-link">
+            <img
+              src="assets/images/about-icon.svg"
+              alt="Home Icon"
+              class="nav-logo"
+            />
+            <span>About</span>
+          </a>
+        </nav>
+      </aside>
     </div>
-
-    <script src="js/profile.js"></script>
-</body>
+  </body>
 </html>
