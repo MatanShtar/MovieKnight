@@ -1,68 +1,136 @@
-// --- THE MOCK DATABASE INITIALIZATION ---
-// If no database exists yet, create it and add our placeholder account
-if (!localStorage.getItem('usersDB')) {
-    const defaultUsers = [
-        { 
-            name: 'Vova', 
-            dob: '2000-01-01', 
-            email: 'vova@test.com', 
-            username: 'vova2020', 
-            password: 'password123' 
-        }
-    ];
-    localStorage.setItem('usersDB', JSON.stringify(defaultUsers));
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- 1. LOGIN VALIDATION ---
+    const loginForm = document.getElementById('loginForm');
+    
+    if (loginForm) {
+        const usernameInput = document.getElementById('loginUsername');
+        const passwordInput = document.getElementById('loginPassword');
+        const errorMsg = document.getElementById('loginErrorMsg');
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault(); 
+            
+            // Reset states
+            usernameInput.classList.remove('input-error');
+            passwordInput.classList.remove('input-error');
+            errorMsg.classList.remove('show');
+
+            let hasError = false;
+
+            if (!usernameInput.value.trim()) {
+                usernameInput.classList.add('input-error');
+                hasError = true;
+            }
+            if (!passwordInput.value.trim()) {
+                passwordInput.classList.add('input-error');
+                hasError = true;
+            }
+
+            if (hasError) {
+                errorMsg.textContent = "Please fill in all required fields.";
+                errorMsg.classList.add('show');
+                return;
+            }
+
+            // Mock login check
+            if (usernameInput.value !== "admin" || passwordInput.value !== "1234") {
+                usernameInput.classList.add('input-error');
+                passwordInput.classList.add('input-error');
+                errorMsg.textContent = "Incorrect email or password.";
+                errorMsg.classList.add('show');
+            } else {
+                alert("Login successful!");
+                window.location.href = "index.html"; 
+            }
+        });
+
+        // Remove red border when user starts typing
+        [usernameInput, passwordInput].forEach(input => {
+            input.addEventListener('input', () => {
+                input.classList.remove('input-error');
+                errorMsg.classList.remove('show');
+            });
+        });
+    }
+
+    // --- 2. SIGNUP VALIDATION ---
+    const signupForm = document.getElementById('signupForm');
+
+    if (signupForm) {
+        const nameInput = document.getElementById('signupName');
+        const dobInput = document.getElementById('signupDob');
+        const emailInput = document.getElementById('signupEmail');
+        const usernameInput = document.getElementById('signupUsername');
+        const passwordInput = document.getElementById('signupPassword');
+        const confirmPasswordInput = document.getElementById('signupConfirmPassword');
+        const errorMsg = document.getElementById('signupErrorMsg');
+
+        const allInputs = [nameInput, dobInput, emailInput, usernameInput, passwordInput, confirmPasswordInput];
+
+        signupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            // Reset states
+            allInputs.forEach(input => input.classList.remove('input-error'));
+            errorMsg.classList.remove('show');
+
+            let hasError = false;
+
+            // Check for empty fields
+            allInputs.forEach(input => {
+                if (!input.value.trim()) {
+                    input.classList.add('input-error');
+                    hasError = true;
+                }
+            });
+
+            if (hasError) {
+                errorMsg.textContent = "Please fill in all required fields.";
+                errorMsg.classList.add('show');
+                return;
+            }
+
+            // Check if passwords match
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                passwordInput.classList.add('input-error');
+                confirmPasswordInput.classList.add('input-error');
+                errorMsg.textContent = "Passwords do not match.";
+                errorMsg.classList.add('show');
+                return;
+            }
+
+            alert("Sign up successful!");
+            window.location.href = "login.html";
+        });
+
+        // Remove red border when user starts typing
+        allInputs.forEach(input => {
+            input.addEventListener('input', () => {
+                input.classList.remove('input-error');
+                errorMsg.classList.remove('show');
+            });
+        });
+    }
+});
+
+// --- ADD THIS TO THE BOTTOM OF validation.js ---
+function continueAsGuest(e) {
+    e.preventDefault();
+    // 1. Erase any saved user data
+    localStorage.removeItem('movieKnightUser');
+    // 2. Send them to the home page
+    window.location.href = "index.html";
 }
 
-// --- SIGNUP LOGIC ---
-const signupForm = document.getElementById('signupForm');
-
-if (signupForm) {
-    signupForm.addEventListener('submit', (e) => {
-        // Stop the browser from instantly refreshing the page
-        e.preventDefault(); 
-        
-        // 1. Grab all the values the user typed in
-        const name = document.getElementById('name').value.trim();
-        const dob = document.getElementById('dob').value;
-        const email = document.getElementById('email').value.trim();
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-
-        // 2. Perform Custom Validations
-        if (password !== confirmPassword) {
-            alert("Error: Passwords do not match!");
-            return; // Stops the function from continuing
-        }
-        
-        if (password.length < 6) {
-            alert("Error: Password must be at least 6 characters long.");
-            return;
-        }
-
-        // 3. Database Checks (Do they already exist?)
-        const users = JSON.parse(localStorage.getItem('usersDB'));
-        
-        const emailExists = users.find(u => u.email === email);
-        if (emailExists) {
-            alert("Error: An account with that email already exists!");
-            return;
-        }
-
-        const usernameExists = users.find(u => u.username === username);
-        if (usernameExists) {
-            alert("Error: That username is already taken!");
-            return;
-        }
-
-        // 4. Save the New User to the Database
-        const newUser = { name, dob, email, username, password };
-        users.push(newUser);
-        localStorage.setItem('usersDB', JSON.stringify(users));
-
-        // 5. Automatically log them in and send them to the Home Page
-        // We only save safe info to the current session (never the password!)
-        localStorage.setItem('currentUser', JSON.stringify({ email, username }));
-        window.location.href = 'index.html';
-    });
+// --- FIND YOUR MOCK LOGIN CHECK IN validation.js AND UPDATE IT ---
+// It should look like this now:
+if (usernameInput.value !== "admin" || passwordInput.value !== "1234") {
+    usernameInput.classList.add('input-error');
+    passwordInput.classList.add('input-error');
+    errorMsg.textContent = "Incorrect email or password.";
+    errorMsg.classList.add('show');
+} else {
+    localStorage.setItem('movieKnightUser', usernameInput.value);
+    window.location.href = "index.html"; 
 }
