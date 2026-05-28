@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MovieKnight - Home</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body class="app-body">
 
     <div class="app-container">
@@ -13,14 +15,14 @@
             <div class="sidebar-logo">
                 <img src="assets/images/movie-knight-logo-sidebar.svg" alt="MovieKnight" class="nav-logo">
             </div>
-            
+
             <nav class="main-nav">
-                
+
                 <a href="index.html" class="nav-link active">
                     <img src="assets/images/home-icon.svg" alt="Home Icon" class="nav-logo">
                     Home
                 </a>
-                
+
                 <a href="#" class="nav-link">
                     <img src="assets/images/explore-icon.svg" alt="Explore Icon" class="nav-logo">
                     Explore
@@ -29,6 +31,17 @@
                     <img src="assets/images/profile-icon.svg" alt="Profile Icon" class="nav-logo">
                     Profile
                 </a>
+                <div class="settings-container" id="sidebarSettings" style="display: none;">
+                    <a href="#" class="nav-link" id="settingsToggleBtn">
+                        <img src="assets/images/settings-icon.svg" alt="Settings Icon" class="nav-logo">
+                        Settings
+                    </a>
+                    <div class="settings-submenu" id="settingsSubmenu">
+                        <a href="#"><img src="assets/images/preferences-icon.svg" alt="Pref"> Preferences</a>
+                        <a href="#"><img src="assets/images/account-icon.svg" alt="Account"> Account Settings</a>
+                    </div>
+                </div>
+
                 <a href="#" class="nav-link about-link">
                     <img src="assets/images/about-icon.svg" alt="Home Icon" class="nav-logo">
                     <span>About</span>
@@ -47,7 +60,7 @@
                             AI mode
                         </button>
                     </div>
-                
+
                     <div class="surprise-container">
                         <button class="surprise-btn">
                             <img src="assets/images/dice-icon.svg" alt="Search Icon" class="nav-search-icon">
@@ -55,39 +68,137 @@
                         <p>SURPRISE ME</p>
                     </div>
                 </div>
-                    <div class="header-login-container">
-                        <button class="header-login-btn" onclick="window.location.href='login.html'">
-                            <p> Login </p>
-                        </button>
-                    </div>
+                <div class="header-login-container" id="headerAuthContainer">
+                    <button class="header-login-btn" id="loginBtn" onclick="window.location.href='login.html'">
+                        <p>Login</p>
+                    </button>
 
-                
+                    <div class="user-profile-display" id="userProfileDisplay" style="display: none;">
+                        <div class="user-welcome">
+                            <span class="welcome-text">Good to see you,</span>
+                            <span class="username-text" id="displayUsername">User</span>
+                        </div>
+                        <img src="assets/images/account-icon.svg" alt="Profile" class="profile-pic">
+                    </div>
+                </div>
+
+
             </header>
 
             <div class="controls-bar">
-                <button class="filter-btn">
-                    <img src="assets/images/filters-icon.svg" alt="Search Icon" class="nav-search-icon">
-                    Filters
-                </button>
-                <div class="sort-dropdown">
-                    <label>Sort by</label>
-                    <select>
-                        <option>Popular</option>
-                        <option>Top Rated</option>
-                        <option>Newest</option>
-                    </select>
+                <div class="filter-wrapper">
+                    <button class="filter-btn" id="filterToggleBtn">
+                        <img src="assets/images/filters-icon.svg" alt="Filters Icon">
+                        Filters
+                    </button>
+
+                    <div class="filter-dropdown" id="filterMenu">
+
+                        <div class="pill-selector-row">
+                            <label class="filter-label">Release Year</label>
+                            <div class="year-filter">
+                                <label class="year-label">From</label>
+                                <div class="year-dropdown-wrapper">
+                                    <button class="year-custom-btn" id="fromYearBtn">Any</button>
+                                    <div class="pill-dropdown year-dropdown-menu" id="fromYearMenu"></div>
+                                </div>
+
+                                <label class="year-label till-label">Till</label>
+                                <div class="year-dropdown-wrapper">
+                                    <button class="year-custom-btn" id="tillYearBtn">Any</button>
+                                    <div class="pill-dropdown year-dropdown-menu" id="tillYearMenu"></div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="movieGenreRow">
+                            <label class="filter-label">Genres</label>
+                            <div class="pill-list" id="movieGenreList"></div>
+                            <div class="pill-add-container">
+                                <button class="pill-add-btn" id="addGenreBtn">+</button>
+                                <button class="pill-clear-btn" id="clearGenreBtn">Clear</button>
+                                <div class="pill-dropdown" id="movieGenreDropdown"></div>
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="ratingRow">
+                            <label class="filter-label">Rating</label>
+                            <div class="star-rating" id="starRatingContainer">
+                                <img class="star" data-value="1" src="assets/images/empty-star-icon.svg" alt="Star 1">
+                                <img class="star" data-value="2" src="assets/images/empty-star-icon.svg" alt="Star 2">
+                                <img class="star" data-value="3" src="assets/images/empty-star-icon.svg" alt="Star 3">
+                                <img class="star" data-value="4" src="assets/images/empty-star-icon.svg" alt="Star 4">
+                                <img class="star" data-value="5" src="assets/images/empty-star-icon.svg" alt="Star 5">
+                                <img class="star" data-value="6" src="assets/images/empty-star-icon.svg" alt="Star 6">
+                                <img class="star" data-value="7" src="assets/images/empty-star-icon.svg" alt="Star 7">
+                                <img class="star" data-value="8" src="assets/images/empty-star-icon.svg" alt="Star 8">
+                                <img class="star" data-value="9" src="assets/images/empty-star-icon.svg" alt="Star 9">
+                                <img class="star" data-value="10" src="assets/images/empty-star-icon.svg" alt="Star 10">
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="actorRow">
+                            <label class="filter-label">Filter By Actor</label>
+                            <div class="pill-list" id="actorList"></div>
+                            <div class="pill-add-container">
+                                <button class="pill-add-btn" id="addActorBtn">+</button>
+                                <button class="pill-clear-btn" id="clearActorBtn">Clear</button>
+                                <div class="pill-dropdown" id="actorDropdown"></div>
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="directorRow">
+                            <label class="filter-label">Filter By Director</label>
+                            <div class="pill-list" id="directorList"></div>
+                            <div class="pill-add-container">
+                                <button class="pill-add-btn" id="addDirectorBtn">+</button>
+                                <button class="pill-clear-btn" id="clearDirectorBtn">Clear</button>
+                                <div class="pill-dropdown" id="directorDropdown"></div>
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="ageRatingRow">
+                            <label class="filter-label">Age Rating</label>
+                            <div class="year-dropdown-wrapper">
+                                <button class="year-custom-btn" id="ageRatingBtn">Any</button>
+                                <div class="pill-dropdown year-dropdown-menu" id="ageRatingMenu"></div>
+                            </div>
+                        </div>
+
+                        <div class="pill-selector-row" id="platformRow">
+                            <label class="filter-label">Where To Watch</label>
+                            <div class="pill-list" id="platformList"></div>
+                            <div class="pill-add-container">
+                                <button class="pill-add-btn" id="addPlatformBtn">+</button>
+                                <button class="pill-clear-btn" id="clearPlatformBtn">Clear</button>
+                                <div class="pill-dropdown" id="platformDropdown"></div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+                <div class="sort-dropdown" id="sortDropdownContainer">
+                    <label class="sort-label">Sort by</label>
+                    <div class="sort-custom-wrapper">
+                        <button class="sort-custom-btn" id="sortCustomBtn">
+                            <span id="sortSelectedText">Popular</span>
+                        </button>
+                        <div class="sort-custom-menu" id="sortCustomMenu"></div>
+                    </div>
                 </div>
             </div>
 
             <section class="movie-grid" id="movieGrid">
-                
+
                 <article class="movie-card">
                     <img src="assets/images/bugonia-movie-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.4 
+                        7.4
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -103,14 +214,14 @@
                         </div>
                     </div>
                 </article>
-                
+
                 <article class="movie-card">
                     <img src="assets/images/one-battle-after-another-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.4 
+                        7.4
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -130,10 +241,10 @@
                 <article class="movie-card">
                     <img src="assets/images/marty-supreme-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.8 
+                        7.8
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -153,10 +264,10 @@
                 <article class="movie-card">
                     <img src="assets/images/housemaid-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.1 
+                        7.1
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -174,12 +285,13 @@
                 </article>
 
                 <article class="movie-card">
-                    <img src="assets/images/ten-things-i-hate-about-you-poster.svg" alt="Movie Poster" class="poster-img">
+                    <img src="assets/images/ten-things-i-hate-about-you-poster.svg" alt="Movie Poster"
+                        class="poster-img">
                     <div class="rating-badge">
-                        7.6 
+                        7.6
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -202,7 +314,7 @@
                         8.5
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -222,10 +334,10 @@
                 <article class="movie-card">
                     <img src="assets/images/frankenstein-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        7.7 
+                        7.7
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -240,15 +352,15 @@
                             Frankenstein (2025)
                         </div>
                     </div>
-                </article> 
+                </article>
 
                 <article class="movie-card">
                     <img src="assets/images/kill-bill-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
-                        8.0 
+                        8.0
                         <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
-                    
+
                     <div class="card-overlay">
                         <button class="icon-btn">
                             <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
@@ -264,13 +376,14 @@
                         </div>
                     </div>
 
-                    
+
                 </article>
-                
+
             </section>
         </main>
     </div>
 
     <script src="js/main.js"></script>
 </body>
+
 </html>
