@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MovieKnight - Home</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/home.css">
 </head>
 
 <body class="app-body">
@@ -19,16 +21,16 @@
             <nav class="main-nav">
 
                 <a href="index.html" class="nav-link active">
-                    <img src="assets/images/home-icon.svg" alt="Home Icon" class="nav-logo">
+                    <img src="assets/images/icons/home-icon.svg" alt="Home Icon" class="nav-logo">
                     Home
                 </a>
 
                 <a href="#" class="nav-link">
-                    <img src="assets/images/explore-icon.svg" alt="Explore Icon" class="nav-logo">
+                    <img src="assets/images/icons/explore-icon.svg" alt="Explore Icon" class="nav-logo">
                     Explore
                 </a>
                 <a href="profile.html" class="nav-link">
-                    <img src="assets/images/profile-icon.svg" alt="Profile Icon" class="nav-logo">
+                    <img src="assets/images/icons/profile-icon.svg" alt="Profile Icon" class="nav-logo">
                     Profile
                 </a>
                 <div class="settings-container" id="sidebarSettings" style="display: none;">
@@ -48,13 +50,13 @@
 
                     </a>
                     <div class="settings-submenu" id="settingsSubmenu">
-                        <a href="#"><img src="assets/images/preferences-icon.svg" alt="Pref"> Preferences</a>
-                        <a href="#"><img src="assets/images/account-icon.svg" alt="Account"> Account Settings</a>
+                        <a href="#"><img src="assets/images/icons/preferences-icon.svg" alt="Pref"> Preferences</a>
+                        <a href="#"><img src="assets/images/icons/account-icon.svg" alt="Account"> Account Settings</a>
                     </div>
                 </div>
 
                 <a href="#" class="nav-link about-link">
-                    <img src="assets/images/about-icon.svg" alt="Home Icon" class="nav-logo">
+                    <img src="assets/images/icons/about-icon.svg" alt="Home Icon" class="nav-logo">
                     <span>About</span>
                 </a>
             </nav>
@@ -64,17 +66,17 @@
             <header class="top-header">
                 <div class="header-left-group">
                     <div class="search-container">
-                        <img src="assets/images/search-icon.svg" alt="Search Icon" class="nav-search-icon">
+                        <img src="assets/images/icons/search-icon.svg" alt="Search Icon" class="nav-search-icon">
                         <input type="text" id="movieSearch" placeholder="Search movies...">
                         <button class="ai-mode-btn">
-                            <img src="assets/images/ai-icon.svg" alt="Search Icon" class="nav-search-icon">
+                            <img src="assets/images/icons/ai-icon.svg" alt="Search Icon" class="nav-search-icon">
                             AI mode
                         </button>
                     </div>
 
                     <div class="surprise-container">
                         <button class="surprise-btn">
-                            <img src="assets/images/dice-icon.svg" alt="Search Icon" class="nav-search-icon">
+                            <img src="assets/images/icons/dice-icon.svg" alt="Search Icon" class="nav-search-icon">
                         </button>
                         <p>SURPRISE ME</p>
                     </div>
@@ -92,12 +94,12 @@
                         </div>
 
                         <button id="headerProfileBtn" class="header-profile-btn">
-                            <img src="assets/images/account-icon.svg" alt="Profile" class="profile-pic">
+                            <img src="assets/images/icons/account-icon.svg" alt="Profile" class="profile-pic">
                         </button>
 
                         <div class="header-dropdown" id="headerDropdown">
                             <a href="#">Settings</a>
-                            <a href="signup.html" class="danger-text">Sign Out</a>
+                            <a href="index.html" id="signOutBtn" class="danger-text">Sign Out</a>
                         </div>
 
                     </div>
@@ -108,7 +110,7 @@
             <div class="controls-bar">
                 <div class="filter-wrapper">
                     <button class="filter-btn" id="filterToggleBtn">
-                        <img src="assets/images/filters-icon.svg" alt="Filters Icon">
+                        <img src="assets/images/icons/filters-icon.svg" alt="Filters Icon">
                         Filters
                     </button>
 
@@ -145,16 +147,16 @@
                         <div class="pill-selector-row" id="ratingRow">
                             <label class="filter-label">Rating</label>
                             <div class="star-rating" id="starRatingContainer">
-                                <img class="star" data-value="1" src="assets/images/empty-star-icon.svg" alt="Star 1">
-                                <img class="star" data-value="2" src="assets/images/empty-star-icon.svg" alt="Star 2">
-                                <img class="star" data-value="3" src="assets/images/empty-star-icon.svg" alt="Star 3">
-                                <img class="star" data-value="4" src="assets/images/empty-star-icon.svg" alt="Star 4">
-                                <img class="star" data-value="5" src="assets/images/empty-star-icon.svg" alt="Star 5">
-                                <img class="star" data-value="6" src="assets/images/empty-star-icon.svg" alt="Star 6">
-                                <img class="star" data-value="7" src="assets/images/empty-star-icon.svg" alt="Star 7">
-                                <img class="star" data-value="8" src="assets/images/empty-star-icon.svg" alt="Star 8">
-                                <img class="star" data-value="9" src="assets/images/empty-star-icon.svg" alt="Star 9">
-                                <img class="star" data-value="10" src="assets/images/empty-star-icon.svg" alt="Star 10">
+                                <img class="star" data-value="1" src="assets/images/icons/empty-star-icon.svg" alt="Star 1">
+                                <img class="star" data-value="2" src="assets/images/icons/empty-star-icon.svg" alt="Star 2">
+                                <img class="star" data-value="3" src="assets/images/icons/empty-star-icon.svg" alt="Star 3">
+                                <img class="star" data-value="4" src="assets/images/icons/empty-star-icon.svg" alt="Star 4">
+                                <img class="star" data-value="5" src="assets/images/icons/empty-star-icon.svg" alt="Star 5">
+                                <img class="star" data-value="6" src="assets/images/icons/empty-star-icon.svg" alt="Star 6">
+                                <img class="star" data-value="7" src="assets/images/icons/empty-star-icon.svg" alt="Star 7">
+                                <img class="star" data-value="8" src="assets/images/icons/empty-star-icon.svg" alt="Star 8">
+                                <img class="star" data-value="9" src="assets/images/icons/empty-star-icon.svg" alt="Star 9">
+                                <img class="star" data-value="10" src="assets/images/icons/empty-star-icon.svg" alt="Star 10">
                             </div>
                         </div>
 
@@ -213,67 +215,67 @@
             <section class="movie-grid" id="movieGrid">
 
                 <article class="movie-card">
-                    <img src="assets/images/bugonia-movie-poster.svg" alt="Movie Poster" class="poster-img">
+                    <img src="assets/images/posters/bugonia-movie-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
                         7.4
-                        <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
+                        <img src="assets/images/icons/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
 
                     <div class="card-overlay">
                         <button class="icon-btn">
-                            <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <div class="movie-title-pill">
-                            bugonia (2025)
+                            Bugonia (2025)
                         </div>
                     </div>
                 </article>
 
                 <article class="movie-card">
-                    <img src="assets/images/one-battle-after-another-poster.svg" alt="Movie Poster" class="poster-img">
+                    <img src="assets/images/posters/one-battle-after-another-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
                         7.4
-                        <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
+                        <img src="assets/images/icons/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
 
                     <div class="card-overlay">
                         <button class="icon-btn">
-                            <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <div class="movie-title-pill">
-                            one battle after another (2025)
+                            One Battle After Another (2025)
                         </div>
                     </div>
                 </article>
 
                 <article class="movie-card">
-                    <img src="assets/images/marty-supreme-poster.svg" alt="Movie Poster" class="poster-img">
+                    <img src="assets/images/posters/marty-supreme-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
                         7.8
-                        <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
+                        <img src="assets/images/icons/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
 
                     <div class="card-overlay">
                         <button class="icon-btn">
-                            <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <div class="movie-title-pill">
                             Marty Supreme (2025)
@@ -282,21 +284,21 @@
                 </article>
 
                 <article class="movie-card">
-                    <img src="assets/images/housemaid-poster.svg" alt="Movie Poster" class="poster-img">
+                    <img src="assets/images/posters/housemaid-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
                         7.1
-                        <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
+                        <img src="assets/images/icons/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
 
                     <div class="card-overlay">
                         <button class="icon-btn">
-                            <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <div class="movie-title-pill">
                             Housemaid (2025)
@@ -305,45 +307,45 @@
                 </article>
 
                 <article class="movie-card">
-                    <img src="assets/images/ten-things-i-hate-about-you-poster.svg" alt="Movie Poster"
+                    <img src="assets/images/posters/ten-things-i-hate-about-you-poster.svg" alt="Movie Poster"
                         class="poster-img">
                     <div class="rating-badge">
                         7.6
-                        <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
+                        <img src="assets/images/icons/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
 
                     <div class="card-overlay">
                         <button class="icon-btn">
-                            <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <div class="movie-title-pill">
-                            10 things i hate about you (1999)
+                            10 Things I Hate About You (1999)
                         </div>
                     </div>
                 </article>
 
                 <article class="movie-card">
-                    <img src="assets/images/interstellar-poster.svg" alt="Movie Poster" class="poster-img">
+                    <img src="assets/images/posters/interstellar-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
                         8.5
-                        <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
+                        <img src="assets/images/icons/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
 
                     <div class="card-overlay">
                         <button class="icon-btn">
-                            <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <div class="movie-title-pill">
                             Interstellar (2014)
@@ -352,21 +354,21 @@
                 </article>
 
                 <article class="movie-card">
-                    <img src="assets/images/frankenstein-poster.svg" alt="Movie Poster" class="poster-img">
+                    <img src="assets/images/posters/frankenstein-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
                         7.7
-                        <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
+                        <img src="assets/images/icons/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
 
                     <div class="card-overlay">
                         <button class="icon-btn">
-                            <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <div class="movie-title-pill">
                             Frankenstein (2025)
@@ -375,21 +377,21 @@
                 </article>
 
                 <article class="movie-card">
-                    <img src="assets/images/kill-bill-poster.svg" alt="Movie Poster" class="poster-img">
+                    <img src="assets/images/posters/kill-bill-poster.svg" alt="Movie Poster" class="poster-img">
                     <div class="rating-badge">
                         8.0
-                        <img src="assets/images/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
+                        <img src="assets/images/icons/ratings-star.svg" alt="Ratings Star" class="ratings-star-img">
                     </div>
 
                     <div class="card-overlay">
                         <button class="icon-btn">
-                            <img src="assets/images/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/eye-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/heart-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <button class="icon-btn">
-                            <img src="assets/images/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
+                            <img src="assets/images/icons/plus-icon.svg" alt="Ratings Star" class="ratings-star-img">
                         </button>
                         <div class="movie-title-pill">
                             Kill Bill: Volume 1 (2003)
@@ -403,7 +405,8 @@
         </main>
     </div>
 
-    <script src="js/main.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/home.js"></script>
 </body>
 
 </html>

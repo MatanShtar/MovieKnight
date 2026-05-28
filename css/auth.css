@@ -1,0 +1,218 @@
+/* auth.css — login & signup pages only. Loaded by login.html and signup.html. */
+
+/*  ----------------------LOGIN----------------------------*/
+/* Background */
+.login-body {
+    background-image: url('../assets/images/movie-knight-gradient-bg.svg'); 
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* Fallback color just in case the image loads slowly */
+    background-color: #1a1a2e; 
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Wrapper */
+.login-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    padding: 20px 0;
+}
+
+/* Logo */
+.main-logo {
+    width: 400px;
+    height: auto;
+    margin-bottom: 16px;
+}
+
+/*Login Box */
+.login-box {
+    background-color: rgba(255, 136, 179, 0.13);
+    width: 540px;
+    height: auto;
+    padding: 32px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    text-align: center;
+}
+
+.login-box h2 {
+    color: #C2B5B4;
+    font-size: 60px;
+    letter-spacing: 15px;
+    margin-bottom: 10px;
+    font-weight: 300;
+}
+
+/* Input Fields */
+
+.input-group input::placeholder {
+    color: rgba(226,226,226,0.7); 
+    font-weight: 300;
+}
+
+.input-group input {
+    width: 432.13px;
+    height: 41.76px;
+    padding: 12px 15px;
+    background-color: rgba(255, 136, 179, 0.07);
+    border: 0px solid rgba(255, 136, 179, 0.07);
+    box-shadow: none;
+    border-radius: 12px; 
+    color: white;
+    font-size: 20px;
+}
+
+.input-group input:focus {
+    outline: none; 
+}
+
+.input-group input:-webkit-autofill,
+.input-group input:-webkit-autofill:hover, 
+.input-group input:-webkit-autofill:focus, 
+.input-group input:-webkit-autofill:active {
+    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: white !important;
+    caret-color: white;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 133px;
+    height: 47px;
+    margin: 10px auto;
+    padding: 10px;
+    background-color: rgba(188,102,118,0.5); 
+    color: white;
+    border: none;
+    border-radius: 50px; 
+    cursor: pointer;
+    font-size: 20px;
+    transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+    background-color: rgba(188,102,118,0.7);
+}
+
+/* Bottom Links */
+.form-links p {
+    color: white;
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.form-links a {
+    color: white;
+    text-decoration: underline;
+}
+
+.form-links a:hover {
+    color: white;
+}
+
+.input-error {
+    /* The !important tag ensures this overrides your normal input borders */
+    border: 1px solid #ff4757 !important;
+    box-shadow: 0 0 10px rgba(255, 71, 87, 0.3) !important; /* Soft red glow */
+    background-color: rgba(255, 71, 87, 0.05) !important; /* Very slight red tint inside the box */
+}
+
+
+/* --- THE ERROR TEXT (FIXED LAYOUT) --- */
+.error-message {
+    color: #ff6b6b;
+    font-size: 13px;
+    text-align: center;
+    background-color: rgba(255, 107, 107, 0.1);
+    padding: 8px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+
+    /* THE MAGIC FIX: Reserves the space without showing the text */
+    visibility: hidden; 
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.error-message.show {
+    visibility: visible;
+    opacity: 1;
+}
+/*---------------------SIGNUP--------------------*/
+.signup-body {
+    background-image: url('../assets/images/movie-knight-gradient-bg.svg'); 
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    
+    /* Fallback color just in case the image loads slowly */
+    background-color: #1a1a2e; 
+    
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Wrapper */
+.signup-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    padding: 20px 0;
+}
+
+/*SignUp Box */
+.signup-box {
+    background-color: rgba(255, 136, 179, 0.13);
+    width: 540px;
+    height: auto;
+    padding: 32px 40px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+}
+
+.signup-box h2 {
+    color: #C2B5B4;
+    font-size: 46px;
+    letter-spacing: 12px;
+    margin-bottom: 6px;
+    font-weight: 300;
+}
+
+/* Date Field */
+.input-group input[type="date"] {
+    color: rgba(226, 226, 226, 0.7);
+    font-weight: 300;
+    text-transform: uppercase;
+    font-family: inherit;
+    direction: ltr;      /* force LTR so the date sits on the left under RTL locales */
+    text-align: left;
+}
+
+
+.input-group input[type="date"]::-webkit-calendar-picker-indicator {
+
+    display: none;
+}
+
+
+
+/* (submit button & bottom links are defined once in the LOGIN section above) */
+

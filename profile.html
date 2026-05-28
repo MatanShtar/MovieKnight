@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MovieKnight - Profile</title>
-    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+    <link rel="stylesheet" href="css/common.css" />
     <link rel="stylesheet" href="css/profile.css" />
   </head>
 
@@ -21,7 +22,7 @@
         <nav class="main-nav">
           <a href="index.html" class="nav-link">
             <img
-              src="assets/images/home-icon.svg"
+              src="assets/images/icons/home-icon.svg"
               alt="Home Icon"
               class="nav-logo"
             />
@@ -30,7 +31,7 @@
 
           <a href="#" class="nav-link">
             <img
-              src="assets/images/explore-icon.svg"
+              src="assets/images/icons/explore-icon.svg"
               alt="Explore Icon"
               class="nav-logo"
             />
@@ -38,16 +39,13 @@
           </a>
           <a href="profile.html" class="nav-link active">
             <img
-              src="assets/images/profile-icon.svg"
+              src="assets/images/icons/profile-icon.svg"
               alt="Profile Icon"
               class="nav-logo"
             />
             Profile
           </a>
-          <div
-            class="settings-container"
-            id="sidebarSettings"
-          >
+          <div class="settings-container" id="sidebarSettings">
             <a href="#" class="nav-link" id="settingsToggleBtn">
               <svg
                 class="nav-logo custom-gear"
@@ -75,11 +73,11 @@
             </a>
             <div class="settings-submenu" id="settingsSubmenu">
               <a href="#"
-                ><img src="assets/images/preferences-icon.svg" alt="Pref" />
+                ><img src="assets/images/icons/preferences-icon.svg" alt="Pref" />
                 Preferences</a
               >
               <a href="#"
-                ><img src="assets/images/account-icon.svg" alt="Account" />
+                ><img src="assets/images/icons/account-icon.svg" alt="Account" />
                 Account Settings</a
               >
             </div>
@@ -87,7 +85,7 @@
 
           <a href="#" class="nav-link about-link">
             <img
-              src="assets/images/about-icon.svg"
+              src="assets/images/icons/about-icon.svg"
               alt="Home Icon"
               class="nav-logo"
             />
@@ -95,6 +93,35 @@
           </a>
         </nav>
       </aside>
+      <main class="main-content">
+        <header class="top-header">
+          <div class="header-login-container" id="headerAuthContainer">
+                    <button class="header-login-btn" id="loginBtn" onclick="window.location.href='login.html'">
+                        <p>Login</p>
+                    </button>
+
+                    <div class="user-profile-display" id="userProfileDisplay" style="display: none;">
+
+                        <div class="user-welcome">
+                            <span class="welcome-text">Good to see you,</span>
+                            <span class="username-text" id="displayUsername">User</span>
+                        </div>
+
+                        <button id="headerProfileBtn" class="header-profile-btn">
+                            <img src="assets/images/icons/account-icon.svg" alt="Profile" class="profile-pic">
+                        </button>
+
+                        <div class="header-dropdown" id="headerDropdown">
+                            <a href="#">Settings</a>
+                            <a href="index.html" id="signOutBtn" class="danger-text">Sign Out</a>
+                        </div>
+
+                    </div>
+                </div>
+        </header>
+      </main>
     </div>
+    <script src="js/common.js"></script>
+    <script src="js/profile.js"></script>
   </body>
 </html>

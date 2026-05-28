@@ -40,8 +40,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 errorMsg.textContent = "Incorrect email or password.";
                 errorMsg.classList.add('show');
             } else {
+                // Persist the logged-in user — single source of truth read by main.js
+                localStorage.setItem('currentUser', JSON.stringify({ username: usernameInput.value }));
                 alert("Login successful!");
-                window.location.href = "index.html"; 
+                window.location.href = "index.html";
             }
         });
 
@@ -100,8 +102,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            // Log the new user in straight away, then go to the home page
+            localStorage.setItem('currentUser', JSON.stringify({
+                username: usernameInput.value,
+                name: nameInput.value,
+                email: emailInput.value
+            }));
             alert("Sign up successful!");
-            window.location.href = "login.html";
+            window.location.href = "index.html";
         });
 
         // Remove red border when user starts typing
@@ -114,23 +122,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- ADD THIS TO THE BOTTOM OF validation.js ---
+// Guest mode: clear any saved user and head to the home page
 function continueAsGuest(e) {
     e.preventDefault();
-    // 1. Erase any saved user data
-    localStorage.removeItem('movieKnightUser');
-    // 2. Send them to the home page
+    localStorage.removeItem('currentUser');
     window.location.href = "index.html";
-}
-
-// --- FIND YOUR MOCK LOGIN CHECK IN validation.js AND UPDATE IT ---
-// It should look like this now:
-if (usernameInput.value !== "admin" || passwordInput.value !== "1234") {
-    usernameInput.classList.add('input-error');
-    passwordInput.classList.add('input-error');
-    errorMsg.textContent = "Incorrect email or password.";
-    errorMsg.classList.add('show');
-} else {
-    localStorage.setItem('movieKnightUser', usernameInput.value);
-    window.location.href = "index.html"; 
 }
