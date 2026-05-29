@@ -81,30 +81,6 @@
                         <p>SURPRISE ME</p>
                     </div>
                 </div>
-                <div class="header-login-container" id="headerAuthContainer">
-                    <button class="header-login-btn" id="loginBtn" onclick="window.location.href='login.html'">
-                        <p>Login</p>
-                    </button>
-
-                    <div class="user-profile-display" id="userProfileDisplay" style="display: none;">
-
-                        <div class="user-welcome">
-                            <span class="welcome-text">Good to see you,</span>
-                            <span class="username-text" id="displayUsername">User</span>
-                        </div>
-
-                        <button id="headerProfileBtn" class="header-profile-btn">
-                            <img src="assets/images/icons/account-icon.svg" alt="Profile" class="profile-pic">
-                        </button>
-
-                        <div class="header-dropdown" id="headerDropdown">
-                            <a href="#">Settings</a>
-                            <a href="index.html" id="signOutBtn" class="danger-text">Sign Out</a>
-                        </div>
-
-                    </div>
-                </div>
-
             </header>
 
             <div class="controls-bar">
@@ -403,6 +379,30 @@
 
             </section>
         </main>
+
+        <aside class="user-rail">
+            <div class="header-login-container" id="headerAuthContainer">
+                <button class="header-login-btn" id="loginBtn" onclick="window.location.href='login.html'">
+                    <p>Login</p>
+                </button>
+
+                <div class="user-profile-display" id="userProfileDisplay" style="display: none;">
+                    <div class="user-welcome">
+                        <span class="welcome-text">Good to see you,</span>
+                        <span class="username-text" id="displayUsername">User</span>
+                    </div>
+
+                    <button id="headerProfileBtn" class="header-profile-btn">
+                        <img src="assets/images/icons/account-icon.svg" alt="Profile" class="profile-pic">
+                    </button>
+
+                    <div class="header-dropdown" id="headerDropdown">
+                        <a href="#">Settings</a>
+                        <a href="index.html" id="signOutBtn" class="danger-text">Sign Out</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
     </div>
 
     <script src="js/common.js"></script>

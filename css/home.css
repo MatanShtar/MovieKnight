@@ -3,8 +3,9 @@
 
 .header-left-group {
     display: flex;
-    align-items: flex-start; 
-    width: 100%;
+    align-items: flex-start;
+    flex: 1;          /* grow to fill, pushing the auth widget to the right */
+    min-width: 0;
     gap: 30px;
 }
 
@@ -113,7 +114,7 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    max-width: 1221px;
+    max-width: var(--content-width);
 }
 
 .filter-btn{
@@ -577,10 +578,10 @@
 .movie-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    row-gap: 20px; 
+    row-gap: 20px;
     column-gap: 40px;
     width: 100%;
-    max-width: 1231px;
+    max-width: var(--content-width);
 }
 
 
@@ -590,10 +591,8 @@
     justify-content: center;
     position: relative;
     overflow: hidden;
-    aspect-ratio: 2 / 3;
+    aspect-ratio: 2 / 3;       /* card fills its grid track; height follows from the 2:3 ratio */
     border: 3px solid rgba(188,102,118, 1);
-    width: 262.31px;
-    height: 378.36px;
     transition: transform 0.3s ease;
 }
 

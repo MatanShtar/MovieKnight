@@ -42,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Persist the logged-in user — single source of truth read by main.js
                 localStorage.setItem('currentUser', JSON.stringify({ username: usernameInput.value }));
-                alert("Login successful!");
                 window.location.href = "index.html";
             }
         });
@@ -108,7 +107,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: nameInput.value,
                 email: emailInput.value
             }));
-            alert("Sign up successful!");
             window.location.href = "index.html";
         });
 

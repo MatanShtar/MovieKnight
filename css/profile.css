@@ -1,3 +1,226 @@
-.h1t{
-    text-decoration: line-through;
+.profile-main {
+  /* background-color: black; */
+  padding: 72px 0 0 0;
+}
+
+.profile-header {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  max-width: var(--content-width);
+}
+
+.profile-info {
+  flex: 3;
+  /* background-color: aqua; */
+  min-height: 320px;
+  display: flex;
+}
+
+.profile-info-left-col {
+  flex: 1;
+  /* background-color: blue; */
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-avatar-container {
+  flex: 2;
+  /* background-color: yellow; */
+  display: flex;
+  justify-content: start;
+  align-items: center;
+}
+
+.profile-avatar {
+  position: relative;
+  width: 80%;
+  aspect-ratio: 1;
+}
+
+.avatar-pic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 5px solid white;
+  box-sizing: border-box;
+}
+
+.upload-new-pic {
+  position: absolute;
+  top: -6%;
+  right: -15%;
+  cursor: pointer;
+}
+
+.profile-meta {
+  flex: 1;
+  /* background-color: violet; */
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  gap: 10px;
+}
+
+.profile-meta > p {
+  font-size: 18px;
+  opacity: 70%;
+}
+
+.new-collection-btn {
+  border: 0px;
+  background-color: rgba(255, 136, 179, 0.13);
+  border-radius: 12px;
+  padding: 16px 16px 16px 16px;
+  color: white;
+  font-size: 18px;
+  opacity: 85%;
+  display: flex;
+  justify-content: start;
+  gap: 20px;
+  width: 90%;
+}
+
+.new-collection-btn:hover {
+  cursor: pointer;
+  background: rgba(255, 136, 179, 0.3);
+}
+
+.profile-info-right-col {
+  flex: 2;
+  /* background-color: azure; */
+  display: flex;
+  flex-direction: column;
+  padding-left: 26px;
+}
+
+.profile-username {
+  flex: 1;
+  /* background-color: cadetblue; */
+  display: flex;
+  font-size: 40px;
+  letter-spacing: 3%;
+  font-weight: 300;
+}
+
+.profile-bio {
+  flex: 5;
+  /* background-color: chocolate; */
+  font-size: 16px;
+  opacity: 70%;
+  line-height: 1.6;
+  padding-top: 16px;
+}
+
+.profile-badges {
+  flex: 2;
+  /* background-color: chartreuse; */
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.prog-badges-header {
+  flex: 1;
+  /* background-color: brown; */
+  display: flex;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 300;
+  letter-spacing: 3%;
+}
+
+.badges-display {
+  flex: 3;
+  /* background-color: teal; */
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shield-path {
+  stroke: white;
+  stroke-width: 2px;
+  stroke-linejoin: round; /* Keeps the sharp corners from looking messy */
+}
+
+/* FILLS: Links the specific classes to the gradient IDs in the HTML */
+.silver-shield {
+  fill: url(#silver-gradient);
+}
+
+.gold-shield {
+  fill: url(#gold-gradient);
+}
+
+.bronze-shield {
+  fill: url(#bronze-gradient);
+}
+
+.badge-shield {
+  position: relative;
+}
+
+.badge-title {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -40%);
+  text-align: center;
+  width: 80%;
+  color: #2d2319;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.view-badges-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.view-badges-btn {
+  background-color: rgba(255, 136, 179, 0.13);
+  border: 0;
+  border-radius: 12px;
+  padding: 16px 16px 16px 16px;
+  color: white;
+  font-size: 18px;
+  opacity: 85%;
+  width: 50%
+}
+
+.view-badges-btn:hover {
+  cursor: pointer;
+  background: rgba(255, 136, 179, 0.3);
+}
+
+.collections-row {
+  padding-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  width: 100%;
+  max-width: var(--content-width);
+  min-height: 420px;
+}
+
+.collection-card {
+  flex: 0 0 calc((100% - 4 * 24px) / 5);
+}
+
+.collection-name {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.collection-poster {
+  width: 100%;
+  display: block;
 }

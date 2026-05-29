@@ -1,3 +1,26 @@
+// --- RENDER COLLECTIONS FROM JSON ---
+// Most basic card for now: the poster image + the name above it. Build on top of this.
+(async () => {
+    const row = document.querySelector('.collections-row');
+    if (!row) return;
+
+    try {
+        const res = await fetch('data/collections.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const { collections } = await res.json();
+
+        row.innerHTML = collections.map((c, i) => `
+            <article class="collection-card" data-card="${i}">
+                <p class="collection-name">${c.name}</p>
+                <img class="collection-poster" src="${c.posterPath}" alt="${c.name}">
+            </article>
+        `).join('');
+    } catch (err) {
+        console.error('Could not load collections:', err);
+    }
+})();
+
+
 (function () {
     'use strict';
 
