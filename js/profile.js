@@ -1,19 +1,36 @@
 // --- RENDER COLLECTIONS FROM JSON ---
-// Most basic card for now: the poster image + the name above it. Build on top of this.
+// Show shimmer skeletons immediately, then swap in the real cards only once their
+// poster images are decoded — so the cards fade in complete, never piece-by-piece.
 (async () => {
   const row = document.querySelector(".collections-row");
   if (!row) return;
+
+  row.innerHTML = skeletonMarkup(5); // placeholder while we fetch + preload
 
   try {
     const res = await fetch("data/collections.json");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { collections } = await res.json();
 
-    row.innerHTML = collections.map(buildCollectionCard).join("");
+    const html = collections.map(buildCollectionCard).join("");
+    await preloadImages(collections.map((c) => c.posterPath)); // wait for posters
+    row.innerHTML = html; // real cards now animate in (CSS .collection-card entrance)
   } catch (err) {
     console.error("Could not load collections:", err);
+    row.innerHTML = ""; // drop the skeletons rather than spin forever
   }
 })();
+
+// One shimmer placeholder card, repeated n times. (preloadImages lives in common.js)
+function skeletonMarkup(n) {
+  const card = `
+    <article class="collection-card collection-card--skeleton" aria-hidden="true">
+      <div class="skeleton skeleton-name"></div>
+      <div class="skeleton skeleton-poster"></div>
+      <div class="skeleton skeleton-stats"></div>
+    </article>`;
+  return card.repeat(n);
+}
 
 function buildCollectionCard(c, i) {
   const primaryColor = c.default ? "#D4AF37" : "#BC6676";
@@ -31,7 +48,7 @@ function buildCollectionCard(c, i) {
   }
 
   return `
-    <article class="collection-card" data-card="${i}" data-published="${c.published}">
+    <article class="collection-card" data-card="${i}" data-published="${c.published}" style="--card-accent: ${primaryColor}">
       <p class="collection-name">${c.name}</p>
       <div class="collection-poster-container" style="border: 3px solid ${primaryColor}">
         <img class="collection-poster" src="${c.posterPath}" alt="${c.name}">

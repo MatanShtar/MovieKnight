@@ -1,6 +1,10 @@
+/* profile.css — profile page only. Loaded by profile.html. */
+
 .profile-main {
-  /* background-color: black; */
-  padding: 72px 0 0 0;
+  /* same 50px side + 100px bottom padding as the home main-content, so collection
+     cards land at the exact movie-card width (275px) and the content column lines
+     up across pages (#1). 72px top keeps the original vertical start. */
+  padding: 72px 50px 100px 50px;
 }
 
 .profile-header {
@@ -12,21 +16,18 @@
 
 .profile-info {
   flex: 3;
-  /* background-color: aqua; */
   min-height: 320px;
   display: flex;
 }
 
 .profile-info-left-col {
   flex: 1;
-  /* background-color: blue; */
   display: flex;
   flex-direction: column;
 }
 
 .profile-avatar-container {
   flex: 2;
-  /* background-color: yellow; */
   display: flex;
   justify-content: start;
   align-items: center;
@@ -43,8 +44,14 @@
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  border: 5px solid white;
+  border: 5px solid var(--text);
   box-sizing: border-box;
+  transition: box-shadow var(--t-base) ease;
+}
+
+/* soft accent halo when you hover the avatar */
+.profile-avatar:hover .avatar-pic {
+  box-shadow: 0 0 0 6px rgba(var(--pink), 0.35);
 }
 
 .upload-new-pic {
@@ -52,11 +59,15 @@
   top: -6%;
   right: -15%;
   cursor: pointer;
+  transition: transform var(--t-fast) var(--ease-pop);
+}
+
+.upload-new-pic:hover {
+  transform: scale(1.15);
 }
 
 .profile-meta {
   flex: 1;
-  /* background-color: violet; */
   display: flex;
   flex-direction: column;
   justify-content: end;
@@ -70,26 +81,49 @@
 
 .new-collection-btn {
   border: 0px;
-  background-color: rgba(255, 136, 179, 0.13);
+  background-color: rgba(var(--pink), 0.13);
   border-radius: 12px;
-  padding: 16px 16px 16px 16px;
-  color: white;
+  padding: 16px;
+  color: var(--text);
   font-size: 18px;
   opacity: 85%;
   display: flex;
-  justify-content: start;
-  gap: 20px;
-  width: 90%;
+  align-items: center;
+  gap: 12px;
+  width: 240px; /* matches .view-badges-btn so the two line up (#13) */
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap),
+    opacity var(--t-base) ease;
+}
+
+/* icon stays on the left; label centers in the space that's left */
+.new-collection-btn img {
+  flex-shrink: 0;
+  transition: transform var(--t-base) var(--ease-pop);
+}
+
+.new-collection-btn span {
+  flex: 1;
+  text-align: center;
 }
 
 .new-collection-btn:hover {
   cursor: pointer;
-  background: rgba(255, 136, 179, 0.3);
+  background: rgba(var(--pink), 0.3);
+  opacity: 1;
+}
+
+.new-collection-btn:hover img {
+  transform: scale(1.2); /* the + gives a little pop on hover */
+}
+
+.new-collection-btn:active {
+  transform: scale(0.98);
 }
 
 .profile-info-right-col {
   flex: 2;
-  /* background-color: azure; */
   display: flex;
   flex-direction: column;
   padding-left: 26px;
@@ -97,7 +131,6 @@
 
 .profile-username {
   flex: 1;
-  /* background-color: cadetblue; */
   display: flex;
   font-size: 40px;
   letter-spacing: 3%;
@@ -106,7 +139,6 @@
 
 .profile-bio {
   flex: 5;
-  /* background-color: chocolate; */
   font-size: 16px;
   opacity: 70%;
   line-height: 1.6;
@@ -115,7 +147,6 @@
 
 .profile-badges {
   flex: 2;
-  /* background-color: chartreuse; */
   min-height: 320px;
   display: flex;
   flex-direction: column;
@@ -123,9 +154,9 @@
 
 .prog-badges-header {
   flex: 1;
-  /* background-color: brown; */
   display: flex;
   justify-content: center;
+  text-align: center;
   font-size: 40px;
   font-weight: 300;
   letter-spacing: 3%;
@@ -133,7 +164,6 @@
 
 .badges-display {
   flex: 3;
-  /* background-color: teal; */
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -161,6 +191,66 @@
 
 .badge-shield {
   position: relative;
+  transition:
+    transform var(--t-base) var(--ease-pop),
+    filter var(--t-base) ease;
+}
+
+/* shields lift, tilt, and catch the light on hover */
+.badge-shield:hover {
+  transform: translateY(-6px) scale(1.06) rotate(-2deg);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+}
+
+/* tier-coloured glow on hover — gold is the top tier, so it shines brightest (#9) */
+.badge-shield:has(.silver-shield):hover {
+  filter: drop-shadow(0 0 14px rgba(220, 220, 226, 0.75));
+}
+.badge-shield:has(.gold-shield):hover {
+  filter: drop-shadow(0 0 22px rgba(251, 201, 38, 0.95));
+}
+.badge-shield:has(.bronze-shield):hover {
+  filter: drop-shadow(0 0 14px rgba(203, 149, 82, 0.8));
+}
+
+/* hover tooltip: black 95% bg, floats above the shield (#9) */
+.badge-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 112%;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background-color: rgba(0, 0, 0, 0.95);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 10;
+  transition:
+    opacity var(--t-base) ease,
+    transform var(--t-base) var(--ease-snap);
+}
+
+.badge-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.95);
+}
+
+.badge-shield:hover .badge-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
 .badge-title {
@@ -170,7 +260,7 @@
   transform: translate(-50%, -40%);
   text-align: center;
   width: 80%;
-  color: #2d2319;
+  color: var(--surface-chip);
   font-weight: 800;
   font-size: 12px;
   letter-spacing: 0.5px;
@@ -186,50 +276,84 @@
 }
 
 .view-badges-btn {
-  background-color: rgba(255, 136, 179, 0.13);
+  background-color: rgba(var(--pink), 0.13);
   border: 0;
   border-radius: 12px;
-  padding: 16px 16px 16px 16px;
-  color: white;
+  padding: 16px;
+  color: var(--text);
   font-size: 18px;
   opacity: 85%;
-  width: 50%;
+  width: 240px; /* same size as .new-collection-btn (#13) */
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap),
+    opacity var(--t-base) ease;
 }
 
 .view-badges-btn:hover {
   cursor: pointer;
-  background: rgba(255, 136, 179, 0.3);
+  background: rgba(var(--pink), 0.3);
+  opacity: 1;
 }
 
+.view-badges-btn:active {
+  transform: scale(0.98);
+}
+
+/* same grid as the home movie grid, so collection cards render at the same width */
 .collections-row {
   padding-top: 24px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  column-gap: 40px;
+  row-gap: 20px;
   width: 100%;
   max-width: var(--content-width);
   min-height: 420px;
-  justify-content: space-around;
 }
 
 .collection-card {
-  flex: 0 0 calc((100% - 4 * 24px) / 5);
-  min-width: 240px;
   margin-bottom: 28px;
+  cursor: pointer; /* #4 */
+  /* hover lift + poster zoom synced on one timing, identical to .movie-card (#1, #16) */
+  transition: transform var(--t-base) var(--ease-snap);
+}
+
+/* identical lift/scale to the home movie cards */
+.collection-card:hover {
+  transform: translateY(-2px) scale(1.01);
 }
 
 .collection-name {
   text-align: center;
   margin-bottom: 8px;
+  transition: color var(--t-base) ease;
+}
+
+/* paint the name in the card's own accent on hover — gold for default, pink otherwise (#3).
+   --card-accent is set per-card inline by profile.js. */
+.collection-card:hover .collection-name {
+  color: var(--card-accent, rgb(var(--pink)));
 }
 
 .collection-poster-container {
   position: relative;
+  overflow: hidden; /* clip the poster zoom */
+  transition: box-shadow var(--t-base) var(--ease-snap);
+}
+
+.collection-card:hover .collection-poster-container {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45); /* matches movie-card depth */
 }
 
 .collection-poster {
   width: 100%;
   display: block;
+  transition: transform var(--t-base) var(--ease-snap);
+}
+
+.collection-card:hover .collection-poster {
+  transform: scale(1.08); /* same zoom as .movie-card */
 }
 
 .collection-menu-button {
@@ -239,13 +363,19 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #2d2319;
+  background-color: var(--surface-chip);
   width: 18px;
   height: 18px;
   opacity: 90%;
   border-radius: 3px;
   border: 0;
   cursor: pointer;
+  transition: transform var(--t-fast) var(--ease-pop), opacity var(--t-fast) ease;
+}
+
+.collection-menu-button:hover {
+  transform: scale(1.18);
+  opacity: 1;
 }
 
 .collection-stats .stat-icon {
@@ -296,7 +426,7 @@
   z-index: 1000;
   min-width: 200px;
   padding: 8px 0;
-  background-color: #1c1613;
+  background-color: var(--surface-menu);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -318,7 +448,7 @@
   text-align: left;
   padding: 11px 20px;
   font-size: 15px;
-  color: #ffffff;
+  color: var(--text);
   font-family: inherit;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -336,4 +466,58 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+}
+
+/* --- COLLECTIONS LOADING + ENTRANCE (#5, #14) --- */
+
+/* real cards fade up in a gentle stagger once their images are ready */
+@keyframes collectionEnter {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.collection-card:not(.collection-card--skeleton) {
+  animation: collectionEnter 0.45s var(--ease-snap) backwards;
+}
+.collection-card:nth-child(1) { animation-delay: 0.00s; }
+.collection-card:nth-child(2) { animation-delay: 0.07s; }
+.collection-card:nth-child(3) { animation-delay: 0.14s; }
+.collection-card:nth-child(4) { animation-delay: 0.21s; }
+.collection-card:nth-child(5) { animation-delay: 0.28s; }
+.collection-card:nth-child(n + 6) { animation-delay: 0.35s; }
+
+/* skeleton placeholders shown while collections load */
+.collection-card--skeleton {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* @keyframes shimmer lives in common.css (shared with the home movie grid) */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.skeleton-name {
+  height: 16px;
+  width: 60%;
+  margin: 0 auto 8px;
+}
+
+.skeleton-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+}
+
+.skeleton-stats {
+  height: 16px;
+  width: 100%;
+  margin-top: 8px;
 }

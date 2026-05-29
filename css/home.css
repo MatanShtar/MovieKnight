@@ -12,31 +12,46 @@
 .search-container {
     display: flex;
     align-items: center;
-    background-color: rgba(255, 136, 179, 0.13);
+    background-color: rgba(var(--pink), 0.13);
     border-radius: 10px;
     padding: 5px 15px;
     height: 66.59px;
-    flex-grow: 1; 
+    flex-grow: 1;
     max-width: 100%;
-    transition: all 0.7s ease;
-    border: 5px solid transparent; 
-
+    transition:
+        background-color var(--t-base) ease,
+        border-color var(--t-base) ease,
+        box-shadow var(--t-base) ease;
+    border: 5px solid transparent;
 }
 
 .search-container input {
     background: transparent;
-    font-size: 30px;
+    font-size: 20px;
     border: none;
     color: white;
     width: 100%;
     padding: 10px;
-    outline: none; 
+    outline: none;
+}
+
+/* search magnifier icon (direct child only — not the AI button's icon) */
+.search-container > .nav-search-icon {
+    width: 22px;
+    height: auto;
+}
+
+/* gentle focus glow while typing — a thin ring, not a thick border (#8) */
+.search-container:focus-within {
+    box-shadow:
+        0 0 0 2px rgba(var(--pink), 0.5),
+        0 0 24px rgba(var(--pink), 0.18);
 }
 
 .search-container.ai-glow {
-    background-color: rgba(243,135,177,0.25);
-    border-color: rgba(255, 136, 179, 0.6);
-    box-shadow: 0 0 50px rgba(255, 136, 179, 0.4);
+    background-color: rgba(var(--pink-alt), 0.25);
+    border-color: rgba(var(--pink), 0.6);
+    box-shadow: 0 0 50px rgba(var(--pink), 0.4);
 }
 
 .ai-mode-btn{
@@ -45,32 +60,43 @@
     justify-content: space-between;
     padding: 15px;
     appearance: none;
-    background: transparent;
-    border: 1px;
-    background-color: rgba(243,135,177,0.12);
+    /* 1px border always present (transparent until pressed) + nowrap so the label
+       never wraps to 2 lines and the box stays identical before/after press (#7) */
+    border: 1px solid transparent;
+    white-space: nowrap;
+    flex-shrink: 0;
+    background-color: rgba(var(--pink-alt), 0.12);
     min-width:10%;
     height: 42.69px;
     border-radius: 12px;
     font-size: 15px;
-    font-weight: 100;
-    color: rgba(255,255,255,0.7);
-    transition: background-color 0.3s ease,border-color 0.7s ease,box-shadow 0.7s ease;
+    font-weight: 400; /* match the sibling control buttons (Filters / Sort) */
+    color: var(--text-soft);
+    transition:
+        background-color var(--t-base) ease,
+        border-color var(--t-slow) ease,
+        box-shadow var(--t-slow) ease,
+        transform var(--t-fast) var(--ease-snap);
 }
 
 .ai-mode-btn img {
-    width: 18px; 
-    height: auto; 
+    width: 18px;
+    height: auto;
 }
 
 .ai-mode-btn:hover{
-    background-color: rgba(243,135,177,0.3);
+    background-color: rgba(var(--pink-alt), 0.3);
     cursor:pointer;
 }
 
+.ai-mode-btn:active{
+    transform: scale(0.96);
+}
+
 .ai-mode-btn.pressed{
-    border-color: rgba(255, 136, 179, 1);
-    box-shadow: 0 0 12px rgba(255, 136, 179, 0.8);
-    background: rgba(243, 135, 177, 0.3);
+    border: 1px solid rgba(var(--pink), 1);
+    box-shadow: 0 0 12px rgba(var(--pink), 0.8);
+    background: rgba(var(--pink-alt), 0.3);
 }
 
 .surprise-container{
@@ -90,23 +116,25 @@
     min-width:92px;
     min-height: 66.59px;
     justify-content: center;
-    background-color: rgba(243,135,177,0.13);
-    transition: background-color 0.4s;
+    background-color: rgba(var(--pink-alt), 0.13);
+    transition:
+        background-color var(--t-slow),
+        transform var(--t-fast) var(--ease-snap);
 }
 
 .dice-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 4px; 
+    gap: 4px;
 }
 
 .dice-icon {
     display: inline-block;
-    width: 24px; 
+    width: 24px;
     height: 24px;
     object-fit: contain;
-    opacity: 0.7; 
+    opacity: 0.7;
     transition: opacity 0.3s ease;
 }
 
@@ -123,17 +151,18 @@
 }
 
 .surprise-btn:hover{
-    background-color: rgba(243,135,177,0.3);
+    background-color: rgba(var(--pink-alt), 0.3);
     cursor:pointer;
 }
 
 .surprise-btn:active{
-    background: rgba(243, 135, 177, 0.7);
+    background: rgba(var(--pink-alt), 0.7);
+    transform: scale(0.94);
 }
 
 .surprise-container p{
     padding-top: 3px;
-    color: rgba(255,255,255,0.7)
+    color: var(--text-soft);
 }
 
 @keyframes tossLeft {
@@ -183,13 +212,15 @@
     gap:9px;
     width: 97.78px;
     height: 45.3px;
-    background-color: rgba(255,136,179,0.13);
+    background-color: rgba(var(--pink), 0.13);
     border-radius: 12px;
     border:none;
     text-align: center;
-    color: rgba(255,255,255,0.7);
+    color: var(--text-soft);
     font-size: 15px;
-    transition: background-color 0.3s ease;
+    transition:
+        background-color var(--t-base) ease,
+        transform var(--t-fast) var(--ease-snap);
 }
 
 .filter-btn img{
@@ -199,7 +230,11 @@
 
 .filter-btn:hover{
     cursor:pointer;
-    background:rgba(255,136,179,0.3);
+    background:rgba(var(--pink), 0.3);
+}
+
+.filter-btn:active{
+    transform: scale(0.96);
 }
 
 .filter-wrapper {
@@ -210,18 +245,18 @@
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
-    
-    position: absolute; 
-    top: 50px; 
+    transition: opacity 0.3s ease, transform 0.3s var(--ease-snap), visibility 0.3s;
+
+    position: absolute;
+    top: 50px;
     left: 0;
     z-index: 200;
-    background-color: rgba(132, 52, 63, 0.85); 
+    background-color: rgba(var(--maroon-light), 0.85);
     border-radius: 12px;
     padding: 25px;
-    width: 500px; 
+    width: 500px;
     flex-direction: column;
-    gap: 15px; 
+    gap: 15px;
     box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
     display: flex; /* Keep display flex here */
 }
@@ -245,7 +280,7 @@
     text-align: center;
     height: 25px;
     width: 65px;
-    background-color: rgba(89, 30, 38, 0.7);
+    background-color: rgba(var(--maroon), 0.7);
     color: white;
     border: none;
     border-radius: 3px;
@@ -256,26 +291,33 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 6px center;
+    transition: background-color var(--t-fast) ease;
 }
 
-.year-custom-btn:focus { 
-    outline: none; 
+.year-custom-btn:hover {
+    background-color: rgba(var(--maroon), 0.95);
+}
+
+/* keyboard focus shows a ring; mouse clicks stay clean */
+.year-custom-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
 }
 
 .year-dropdown-wrapper {
-    position: relative; 
-    display: flex; 
+    position: relative;
+    display: flex;
     align-items: center;
 }
 
 .year-label {
-    font-size: 14px; 
-    opacity: 1; 
+    font-size: 14px;
+    opacity: 1;
 }
 
 .year-dropdown-menu {
-    max-height: 180px; 
-    width: 85px; 
+    max-height: 180px;
+    width: 85px;
 }
 
 .till-label{
@@ -306,21 +348,21 @@
 }
 /* ----------------------GENRES--------------- */
 .pill-selector-row {
-    width: 100%; 
+    width: 100%;
     display: flex;
-    flex-wrap: nowrap; 
+    flex-wrap: nowrap;
     align-items: center;
     gap: 15px;
-    min-height: 35px; 
+    min-height: 35px;
 }
 
 .filter-label {
-    width: 150px; 
-    min-width: 150px; 
+    width: 150px;
+    min-width: 150px;
     max-width: 150px; /* Rigid lock */
     font-size: 18px;
-    color: white;
-    flex-shrink: 0; 
+    color: var(--text);
+    flex-shrink: 0;
     margin: 0;
     padding: 0;
 }
@@ -328,14 +370,14 @@
 
 .pill-option {
     cursor: pointer;
-    padding: 12px 18px; 
+    padding: 12px 18px;
     text-align: left;
     color: white;
     transition: background-color 0.2s ease;
 }
 
 .pill-option:hover {
-    background-color: rgba(150, 50, 65, 0.9); 
+    background-color: rgba(150, 50, 65, 0.9); /* bright maroon hover wash */
 }
 
 .pill-list {
@@ -351,35 +393,47 @@
 }
 
 .pill-item {
-    background-color: rgba(89, 30, 38, 0.7);
+    background-color: rgba(var(--maroon), 0.7);
     color: white;
-    padding: 0 10px 0 10px;
+    padding: 0 5px 0 12px;
+    gap: 5px;
     height: 25px;
     font-size: 14px;
     border-radius: 5px;
     display: inline-flex;
     align-items: center;
-    position: relative; 
+    position: relative;
     white-space: nowrap;
+    animation: pillPop 0.25s var(--ease-pop) both;
+}
+
+/* pills appear with a little pop when added */
+@keyframes pillPop {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
 }
 
 .pill-item .pill-remove {
-    position: absolute;
-    top: 40%;
-    transform: translateY(-100%);
-    right: 2px; 
-    font-size: 10px; 
-    line-height: 1; 
+    font-size: 15px;
+    line-height: 1;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
     cursor: pointer;
-    opacity: 0.8;
-    padding: 0;
-    display: flex;
+    opacity: 0.75;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    transition:
+        opacity var(--t-fast) ease,
+        background-color var(--t-fast) ease,
+        color var(--t-fast) ease;
 }
 
 .pill-item .pill-remove:hover {
     opacity: 1;
+    background-color: rgba(var(--danger), 0.25);
+    color: rgb(var(--danger));
 }
 
 /* 4. Overflow Dots & Tooltip */
@@ -392,23 +446,23 @@
     color: white;
     padding: 0 5px;
     cursor: default;
-    height: 25px; 
+    height: 25px;
     line-height: 1;
 }
 
 .pill-tooltip {
-    visibility: hidden; 
+    visibility: hidden;
     opacity: 0;
     transition: opacity 0.2s ease;
     position: absolute;
     bottom: 120%;
     left: 50%;
     transform: translateX(-50%);
-    background-color: rgba(89, 30, 38, 0.95); 
+    background-color: rgba(var(--maroon), 0.95);
     color: white;
-    text-shadow: none; 
-    line-height: 1; 
-    padding: 6px 10px; 
+    text-shadow: none;
+    line-height: 1;
+    padding: 6px 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -426,14 +480,14 @@
 
 
 .pill-add-container {
-    position: relative; 
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .pill-add-btn {
-    background-color: rgba(89, 30, 38, 0.7);
+    background-color: rgba(var(--maroon), 0.7);
     color: white;
     border: none;
     width: 25px;
@@ -444,13 +498,22 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0; 
+    flex-shrink: 0;
+    transition: background-color var(--t-fast) ease, transform var(--t-fast) var(--ease-pop);
 }
 
-.pill-add-btn:focus,
+.pill-add-btn:hover {
+    background-color: rgba(var(--maroon), 0.95);
+    transform: scale(1.1);
+}
+
 .pill-add-btn:active {
-    outline: none !important; 
-    border: none !important;
+    transform: scale(0.9);
+}
+
+.pill-add-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
 }
 
 /* 6. The Dropdown Menu */
@@ -458,26 +521,26 @@
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+    transition: opacity 0.3s ease, transform 0.3s var(--ease-snap), visibility 0.3s;
     position: absolute;
-    top: 100%; 
-    left: 0;   
-    background-color: rgba(89, 30, 38, 0.95);
+    top: 100%;
+    left: 0;
+    background-color: rgba(var(--maroon), 0.95);
     border-radius: 8px;
     z-index: 999;
     /* Auto-expands so "Christopher Nolan" never wraps */
-    width: max-content; 
-    min-width: 40px; 
+    width: max-content;
+    min-width: 40px;
     text-align: center;
-    white-space: nowrap; 
-    margin-top: 5px; 
+    white-space: nowrap;
+    margin-top: 5px;
     /* padding: 8px 0; */
-    max-height: 250px; 
+    max-height: 250px;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-.pill-dropdown.show { 
+.pill-dropdown.show {
     opacity: 1;
     visibility: visible;
     transform: translateY(0);
@@ -494,7 +557,7 @@
     padding: 0;
     line-height: 1; /* Prevents invisible font boxes from pushing it down */
     transition: color 0.2s ease;
-    display: none; 
+    display: none;
 }
 
 .pill-clear-btn:hover {
@@ -503,21 +566,21 @@
 }
 
 #ageRatingBtn {
-    width: 90px; 
+    width: 90px;
 }
 
 .dropdown-search {
     width: 90%;
     margin: 10px 5%; /* Centers it with breathing room */
     padding: 8px 12px;
-    background-color: rgba(255, 136, 179, 0.1);
-    border: 1px solid rgba(255, 136, 179, 0.3);
+    background-color: rgba(var(--pink), 0.1);
+    border: 1px solid rgba(var(--pink), 0.3);
     border-radius: 6px;
     color: white;
     font-size: 14px;
     outline: none;
     font-family: inherit;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .dropdown-search::placeholder {
@@ -525,7 +588,8 @@
 }
 
 .dropdown-search:focus {
-    border-color: rgba(255, 136, 179, 0.8);
+    border-color: rgba(var(--pink), 0.8);
+    box-shadow: 0 0 0 3px rgba(var(--pink), 0.15);
 }
 
 
@@ -533,19 +597,19 @@
 
 .star-rating {
     display: flex;
-    gap: 8px; 
+    gap: 8px;
     align-items: center;
 }
 
 .star {
-    width: 20px; 
+    width: 20px;
     height: 20px;
     cursor: pointer;
-    transition: transform 0.1s ease; 
+    transition: transform 0.1s ease;
 }
 
 .star:hover {
-    transform: scale(1.1); 
+    transform: scale(1.25) rotate(-6deg);
 }
 
 /* ----------------------------SORT BY----------------------------- */
@@ -570,10 +634,10 @@
 
 
 .sort-custom-btn {
-    width: 97.83px; 
+    width: 97.83px;
     height: 45.3px;
-    background-color: rgba(255, 136, 179, 0.13); 
-    color: rgba(255,255,255,0.7);
+    background-color: rgba(var(--pink), 0.13);
+    color: var(--text-soft);
     border: none;
     border-radius: 8px;
     font-size: 15px;
@@ -581,27 +645,37 @@
     display: flex;
     align-items: center;
     padding-left: 10px;
-    padding-right: 32px; 
+    padding-right: 32px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 12px center;
+    transition: background-color var(--t-base) ease, transform var(--t-fast) var(--ease-snap);
 }
 
-.sort-custom-btn:focus {
+.sort-custom-btn:hover {
+    background-color: rgba(var(--pink), 0.22);
+}
+
+.sort-custom-btn:active {
+    transform: scale(0.97);
+}
+
+.sort-custom-btn:focus-visible {
     outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
 }
 
 .sort-custom-menu {
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
+    transition: opacity 0.3s ease, transform 0.3s var(--ease-snap), visibility 0.3s;
     position: absolute;
     top: 105%;
-    right: 0; 
-    width: max-content; 
-    min-width: 250px; 
-    background-color: rgba(132, 52, 63, 0.95); 
+    right: 0;
+    width: max-content;
+    min-width: 250px;
+    background-color: rgba(var(--maroon-light), 0.95);
     border-radius: 12px;
     z-index: 1000;
     box-shadow: 0px 10px 30px rgba(0,0,0,0.5);
@@ -619,19 +693,20 @@
     color: white;
     cursor: pointer;
     font-size: 16px;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, padding-left var(--t-fast) ease;
     text-align: left;
     opacity: 0.7;
 }
 
 .sort-option:hover {
-    background-color: rgba(89, 30, 38, 0.95); 
+    background-color: rgba(var(--maroon), 0.95);
     opacity: 1;
+    padding-left: 26px; /* subtle nudge on hover */
 }
 
 .sort-option.selected {
-    opacity: 1; 
-    font-weight: bold; 
+    opacity: 1;
+    font-weight: bold;
 }
 /*  Movie Posters */
 .movie-grid {
@@ -651,16 +726,62 @@
     position: relative;
     overflow: hidden;
     aspect-ratio: 2 / 3;       /* card fills its grid track; height follows from the 2:3 ratio */
-    border: 3px solid rgba(188,102,118, 1);
-    transition: transform 0.3s ease;
+    border: 3px solid rgb(var(--rose));
+    /* card lift + poster zoom share one duration/easing so they move in lockstep */
+    transition:
+        transform var(--t-base) var(--ease-snap),
+        box-shadow var(--t-base) var(--ease-snap);
+    /* staggered fade-up on load — `backwards` so finished cards still respond to :hover */
+    animation: cardEnter 0.5s var(--ease-snap) backwards;
 }
 
+@keyframes cardEnter {
+    from { opacity: 0; transform: translateY(18px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.movie-card:nth-child(1)  { animation-delay: 0.00s; }
+.movie-card:nth-child(2)  { animation-delay: 0.05s; }
+.movie-card:nth-child(3)  { animation-delay: 0.10s; }
+.movie-card:nth-child(4)  { animation-delay: 0.15s; }
+.movie-card:nth-child(5)  { animation-delay: 0.20s; }
+.movie-card:nth-child(6)  { animation-delay: 0.25s; }
+.movie-card:nth-child(7)  { animation-delay: 0.30s; }
+.movie-card:nth-child(8)  { animation-delay: 0.35s; }
+.movie-card:nth-child(n+9){ animation-delay: 0.40s; }
+
+/* the whole card (border + poster together) scales as one unit, so the frame and
+   the poster are always perfectly in sync — no independent poster zoom to drift. */
 .movie-card:hover{
-    transform: translateY(-5px);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow:
+        0 18px 38px rgba(0, 0, 0, 0.45),
+        0 0 0 3px rgba(var(--pink), 0.55);
+    z-index: 2; /* lift above neighbours while scaled */
+}
+
+.poster-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* shimmer placeholder shown while posters preload (same loader as collections) */
+.movie-card--skeleton {
+    cursor: default;
+    border-color: rgba(var(--rose), 0.35);
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 25%,
+        rgba(255, 255, 255, 0.12) 37%,
+        rgba(255, 255, 255, 0.04) 63%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
 }
 
 .card-overlay{
-    opacity: 0%;
+    opacity: 0;
     height: 100%;
     width: 100%;
     background-color: rgba(0,0,0,0.7);
@@ -670,11 +791,11 @@
     gap:20px;
     padding: 30px;
     position: absolute;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--t-base) ease;
 }
 
-.card-overlay:hover{
-    opacity: 100%;
+.movie-card:hover .card-overlay{
+    opacity: 1;
     cursor: pointer;
 }
 
@@ -682,25 +803,48 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: rgba(73,8,15,1);
+    background-color: rgb(var(--wine));
     border-radius: 100px;
     border:none;
     width:53.7px;
     height:53.7px;
-    transition: background-color 0.3s ease;
+    /* start small + faded so they pop in when the overlay appears */
+    transform: scale(0.6);
+    opacity: 0;
+    transition:
+        background-color var(--t-base) ease,
+        transform var(--t-base) var(--ease-pop),
+        opacity var(--t-base) ease;
 }
 
+/* staggered pop-in of the three action buttons */
+.movie-card:hover .card-overlay button{
+    transform: scale(1);
+    opacity: 1;
+}
+.movie-card:hover .card-overlay button:nth-child(1){ transition-delay: 0.04s; }
+.movie-card:hover .card-overlay button:nth-child(2){ transition-delay: 0.09s; }
+.movie-card:hover .card-overlay button:nth-child(3){ transition-delay: 0.14s; }
+
 .card-overlay button:hover{
-    background-color: rgba(188,102,118,0.8);
+    background-color: rgba(var(--rose), 0.8);
     cursor: pointer;
 }
 
+/* keep hover/active scale working on top of the pop-in scale (higher specificity) */
+.card-overlay button:hover{
+    transform: scale(1.05);
+}
+.movie-card:hover .card-overlay button:active{
+    transform: scale(0.95);
+}
+
 .card-overlay button:active{
-    background-color: rgba(188,102,118,1);
+    background-color: rgb(var(--rose));
 }
 
 .card-overlay button.active {
-    background-color: rgba(188,102,118,1);
+    background-color: rgb(var(--rose));
 }
 
 .movie-title-pill{
@@ -711,16 +855,10 @@
     border-radius: 30px;
     width: 227.95px;
     height: 24.21px;
-    background-color: rgba(255,136,179,0.2);
+    background-color: rgba(var(--pink), 0.2);
     text-transform: uppercase;
     align-items: center;
     justify-content: center;
-}
-
-.poster-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
 }
 
 .rating-badge {

@@ -1,5 +1,23 @@
 // common.js — sidebar + auth logic shared by every page (index.html, profile.html)
 
+// Resolve once every image has loaded (or errored), with a safety timeout so a
+// slow/broken image can't hang the reveal. Used by the home grid + profile collections
+// to swap shimmer skeletons for real cards only when their images are ready.
+function preloadImages(urls, timeoutMs = 2500) {
+    const loaded = Promise.all(
+        urls.map(
+            (src) =>
+                new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = img.onerror = resolve;
+                    img.src = src;
+                }),
+        ),
+    );
+    const timeout = new Promise((resolve) => setTimeout(resolve, timeoutMs));
+    return Promise.race([loaded, timeout]);
+}
+
 // --- AUTHENTICATION & POST-LOGIN UI ---
 const loginBtn = document.getElementById('loginBtn');
 const userProfileDisplay = document.getElementById('userProfileDisplay');
@@ -35,14 +53,59 @@ if (settingsToggleBtn && sidebarSettings && settingsSubmenu) {
     });
 }
 
-// --- SIGN OUT ---
+// --- SIGN OUT (with confirmation) ---
 const signOutBtn = document.getElementById('signOutBtn');
 if (signOutBtn) {
     signOutBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        localStorage.removeItem('currentUser'); // clear the saved login
-        window.location.href = 'index.html';    // reload as a guest
+        if (headerDropdown) headerDropdown.classList.remove('show'); // tuck the menu away
+        showSignOutConfirm();
     });
+}
+
+// Lazily build the confirm dialog once, then just toggle .show afterwards.
+// Injected here so both index.html and profile.html get it without duplicate markup.
+function showSignOutConfirm() {
+    let overlay = document.getElementById('signOutModal');
+
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'signOutModal';
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+          <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="signOutTitle">
+            <h3 id="signOutTitle" class="modal-title">Sign out?</h3>
+            <p class="modal-text">Are you sure you want to sign out?</p>
+            <div class="modal-actions">
+              <button class="modal-btn modal-btn--ghost" data-modal="cancel">Cancel</button>
+              <button class="modal-btn modal-btn--danger" data-modal="confirm">Sign Out</button>
+            </div>
+          </div>`;
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', (e) => {
+            const action = e.target.dataset.modal;
+            if (e.target === overlay || action === 'cancel') {
+                hideSignOutConfirm();
+            } else if (action === 'confirm') {
+                localStorage.removeItem('currentUser'); // clear the saved login
+                window.location.href = 'index.html';     // reload as a guest
+            }
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') hideSignOutConfirm();
+        });
+    }
+
+    void overlay.offsetWidth; // commit the hidden state so the fade-in actually plays
+    overlay.classList.add('show');
+    const cancelBtn = overlay.querySelector('[data-modal="cancel"]');
+    if (cancelBtn) cancelBtn.focus();
+}
+
+function hideSignOutConfirm() {
+    const overlay = document.getElementById('signOutModal');
+    if (overlay) overlay.classList.remove('show');
 }
 
 // --- PROFILE NAV LINK GUARD ---

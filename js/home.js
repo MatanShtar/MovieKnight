@@ -1,3 +1,29 @@
+// --- HOME MOVIE GRID: SKELETON LOADER ---
+// The movie cards are static HTML, so we show shimmer skeletons, preload the posters,
+// then swap the real cards in (they fade up via the .movie-card entrance animation).
+// Mirrors the profile collections loader for a consistent loading experience.
+(function () {
+  const grid = document.getElementById("movieGrid");
+  if (!grid) return;
+
+  const cards = Array.from(grid.querySelectorAll(".movie-card"));
+  if (!cards.length) return;
+
+  const posterSrcs = cards
+    .map((c) => c.querySelector(".poster-img")?.getAttribute("src"))
+    .filter(Boolean);
+  const realHTML = grid.innerHTML;
+
+  grid.innerHTML = movieSkeletonMarkup(cards.length);
+  preloadImages(posterSrcs).then(() => {
+    grid.innerHTML = realHTML; // real cards now animate in
+  });
+})();
+
+function movieSkeletonMarkup(n) {
+  return `<article class="movie-card movie-card--skeleton" aria-hidden="true"></article>`.repeat(n);
+}
+
 // --- GLOBAL MENU MANAGEMENT ---
 const filterBtn = document.getElementById("filterToggleBtn");
 const filterMenu = document.getElementById("filterMenu");
@@ -615,12 +641,16 @@ if (sortCustomBtn && sortCustomMenu) {
 }
 
 // --- MOVIE POSTER OVERLAY BUTTONS ---
-document.querySelectorAll(".icon-btn").forEach((btn) => {
-  btn.addEventListener("click", (e) => {
+// Delegated to the grid so it keeps working after the skeleton -> real-cards re-render.
+const movieGridEl = document.getElementById("movieGrid");
+if (movieGridEl) {
+  movieGridEl.addEventListener("click", (e) => {
+    const btn = e.target.closest(".icon-btn");
+    if (!btn) return;
     e.stopPropagation();
     btn.classList.toggle("active");
   });
-});
+}
 
 // --- AI MODE TOGGLE & SEARCH BAR GLOW ---
 const aiModeBtn = document.querySelector(".ai-mode-btn");
