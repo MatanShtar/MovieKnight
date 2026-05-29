@@ -45,7 +45,7 @@ body {
 }
 
 .app-container {
-  --rail-width: 350px; /* sidebar AND the right user-rail share this, for symmetry */
+  --rail-width: 300px; /* sidebar AND the right user-rail share this, for symmetry */
   display: flex;
   min-height: 100vh;
   align-items: stretch;
@@ -232,7 +232,7 @@ body {
 
 /* --- MAIN CONTENT AREA --- */
 .main-content {
-  --content-width: 1240px; /* shared max width for header / controls / grid / profile blocks */
+  --content-width: 1640px; /* shared max width for header / controls / grid / profile blocks */
   flex: 1; /* fill the area beside the sidebar */
   min-width: 0; /* let content shrink instead of overflowing */
   padding: 30px 50px 100px 50px;

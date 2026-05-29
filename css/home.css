@@ -154,12 +154,12 @@
 
 /* The classes JS will apply */
 .roll-left {
-    animation: tossLeft 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+    animation: tossLeft 0.5s cubic-bezier(0.25, 1, 0.5, 1);
     transform-origin: center center;
 }
 
 .roll-right {
-    animation: tossRight 0.9s cubic-bezier(0.25, 1, 0.5, 1); /* Slightly longer so they land offset */
+    animation: tossRight 0.5s cubic-bezier(0.25, 1, 0.5, 1); /* Slightly longer so they land offset */
     transform-origin: center center;
 }
 

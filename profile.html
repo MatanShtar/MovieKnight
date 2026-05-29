@@ -295,6 +295,32 @@
         </div>
       </aside>
     </div>
+
+    <!-- Shared popup menu for the collection cards' 3-dots button.
+         The publish/unpublish item's label + icon are set by profile.js per collection. -->
+    <div class="collection-menu" id="collectionMenu" hidden>
+      <button class="collection-menu-item" data-action="add">
+        <img class="menu-icon" src="assets/images/icons/plus-icon.svg" alt="" />
+        <span>Add to Collection</span>
+      </button>
+      <button class="collection-menu-item" data-action="rename">
+        <img class="menu-icon" src="assets/images/icons/rename-icon.svg" alt="" />
+        <span>Rename</span>
+      </button>
+      <button class="collection-menu-item" id="publishToggleItem" data-action="unpublish">
+        <img class="menu-icon" src="assets/images/icons/lock-icon.svg" alt="" />
+        <span>Unpublish</span>
+      </button>
+      <button class="collection-menu-item" data-action="copy-link">
+        <img class="menu-icon" src="assets/images/icons/copy-link-icon.svg" alt="" />
+        <span>Copy Link</span>
+      </button>
+      <button class="collection-menu-item collection-menu-item--danger" data-action="delete">
+        <img class="menu-icon" src="assets/images/icons/red-delete-icon.svg" alt="" />
+        <span>Delete Collection</span>
+      </button>
+    </div>
+
     <script src="js/common.js"></script>
     <script src="js/profile.js"></script>
   </body>
