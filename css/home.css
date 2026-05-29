@@ -94,6 +94,34 @@
     transition: background-color 0.4s;
 }
 
+.dice-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 4px; 
+}
+
+.dice-icon {
+    display: inline-block;
+    width: 24px; 
+    height: 24px;
+    object-fit: contain;
+    opacity: 0.7; 
+    transition: opacity 0.3s ease;
+}
+
+#diceTwo{
+    margin-top: -10px;
+    scale: 1.2;
+}
+#diceOne{
+    margin-top: 20px;
+}
+
+.surprise-btn:hover .dice-icon {
+    opacity: 1;
+}
+
 .surprise-btn:hover{
     background-color: rgba(243,135,177,0.3);
     cursor:pointer;
@@ -106,6 +134,37 @@
 .surprise-container p{
     padding-top: 3px;
     color: rgba(255,255,255,0.7)
+}
+
+@keyframes tossLeft {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    30% { transform: translate(-8px, -12px) rotate(-180deg); }
+    70% { transform: translate(-4px, 4px) rotate(-360deg); }
+    100% { transform: translate(0, 0) rotate(-360deg); }
+}
+
+/* Right Die: Tumbles up and right, spinning forward */
+@keyframes tossRight {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    30% { transform: translate(8px, -10px) rotate(180deg); } /* Slightly different height for realism */
+    70% { transform: translate(4px, 4px) rotate(360deg); }
+    100% { transform: translate(0, 0) rotate(360deg); }
+}
+
+
+/* The classes JS will apply */
+.roll-left {
+    animation: tossLeft 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+    transform-origin: center center;
+}
+
+.roll-right {
+    animation: tossRight 0.9s cubic-bezier(0.25, 1, 0.5, 1); /* Slightly longer so they land offset */
+    transform-origin: center center;
+}
+
+#diceIcon {
+    display: inline-block; /* Ensures the rotation transform works flawlessly */
 }
 /* Controls Bar */
 .controls-bar{

@@ -659,28 +659,53 @@ if (searchInput) {
   });
 }
 
-// --- SURPRISE ME RANDOMIZER ---
-const surpriseBtn = document.querySelector(".surprise-btn");
-const movieSearchInput = document.getElementById("movieSearch");
-let lastRandomIndex = -1; // This remembers the last movie picked
+// --- SURPRISE ME RANDOMIZER & DUAL DICE ANIMATION ---
+document.addEventListener('DOMContentLoaded', () => {
+    const surpriseBtn = document.getElementById('surpriseMeBtn');
+    const diceOne = document.getElementById('diceOne');
+    const diceTwo = document.getElementById('diceTwo');
+    const movieSearchInput = document.getElementById('movieSearch');
+    let lastRandomIndex = -1; // Remembers the last movie picked
 
-if (surpriseBtn && movieSearchInput) {
-  surpriseBtn.addEventListener("click", () => {
-    const titlePills = document.querySelectorAll(".movie-title-pill");
+    if (surpriseBtn) {
+        surpriseBtn.addEventListener('click', (e) => {
+            e.preventDefault();
 
-    if (titlePills.length > 0) {
-      let randomIndex;
-      if (titlePills.length > 1) {
-        do {
-          randomIndex = Math.floor(Math.random() * titlePills.length);
-        } while (randomIndex === lastRandomIndex);
-      } else {
-        randomIndex = 0;
-      }
-      lastRandomIndex = randomIndex;
-      const randomTitle = titlePills[randomIndex].textContent.trim();
-      movieSearchInput.value = randomTitle;
-      movieSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
+            // --- 1. FIRE THE DUAL ANIMATION ---
+            if (diceOne && diceTwo) {
+                // Strip the animation classes
+                diceOne.classList.remove('roll-left');
+                diceTwo.classList.remove('roll-right');
+
+                // The magic reflow trick to reset the animation
+                void diceOne.offsetWidth; 
+                
+                // Add the specific tumble classes back
+                diceOne.classList.add('roll-left');
+                diceTwo.classList.add('roll-right');
+            }
+
+            // --- 2. RUN THE RANDOMIZER LOGIC ---
+            if (movieSearchInput) {
+                const titlePills = document.querySelectorAll(".movie-title-pill");
+                
+                if (titlePills.length > 0) {
+                    let randomIndex;
+                    if (titlePills.length > 1) {
+                        do {
+                            randomIndex = Math.floor(Math.random() * titlePills.length);
+                        } while (randomIndex === lastRandomIndex);
+                    } else {
+                        randomIndex = 0;
+                    }
+                    
+                    lastRandomIndex = randomIndex;
+                    const randomTitle = titlePills[randomIndex].textContent.trim();
+                    
+                    movieSearchInput.value = randomTitle;
+                    movieSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+            }
+        });
     }
-  });
-}
+});
