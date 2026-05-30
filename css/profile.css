@@ -1,9 +1,8 @@
 /* profile.css — profile page only. Loaded by profile.html. */
 
 .profile-main {
-  /* same 50px side + 100px bottom padding as the home main-content, so collection
-     cards land at the exact movie-card width (275px) and the content column lines
-     up across pages (#1). 72px top keeps the original vertical start. */
+  /* match the home content padding so the columns align and collection cards
+     share the movie-card width; the 72px top keeps the original vertical start */
   padding: 72px 50px 100px 50px;
 }
 
@@ -90,7 +89,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 240px; /* matches .view-badges-btn so the two line up (#13) */
+  width: 240px; /* same width as the View All Badges button */
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap),
@@ -115,7 +114,7 @@
 }
 
 .new-collection-btn:hover img {
-  transform: scale(1.2); /* the + gives a little pop on hover */
+  transform: scale(1.2);
 }
 
 .new-collection-btn:active {
@@ -166,8 +165,9 @@
   flex: 3;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
+  gap: 16px;
 }
 
 .shield-path {
@@ -191,18 +191,29 @@
 
 .badge-shield {
   position: relative;
+  flex: 1 1 0; /* share the row evenly and shrink when the column is narrow */
+  min-width: 0;
+  max-width: 132px;
+  display: flex;
+  justify-content: center;
   transition:
     transform var(--t-base) var(--ease-pop),
     filter var(--t-base) ease;
 }
 
-/* shields lift, tilt, and catch the light on hover */
+.badge-shield svg {
+  width: 100%;
+  height: auto;
+  max-width: 120px;
+}
+
+/* lift and tilt on hover */
 .badge-shield:hover {
   transform: translateY(-6px) scale(1.06) rotate(-2deg);
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
 }
 
-/* tier-coloured glow on hover — gold is the top tier, so it shines brightest (#9) */
+/* tier-coloured glow on hover (gold brightest) */
 .badge-shield:has(.silver-shield):hover {
   filter: drop-shadow(0 0 14px rgba(220, 220, 226, 0.75));
 }
@@ -213,7 +224,7 @@
   filter: drop-shadow(0 0 14px rgba(203, 149, 82, 0.8));
 }
 
-/* hover tooltip: black 95% bg, floats above the shield (#9) */
+/* hover tooltip above the shield */
 .badge-tooltip {
   visibility: hidden;
   opacity: 0;
@@ -283,7 +294,7 @@
   color: var(--text);
   font-size: 18px;
   opacity: 85%;
-  width: 240px; /* same size as .new-collection-btn (#13) */
+  width: 240px; /* same width as the New Collection button */
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap),
@@ -314,14 +325,13 @@
 
 .collection-card {
   margin-bottom: 28px;
-  cursor: pointer; /* #4 */
-  /* hover lift + poster zoom synced on one timing, identical to .movie-card (#1, #16) */
+  cursor: pointer;
+  /* hover lift on the same timing as the home movie cards */
   transition: transform var(--t-base) var(--ease-snap);
 }
 
-/* identical lift/scale to the home movie cards */
 .collection-card:hover {
-  transform: translateY(-2px) scale(1.01);
+  transform: translateY(-3px) scale(1.02);
 }
 
 .collection-name {
@@ -330,8 +340,7 @@
   transition: color var(--t-base) ease;
 }
 
-/* paint the name in the card's own accent on hover — gold for default, pink otherwise (#3).
-   --card-accent is set per-card inline by profile.js. */
+/* on hover, tint the name with the card's accent (--card-accent is set per card in profile.js) */
 .collection-card:hover .collection-name {
   color: var(--card-accent, rgb(var(--pink)));
 }
@@ -468,7 +477,7 @@
   flex-shrink: 0;
 }
 
-/* --- COLLECTIONS LOADING + ENTRANCE (#5, #14) --- */
+/* --- COLLECTIONS LOADING + ENTRANCE --- */
 
 /* real cards fade up in a gentle stagger once their images are ready */
 @keyframes collectionEnter {
@@ -520,4 +529,130 @@
   height: 16px;
   width: 100%;
   margin-top: 8px;
+}
+
+/* ============================================================
+   RESPONSIVE (profile)
+   ============================================================ */
+/* The two-column header crowds the badges before this, so stack it. */
+@media (max-width: 1280px) {
+  .profile-header {
+    flex-direction: column;
+    gap: 40px; /* breathing room between the info and the badges section */
+  }
+  .profile-info,
+  .profile-badges {
+    min-height: 0;
+  }
+  /* space out the badges: title -> shields -> button */
+  .profile-badges {
+    gap: 20px;
+  }
+  .badges-display {
+    padding: 4px 0;
+  }
+  .view-badges-container {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .profile-main {
+    padding: 16px 16px 64px;
+  }
+  /* hover tooltips don't apply on touch; hide them (they'd also overflow a narrow screen) */
+  .badge-tooltip {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Flatten the header into one centred column and reorder it:
+     avatar -> name -> bio -> badges -> collections meta (count + New Collection). */
+  .profile-header {
+    align-items: center;
+    text-align: center;
+    gap: 18px;
+  }
+  .profile-info,
+  .profile-info-left-col,
+  .profile-info-right-col {
+    display: contents;
+  }
+  .profile-avatar-container {
+    order: 0;
+    justify-content: center;
+  }
+  .profile-avatar {
+    width: 128px;
+  }
+  .profile-username {
+    order: 1;
+    justify-content: center;
+    font-size: 30px;
+  }
+  .profile-bio {
+    order: 2;
+    padding-top: 0;
+    max-width: 540px;
+  }
+  .profile-badges {
+    order: 3;
+    width: 100%;
+    margin-top: 6px;
+  }
+  /* the collections box is a fixed-width column; the count sits at the button's
+     left edge (not centred) so it reads as a label for the button */
+  .profile-meta {
+    order: 4;
+    align-items: stretch;
+    width: 100%;
+    max-width: 340px;
+    margin-top: 8px;
+    gap: 10px;
+  }
+  .profile-meta > p {
+    text-align: left;
+    margin-left: 2px;
+  }
+  .new-collection-btn,
+  .view-badges-btn {
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .prog-badges-header {
+    font-size: 28px;
+  }
+  .badges-display {
+    gap: 14px;
+  }
+
+  /* One collection per row so the poster and the stat icons get room to breathe. */
+  .collections-row {
+    grid-template-columns: 1fr;
+    row-gap: 20px;
+    min-height: 0;
+    padding-top: 8px;
+  }
+  .collection-card {
+    margin-bottom: 0;
+  }
+  .collection-name {
+    font-size: 16px;
+  }
+  .collection-stats {
+    font-size: 15px;
+    padding: 8px 4px;
+  }
+  .collection-stats .stat-icon {
+    width: 17px;
+    height: 17px;
+  }
+  .collections-stats-left {
+    gap: 18px;
+  }
+  .collections-stats-left > * {
+    gap: 5px;
+  }
 }

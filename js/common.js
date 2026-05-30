@@ -1,8 +1,7 @@
 // common.js — sidebar + auth logic shared by every page (index.html, profile.html)
 
-// Resolve once every image has loaded (or errored), with a safety timeout so a
-// slow/broken image can't hang the reveal. Used by the home grid + profile collections
-// to swap shimmer skeletons for real cards only when their images are ready.
+// Resolve once every image has loaded or errored, with a timeout so a broken image
+// can't stall the reveal. Used by the home grid and the profile collections.
 function preloadImages(urls, timeoutMs = 2500) {
     const loaded = Promise.all(
         urls.map(
@@ -58,13 +57,12 @@ const signOutBtn = document.getElementById('signOutBtn');
 if (signOutBtn) {
     signOutBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        if (headerDropdown) headerDropdown.classList.remove('show'); // tuck the menu away
+        if (headerDropdown) headerDropdown.classList.remove('show'); // close the dropdown first
         showSignOutConfirm();
     });
 }
 
-// Lazily build the confirm dialog once, then just toggle .show afterwards.
-// Injected here so both index.html and profile.html get it without duplicate markup.
+// Build the confirm dialog once (injected so both pages share it), then toggle .show.
 function showSignOutConfirm() {
     let overlay = document.getElementById('signOutModal');
 
@@ -97,7 +95,7 @@ function showSignOutConfirm() {
         });
     }
 
-    void overlay.offsetWidth; // commit the hidden state so the fade-in actually plays
+    void overlay.offsetWidth; // force reflow so the fade-in plays
     overlay.classList.add('show');
     const cancelBtn = overlay.querySelector('[data-modal="cancel"]');
     if (cancelBtn) cancelBtn.focus();
@@ -138,3 +136,59 @@ if (headerProfileBtn && headerDropdown) {
         }
     });
 }
+
+// --- MOBILE NAV DRAWER + LAYOUT RELOCATION ---
+(function () {
+    const mq = window.matchMedia('(max-width: 1024px)');
+    const topbar = document.querySelector('.mobile-topbar');
+    const userRail = document.querySelector('.user-rail');
+    const authContainer = document.getElementById('headerAuthContainer');
+
+    // Auth widget lives in the right rail on desktop and in the top bar on mobile.
+    function placeAuth() {
+        if (!authContainer || !topbar || !userRail) return;
+        const target = mq.matches ? topbar : userRail;
+        if (authContainer.parentElement !== target) target.appendChild(authContainer);
+    }
+    placeAuth();
+    mq.addEventListener('change', placeAuth);
+
+    // Hamburger opens the sidebar nav as a dropdown menu.
+    const navToggle = document.getElementById('mobileNavToggle');
+    const sidebar = document.querySelector('.sidebar');
+    const backdrop = document.getElementById('navBackdrop');
+
+    function openNav() {
+        document.body.classList.add('nav-open');
+        if (navToggle) navToggle.setAttribute('aria-expanded', 'true');
+    }
+    function closeNav() {
+        document.body.classList.remove('nav-open');
+        if (navToggle) navToggle.setAttribute('aria-expanded', 'false');
+    }
+
+    if (navToggle && sidebar) {
+        navToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (document.body.classList.contains('nav-open')) closeNav();
+            else openNav();
+        });
+        if (backdrop) backdrop.addEventListener('click', closeNav);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeNav();
+        });
+
+        // Tapping a destination closes the menu; the Settings toggle just expands.
+        sidebar.querySelectorAll('.nav-link').forEach((link) => {
+            if (link.id === 'settingsToggleBtn') return;
+            link.addEventListener('click', () => {
+                if (mq.matches) closeNav();
+            });
+        });
+
+        // Always reset the menu when returning to desktop.
+        mq.addEventListener('change', () => {
+            if (!mq.matches) closeNav();
+        });
+    }
+})();

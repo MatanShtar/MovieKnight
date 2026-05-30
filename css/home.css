@@ -9,6 +9,35 @@
     gap: 30px;
 }
 
+/* wraps the search row + controls row so they can stay pinned together */
+.content-head {
+    width: 100%;
+    max-width: var(--content-width);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+@media (min-width: 1025px) {
+    /* keep the search + filters pinned while the movie grid scrolls beneath them */
+    .content-head {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        padding-top: 18px;
+        padding-bottom: 16px;
+        background: linear-gradient(
+            rgba(26, 14, 19, 0.94) 80%,
+            rgba(26, 14, 19, 0)
+        );
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
+    }
+    .content-head .top-header {
+        margin-top: 0;
+    }
+}
+
 .search-container {
     display: flex;
     align-items: center;
@@ -41,7 +70,7 @@
     height: auto;
 }
 
-/* gentle focus glow while typing — a thin ring, not a thick border (#8) */
+/* thin focus ring while typing (quieter sibling of the AI glow below) */
 .search-container:focus-within {
     box-shadow:
         0 0 0 2px rgba(var(--pink), 0.5),
@@ -60,8 +89,8 @@
     justify-content: space-between;
     padding: 15px;
     appearance: none;
-    /* 1px border always present (transparent until pressed) + nowrap so the label
-       never wraps to 2 lines and the box stays identical before/after press (#7) */
+    /* keep a transparent 1px border + nowrap so the button stays the same size
+       whether or not it's pressed */
     border: 1px solid transparent;
     white-space: nowrap;
     flex-shrink: 0;
@@ -107,6 +136,7 @@
     text-align: center;
     width:92px;
     gap:8px;
+    cursor: pointer; /* the whole control is clickable, not just the dice */
 }
 
 .surprise-btn{
@@ -359,7 +389,7 @@
 .filter-label {
     width: 150px;
     min-width: 150px;
-    max-width: 150px; /* Rigid lock */
+    max-width: 150px;
     font-size: 18px;
     color: var(--text);
     flex-shrink: 0;
@@ -407,7 +437,7 @@
     animation: pillPop 0.25s var(--ease-pop) both;
 }
 
-/* pills appear with a little pop when added */
+/* pills pop in when added */
 @keyframes pillPop {
     from { opacity: 0; transform: scale(0.7); }
     to   { opacity: 1; transform: scale(1); }
@@ -625,6 +655,7 @@
 .sort-label {
     font-size: 16px;
     margin: 0;
+    color: var(--text-soft); /* match the Filters / Surprise Me text */
 }
 
 /* Wrapper for the custom dropdown */
@@ -727,11 +758,10 @@
     overflow: hidden;
     aspect-ratio: 2 / 3;       /* card fills its grid track; height follows from the 2:3 ratio */
     border: 3px solid rgb(var(--rose));
-    /* card lift + poster zoom share one duration/easing so they move in lockstep */
     transition:
         transform var(--t-base) var(--ease-snap),
         box-shadow var(--t-base) var(--ease-snap);
-    /* staggered fade-up on load — `backwards` so finished cards still respond to :hover */
+    /* staggered fade-up on load; `backwards` so finished cards still react to :hover */
     animation: cardEnter 0.5s var(--ease-snap) backwards;
 }
 
@@ -750,10 +780,9 @@
 .movie-card:nth-child(8)  { animation-delay: 0.35s; }
 .movie-card:nth-child(n+9){ animation-delay: 0.40s; }
 
-/* the whole card (border + poster together) scales as one unit, so the frame and
-   the poster are always perfectly in sync — no independent poster zoom to drift. */
+/* scale the whole card as one unit so the frame and poster stay in sync */
 .movie-card:hover{
-    transform: translateY(-2px) scale(1.04);
+    transform: translateY(-2px) scale(1.01);
     box-shadow:
         0 18px 38px rgba(0, 0, 0, 0.45),
         0 0 0 3px rgba(var(--pink), 0.55);
@@ -882,4 +911,208 @@
     min-width: 15px;
     min-height: 14px;
     padding-bottom: 2px;
+}
+
+/* ============================================================
+   RESPONSIVE (home)
+   ============================================================ */
+@media (max-width: 1024px) {
+    /* Search row: hamburger + search bar (Surprise Me moves to the controls row). */
+    .header-left-group {
+        gap: 12px;
+        align-items: center;
+    }
+    .search-container {
+        height: 52px;
+        border-width: 3px;
+        padding: 4px 12px;
+    }
+    .search-container input {
+        font-size: 16px;
+        padding: 8px;
+    }
+    .search-container > .nav-search-icon {
+        width: 20px;
+    }
+    .ai-mode-btn {
+        font-size: 14px;
+        height: 36px;
+        padding: 10px;
+        gap: 6px;
+    }
+    .ai-mode-btn img {
+        width: 16px;
+    }
+
+    /* Controls row: Filters | Sort | Surprise — compact so they sit on one line. */
+    .controls-bar {
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: space-between;
+    }
+    .filter-btn {
+        width: auto;
+        height: 38px;
+        padding: 0 10px;
+        gap: 5px;
+        font-size: 13px;
+    }
+    .filter-btn img {
+        width: 15px;
+        height: auto;
+    }
+    .sort-dropdown {
+        gap: 5px;
+    }
+    .sort-label {
+        font-size: 13px;
+    }
+    .sort-custom-btn {
+        width: auto;
+        min-width: 66px;
+        height: 38px;
+        font-size: 13px;
+        padding-left: 9px;
+        padding-right: 24px;
+    }
+
+    /* Surprise becomes a compact horizontal pill instead of the tall dice button. */
+    .surprise-container {
+        flex-direction: row;
+        align-items: center;
+        width: auto;
+        gap: 5px;
+        height: 38px;
+        padding: 0 10px;
+        background: rgba(var(--pink), 0.13);
+        border-radius: 12px;
+        transition: background-color var(--t-base) ease;
+    }
+    .surprise-container:hover {
+        background: rgba(var(--pink), 0.25);
+    }
+    .surprise-btn {
+        background: transparent;
+        min-width: 0;
+        min-height: 0;
+        width: auto;
+        height: auto;
+        padding: 0;
+    }
+    .surprise-btn:hover,
+    .surprise-btn:active {
+        background: transparent;
+        transform: none;
+    }
+    .surprise-container p {
+        padding: 0;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+    .dice-wrapper {
+        gap: 2px;
+    }
+    .dice-icon {
+        width: 15px;
+        height: 15px;
+    }
+    #diceOne,
+    #diceTwo {
+        margin-top: 0;
+        scale: 1;
+    }
+
+    /* The filter dropdown can't be 500px wide on a phone. */
+    .filter-dropdown {
+        width: min(92vw, 500px);
+        padding: 18px;
+    }
+    /* stack each filter: label on its own line, controls (and their pop-outs) below
+       at the left edge so they never run off the right of a narrow screen */
+    .pill-selector-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .filter-label {
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+    .year-filter {
+        flex-wrap: wrap;
+    }
+    .till-label {
+        margin-left: 0;
+    }
+    .pill-dropdown {
+        max-width: min(70vw, 240px);
+        white-space: normal;
+    }
+    .pill-option {
+        white-space: normal;
+    }
+    /* 10 stars are 272px wide — let them shrink and wrap on a narrow panel */
+    .star-rating {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    .star {
+        width: 18px;
+        height: 18px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Phone grid: three across, matching the design. minmax(0,1fr) keeps the
+       columns equal so the posters can't inflate a track and push a card off-screen. */
+    .movie-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: 12px;
+        row-gap: 16px;
+    }
+    .rating-badge {
+        font-size: 13px;
+        min-width: 0;
+        min-height: 0;
+        padding: 2px 5px;
+    }
+    .card-overlay {
+        gap: 8px;
+        padding: 8px;
+    }
+    .card-overlay button {
+        width: 34px;
+        height: 34px;
+    }
+    .card-overlay button img {
+        width: 16px;
+    }
+    .movie-title-pill {
+        width: calc(100% - 12px);
+        font-size: 10px;
+        height: auto;
+        padding: 3px 4px;
+    }
+}
+
+/* Tiny screens: collapse Filters + Surprise to just their icons so the controls
+   row always stays on a single line. */
+@media (max-width: 389px) {
+    .filter-btn {
+        width: 40px;
+        padding: 0;
+        gap: 0;
+        font-size: 0;
+        justify-content: center;
+    }
+    .filter-btn img {
+        width: 18px;
+        height: 18px;
+    }
+    .surprise-container {
+        padding: 0 11px;
+    }
+    .surprise-container p {
+        display: none;
+    }
 }

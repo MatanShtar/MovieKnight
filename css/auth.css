@@ -35,10 +35,6 @@
     animation: authEnter 0.5s var(--ease-snap) backwards;
 }
 
-.main-logo:hover {
-    transform: scale(1.04) rotate(-2deg);
-}
-
 /* gentle fade-up as the form arrives */
 @keyframes authEnter {
     from { opacity: 0; transform: translateY(16px); }
@@ -167,7 +163,7 @@
     border-radius: 6px;
     margin-bottom: 15px;
 
-    /* THE MAGIC FIX: Reserves the space without showing the text */
+    /* reserve the space up front so the layout doesn't jump when the error shows */
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -244,3 +240,34 @@
 
 
 /* (submit button & bottom links are defined once in the LOGIN section above) */
+
+/* ============================================================
+   RESPONSIVE (auth)
+   ============================================================ */
+@media (max-width: 600px) {
+    .login-wrapper,
+    .signup-wrapper {
+        padding: 16px;
+    }
+    .main-logo {
+        width: min(78vw, 360px);
+        margin-bottom: 8px;
+    }
+    .login-box,
+    .signup-box {
+        width: 100%;
+        max-width: 480px;
+        padding: 24px 20px;
+    }
+    .login-box h2 {
+        font-size: clamp(34px, 12vw, 60px);
+        letter-spacing: 8px;
+    }
+    .signup-box h2 {
+        font-size: clamp(28px, 9vw, 46px);
+        letter-spacing: 6px;
+    }
+    .input-group input {
+        width: 100%;
+    }
+}

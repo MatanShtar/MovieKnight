@@ -1,7 +1,6 @@
 // --- HOME MOVIE GRID: SKELETON LOADER ---
-// The movie cards are static HTML, so we show shimmer skeletons, preload the posters,
-// then swap the real cards in (they fade up via the .movie-card entrance animation).
-// Mirrors the profile collections loader for a consistent loading experience.
+// The cards are static HTML, so show skeletons, preload the posters, then swap the
+// real cards in (they fade up via the .movie-card entrance animation).
 (function () {
   const grid = document.getElementById("movieGrid");
   if (!grid) return;
@@ -23,6 +22,22 @@
 function movieSkeletonMarkup(n) {
   return `<article class="movie-card movie-card--skeleton" aria-hidden="true"></article>`.repeat(n);
 }
+
+// --- MOBILE: Surprise Me sits in the search row on desktop, the controls row on mobile ---
+(function () {
+  const surprise = document.querySelector(".surprise-container");
+  const controlsBar = document.querySelector(".controls-bar");
+  const headerLeft = document.querySelector(".header-left-group");
+  if (!surprise || !controlsBar || !headerLeft) return;
+
+  const mq = window.matchMedia("(max-width: 1024px)");
+  function place() {
+    const target = mq.matches ? controlsBar : headerLeft;
+    if (surprise.parentElement !== target) target.appendChild(surprise);
+  }
+  place();
+  mq.addEventListener("change", place);
+})();
 
 // --- GLOBAL MENU MANAGEMENT ---
 const filterBtn = document.getElementById("filterToggleBtn");
@@ -691,14 +706,16 @@ if (searchInput) {
 
 // --- SURPRISE ME RANDOMIZER & DUAL DICE ANIMATION ---
 document.addEventListener('DOMContentLoaded', () => {
-    const surpriseBtn = document.getElementById('surpriseMeBtn');
     const diceOne = document.getElementById('diceOne');
     const diceTwo = document.getElementById('diceTwo');
     const movieSearchInput = document.getElementById('movieSearch');
+    // The whole container is the click target (dice + the "Surprise Me" label),
+    // so a tap anywhere on the button works, not just on the dice image.
+    const surpriseTrigger = document.querySelector('.surprise-container');
     let lastRandomIndex = -1; // Remembers the last movie picked
 
-    if (surpriseBtn) {
-        surpriseBtn.addEventListener('click', (e) => {
+    if (surpriseTrigger) {
+        surpriseTrigger.addEventListener('click', (e) => {
             e.preventDefault();
 
             // --- 1. FIRE THE DUAL ANIMATION ---
@@ -707,8 +724,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 diceOne.classList.remove('roll-left');
                 diceTwo.classList.remove('roll-right');
 
-                // The magic reflow trick to reset the animation
-                void diceOne.offsetWidth; 
+                // force a reflow so the animation can replay from the start
+                void diceOne.offsetWidth;
                 
                 // Add the specific tumble classes back
                 diceOne.classList.add('roll-left');

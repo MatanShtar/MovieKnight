@@ -13,6 +13,13 @@
 <body class="app-body">
 
     <div class="app-container">
+        <header class="mobile-topbar">
+            <a class="mobile-brand" href="index.html">
+                <img class="mobile-brand-knight" src="assets/images/knight-minimal-logo.svg" alt="">
+                <img class="mobile-brand-text" src="assets/images/movie-knight-wordmark.svg" alt="MovieKnight">
+            </a>
+        </header>
+
         <aside class="sidebar">
             <a class="sidebar-logo" href="index.html">
                 <img src="assets/images/movie-knight-logo-sidebar.svg" alt="MovieKnight" class="nav-logo">
@@ -63,8 +70,12 @@
         </aside>
 
         <main class="main-content">
+            <div class="content-head">
             <header class="top-header">
                 <div class="header-left-group">
+                    <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open menu" aria-expanded="false">
+                        <img src="assets/images/icons/hamburger-menu-icon.svg" alt="">
+                    </button>
                     <div class="search-container">
                         <img src="assets/images/icons/search-icon.svg" alt="Search Icon" class="nav-search-icon">
                         <input type="text" id="movieSearch" placeholder="Search movies...">
@@ -199,6 +210,7 @@
                         <div class="sort-custom-menu" id="sortCustomMenu"></div>
                     </div>
                 </div>
+            </div>
             </div>
 
             <section class="movie-grid" id="movieGrid">
@@ -417,6 +429,8 @@
                 </div>
             </div>
         </aside>
+
+        <div class="nav-backdrop" id="navBackdrop" hidden></div>
     </div>
 
     <script src="js/common.js"></script>

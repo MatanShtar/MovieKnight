@@ -1,6 +1,6 @@
 // --- RENDER COLLECTIONS FROM JSON ---
-// Show shimmer skeletons immediately, then swap in the real cards only once their
-// poster images are decoded — so the cards fade in complete, never piece-by-piece.
+// Show skeletons, then swap in the real cards once their posters have loaded, so the
+// cards appear complete instead of filling in piece by piece.
 (async () => {
   const row = document.querySelector(".collections-row");
   if (!row) return;

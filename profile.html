@@ -11,6 +11,16 @@
 
   <body class="app-body">
     <div class="app-container">
+      <header class="mobile-topbar">
+        <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open menu" aria-expanded="false">
+          <img src="assets/images/icons/hamburger-menu-icon.svg" alt="" />
+        </button>
+        <a class="mobile-brand" href="index.html">
+          <img class="mobile-brand-knight" src="assets/images/knight-minimal-logo.svg" alt="" />
+          <img class="mobile-brand-text" src="assets/images/movie-knight-wordmark.svg" alt="MovieKnight" />
+        </a>
+      </header>
+
       <aside class="sidebar">
         <a class="sidebar-logo" href="index.html">
           <img
@@ -297,6 +307,8 @@
           </div>
         </div>
       </aside>
+
+      <div class="nav-backdrop" id="navBackdrop" hidden></div>
     </div>
 
     <!-- Shared popup menu for the collection cards' 3-dots button.

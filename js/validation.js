@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 errorMsg.textContent = "Incorrect email or password.";
                 errorMsg.classList.add('show');
             } else {
-                // Persist the logged-in user — single source of truth read by main.js
+                // Save the logged-in user (read by common.js on every page)
                 localStorage.setItem('currentUser', JSON.stringify({ username: usernameInput.value }));
                 window.location.href = "index.html";
             }
