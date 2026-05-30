@@ -111,9 +111,9 @@ body {
 }
 
 .app-container {
-  /* sidebar AND the right user-rail share this width for symmetry; it shrinks on
-     narrower desktops so the content column keeps enough room */
-  --rail-width: clamp(220px, 18vw, 300px);
+  /* sidebar AND the right user-rail share this width for symmetry; kept lean so the
+     middle content column stays wide */
+  --rail-width: clamp(200px, 14vw, 250px);
   display: flex;
   min-height: 100vh;
   align-items: stretch;
@@ -308,7 +308,7 @@ body {
   --content-width: 1640px; /* shared max width for header / controls / grid / profile blocks */
   flex: 1; /* fill the area beside the sidebar */
   min-width: 0; /* let content shrink instead of overflowing */
-  padding: 30px 50px 100px 50px;
+  padding: 30px 40px 100px 40px;
   display: flex;
   flex-direction: column;
   align-items: center; /* centers each content block in the area beside the sidebar */
@@ -441,9 +441,9 @@ body {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  width: 100px;
-  background-color: var(--surface-dropdown);
-  border: 1px solid var(--overlay);
+  width: 150px;
+  background-color: var(--surface-menu); /* same black as the collection actions menu */
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 8px 0;
   display: flex;

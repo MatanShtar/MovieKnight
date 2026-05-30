@@ -101,6 +101,17 @@ if (filterBtn && filterMenu) {
   });
 }
 
+// Filter "Apply" button — closes the panel; the chosen filters stay selected.
+// (Placeholder for now — wire it up to actual filtering later.)
+const filterApplyBtn = document.getElementById("filterApplyBtn");
+if (filterApplyBtn && filterMenu) {
+  filterApplyBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeAllInnerDropdowns();
+    filterMenu.classList.remove("show");
+  });
+}
+
 // Main Sort By Toggle (Closes Filter Menu)
 if (sortCustomBtn && sortCustomMenu) {
   sortCustomBtn.addEventListener("click", (e) => {
