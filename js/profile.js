@@ -5,12 +5,17 @@
   const row = document.querySelector(".collections-row");
   if (!row) return;
 
-  row.innerHTML = skeletonMarkup(5); // placeholder while we fetch + preload
+  row.innerHTML = skeletonMarkup(4); // placeholder while we fetch + preload
 
   try {
     const res = await fetch("data/collections.json");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const { collections } = await res.json();
+    const { totalCollections, collections } = await res.json();
+
+    // Inject collections amount
+    const countEl = document.getElementById("collectionCount");
+    const colCount = totalCollections ?? collections.length;
+    countEl.textContent = `${colCount} Collections`
 
     const html = collections.map(buildCollectionCard).join("");
     await preloadImages(collections.map((c) => c.posterPath)); // wait for posters
@@ -48,7 +53,7 @@ function buildCollectionCard(c, i) {
   }
 
   return `
-    <article class="collection-card" data-card="${i}" data-published="${c.published}" style="--card-accent: ${primaryColor}">
+    <article class="collection-card" data-card="${i}" data-published="${c.published}" data-default="${c.default}" style="--card-accent: ${primaryColor}" data-toast="soon:Coming Soon!">
       <p class="collection-name">${c.name}</p>
       <div class="collection-poster-container" style="border: 3px solid ${primaryColor}">
         <img class="collection-poster" src="${c.posterPath}" alt="${c.name}">
@@ -79,6 +84,49 @@ function buildCollectionCard(c, i) {
 
   let activeBtn = null;
 
+  // The 3-dots menu items, built in JS so they can vary per collection. Default
+  // collections (data-default) can't be renamed or deleted, so those two are skipped
+  // for them; the other three always show. The Publish/Unpublish item is resolved per
+  // collection from its published state.
+  const MENU_ITEMS = [
+    { action: "add", icon: "plus", label: "Add to Collection" },
+    { action: "rename", icon: "rename", label: "Rename", defaultHidden: true },
+    { toggle: true },
+    { action: "copy-link", icon: "copy-link", label: "Copy Link" },
+    { action: "delete", icon: "red-delete", label: "Delete Collection", danger: true, defaultHidden: true },
+  ];
+
+  function buildItem(item, isPublished) {
+    let { action, icon, label } = item;
+    let id = "";
+    if (item.toggle) {
+      // public collections can be Unpublished (lock icon); private ones Published (globe)
+      action = isPublished ? "unpublish" : "publish";
+      label = isPublished ? "Unpublish" : "Publish";
+      icon = isPublished ? "lock" : "globus";
+      id = ' id="publishToggleItem"';
+    }
+    const danger = item.danger ? " collection-menu-item--danger" : "";
+    return `
+      <button class="collection-menu-item${danger}"${id} data-action="${action}">
+        <img class="menu-icon" src="assets/images/icons/${icon}-icon.svg" alt="" />
+        <span>${label}</span>
+      </button>`;
+  }
+
+  function renderMenu(isDefault, isPublished) {
+    const items = MENU_ITEMS.filter(
+      (item) => !(isDefault && item.defaultHidden),
+    )
+      .map((item) => buildItem(item, isPublished))
+      .join("");
+    // footnote on default collections, explaining the trimmed set of actions
+    const note = isDefault
+      ? `<p class="collection-menu-note">Default Collection</p>`
+      : "";
+    menu.innerHTML = items + note;
+  }
+
   function openMenu(button) {
     closeMenu(); // clear any previously-open state first
 
@@ -86,16 +134,9 @@ function buildCollectionCard(c, i) {
     if (!card) return;
     menu.dataset.card = card.dataset.card; // remember which collection this is for
 
-    // Public collections can be Unpublished (lock icon); private ones can be Published (globe icon)
-    const published = card.dataset.published === "true";
-    const toggle = document.getElementById("publishToggleItem");
-    if (toggle) {
-      toggle.dataset.action = published ? "unpublish" : "publish";
-      toggle.querySelector("span").textContent = published ? "Unpublish" : "Publish";
-      toggle.querySelector(".menu-icon").src = published
-        ? "assets/images/icons/lock-icon.svg"
-        : "assets/images/icons/globus-icon.svg";
-    }
+    // Build this collection's menu. Default collections (data-default) drop the
+    // Rename + Delete items; the Publish/Unpublish item reflects the published state.
+    renderMenu(card.dataset.default === "true", card.dataset.published === "true");
 
     menu.hidden = false; // reveal first so we can measure its width
 
@@ -131,8 +172,8 @@ function buildCollectionCard(c, i) {
   menu.addEventListener("click", (e) => {
     const item = e.target.closest(".collection-menu-item");
     if (!item) return;
-    console.log(`${item.dataset.action} -> collection #${menu.dataset.card}`);
     closeMenu();
+    toast.soon("Coming Soon!"); // menu actions aren't wired up yet
   });
 
   // Close on outside click, Escape, or scroll

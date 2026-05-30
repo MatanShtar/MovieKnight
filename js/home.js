@@ -1,26 +1,53 @@
-// --- HOME MOVIE GRID: SKELETON LOADER ---
-// The cards are static HTML, so show skeletons, preload the posters, then swap the
-// real cards in (they fade up via the .movie-card entrance animation).
-(function () {
+// --- HOME MOVIE GRID: FETCH + RENDER FROM JSON ---
+// Show skeletons, fetch the movies, preload their posters, then swap in the real
+// cards so they appear complete (same pattern as the profile collections).
+(async () => {
   const grid = document.getElementById("movieGrid");
   if (!grid) return;
 
-  const cards = Array.from(grid.querySelectorAll(".movie-card"));
-  if (!cards.length) return;
+  grid.innerHTML = movieSkeletonMarkup(10); // placeholder while we fetch + preload
 
-  const posterSrcs = cards
-    .map((c) => c.querySelector(".poster-img")?.getAttribute("src"))
-    .filter(Boolean);
-  const realHTML = grid.innerHTML;
+  try {
+    const res = await fetch("data/movies.json");
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { movies } = await res.json();
 
-  grid.innerHTML = movieSkeletonMarkup(cards.length);
-  preloadImages(posterSrcs).then(() => {
-    grid.innerHTML = realHTML; // real cards now animate in
-  });
+    const html = movies.map(buildMovieCard).join("");
+    await preloadImages(movies.map((m) => m.posterPath)); // wait for posters
+    grid.innerHTML = html; // real cards now animate in (.movie-card entrance)
+    applyActiveSort(); // order to match the current "Sort by" selection
+  } catch (err) {
+    console.error("Could not load movies:", err);
+    grid.innerHTML = ""; // drop the skeletons rather than spin forever
+  }
 })();
 
+// One shimmer placeholder card, repeated n times. (preloadImages lives in common.js)
 function movieSkeletonMarkup(n) {
   return `<article class="movie-card movie-card--skeleton" aria-hidden="true"></article>`.repeat(n);
+}
+
+function buildMovieCard(m) {
+  return `
+    <article class="movie-card" data-title="${m.title}" data-rating="${m.rating}" data-year="${m.releaseYear}" data-popularity="${m.popularity}" data-toast="soon:Coming Soon!">
+      <img src="${m.posterPath}" alt="${m.title}" class="poster-img">
+      <div class="rating-badge">
+        ${Number(m.rating).toFixed(1)}
+        <img src="assets/images/icons/ratings-star.svg" alt="Rating" class="ratings-star-img">
+      </div>
+      <div class="card-overlay">
+        <button class="icon-btn">
+          <img src="assets/images/icons/eye-icon.svg" alt="Mark watched" class="ratings-star-img">
+        </button>
+        <button class="icon-btn">
+          <img src="assets/images/icons/heart-icon.svg" alt="Like" class="ratings-star-img">
+        </button>
+        <button class="icon-btn">
+          <img src="assets/images/icons/plus-icon.svg" alt="Add to collection" class="ratings-star-img">
+        </button>
+        <div class="movie-title-pill">${m.title} (${m.releaseYear})</div>
+      </div>
+    </article>`;
 }
 
 // --- MOBILE: Surprise Me sits in the search row on desktop, the controls row on mobile ---
@@ -109,6 +136,7 @@ if (filterApplyBtn && filterMenu) {
     e.stopPropagation();
     closeAllInnerDropdowns();
     filterMenu.classList.remove("show");
+    toast.soon("Coming Soon!"); // filtering isn't wired up yet
   });
 }
 
@@ -634,15 +662,49 @@ if (clearPlatformBtn) {
   };
 }
 // --- SORT BY DROPDOWN LOGIC ---
+// Each option carries the field to sort on (key, matching the card's data-* name)
+// and the direction (dir). The dropdown handler just hands that to sortMovieGrid().
 const sortOptionsData = [
-  { short: "Popular", long: "Popular This Week" },
-  { short: "Rating ↑", long: "Rating (Worst to Best)" },
-  { short: "Rating ↓", long: "Rating (Best to Worst)" },
-  { short: "A ➔ Z", long: "Alphabetical (A-->Z)" },
-  { short: "Z ➔ A", long: "Alphabetical (Z-->A)" },
-  { short: "Newest", long: "Release Date (New to Old)" },
-  { short: "Oldest", long: "Release Date (Old to New)" },
+  { short: "Popular", long: "Popular This Week", key: "popularity", dir: "desc" },
+  { short: "Rating ↓", long: "Rating (Best to Worst)", key: "rating", dir: "desc" },
+  { short: "Rating ↑", long: "Rating (Worst to Best)", key: "rating", dir: "asc" },
+  { short: "A ➔ Z", long: "Alphabetical (A-->Z)", key: "title", dir: "asc" },
+  { short: "Z ➔ A", long: "Alphabetical (Z-->A)", key: "title", dir: "desc" },
+  { short: "Newest", long: "Release Date (New to Old)", key: "year", dir: "desc" },
+  { short: "Oldest", long: "Release Date (Old to New)", key: "year", dir: "asc" },
 ];
+
+// Generic sort: reorders the rendered movie cards in place by a data-* field.
+// Reordering (rather than re-rendering) keeps each card's live-search hidden state.
+function sortMovieGrid({ key, dir }) {
+  const grid = document.getElementById("movieGrid");
+  if (!grid) return;
+  const cards = [...grid.querySelectorAll(".movie-card:not(.movie-card--skeleton)")];
+  if (!cards.length) return;
+
+  const valueOf = (card) =>
+    key === "title"
+      ? (card.dataset.title || "").toLowerCase()
+      : parseFloat(card.dataset[key]) || 0;
+
+  cards
+    .sort((a, b) => {
+      const va = valueOf(a);
+      const vb = valueOf(b);
+      const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+      return dir === "asc" ? cmp : -cmp;
+    })
+    .forEach((card) => grid.appendChild(card)); // moving a node re-appends it in order
+}
+
+// Apply whatever option the dropdown currently shows (called once after the grid renders,
+// so the displayed order always matches the selected "Sort by" — even if the JSON order changes).
+function applyActiveSort() {
+  const label = document.getElementById("sortSelectedText");
+  const current = label ? label.textContent.trim() : "";
+  const option = sortOptionsData.find((o) => o.short === current);
+  if (option) sortMovieGrid(option);
+}
 
 if (sortCustomBtn && sortCustomMenu) {
   const sortSelectedText = document.getElementById("sortSelectedText");
@@ -661,6 +723,7 @@ if (sortCustomBtn && sortCustomMenu) {
         .forEach((opt) => opt.classList.remove("selected"));
       div.classList.add("selected");
       sortCustomMenu.classList.remove("show");
+      sortMovieGrid(option);
     };
     sortCustomMenu.appendChild(div);
   });
@@ -674,7 +737,22 @@ if (movieGridEl) {
     const btn = e.target.closest(".icon-btn");
     if (!btn) return;
     e.stopPropagation();
-    btn.classList.toggle("active");
+    const label = btn.querySelector("img")?.alt || "";
+
+    // "Add to collection" should open a collection-picker modal (not built yet) -> Coming Soon
+    if (label === "Add to collection") {
+      toast.soon("Coming Soon!");
+      return;
+    }
+
+    // eye / heart are simple front-end toggles, so reflect their on/off state
+    const nowActive = btn.classList.toggle("active");
+    const messages = {
+      "Mark watched": ["Added to Already Watched", "Removed from Already Watched"],
+      "Like": ["Added to Favorites", "Removed from Favorites"],
+    };
+    const [onMsg, offMsg] = messages[label] || ["Coming Soon!", "Coming Soon!"];
+    toast[nowActive ? "success" : "info"](nowActive ? onMsg : offMsg);
   });
 }
 
@@ -689,6 +767,7 @@ if (aiModeBtn && searchContainer && searchInput) {
     searchContainer.classList.toggle("ai-glow");
     if (aiModeBtn.classList.contains("pressed")) {
       searchInput.placeholder = "Search movies with AI...";
+      toast.soon("AI Mode - Coming Soon!");
     } else {
       searchInput.placeholder = "Search movies...";
     }
@@ -758,7 +837,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     lastRandomIndex = randomIndex;
-                    const randomTitle = titlePills[randomIndex].textContent.trim();
+                    // fill just the title (no year); data-title is the clean title from the JSON
+                    const randomTitle = titlePills[randomIndex].closest(".movie-card").dataset.title;
                     
                     movieSearchInput.value = randomTitle;
                     movieSearchInput.dispatchEvent(new Event("input", { bubbles: true }));

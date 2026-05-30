@@ -7,17 +7,31 @@
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
     <link rel="stylesheet" href="css/common.css" />
     <link rel="stylesheet" href="css/profile.css" />
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
   </head>
 
   <body class="app-body">
     <div class="app-container">
       <header class="mobile-topbar">
-        <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open menu" aria-expanded="false">
+        <button
+          class="mobile-nav-toggle"
+          id="mobileNavToggle"
+          aria-label="Open menu"
+          aria-expanded="false"
+        >
           <img src="assets/images/icons/hamburger-menu-icon.svg" alt="" />
         </button>
         <a class="mobile-brand" href="index.html">
-          <img class="mobile-brand-knight" src="assets/images/knight-minimal-logo.svg" alt="" />
-          <img class="mobile-brand-text" src="assets/images/movie-knight-wordmark.svg" alt="MovieKnight" />
+          <img
+            class="mobile-brand-knight"
+            src="assets/images/knight-minimal-logo.svg"
+            alt=""
+          />
+          <img
+            class="mobile-brand-text"
+            src="assets/images/movie-knight-wordmark.svg"
+            alt="MovieKnight"
+          />
         </a>
       </header>
 
@@ -39,7 +53,7 @@
             Home
           </a>
 
-          <a href="#" class="nav-link">
+          <a href="#" class="nav-link" data-toast="soon:Coming Soon!">
             <img
               src="assets/images/icons/explore-icon.svg"
               alt="Explore Icon"
@@ -82,14 +96,14 @@
               <span class="settings-arrow"></span>
             </a>
             <div class="settings-submenu" id="settingsSubmenu">
-              <a href="#"
+              <a href="#" data-toast="soon:Coming Soon!"
                 ><img
                   src="assets/images/icons/preferences-icon.svg"
                   alt="Pref"
                 />
                 Preferences</a
               >
-              <a href="#"
+              <a href="#" data-toast="soon:Coming Soon!"
                 ><img
                   src="assets/images/icons/account-icon.svg"
                   alt="Account"
@@ -99,7 +113,11 @@
             </div>
           </div>
 
-          <a href="#" class="nav-link about-link">
+          <a
+            href="#"
+            class="nav-link about-link"
+            data-toast="soon:Coming Soon!"
+          >
             <img
               src="assets/images/icons/about-icon.svg"
               alt="Home Icon"
@@ -117,19 +135,23 @@
                 <div class="profile-avatar">
                   <img
                     src="assets/images/yuviverse-profile-pic.png"
-                    alt="Prifle picture"
+                    alt="Profile picture"
                     class="avatar-pic"
                   />
                   <img
                     src="assets/images/icons/upload-profile-pic-icon.svg"
-                    alt="Prifle picture"
+                    alt="Profile picture"
                     class="upload-new-pic"
+                    data-toast="soon:Coming Soon!"
                   />
                 </div>
               </div>
               <div class="profile-meta">
-                <p>5 Collections</p>
-                <button class="new-collection-btn">
+                <p id="collectionCount">...</p>
+                <button
+                  class="new-collection-btn"
+                  data-toast="soon:Coming Soon!"
+                >
                   <img
                     src="assets/images/icons/plus-icon.svg"
                     alt="Plus icon"
@@ -141,11 +163,20 @@
 
             <div class="profile-info-right-col">
               <h2 class="profile-username">Yuviverse7</h2>
-              <p class="profile-bio">
-                The 7 stands for how many times I watched Rocky this week<br />
-                Barbie is overrated #team_oppenheimer<br />
-                Real men cry 🐺
-              </p>
+              <div class="bio-edit">
+                <p class="profile-bio">
+                  The 7 stands for how many times I watched Rocky this week<br />
+                  Barbie is overrated #team_oppenheimer<br />
+                  Real men cry 🐺
+                </p>
+                <button
+                  class="bio-edit-btn"
+                  data-toast="soon:Coming Soon!"
+                  aria-label="Edit bio"
+                >
+                  <img src="assets/images/icons/rename-icon.svg" alt="Edit bio" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -186,7 +217,9 @@
                   />
                 </svg>
                 <span class="badge-title">Movie Enthusiast</span>
-                <span class="badge-tooltip">Silver Tier · 63 movies until Gold</span>
+                <span class="badge-tooltip"
+                  >Silver Tier · 63 movies until Gold</span
+                >
               </div>
 
               <div class="badge-shield">
@@ -256,11 +289,15 @@
                   />
                 </svg>
                 <span class="badge-title">Collection Master</span>
-                <span class="badge-tooltip">Bronze Tier · 21 collections until Silver</span>
+                <span class="badge-tooltip"
+                  >Bronze Tier · 21 collections until Silver</span
+                >
               </div>
             </div>
             <div class="view-badges-container">
-              <button class="view-badges-btn">View All Badges</button>
+              <button class="view-badges-btn" data-toast="soon:Coming Soon!">
+                View All Badges
+              </button>
             </div>
           </div>
         </section>
@@ -300,7 +337,7 @@
 
             <div class="header-dropdown" id="headerDropdown">
               <a href="profile.html">Profile</a>
-              <a href="#">Settings</a>
+              <a href="#" data-toast="soon:Coming Soon!">Settings</a>
               <a href="index.html" id="signOutBtn" class="danger-text"
                 >Sign Out</a
               >
@@ -314,29 +351,11 @@
 
     <!-- Shared popup menu for the collection cards' 3-dots button.
          The publish/unpublish item's label + icon are set by profile.js per collection. -->
-    <div class="collection-menu" id="collectionMenu" hidden>
-      <button class="collection-menu-item" data-action="add">
-        <img class="menu-icon" src="assets/images/icons/plus-icon.svg" alt="" />
-        <span>Add to Collection</span>
-      </button>
-      <button class="collection-menu-item" data-action="rename">
-        <img class="menu-icon" src="assets/images/icons/rename-icon.svg" alt="" />
-        <span>Rename</span>
-      </button>
-      <button class="collection-menu-item" id="publishToggleItem" data-action="unpublish">
-        <img class="menu-icon" src="assets/images/icons/lock-icon.svg" alt="" />
-        <span>Unpublish</span>
-      </button>
-      <button class="collection-menu-item" data-action="copy-link">
-        <img class="menu-icon" src="assets/images/icons/copy-link-icon.svg" alt="" />
-        <span>Copy Link</span>
-      </button>
-      <button class="collection-menu-item collection-menu-item--danger" data-action="delete">
-        <img class="menu-icon" src="assets/images/icons/red-delete-icon.svg" alt="" />
-        <span>Delete Collection</span>
-      </button>
-    </div>
+    <!-- items are built in js/profile.js (renderMenu) per collection -->
+    <div class="collection-menu" id="collectionMenu" hidden></div>
 
+    <script src="vendor/toastify/toastify.min.js"></script>
+    <script src="js/toast.js"></script>
     <script src="js/common.js"></script>
     <script src="js/profile.js"></script>
   </body>

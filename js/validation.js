@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hasError) {
                 errorMsg.textContent = "Please fill in all required fields.";
                 errorMsg.classList.add('show');
+                toast.error("Please fill in all required fields.");
                 return;
             }
 
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 passwordInput.classList.add('input-error');
                 errorMsg.textContent = "Incorrect email or password.";
                 errorMsg.classList.add('show');
+                toast.error("Incorrect email or password.");
             } else {
                 // Save the logged-in user (read by common.js on every page)
                 localStorage.setItem('currentUser', JSON.stringify({ username: usernameInput.value }));
@@ -89,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (hasError) {
                 errorMsg.textContent = "Please fill in all required fields.";
                 errorMsg.classList.add('show');
+                toast.error("Please fill in all required fields.");
                 return;
             }
 
@@ -98,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 confirmPasswordInput.classList.add('input-error');
                 errorMsg.textContent = "Passwords do not match.";
                 errorMsg.classList.add('show');
+                toast.error("Passwords do not match.");
                 return;
             }
 

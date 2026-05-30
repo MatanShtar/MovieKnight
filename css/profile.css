@@ -137,11 +137,59 @@
 }
 
 .profile-bio {
-  flex: 5;
   font-size: 16px;
   opacity: 70%;
   line-height: 1.6;
-  padding-top: 16px;
+}
+
+/* Bio "edit" affordance. The dashed box + edit icon are desktop + mouse only and
+   appear only while hovering the bio (see the @media block at the bottom). The wrapper
+   takes the bio's place in the column so the dashed outline hugs the text, not the
+   whole flex cell. */
+.bio-edit {
+  flex: 5; /* the bio's old flex value, so the column layout is unchanged */
+  position: relative;
+  padding-top: 16px; /* the gap under the username (was .profile-bio padding-top) */
+}
+.bio-edit-btn {
+  position: absolute;
+  top: 12px;
+  right: 4px;
+  display: none; /* revealed on desktop hover only */
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(var(--pink), 0.2);
+  cursor: pointer;
+  transition:
+    background var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+.bio-edit-btn:hover {
+  background: rgba(var(--pink), 0.32);
+}
+.bio-edit-btn:active {
+  transform: scale(0.92);
+}
+.bio-edit-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+/* desktop + real mouse only: thin dashed rectangle + edit icon while hovering the bio */
+@media (hover: hover) and (min-width: 1025px) {
+  .bio-edit:hover .profile-bio {
+    outline: 1px dashed rgba(var(--pink), 0.65);
+    outline-offset: 6px;
+    border-radius: 6px;
+  }
+  .bio-edit:hover .bio-edit-btn {
+    display: flex;
+  }
 }
 
 .profile-badges {
@@ -477,6 +525,18 @@
   flex-shrink: 0;
 }
 
+/* footnote shown only for default collections (built in renderMenu), explaining
+   why Rename + Delete are missing — a quiet, italic system note under a divider */
+.collection-menu-note {
+  margin-top: 4px;
+  padding: 8px 20px 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
 /* --- COLLECTIONS LOADING + ENTRANCE --- */
 
 /* real cards fade up in a gentle stagger once their images are ready */
@@ -576,7 +636,8 @@
   }
   .profile-info,
   .profile-info-left-col,
-  .profile-info-right-col {
+  .profile-info-right-col,
+  .bio-edit {
     display: contents;
   }
   .profile-avatar-container {

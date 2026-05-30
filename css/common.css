@@ -100,6 +100,19 @@ body {
   background: rgba(255, 255, 255, 0.5);
 }
 
+/* --- TOAST NOTIFICATIONS (Toastify wrapper; colours/position set in js/toast.js) --- */
+.toastify.mk-toast {
+  /* hug the message: width follows the text and stays on one line, so there's no
+     awkward empty space on short toasts and no fixed width to fight. fit-content is
+     needed for the phone's centred toast, where Toastify sets left:0/right:0 (which
+     would otherwise stretch the box to max-width). */
+  width: -moz-fit-content;
+  width: fit-content;
+  white-space: nowrap;
+  max-width: 90vw; /* safety only — a very long message won't run off-screen */
+  line-height: 1.35;
+}
+
 /* ---------- APP SHELL ---------- */
 .app-body {
   background-image: url("../assets/images/movie-knight-gradient-bg.svg");
@@ -180,7 +193,7 @@ body {
 #settingsToggleBtn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
 }
 
 .custom-gear {
@@ -265,16 +278,16 @@ body {
 
 /* --- NAV LINKS --- */
 .nav-link {
-  width: 194.13px;
-  min-height: 66.59px;
-  font-size: 25px;
+  width: 194px;
+  min-height: 50px;
+  font-size: 18px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
   background-color: rgba(var(--pink), 0.03);
   color: var(--text-dim);
   text-decoration: none;
-  padding: 12px 15px;
+  padding: 10px 15px;
   border-top-right-radius: 12px;
   border-bottom-right-radius: 12px;
   transition:
@@ -284,8 +297,12 @@ body {
     box-shadow var(--t-base);
 }
 
-.nav-link img {
-  padding-right: 15px;
+.nav-link img,
+.nav-link .nav-logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  padding: 0;
 }
 
 .nav-link:hover img {
