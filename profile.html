@@ -8,6 +8,11 @@
     <link rel="stylesheet" href="css/common.css" />
     <link rel="stylesheet" href="css/profile.css" />
     <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
+    <!-- defer: download during HTML parse, then run in order after the DOM is ready -->
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/common.js" defer></script>
+    <script src="js/profile.js" defer></script>
   </head>
 
   <body class="app-body">
@@ -353,10 +358,5 @@
          The publish/unpublish item's label + icon are set by profile.js per collection. -->
     <!-- items are built in js/profile.js (renderMenu) per collection -->
     <div class="collection-menu" id="collectionMenu" hidden></div>
-
-    <script src="vendor/toastify/toastify.min.js"></script>
-    <script src="js/toast.js"></script>
-    <script src="js/common.js"></script>
-    <script src="js/profile.js"></script>
   </body>
 </html>

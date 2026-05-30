@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/home.css">
     <link rel="stylesheet" href="vendor/toastify/toastify.min.css">
+    <!-- defer: download during HTML parse, then run in order after the DOM is ready -->
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/common.js" defer></script>
+    <script src="js/home.js" defer></script>
 </head>
 
 <body class="app-body">
@@ -247,11 +252,6 @@
 
         <div class="nav-backdrop" id="navBackdrop" hidden></div>
     </div>
-
-    <script src="vendor/toastify/toastify.min.js"></script>
-    <script src="js/toast.js"></script>
-    <script src="js/common.js"></script>
-    <script src="js/home.js"></script>
 </body>
 
 </html>
