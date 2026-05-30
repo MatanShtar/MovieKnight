@@ -329,9 +329,8 @@ body {
 .user-rail {
   width: var(--rail-width);
   flex-shrink: 0;
-  /* top offset lines the widget up with the search bar:
-       .main-content padding-top (30) + .top-header margin-top (42) */
-  padding: 72px 0 0 0;
+  /* same top offset on home and profile so the login widget sits at one height */
+  padding: 24px 0 0 0;
   justify-content: center;
   display: flex;
   /* stays pinned while the page scrolls (sidebar is already sticky) */
