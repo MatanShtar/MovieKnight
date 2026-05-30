@@ -626,9 +626,7 @@ function renderPlatforms() {
 }
 
 function renderPlatformDropdown() {
-  platformDropdown.innerHTML = "";
-  injectSearchBar(platformDropdown);
-
+ 
   allPlatforms
     .filter((p) => !activePlatforms.includes(p))
     .forEach((platform) => {
