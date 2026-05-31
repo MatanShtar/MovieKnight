@@ -1,23 +1,22 @@
-/* common.css — base styles + shared app chrome (sidebar, header, auth widget).
+/* common.css - base styles + shared app chrome (sidebar, header, auth widget).
    Loaded by every page. */
 
 /* ==========================================
    1. DESIGN TOKENS (VARIABLES)
    ========================================== */
 :root {
- 
-  --pink: 255, 136, 179;        /* primary interactive pink */
-  --pink-alt: 243, 135, 177;    /* header / AI accent pink */
-  --rose: 188, 102, 118;        /* card borders, submit button, overlay buttons */
-  --maroon: 89, 30, 38;         /* pills, inner dropdowns */
-  --maroon-light: 132, 52, 63;  /* filter + sort dropdown surfaces */
-  --wine: 73, 8, 15;            /* overlay action buttons */
-  --ink: 26, 26, 46;            /* deep background / scrollbar track (#1a1a2e) */
-  --danger: 255, 107, 107;      /* destructive text / error glow */
-  --danger-input: 255, 71, 87;  /* invalid-field border + glow (#ff4757) */
-  --surface-menu: #1c1613;      /* collection popup menu */
-  --surface-dropdown: #492828;  /* header profile dropdown */
-  --surface-chip: #2d2319;      /* collection menu button, badge title ink */
+  --pink: 255, 136, 179; /* primary interactive pink */
+  --pink-alt: 243, 135, 177; /* header / AI accent pink */
+  --rose: 188, 102, 118; /* card borders, submit button, overlay buttons */
+  --maroon: 89, 30, 38; /* pills, inner dropdowns */
+  --maroon-light: 132, 52, 63; /* filter + sort dropdown surfaces */
+  --wine: 73, 8, 15; /* overlay action buttons */
+  --ink: 26, 26, 46; /* deep background / scrollbar track (#1a1a2e) */
+  --danger: 255, 107, 107; /* destructive text / error glow */
+  --danger-input: 255, 71, 87; /* invalid-field border + glow (#ff4757) */
+  --surface-menu: #1c1613; /* collection popup menu */
+  --surface-dropdown: #492828; /* header profile dropdown */
+  --surface-chip: #2d2319; /* collection menu button, badge title ink */
   --text: #ffffff;
   --text-muted: rgba(226, 226, 226, 0.7);
   --text-soft: rgba(255, 255, 255, 0.7);
@@ -28,8 +27,13 @@
   --t-fast: 0.15s;
   --t-base: 0.25s;
   --t-slow: 0.4s;
-  --ease-snap: cubic-bezier(0.25, 1, 0.5, 1);    /* quick, decisive */
-  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot — playful */
+  --ease-snap: cubic-bezier(0.25, 1, 0.5, 1); /* quick, decisive */
+  --ease-pop: cubic-bezier(
+    0.34,
+    1.56,
+    0.64,
+    1
+  );
 }
 
 /* ==========================================
@@ -74,8 +78,12 @@ body {
    3. ANIMATIONS & SCROLLBARS
    ========================================== */
 @keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 ::-webkit-scrollbar {
@@ -99,7 +107,7 @@ body {
   width: -moz-fit-content;
   width: fit-content;
   white-space: nowrap;
-  max-width: 90vw; 
+  max-width: 90vw;
   line-height: 1.35;
 }
 
@@ -208,7 +216,9 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: color 0.2s ease, transform var(--t-fast) var(--ease-snap);
+  transition:
+    color 0.2s ease,
+    transform var(--t-fast) var(--ease-snap);
 }
 
 .settings-submenu a:hover {
@@ -230,7 +240,6 @@ body {
   opacity: 0.7;
   transform: rotate(-90deg);
 }
-
 
 .settings-container.open .settings-arrow {
   transform: rotate(0deg);
@@ -318,9 +327,9 @@ body {
    8. MAIN CONTENT WRAPPER
    ========================================== */
 .main-content {
-  --content-width: 1640px; 
+  --content-width: 1640px;
   flex: 1;
-  min-width: 0; 
+  min-width: 0;
   padding: 30px 40px 100px 40px;
   display: flex;
   flex-direction: column;
@@ -360,7 +369,7 @@ body {
   border-radius: 12px;
   min-width: 129.63px;
   min-height: 48.85px;
-  display: flex; 
+  display: flex;
   align-items: center;
   justify-content: center;
   background-color: rgba(var(--pink-alt), 0.13);
@@ -392,7 +401,7 @@ body {
   align-items: center;
   gap: 15px;
   cursor: pointer;
-  position: relative; 
+  position: relative;
 }
 
 .user-welcome {
@@ -451,7 +460,9 @@ body {
   top: calc(100% + 10px);
   right: 0;
   width: 150px;
-  background-color: var(--surface-menu); /* same black as the collection actions menu */
+  background-color: var(
+    --surface-menu
+  );
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 8px 0;
@@ -608,7 +619,7 @@ body {
    13. RESPONSIVE DESIGN (MEDIA QUERIES)
    ========================================== */
 @media (max-width: 1024px) {
-  /* Stack the shell; the sidebar becomes a dropdown menu under the bar. */
+  /* The sidebar becomes a dropdown menu under the bar. */
   .app-container {
     flex-direction: column;
   }
@@ -640,7 +651,7 @@ body {
   .mobile-brand-knight {
     height: 38px;
     width: auto;
-    filter: brightness(0) invert(1); /* the source asset is black; show it white */
+    filter: brightness(0) invert(1);
   }
 
   .mobile-brand-text {
@@ -667,12 +678,15 @@ body {
       background-color var(--t-base) ease,
       transform var(--t-fast) var(--ease-snap);
   }
+
   .mobile-nav-toggle:hover {
     background: rgba(var(--pink), 0.25);
   }
+
   .mobile-nav-toggle:active {
     transform: scale(0.94);
   }
+
   .mobile-nav-toggle img {
     width: 22px;
     height: 22px;
@@ -680,8 +694,9 @@ body {
 
   /* --- Sidebar becomes a dropdown menu that opens under the bar --- */
   .sidebar-logo {
-    display: none; /* the top bar already shows the brand */
+    display: none;
   }
+
   .sidebar {
     position: fixed;
     top: 64px;
@@ -703,18 +718,21 @@ body {
       opacity var(--t-base) ease,
       transform var(--t-base) var(--ease-snap);
   }
+
   body.nav-open .sidebar {
     opacity: 1;
     transform: translateY(0);
     pointer-events: auto;
   }
+
   .main-nav {
     gap: 6px;
   }
-  /* Settings spans the full menu width like every other item */
+
   .settings-container {
     width: 100%;
   }
+
   .nav-link {
     width: 100%;
     min-height: 50px;
@@ -723,15 +741,15 @@ body {
     border-radius: 12px;
     gap: 14px;
   }
+
   .nav-link:hover {
-    transform: none; /* menu items stay put */
+    transform: none;
   }
+
   .nav-link.active {
     background: rgba(var(--pink), 0.15);
   }
-  /* one uniform icon box for every item — the img icons and the gear svg.
-     (the desktop padding-right/left was shrinking the img icons under border-box,
-     which is why the gear looked oversized and the About icon vanished) */
+
   .nav-link img,
   .nav-link .nav-logo {
     width: 24px;
@@ -739,12 +757,15 @@ body {
     object-fit: contain;
     padding: 0;
   }
+
   .about-link img {
     padding-left: 0;
   }
+
   .about-link span {
     padding-left: 0;
   }
+
   .about-link {
     margin-top: 14px;
     margin-bottom: 4px;
@@ -761,6 +782,7 @@ body {
     transition: opacity var(--t-base) ease;
     z-index: 1200;
   }
+
   body.nav-open .nav-backdrop {
     opacity: 1;
     pointer-events: auto;
@@ -775,7 +797,6 @@ body {
     gap: 16px;
   }
 
-
   .top-header {
     margin-top: 0;
   }
@@ -784,18 +805,22 @@ body {
   .mobile-topbar .user-welcome {
     text-align: right;
   }
+
   .mobile-topbar .welcome-text {
     font-size: 13px;
   }
+
   .mobile-topbar .username-text {
     font-size: 14px;
   }
+
   .mobile-topbar .header-login-btn {
     font-size: 18px;
     min-width: 0;
     min-height: 42px;
     padding: 0 18px;
   }
+
   .mobile-topbar .profile-pic {
     width: 44px;
     height: 44px;
@@ -807,12 +832,15 @@ body {
   .mobile-brand-knight {
     height: 32px;
   }
+
   .mobile-brand-text {
     height: 16px;
   }
+
   .mobile-topbar .user-welcome {
     display: none;
   }
+  
   .mobile-topbar .profile-pic {
     width: 40px;
     height: 40px;

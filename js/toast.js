@@ -3,22 +3,33 @@
 // ==========================================
 window.toast = (function () {
   const TYPES = {
-    success: { icon: "✓", background: "linear-gradient(135deg, #1d9d6c, #2bbd7e)" },
-    info: { icon: "ⓘ", background: "linear-gradient(135deg, #3a7bd5, #4a9fe0)" },
-    soon: { icon: "✦", background: "linear-gradient(135deg, #8338ec, #c77dff)" }, // "Coming Soon" — its own colour
-    error: { icon: "✕", background: "linear-gradient(135deg, #c0392b, #e7503f)" },
+    success: {
+      icon: "✓",
+      background: "linear-gradient(135deg, #1d9d6c, #2bbd7e)",
+    },
+    info: {
+      icon: "ⓘ",
+      background: "linear-gradient(135deg, #3a7bd5, #4a9fe0)",
+    },
+    soon: {
+      icon: "✦",
+      background: "linear-gradient(135deg, #8338ec, #c77dff)",
+    },
+    error: {
+      icon: "✕",
+      background: "linear-gradient(135deg, #c0392b, #e7503f)",
+    },
   };
 
   // phones get top-center toasts; wider screens get bottom-right
   const isPhone = () => window.matchMedia("(max-width: 1024px)").matches;
-
 
   // ==========================================
   // 2. TOAST DISPLAY LOGIC
   // ==========================================
   function show(message, type = "info", options = {}) {
     if (typeof Toastify !== "function") {
-      console.warn("[toast] Toastify not loaded — message was:", message);
+      console.warn("[toast] Toastify not loaded - message was:", message);
       return;
     }
     const t = TYPES[type] || TYPES.info;
@@ -42,13 +53,14 @@ window.toast = (function () {
     }).showToast();
   }
 
-// ==========================================
-// 3. DECLARATIVE HTML HOOKS
-// ==========================================
+  // ==========================================
+  // 3. DECLARATIVE HTML HOOKS
+  // ==========================================
   document.addEventListener("click", (e) => {
     const el = e.target.closest("[data-toast]");
     if (!el) return;
-    if (el.tagName === "A" && el.getAttribute("href") === "#") e.preventDefault();
+    if (el.tagName === "A" && el.getAttribute("href") === "#")
+      e.preventDefault();
     const raw = el.getAttribute("data-toast") || "";
     const m = raw.match(/^(success|info|error|soon)\s*:\s*([\s\S]+)$/);
     if (m) show(m[2], m[1]);

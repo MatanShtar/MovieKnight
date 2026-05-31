@@ -1,272 +1,273 @@
-/* auth.css — login & signup pages only. Loaded by login.html and signup.html. */
+/* auth.css - login & signup pages only. Loaded by login.html and signup.html. */
 
 /* ==========================================
    1. LOGIN PAGE BACKGROUND
    ========================================== */
 .login-body {
-    background-image: url('../assets/images/movie-knight-gradient-bg.svg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+  background-image: url("../assets/images/movie-knight-gradient-bg.svg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 
-    /* Fallback color just in case the image loads slowly */
-    background-color: rgb(var(--ink));
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  /* Fallback color just in case the image loads slowly */
+  background-color: rgb(var(--ink));
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-
 .login-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 18px;
-    width: 100%;
-    padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 20px 0;
 }
 
 .main-logo {
-    width: 400px;
-    height: auto;
-    margin-bottom: 16px;
-    transition: transform var(--t-slow) var(--ease-pop);
-    animation: authEnter 0.5s var(--ease-snap) backwards;
+  width: 400px;
+  height: auto;
+  margin-bottom: 16px;
+  transition: transform var(--t-slow) var(--ease-pop);
+  animation: authEnter 0.5s var(--ease-snap) backwards;
 }
 
 /* gentle fade-up as the form arrives */
 @keyframes authEnter {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ==========================================
    2. LOGIN FORM & INPUTS
    ========================================== */
 .login-box {
-    background-color: rgba(var(--pink), 0.13);
-    width: 540px;
-    height: auto;
-    padding: 32px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
-    animation: authEnter 0.55s var(--ease-snap) 0.08s backwards;
+  background-color: rgba(var(--pink), 0.13);
+  width: 540px;
+  height: auto;
+  padding: 32px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: center;
+  animation: authEnter 0.55s var(--ease-snap) 0.08s backwards;
 }
 
 .login-box h2 {
-    color: var(--text-heading);
-    font-size: 60px;
-    letter-spacing: 15px;
-    margin-bottom: 10px;
-    font-weight: 300;
+  color: var(--text-heading);
+  font-size: 60px;
+  letter-spacing: 15px;
+  margin-bottom: 10px;
+  font-weight: 300;
 }
 
 /* Input Fields */
 
 .input-group input::placeholder {
-    color: var(--text-muted);
-    font-weight: 300;
+  color: var(--text-muted);
+  font-weight: 300;
 }
 
 .input-group input {
-    width: 432.13px;
-    height: 41.76px;
-    padding: 12px 15px;
-    background-color: rgba(var(--pink), 0.07);
-    border: 0px solid rgba(var(--pink), 0.07);
-    box-shadow: none;
-    border-radius: 12px;
-    color: var(--text);
-    font-size: 20px;
-    transition:
-        background-color var(--t-base) ease,
-        box-shadow var(--t-base) ease;
+  width: 432.13px;
+  height: 41.76px;
+  padding: 12px 15px;
+  background-color: rgba(var(--pink), 0.07);
+  border: 0px solid rgba(var(--pink), 0.07);
+  box-shadow: none;
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 20px;
+  transition:
+    background-color var(--t-base) ease,
+    box-shadow var(--t-base) ease;
 }
 
 .input-group input:focus {
-    outline: none;
-    background-color: rgba(var(--pink), 0.12);
-    box-shadow: 0 0 0 2px rgba(var(--pink), 0.45);
+  outline: none;
+  background-color: rgba(var(--pink), 0.12);
+  box-shadow: 0 0 0 2px rgba(var(--pink), 0.45);
 }
 
 .input-group input:-webkit-autofill,
 .input-group input:-webkit-autofill:hover,
 .input-group input:-webkit-autofill:focus,
 .input-group input:-webkit-autofill:active {
-    transition: background-color 5000s ease-in-out 0s;
-    -webkit-text-fill-color: white !important;
-    caret-color: white;
+  transition: background-color 5000s ease-in-out 0s;
+  -webkit-text-fill-color: white !important;
+  caret-color: white;
 }
 
 /* ==========================================
    3. SUBMIT BUTTON & LINKS
    ========================================== */
 .submit-btn {
-    width: 133px;
-    height: 47px;
-    margin: 10px auto;
-    padding: 10px;
-    background-color: rgba(var(--rose), 0.5);
-    color: var(--text);
-    border: none;
-    border-radius: 50px;
-    cursor: pointer;
-    font-size: 20px;
-    transition:
-        background-color var(--t-base) ease,
-        box-shadow var(--t-base) ease,
-        transform var(--t-fast) var(--ease-snap);
+  width: 133px;
+  height: 47px;
+  margin: 10px auto;
+  padding: 10px;
+  background-color: rgba(var(--rose), 0.5);
+  color: var(--text);
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-size: 20px;
+  transition:
+    background-color var(--t-base) ease,
+    box-shadow var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
 }
 
 .submit-btn:hover {
-    background-color: rgba(var(--rose), 0.7);
-    box-shadow: 0 6px 18px rgba(var(--rose), 0.35);
+  background-color: rgba(var(--rose), 0.7);
+  box-shadow: 0 6px 18px rgba(var(--rose), 0.35);
 }
 
 .submit-btn:active {
-    transform: scale(0.96);
+  transform: scale(0.96);
 }
 
 /* Bottom Links */
 .form-links p {
-    color: var(--text);
-    font-size: 16px;
-    margin-bottom: 10px;
+  color: var(--text);
+  font-size: 16px;
+  margin-bottom: 10px;
 }
 
 .form-links a {
-    color: var(--text);
-    text-decoration: underline;
-    transition: color var(--t-fast) ease;
+  color: var(--text);
+  text-decoration: underline;
+  transition: color var(--t-fast) ease;
 }
 
 .form-links a:hover {
-    color: rgb(var(--pink));
+  color: rgb(var(--pink));
 }
 
 /* ==========================================
    4. FORM VALIDATION ERRORS
    ========================================== */
 .input-error {
-    border: 1px solid rgb(var(--danger-input)) !important;
-    box-shadow: 0 0 10px rgba(var(--danger-input), 0.3) !important; 
-    background-color: rgba(var(--danger-input), 0.05) !important; 
+  border: 1px solid rgb(var(--danger-input)) !important;
+  box-shadow: 0 0 10px rgba(var(--danger-input), 0.3) !important;
+  background-color: rgba(var(--danger-input), 0.05) !important;
 }
 
 .error-message {
-    color: rgb(var(--danger));
-    font-size: 13px;
-    text-align: center;
-    background-color: rgba(var(--danger), 0.1);
-    padding: 8px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+  color: rgb(var(--danger));
+  font-size: 13px;
+  text-align: center;
+  background-color: rgba(var(--danger), 0.1);
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .error-message.show {
-    visibility: visible;
-    opacity: 1;
+  visibility: visible;
+  opacity: 1;
 }
 
 /* ==========================================
    5. SIGNUP PAGE LAYOUT
    ========================================== */
 .signup-body {
-    background-image: url('../assets/images/movie-knight-gradient-bg.svg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    /* Fallback color just in case the image loads slowly */
-    background-color: rgb(var(--ink));
+  background-image: url("../assets/images/movie-knight-gradient-bg.svg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* Fallback color just in case the image loads slowly */
+  background-color: rgb(var(--ink));
 
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .signup-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 18px;
-    width: 100%;
-    padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 20px 0;
 }
 
 .signup-box {
-    background-color: rgba(var(--pink), 0.13);
-    width: 540px;
-    height: auto;
-    padding: 32px 40px;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    text-align: center;
-    animation: authEnter 0.55s var(--ease-snap) 0.08s backwards;
+  background-color: rgba(var(--pink), 0.13);
+  width: 540px;
+  height: auto;
+  padding: 32px 40px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+  animation: authEnter 0.55s var(--ease-snap) 0.08s backwards;
 }
 
 .signup-box h2 {
-    color: var(--text-heading);
-    font-size: 46px;
-    letter-spacing: 12px;
-    margin-bottom: 6px;
-    font-weight: 300;
+  color: var(--text-heading);
+  font-size: 46px;
+  letter-spacing: 12px;
+  margin-bottom: 6px;
+  font-weight: 300;
 }
 
 /* Date Field */
 .input-group input[type="date"] {
-    color: var(--text-muted);
-    font-weight: 300;
-    text-transform: uppercase;
-    font-family: inherit;
-    direction: ltr;   
-    text-align: left;
+  color: var(--text-muted);
+  font-weight: 300;
+  text-transform: uppercase;
+  font-family: inherit;
+  direction: ltr;
+  text-align: left;
 }
-
 
 .input-group input[type="date"]::-webkit-calendar-picker-indicator {
-
-    display: none;
+  display: none;
 }
-
-
 
 /* ==========================================
    6. RESPONSIVE DESIGN
    ========================================== */
 @media (max-width: 600px) {
-    .login-wrapper,
-    .signup-wrapper {
-        padding: 16px;
-    }
-    .main-logo {
-        width: min(78vw, 360px);
-        margin-bottom: 8px;
-    }
-    .login-box,
-    .signup-box {
-        width: 100%;
-        max-width: 480px;
-        padding: 24px 20px;
-    }
-    .login-box h2 {
-        font-size: clamp(34px, 12vw, 60px);
-        letter-spacing: 8px;
-    }
-    .signup-box h2 {
-        font-size: clamp(28px, 9vw, 46px);
-        letter-spacing: 6px;
-    }
-    .input-group input {
-        width: 100%;
-    }
+  .login-wrapper,
+  .signup-wrapper {
+    padding: 16px;
+  }
+  .main-logo {
+    width: min(78vw, 360px);
+    margin-bottom: 8px;
+  }
+  .login-box,
+  .signup-box {
+    width: 100%;
+    max-width: 480px;
+    padding: 24px 20px;
+  }
+  .login-box h2 {
+    font-size: clamp(34px, 12vw, 60px);
+    letter-spacing: 8px;
+  }
+  .signup-box h2 {
+    font-size: clamp(28px, 9vw, 46px);
+    letter-spacing: 6px;
+  }
+  .input-group input {
+    width: 100%;
+  }
 }
