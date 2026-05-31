@@ -1,10 +1,11 @@
 /* common.css — base styles + shared app chrome (sidebar, header, auth widget).
    Loaded by every page. */
 
-/* ---------- DESIGN TOKENS ---------- */
+/* ==========================================
+   1. DESIGN TOKENS (VARIABLES)
+   ========================================== */
 :root {
-  /* Brand palette — stored as raw RGB triples so they compose with any alpha:
-     rgba(var(--pink), 0.13). Keeps the many translucent tints in sync from one place. */
+ 
   --pink: 255, 136, 179;        /* primary interactive pink */
   --pink-alt: 243, 135, 177;    /* header / AI accent pink */
   --rose: 188, 102, 118;        /* card borders, submit button, overlay buttons */
@@ -14,24 +15,16 @@
   --ink: 26, 26, 46;            /* deep background / scrollbar track (#1a1a2e) */
   --danger: 255, 107, 107;      /* destructive text / error glow */
   --danger-input: 255, 71, 87;  /* invalid-field border + glow (#ff4757) */
-
-  /* Solid surfaces */
   --surface-menu: #1c1613;      /* collection popup menu */
   --surface-dropdown: #492828;  /* header profile dropdown */
   --surface-chip: #2d2319;      /* collection menu button, badge title ink */
-
-  /* Text */
   --text: #ffffff;
   --text-muted: rgba(226, 226, 226, 0.7);
   --text-soft: rgba(255, 255, 255, 0.7);
   --text-dim: #ccc;
   --text-heading: #c2b5b4;
-
-  /* Neutral overlays (hover/active washes) */
   --overlay: rgba(255, 255, 255, 0.1);
   --overlay-weak: rgba(255, 255, 255, 0.05);
-
-  /* Motion */
   --t-fast: 0.15s;
   --t-base: 0.25s;
   --t-slow: 0.4s;
@@ -39,7 +32,9 @@
   --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1); /* slight overshoot — playful */
 }
 
-/* ---------- BASE / RESET ---------- */
+/* ==========================================
+   2. BASE STYLES & RESET
+   ========================================== */
 * {
   margin: 0;
   padding: 0;
@@ -55,19 +50,15 @@
 
 body {
   font-family: "Lao Sangam MN", sans-serif;
-  font-size: 16px; /* explicit type base — the rest of the scale (12/15/18/20/25/40) keys off this */
+  font-size: 16px;
   line-height: 1.4;
 }
 
-/* Keyboard focus ring — shows only for keyboard users, in the brand accent.
-   Elements with their own focus glow (search, inputs, custom dropdowns) override
-   this with box-shadow below. */
 :focus-visible {
   outline: 2px solid rgba(var(--pink), 0.9);
   outline-offset: 2px;
 }
 
-/* Respect users who prefer less motion: keep the end states, drop the movement. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -79,13 +70,14 @@ body {
   }
 }
 
-/* loading-skeleton shimmer — shared by the home movie grid and the profile collections */
+/* ==========================================
+   3. ANIMATIONS & SCROLLBARS
+   ========================================== */
 @keyframes shimmer {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
 
-/* --- GLOBAL PAGE SCROLLBAR (the main one stays visible) --- */
 ::-webkit-scrollbar {
   width: 10px;
 }
@@ -100,20 +92,20 @@ body {
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* --- TOAST NOTIFICATIONS (Toastify wrapper; colours/position set in js/toast.js) --- */
+/* ==========================================
+   4. TOAST NOTIFICATIONS
+   ========================================== */
 .toastify.mk-toast {
-  /* hug the message: width follows the text and stays on one line, so there's no
-     awkward empty space on short toasts and no fixed width to fight. fit-content is
-     needed for the phone's centred toast, where Toastify sets left:0/right:0 (which
-     would otherwise stretch the box to max-width). */
   width: -moz-fit-content;
   width: fit-content;
   white-space: nowrap;
-  max-width: 90vw; /* safety only — a very long message won't run off-screen */
+  max-width: 90vw; 
   line-height: 1.35;
 }
 
-/* ---------- APP SHELL ---------- */
+/* ==========================================
+   5. APP SHELL LAYOUT
+   ========================================== */
 .app-body {
   background-image: url("../assets/images/movie-knight-gradient-bg.svg");
   background-size: cover;
@@ -124,15 +116,15 @@ body {
 }
 
 .app-container {
-  /* sidebar AND the right user-rail share this width for symmetry; kept lean so the
-     middle content column stays wide */
   --rail-width: clamp(200px, 14vw, 250px);
   display: flex;
   min-height: 100vh;
   align-items: stretch;
 }
 
-/* --- SIDEBAR --- */
+/* ==========================================
+   6. SIDEBAR NAVIGATION
+   ========================================== */
 .sidebar {
   width: var(--rail-width);
   display: flex;
@@ -172,6 +164,9 @@ body {
   flex-grow: 1;
 }
 
+/* ==========================================
+   7. SETTINGS MENU
+   ========================================== */
 .settings-container {
   display: flex;
   flex-direction: column;
@@ -233,10 +228,10 @@ body {
 
   transition: transform 0.6s ease;
   opacity: 0.7;
-  transform: rotate(-90deg); /* closed: chevron points RIGHT */
+  transform: rotate(-90deg);
 }
 
-/* open: rotate 90deg clockwise so the chevron points DOWN */
+
 .settings-container.open .settings-arrow {
   transform: rotate(0deg);
 }
@@ -255,7 +250,6 @@ body {
   padding-left: 50px;
 }
 
-/* The open state for the links */
 .settings-container.open .settings-submenu {
   max-height: 200px;
   opacity: 1;
@@ -320,19 +314,23 @@ body {
   color: var(--text);
 }
 
-/* --- MAIN CONTENT AREA --- */
+/* ==========================================
+   8. MAIN CONTENT WRAPPER
+   ========================================== */
 .main-content {
-  --content-width: 1640px; /* shared max width for header / controls / grid / profile blocks */
-  flex: 1; /* fill the area beside the sidebar */
-  min-width: 0; /* let content shrink instead of overflowing */
+  --content-width: 1640px; 
+  flex: 1;
+  min-width: 0; 
   padding: 30px 40px 100px 40px;
   display: flex;
   flex-direction: column;
-  align-items: center; /* centers each content block in the area beside the sidebar */
+  align-items: center;
   gap: 20px;
 }
 
-/* --- TOP HEADER (shared shell) --- */
+/* ==========================================
+   9. TOP HEADER & USER RAIL
+   ========================================== */
 .top-header {
   margin-top: 42px;
   width: 100%;
@@ -342,28 +340,27 @@ body {
   gap: 30px;
 }
 
-/* Right rail — the auth widget gets its own column, symmetrical to the sidebar */
 .user-rail {
   width: var(--rail-width);
   flex-shrink: 0;
-  /* same top offset on home and profile so the login widget sits at one height */
   padding: 24px 0 0 0;
   justify-content: center;
   display: flex;
-  /* stays pinned while the page scrolls (sidebar is already sticky) */
   position: sticky;
   top: 0;
   align-self: flex-start;
 }
 
-/* --- LOGIN BUTTON (shared header) --- */
+/* ==========================================
+   10. HEADER AUTHENTICATION WIDGET
+   ========================================== */
 .header-login-btn {
   appearance: none;
   border: 0px;
   border-radius: 12px;
   min-width: 129.63px;
   min-height: 48.85px;
-  display: flex; /* Centers the text inside */
+  display: flex; 
   align-items: center;
   justify-content: center;
   background-color: rgba(var(--pink-alt), 0.13);
@@ -395,7 +392,7 @@ body {
   align-items: center;
   gap: 15px;
   cursor: pointer;
-  position: relative; /* anchor for the dropdown */
+  position: relative; 
 }
 
 .user-welcome {
@@ -425,10 +422,6 @@ body {
   align-items: center;
 }
 
-/* Single consolidated definition. (Was three conflicting rules — 65px, 42px, and a
-   separate img rule — plus an invalid `border: -3px`.) Renders at 65px exactly as
-   before; the hover ring now actually shows because it uses box-shadow, not the
-   zero-width border it used to set. */
 .profile-pic {
   width: 65px;
   height: 65px;
@@ -504,7 +497,9 @@ body {
   background-color: rgba(var(--danger), 0.1) !important;
 }
 
-/* --- CONFIRM MODAL (sign-out, injected by common.js) --- */
+/* ==========================================
+   11. GLOBAL MODALS
+   ========================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -596,10 +591,9 @@ body {
   background: rgb(var(--danger));
 }
 
-/* ============================================================
-   MOBILE CHROME — top bar, hamburger, dropdown nav menu.
-   These pieces are hidden on desktop and revealed under 1024px.
-   ============================================================ */
+/* ==========================================
+   12. MOBILE NAVIGATION TOPBAR
+   ========================================== */
 .mobile-topbar {
   display: none;
 }
@@ -610,6 +604,9 @@ body {
   display: none;
 }
 
+/* ==========================================
+   13. RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================== */
 @media (max-width: 1024px) {
   /* Stack the shell; the sidebar becomes a dropdown menu under the bar. */
   .app-container {
@@ -769,16 +766,16 @@ body {
     pointer-events: auto;
   }
 
-  /* The right rail is empty on mobile (its auth widget moves into the top bar). */
   .user-rail {
     display: none;
   }
 
-  /* --- Content fills the width --- */
   .main-content {
     padding: 16px 16px 64px;
     gap: 16px;
   }
+
+
   .top-header {
     margin-top: 0;
   }

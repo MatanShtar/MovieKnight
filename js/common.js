@@ -1,7 +1,8 @@
 // common.js — sidebar + auth logic shared by every page (index.html, profile.html)
 
-// Resolve once every image has loaded or errored, with a timeout so a broken image
-// can't stall the reveal. Used by the home grid and the profile collections.
+// ==========================================
+// 1. IMAGE PRELOADING HELPER
+// ==========================================
 function preloadImages(urls, timeoutMs = 2500) {
     const loaded = Promise.all(
         urls.map(
@@ -17,33 +18,31 @@ function preloadImages(urls, timeoutMs = 2500) {
     return Promise.race([loaded, timeout]);
 }
 
-// --- AUTHENTICATION & POST-LOGIN UI ---
+// ==========================================
+// 2. AUTHENTICATION & POST-LOGIN UI
+// ==========================================
 const loginBtn = document.getElementById('loginBtn');
 const userProfileDisplay = document.getElementById('userProfileDisplay');
 const displayUsername = document.getElementById('displayUsername');
 const sidebarSettings = document.getElementById('sidebarSettings');
 const settingsToggleBtn = document.getElementById('settingsToggleBtn');
 const settingsSubmenu = document.getElementById('settingsSubmenu');
-
-// Single source of truth for the logged-in user (set by validation.js on login)
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 
 if (currentUser) {
-    // Logged in: swap to the profile UI and reveal the sidebar Settings
     if (loginBtn) loginBtn.style.display = 'none';
     if (userProfileDisplay) userProfileDisplay.style.display = 'flex';
     if (sidebarSettings) sidebarSettings.style.display = 'flex';
     if (displayUsername) displayUsername.textContent = currentUser.username;
 } else {
-    // Guest: default state
     if (loginBtn) loginBtn.style.display = 'flex';
     if (userProfileDisplay) userProfileDisplay.style.display = 'none';
     if (sidebarSettings) sidebarSettings.style.display = 'none';
 }
 
-// --- SIDEBAR SETTINGS EXPAND / COLLAPSE ---
-// Toggling .open drives the background, the sliding submenu, the gear spin,
-// AND the arrow rotation — all via CSS on .settings-container.open.
+// ==========================================
+// 3. SIDEBAR SETTINGS (EXPAND/COLLAPSE)
+// ==========================================
 if (settingsToggleBtn && sidebarSettings && settingsSubmenu) {
     settingsToggleBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -52,7 +51,9 @@ if (settingsToggleBtn && sidebarSettings && settingsSubmenu) {
     });
 }
 
-// --- SIGN OUT (with confirmation) ---
+// ==========================================
+// 4. SIGN OUT MODAL & LOGIC
+// ==========================================
 const signOutBtn = document.getElementById('signOutBtn');
 if (signOutBtn) {
     signOutBtn.addEventListener('click', (e) => {
@@ -106,9 +107,9 @@ function hideSignOutConfirm() {
     if (overlay) overlay.classList.remove('show');
 }
 
-// --- PROFILE NAV LINK GUARD ---
-// Clicking "Profile" goes to the profile page only when logged in;
-// otherwise it sends the user to the login page.
+// ==========================================
+// 5. PROFILE NAV LINK GUARD
+// ==========================================
 const profileNavLink = document.querySelector('.main-nav a[href="profile.html"]');
 if (profileNavLink) {
     profileNavLink.addEventListener('click', (e) => {
@@ -118,7 +119,9 @@ if (profileNavLink) {
     });
 }
 
-// --- HEADER PROFILE-PIC DROPDOWN ---
+// ==========================================
+// 6. HEADER PROFILE DROPDOWN
+// ==========================================
 const headerProfileBtn = document.getElementById('headerProfileBtn');
 const headerDropdown = document.getElementById('headerDropdown');
 if (headerProfileBtn && headerDropdown) {
@@ -137,7 +140,9 @@ if (headerProfileBtn && headerDropdown) {
     });
 }
 
-// --- MOBILE NAV DRAWER + LAYOUT RELOCATION ---
+// ==========================================
+// 7. MOBILE NAV DRAWER & RESPONSIVE LAYOUT
+// ==========================================
 (function () {
     const mq = window.matchMedia('(max-width: 1024px)');
     const topbar = document.querySelector('.mobile-topbar');

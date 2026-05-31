@@ -1,16 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- 1. LOGIN VALIDATION ---
+    // ==========================================
+    // 1. LOGIN VALIDATION
+    // ==========================================
     const loginForm = document.getElementById('loginForm');
-    
+
     if (loginForm) {
         const usernameInput = document.getElementById('loginUsername');
         const passwordInput = document.getElementById('loginPassword');
         const errorMsg = document.getElementById('loginErrorMsg');
 
         loginForm.addEventListener('submit', (e) => {
-            e.preventDefault(); 
-            
+            e.preventDefault();
+
             // Reset states
             usernameInput.classList.remove('input-error');
             passwordInput.classList.remove('input-error');
@@ -42,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 errorMsg.classList.add('show');
                 toast.error("Incorrect email or password.");
             } else {
-                // Save the logged-in user (read by common.js on every page)
+                // Save the logged-in user
                 localStorage.setItem('currentUser', JSON.stringify({ username: usernameInput.value }));
                 window.location.href = "index.html";
             }
@@ -57,7 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 2. SIGNUP VALIDATION ---
+    // ==========================================
+    // 2. SIGNUP VALIDATION
+    // ==========================================
     const signupForm = document.getElementById('signupForm');
 
     if (signupForm) {
@@ -124,7 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Guest mode: clear any saved user and head to the home page
+// ==========================================
+// 3. GUEST MODE NAVIGATION
+// ==========================================
 function continueAsGuest(e) {
     e.preventDefault();
     localStorage.removeItem('currentUser');

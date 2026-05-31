@@ -1,6 +1,7 @@
-// --- HOME MOVIE GRID: FETCH + RENDER FROM JSON ---
-// Show skeletons, fetch the movies, preload their posters, then swap in the real
-// cards so they appear complete (same pattern as the profile collections).
+// ==========================================
+// 1. INITIALIZATION & FETCHING
+// ==========================================
+// Initial grid load and render
 (async () => {
   const grid = document.getElementById("movieGrid");
   if (!grid) return;
@@ -22,7 +23,7 @@
   }
 })();
 
-// One shimmer placeholder card, repeated n times. (preloadImages lives in common.js)
+// Generate skeleton placeholders
 function movieSkeletonMarkup(n) {
   return `<article class="movie-card movie-card--skeleton" aria-hidden="true"></article>`.repeat(n);
 }
@@ -50,7 +51,9 @@ function buildMovieCard(m) {
     </article>`;
 }
 
-// --- MOBILE: Surprise Me sits in the search row on desktop, the controls row on mobile ---
+// ==========================================
+// 2. MOBILE LAYOUT ADAPTATION
+// ==========================================
 (function () {
   const surprise = document.querySelector(".surprise-container");
   const controlsBar = document.querySelector(".controls-bar");
@@ -66,7 +69,9 @@ function buildMovieCard(m) {
   mq.addEventListener("change", place);
 })();
 
-// --- GLOBAL MENU MANAGEMENT ---
+// ==========================================
+// 3. GLOBAL MENU TOGGLES
+// ==========================================
 const filterBtn = document.getElementById("filterToggleBtn");
 const filterMenu = document.getElementById("filterMenu");
 const sortCustomBtn = document.getElementById("sortCustomBtn");
@@ -112,7 +117,6 @@ let allGenres = [],
   }
 })();
 
-// This function guarantees only one inner pill-dropdown is open at a time
 function closeAllInnerDropdowns(exceptMenu = null) {
   document.querySelectorAll(".pill-dropdown").forEach((menu) => {
     if (menu !== exceptMenu) menu.classList.remove("show");
@@ -129,7 +133,6 @@ if (filterBtn && filterMenu) {
 }
 
 // Filter "Apply" button — closes the panel; the chosen filters stay selected.
-// (Placeholder for now — wire it up to actual filtering later.)
 const filterApplyBtn = document.getElementById("filterApplyBtn");
 if (filterApplyBtn && filterMenu) {
   filterApplyBtn.addEventListener("click", (e) => {
@@ -168,7 +171,9 @@ document.addEventListener("click", function (event) {
   closeAllInnerDropdowns();
 });
 
-// --- INVISIBLE KEYBOARD TYPING LOGIC ---
+// ==========================================
+// 4. INVISIBLE KEYBOARD SEARCH
+// ==========================================
 let searchTimeout;
 let typeString = "";
 
@@ -212,16 +217,15 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// --- HELPER: INJECT SEARCH BARS ---
+// ==========================================
+// 5. HELPER FUNCTIONS
+// ==========================================
 function injectSearchBar(dropdownElement) {
   const searchInput = document.createElement("input");
   searchInput.type = "text";
   searchInput.className = "dropdown-search";
   searchInput.placeholder = "Search...";
-
-  // Stop the menu from closing when clicking the input
   searchInput.onclick = (e) => e.stopPropagation();
-  // Stop invisible typing from activating while using this bar
   searchInput.onkeydown = (e) => e.stopPropagation();
 
   // Live filter logic
@@ -236,7 +240,9 @@ function injectSearchBar(dropdownElement) {
   dropdownElement.appendChild(searchInput);
 }
 
-// --- CUSTOM YEAR DROPDOWNS ---
+// ==========================================
+// 6. FILTER: RELEASE YEAR
+// ==========================================
 const fromYearBtn = document.getElementById("fromYearBtn");
 const tillYearBtn = document.getElementById("tillYearBtn");
 const fromYearMenu = document.getElementById("fromYearMenu");
@@ -309,7 +315,9 @@ if (fromYearBtn && tillYearBtn) {
   updateYearConstraints();
 }
 
-// --- GENRES --- (allGenres is loaded from filterData.json at the top of the file)
+// ==========================================
+// 7. FILTER: GENRES
+// ==========================================
 let activeGenres = [];
 
 const genreList = document.getElementById("movieGenreList");
@@ -383,7 +391,9 @@ if (clearGenreBtn) {
     renderDropdown();
   };
 }
-// --- RATING STARS ---
+// ==========================================
+// 8. FILTER: RATING STARS
+// ==========================================
 const BLANK_STAR_PATH = "assets/images/icons/empty-star-icon.svg";
 const FILLED_STAR_PATH = "assets/images/icons/ratings-star.svg";
 
@@ -418,7 +428,9 @@ if (starContainer) {
   });
 }
 
-// --- ACTORS --- (allActors is loaded from filterData.json)
+// ==========================================
+// 9. FILTER: ACTORS
+// ==========================================
 let activeActors = [];
 
 const actorList = document.getElementById("actorList");
@@ -493,7 +505,10 @@ if (clearActorBtn) {
     renderActorDropdown();
   };
 }
-// --- DIRECTORS --- (allDirectors is loaded from filterData.json)
+
+// ==========================================
+// 10. FILTER: DIRECTORS
+// ==========================================
 let activeDirector = null;
 
 const directorList = document.getElementById("directorList");
@@ -559,7 +574,10 @@ if (clearDirectorBtn) {
     renderDirectorDropdown();
   };
 }
-// --- AGE RATINGS --- (allAgeRatings is loaded from filterData.json)
+
+// ==========================================
+// 11. FILTER: AGE RATINGS
+// ==========================================
 const ageRatingBtn = document.getElementById("ageRatingBtn");
 const ageRatingMenu = document.getElementById("ageRatingMenu");
 
@@ -585,7 +603,9 @@ function buildAgeRatings() {
   };
 }
 
-// --- PLATFORMS --- (allPlatforms is loaded from filterData.json)
+// ==========================================
+// 12. FILTER: PLATFORMS
+// ==========================================
 let activePlatforms = [];
 
 const platformList = document.getElementById("platformList");
@@ -659,9 +679,10 @@ if (clearPlatformBtn) {
     renderPlatformDropdown();
   };
 }
-// --- SORT BY DROPDOWN LOGIC ---
-// Each option carries the field to sort on (key, matching the card's data-* name)
-// and the direction (dir). The dropdown handler just hands that to sortMovieGrid().
+// ==========================================
+// 13. SORTING LOGIC
+// ==========================================
+// Sorting configuration
 const sortOptionsData = [
   { short: "Popular", long: "Popular This Week", key: "popularity", dir: "desc" },
   { short: "Rating ↓", long: "Rating (Best to Worst)", key: "rating", dir: "desc" },
@@ -672,8 +693,6 @@ const sortOptionsData = [
   { short: "Oldest", long: "Release Date (Old to New)", key: "year", dir: "asc" },
 ];
 
-// Generic sort: reorders the rendered movie cards in place by a data-* field.
-// Reordering (rather than re-rendering) keeps each card's live-search hidden state.
 function sortMovieGrid({ key, dir }) {
   const grid = document.getElementById("movieGrid");
   if (!grid) return;
@@ -695,8 +714,6 @@ function sortMovieGrid({ key, dir }) {
     .forEach((card) => grid.appendChild(card)); // moving a node re-appends it in order
 }
 
-// Apply whatever option the dropdown currently shows (called once after the grid renders,
-// so the displayed order always matches the selected "Sort by" — even if the JSON order changes).
 function applyActiveSort() {
   const label = document.getElementById("sortSelectedText");
   const current = label ? label.textContent.trim() : "";
@@ -727,8 +744,9 @@ if (sortCustomBtn && sortCustomMenu) {
   });
 }
 
-// --- MOVIE POSTER OVERLAY BUTTONS ---
-// Delegated to the grid so it keeps working after the skeleton -> real-cards re-render.
+// ==========================================
+// 14. CARD INTERACTIONS (LIKE / WATCHED)
+// ==========================================
 const movieGridEl = document.getElementById("movieGrid");
 if (movieGridEl) {
   movieGridEl.addEventListener("click", (e) => {
@@ -737,13 +755,11 @@ if (movieGridEl) {
     e.stopPropagation();
     const label = btn.querySelector("img")?.alt || "";
 
-    // "Add to collection" should open a collection-picker modal (not built yet) -> Coming Soon
     if (label === "Add to collection") {
       toast.soon("Coming Soon!");
       return;
     }
 
-    // eye / heart are simple front-end toggles, so reflect their on/off state
     const nowActive = btn.classList.toggle("active");
     const messages = {
       "Mark watched": ["Added to Already Watched", "Removed from Already Watched"],
@@ -754,7 +770,9 @@ if (movieGridEl) {
   });
 }
 
-// --- AI MODE TOGGLE & SEARCH BAR GLOW ---
+// ==========================================
+// 15. AI MODE TOGGLE
+// ==========================================
 const aiModeBtn = document.querySelector(".ai-mode-btn");
 const searchContainer = document.querySelector(".search-container");
 const searchInput = document.getElementById("movieSearch");
@@ -772,7 +790,9 @@ if (aiModeBtn && searchContainer && searchInput) {
   });
 }
 
-// --- LIVE SEARCH LOGIC (DOM Filtering) ---
+// ==========================================
+// 16. LIVE TEXT SEARCH
+// ==========================================
 if (searchInput) {
   searchInput.addEventListener("input", (e) => {
     const searchTerm = e.target.value.trim().toLowerCase();
@@ -792,13 +812,13 @@ if (searchInput) {
   });
 }
 
-// --- SURPRISE ME RANDOMIZER & DUAL DICE ANIMATION ---
+// ==========================================
+// 17. SURPRISE ME RANDOMIZER
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const diceOne = document.getElementById('diceOne');
     const diceTwo = document.getElementById('diceTwo');
     const movieSearchInput = document.getElementById('movieSearch');
-    // The whole container is the click target (dice + the "Surprise Me" label),
-    // so a tap anywhere on the button works, not just on the dice image.
     const surpriseTrigger = document.querySelector('.surprise-container');
     let lastRandomIndex = -1; // Remembers the last movie picked
 
@@ -835,9 +855,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     
                     lastRandomIndex = randomIndex;
-                    // fill just the title (no year); data-title is the clean title from the JSON
                     const randomTitle = titlePills[randomIndex].closest(".movie-card").dataset.title;
-                    
                     movieSearchInput.value = randomTitle;
                     movieSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
                 }

@@ -1,6 +1,6 @@
-// --- RENDER COLLECTIONS FROM JSON ---
-// Show skeletons, then swap in the real cards once their posters have loaded, so the
-// cards appear complete instead of filling in piece by piece.
+// ==========================================
+// 1. FETCH & RENDER COLLECTIONS
+// ==========================================
 (async () => {
   const row = document.querySelector(".collections-row");
   if (!row) return;
@@ -26,7 +26,9 @@
   }
 })();
 
-// One shimmer placeholder card, repeated n times. (preloadImages lives in common.js)
+// ==========================================
+// 2. CARD BUILDERS & SKELETONS
+// ==========================================
 function skeletonMarkup(n) {
   const card = `
     <article class="collection-card collection-card--skeleton" aria-hidden="true">
@@ -72,9 +74,9 @@ function buildCollectionCard(c, i) {
     </article>`;
 }
 
-// --- COLLECTION CARD 3-DOTS MENU ---
-// Event delegation on .collections-row so it works for cards rendered
-// asynchronously by the fetch above (binding per-button at load would miss them).
+// ==========================================
+// 3. COLLECTION 3-DOTS MENU
+// ==========================================
 (function () {
   "use strict";
 
@@ -84,10 +86,6 @@ function buildCollectionCard(c, i) {
 
   let activeBtn = null;
 
-  // The 3-dots menu items, built in JS so they can vary per collection. Default
-  // collections (data-default) can't be renamed or deleted, so those two are skipped
-  // for them; the other three always show. The Publish/Unpublish item is resolved per
-  // collection from its published state.
   const MENU_ITEMS = [
     { action: "add", icon: "plus", label: "Add to Collection" },
     { action: "rename", icon: "rename", label: "Rename", defaultHidden: true },

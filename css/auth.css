@@ -1,7 +1,8 @@
 /* auth.css — login & signup pages only. Loaded by login.html and signup.html. */
 
-/*  ----------------------LOGIN----------------------------*/
-/* Background */
+/* ==========================================
+   1. LOGIN PAGE BACKGROUND
+   ========================================== */
 .login-body {
     background-image: url('../assets/images/movie-knight-gradient-bg.svg');
     background-size: cover;
@@ -16,7 +17,7 @@
     align-items: center;
 }
 
-/* Wrapper */
+
 .login-wrapper {
     display: flex;
     flex-direction: column;
@@ -26,7 +27,6 @@
     padding: 20px 0;
 }
 
-/* Logo */
 .main-logo {
     width: 400px;
     height: auto;
@@ -41,7 +41,9 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/*Login Box */
+/* ==========================================
+   2. LOGIN FORM & INPUTS
+   ========================================== */
 .login-box {
     background-color: rgba(var(--pink), 0.13);
     width: 540px;
@@ -85,7 +87,6 @@
         box-shadow var(--t-base) ease;
 }
 
-/* focus glow doubles as the keyboard-focus indicator (replaces the bare outline:none) */
 .input-group input:focus {
     outline: none;
     background-color: rgba(var(--pink), 0.12);
@@ -101,7 +102,9 @@
     caret-color: white;
 }
 
-/* Submit Button */
+/* ==========================================
+   3. SUBMIT BUTTON & LINKS
+   ========================================== */
 .submit-btn {
     width: 133px;
     height: 47px;
@@ -145,15 +148,15 @@
     color: rgb(var(--pink));
 }
 
+/* ==========================================
+   4. FORM VALIDATION ERRORS
+   ========================================== */
 .input-error {
-    /* The !important tag ensures this overrides your normal input borders */
     border: 1px solid rgb(var(--danger-input)) !important;
-    box-shadow: 0 0 10px rgba(var(--danger-input), 0.3) !important; /* Soft red glow */
-    background-color: rgba(var(--danger-input), 0.05) !important; /* Very slight red tint inside the box */
+    box-shadow: 0 0 10px rgba(var(--danger-input), 0.3) !important; 
+    background-color: rgba(var(--danger-input), 0.05) !important; 
 }
 
-
-/* --- THE ERROR TEXT (FIXED LAYOUT) --- */
 .error-message {
     color: rgb(var(--danger));
     font-size: 13px;
@@ -162,8 +165,6 @@
     padding: 8px;
     border-radius: 6px;
     margin-bottom: 15px;
-
-    /* reserve the space up front so the layout doesn't jump when the error shows */
     visibility: hidden;
     opacity: 0;
     transition: opacity 0.3s ease;
@@ -173,13 +174,15 @@
     visibility: visible;
     opacity: 1;
 }
-/*---------------------SIGNUP--------------------*/
+
+/* ==========================================
+   5. SIGNUP PAGE LAYOUT
+   ========================================== */
 .signup-body {
     background-image: url('../assets/images/movie-knight-gradient-bg.svg');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-
     /* Fallback color just in case the image loads slowly */
     background-color: rgb(var(--ink));
 
@@ -189,7 +192,6 @@
     align-items: center;
 }
 
-/* Wrapper */
 .signup-wrapper {
     display: flex;
     flex-direction: column;
@@ -199,7 +201,6 @@
     padding: 20px 0;
 }
 
-/*SignUp Box */
 .signup-box {
     background-color: rgba(var(--pink), 0.13);
     width: 540px;
@@ -227,7 +228,7 @@
     font-weight: 300;
     text-transform: uppercase;
     font-family: inherit;
-    direction: ltr;      /* force LTR so the date sits on the left under RTL locales */
+    direction: ltr;   
     text-align: left;
 }
 
@@ -239,11 +240,9 @@
 
 
 
-/* (submit button & bottom links are defined once in the LOGIN section above) */
-
-/* ============================================================
-   RESPONSIVE (auth)
-   ============================================================ */
+/* ==========================================
+   6. RESPONSIVE DESIGN
+   ========================================== */
 @media (max-width: 600px) {
     .login-wrapper,
     .signup-wrapper {

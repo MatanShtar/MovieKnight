@@ -1,13 +1,7 @@
-// --- TOAST NOTIFICATIONS ---
-// Thin, theme-matched wrapper around Toastify-js (vendor/toastify). Two ways to fire:
-//   • from JS:    toast.success("Saved!")   toast.info("Coming Soon!")   toast.error("Login failed")
-//   • from HTML:  <button data-toast="Coming Soon!">      (defaults to info)
-//                 <a data-toast="error:Nope, try again">  (type:message)
-// Loaded on every page; requires vendor/toastify/toastify.min.js to load before it.
-// Exposed on window so inline HTML handlers (onclick / data-toast) can reach it.
-
+// ==========================================
+// 1. TOAST CONFIGURATION & SETUP
+// ==========================================
 window.toast = (function () {
-  // Each type → a gradient tuned to the dark maroon theme + a leading glyph.
   const TYPES = {
     success: { icon: "✓", background: "linear-gradient(135deg, #1d9d6c, #2bbd7e)" },
     info: { icon: "ⓘ", background: "linear-gradient(135deg, #3a7bd5, #4a9fe0)" },
@@ -18,6 +12,10 @@ window.toast = (function () {
   // phones get top-center toasts; wider screens get bottom-right
   const isPhone = () => window.matchMedia("(max-width: 1024px)").matches;
 
+
+  // ==========================================
+  // 2. TOAST DISPLAY LOGIC
+  // ==========================================
   function show(message, type = "info", options = {}) {
     if (typeof Toastify !== "function") {
       console.warn("[toast] Toastify not loaded — message was:", message);
@@ -44,9 +42,9 @@ window.toast = (function () {
     }).showToast();
   }
 
-  // Declarative HTML hook: any element with data-toast fires on click.
-  //   data-toast="Coming Soon!"        -> info
-  //   data-toast="success:Saved!"      -> success (type before the first colon)
+// ==========================================
+// 3. DECLARATIVE HTML HOOKS
+// ==========================================
   document.addEventListener("click", (e) => {
     const el = e.target.closest("[data-toast]");
     if (!el) return;

@@ -1,5 +1,8 @@
 /* profile.css — profile page only. Loaded by profile.html. */
 
+/* ==========================================
+   1. PROFILE GRID & HEADER LAYOUT
+   ========================================== */
 .profile-main {
   /* match the home content padding so the columns align and collection cards
      share the movie-card width; the 72px top keeps the original vertical start */
@@ -25,6 +28,9 @@
   flex-direction: column;
 }
 
+/* ==========================================
+   2. AVATAR & PROFILE METADATA
+   ========================================== */
 .profile-avatar-container {
   flex: 2;
   display: flex;
@@ -48,7 +54,6 @@
   transition: box-shadow var(--t-base) ease;
 }
 
-/* soft accent halo when you hover the avatar */
 .profile-avatar:hover .avatar-pic {
   box-shadow: 0 0 0 6px rgba(var(--pink), 0.35);
 }
@@ -73,7 +78,7 @@
   gap: 10px;
 }
 
-.profile-meta > p {
+.profile-meta>p {
   font-size: 18px;
   opacity: 70%;
 }
@@ -89,7 +94,8 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 240px; /* same width as the View All Badges button */
+  width: 240px;
+  /* same width as the View All Badges button */
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap),
@@ -136,26 +142,26 @@
   font-weight: 300;
 }
 
+/* ==========================================
+   3. USER BIO & EDIT CONTROLS
+   ========================================== */
 .profile-bio {
   font-size: 16px;
   opacity: 70%;
   line-height: 1.6;
 }
 
-/* Bio "edit" affordance. The dashed box + edit icon are desktop + mouse only and
-   appear only while hovering the bio (see the @media block at the bottom). The wrapper
-   takes the bio's place in the column so the dashed outline hugs the text, not the
-   whole flex cell. */
 .bio-edit {
-  flex: 5; /* the bio's old flex value, so the column layout is unchanged */
+  flex: 5;
   position: relative;
-  padding-top: 16px; /* the gap under the username (was .profile-bio padding-top) */
+  padding-top: 16px;
 }
+
 .bio-edit-btn {
   position: absolute;
   top: 12px;
   right: 4px;
-  display: none; /* revealed on desktop hover only */
+  display: none;
   align-items: center;
   justify-content: center;
   width: 30px;
@@ -169,12 +175,15 @@
     background var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap);
 }
+
 .bio-edit-btn:hover {
   background: rgba(var(--pink), 0.32);
 }
+
 .bio-edit-btn:active {
   transform: scale(0.92);
 }
+
 .bio-edit-btn img {
   width: 16px;
   height: 16px;
@@ -187,11 +196,15 @@
     outline-offset: 6px;
     border-radius: 6px;
   }
+
   .bio-edit:hover .bio-edit-btn {
     display: flex;
   }
 }
 
+/* ==========================================
+   4. PROGRESSION BADGES
+   ========================================== */
 .profile-badges {
   flex: 2;
   min-height: 320px;
@@ -221,7 +234,7 @@
 .shield-path {
   stroke: white;
   stroke-width: 2px;
-  stroke-linejoin: round; /* Keeps the sharp corners from looking messy */
+  stroke-linejoin: round;
 }
 
 /* FILLS: Links the specific classes to the gradient IDs in the HTML */
@@ -239,7 +252,8 @@
 
 .badge-shield {
   position: relative;
-  flex: 1 1 0; /* share the row evenly and shrink when the column is narrow */
+  flex: 1 1 0;
+  /* share the row evenly and shrink when the column is narrow */
   min-width: 0;
   max-width: 132px;
   display: flex;
@@ -255,7 +269,6 @@
   max-width: 120px;
 }
 
-/* lift and tilt on hover */
 .badge-shield:hover {
   transform: translateY(-6px) scale(1.06) rotate(-2deg);
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
@@ -265,9 +278,11 @@
 .badge-shield:has(.silver-shield):hover {
   filter: drop-shadow(0 0 14px rgba(220, 220, 226, 0.75));
 }
+
 .badge-shield:has(.gold-shield):hover {
   filter: drop-shadow(0 0 22px rgba(251, 201, 38, 0.95));
 }
+
 .badge-shield:has(.bronze-shield):hover {
   filter: drop-shadow(0 0 14px rgba(203, 149, 82, 0.8));
 }
@@ -342,7 +357,7 @@
   color: var(--text);
   font-size: 18px;
   opacity: 85%;
-  width: 240px; /* same width as the New Collection button */
+  width: 240px;
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap),
@@ -359,7 +374,9 @@
   transform: scale(0.98);
 }
 
-/* same grid as the home movie grid, so collection cards render at the same width */
+/* ==========================================
+   5. COLLECTIONS CARDS
+   ========================================== */
 .collections-row {
   padding-top: 24px;
   display: grid;
@@ -395,12 +412,14 @@
 
 .collection-poster-container {
   position: relative;
-  overflow: hidden; /* clip the poster zoom */
+  overflow: hidden;
+  /* clip the poster zoom */
   transition: box-shadow var(--t-base) var(--ease-snap);
 }
 
 .collection-card:hover .collection-poster-container {
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45); /* matches movie-card depth */
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+  /* matches movie-card depth */
 }
 
 .collection-poster {
@@ -410,7 +429,8 @@
 }
 
 .collection-card:hover .collection-poster {
-  transform: scale(1.08); /* same zoom as .movie-card */
+  transform: scale(1.08);
+  /* same zoom as .movie-card */
 }
 
 .collection-menu-button {
@@ -440,7 +460,8 @@
   width: 16px;
   height: 16px;
   vertical-align: middle;
-  background-color: currentColor; /* the paint = inherited color */
+  background-color: currentColor;
+  /* the paint = inherited color */
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
@@ -465,7 +486,7 @@
   gap: 12px;
 }
 
-.collections-stats-left > * {
+.collections-stats-left>* {
   display: flex;
   flex-direction: row;
   justify-content: start;
@@ -473,7 +494,9 @@
   gap: 4px;
 }
 
-/* --- COLLECTION 3-DOTS POPUP MENU --- */
+/* ==========================================
+   6. COLLECTION CONTEXT MENU
+   ========================================== */
 .collection-menu-button--active {
   opacity: 1;
 }
@@ -516,7 +539,7 @@
 }
 
 .collection-menu-item--danger {
-  color: #9c3442; /* matches the red delete icon */
+  color: #9c3442;
 }
 
 .menu-icon {
@@ -537,23 +560,48 @@
   white-space: nowrap;
 }
 
-/* --- COLLECTIONS LOADING + ENTRANCE --- */
-
-/* real cards fade up in a gentle stagger once their images are ready */
+/* ==========================================
+   7. LOADING SKELETONS & ANIMATIONS
+   ========================================== */
 @keyframes collectionEnter {
-  from { opacity: 0; transform: translateY(18px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .collection-card:not(.collection-card--skeleton) {
   animation: collectionEnter 0.45s var(--ease-snap) backwards;
 }
-.collection-card:nth-child(1) { animation-delay: 0.00s; }
-.collection-card:nth-child(2) { animation-delay: 0.07s; }
-.collection-card:nth-child(3) { animation-delay: 0.14s; }
-.collection-card:nth-child(4) { animation-delay: 0.21s; }
-.collection-card:nth-child(5) { animation-delay: 0.28s; }
-.collection-card:nth-child(n + 6) { animation-delay: 0.35s; }
+
+.collection-card:nth-child(1) {
+  animation-delay: 0.00s;
+}
+
+.collection-card:nth-child(2) {
+  animation-delay: 0.07s;
+}
+
+.collection-card:nth-child(3) {
+  animation-delay: 0.14s;
+}
+
+.collection-card:nth-child(4) {
+  animation-delay: 0.21s;
+}
+
+.collection-card:nth-child(5) {
+  animation-delay: 0.28s;
+}
+
+.collection-card:nth-child(n + 6) {
+  animation-delay: 0.35s;
+}
 
 /* skeleton placeholders shown while collections load */
 .collection-card--skeleton {
@@ -563,12 +611,10 @@
 
 /* @keyframes shimmer lives in common.css (shared with the home movie grid) */
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0.04) 25%,
-    rgba(255, 255, 255, 0.12) 37%,
-    rgba(255, 255, 255, 0.04) 63%
-  );
+  background: linear-gradient(90deg,
+      rgba(255, 255, 255, 0.04) 25%,
+      rgba(255, 255, 255, 0.12) 37%,
+      rgba(255, 255, 255, 0.04) 63%);
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
   border-radius: 6px;
@@ -591,26 +637,28 @@
   margin-top: 8px;
 }
 
-/* ============================================================
-   RESPONSIVE (profile)
-   ============================================================ */
-/* The two-column header crowds the badges before this, so stack it. */
+/* ==========================================
+   8. RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================== */
 @media (max-width: 1280px) {
   .profile-header {
     flex-direction: column;
-    gap: 40px; /* breathing room between the info and the badges section */
+    gap: 40px;
   }
+
   .profile-info,
   .profile-badges {
     min-height: 0;
   }
-  /* space out the badges: title -> shields -> button */
+
   .profile-badges {
     gap: 20px;
   }
+
   .badges-display {
     padding: 4px 0;
   }
+
   .view-badges-container {
     margin-top: 4px;
   }
@@ -620,48 +668,55 @@
   .profile-main {
     padding: 16px 16px 64px;
   }
-  /* hover tooltips don't apply on touch; hide them (they'd also overflow a narrow screen) */
+
   .badge-tooltip {
     display: none;
   }
 }
 
 @media (max-width: 768px) {
-  /* Flatten the header into one centred column and reorder it:
-     avatar -> name -> bio -> badges -> collections meta (count + New Collection). */
+
+  /* reorder it: avatar -> name -> bio -> badges -> collections meta (count + New Collection). */
   .profile-header {
     align-items: center;
     text-align: center;
     gap: 18px;
   }
+
   .profile-info,
   .profile-info-left-col,
   .profile-info-right-col,
   .bio-edit {
     display: contents;
   }
+
   .profile-avatar-container {
     order: 0;
     justify-content: center;
   }
+
   .profile-avatar {
     width: 128px;
   }
+
   .profile-username {
     order: 1;
     justify-content: center;
     font-size: 30px;
   }
+
   .profile-bio {
     order: 2;
     padding-top: 0;
     max-width: 540px;
   }
+
   .profile-badges {
     order: 3;
     width: 100%;
     margin-top: 6px;
   }
+
   /* the collections box is a fixed-width column; the count sits at the button's
      left edge (not centred) so it reads as a label for the button */
   .profile-meta {
@@ -672,10 +727,12 @@
     margin-top: 8px;
     gap: 10px;
   }
-  .profile-meta > p {
+
+  .profile-meta>p {
     text-align: left;
     margin-left: 2px;
   }
+
   .new-collection-btn,
   .view-badges-btn {
     width: 100%;
@@ -685,6 +742,7 @@
   .prog-badges-header {
     font-size: 28px;
   }
+
   .badges-display {
     gap: 14px;
   }
@@ -696,24 +754,30 @@
     min-height: 0;
     padding-top: 8px;
   }
+
   .collection-card {
     margin-bottom: 0;
   }
+
   .collection-name {
     font-size: 16px;
   }
+
   .collection-stats {
     font-size: 15px;
     padding: 8px 4px;
   }
+
   .collection-stats .stat-icon {
     width: 17px;
     height: 17px;
   }
+
   .collections-stats-left {
     gap: 18px;
   }
-  .collections-stats-left > * {
+
+  .collections-stats-left>* {
     gap: 5px;
   }
 }
