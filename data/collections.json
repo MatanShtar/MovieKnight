@@ -9,7 +9,7 @@
       "totalLikes": 241,
       "totalSaves": 55,
       "author": "Yuviverse",
-      "posterPath": "assets/images/posters/favorites-collection.svg",
+      "posterPath": "assets/images/posters/favorites-collection.webp",
       "movies": []
     },
     {
@@ -20,7 +20,7 @@
       "totalLikes": null,
       "totalSaves": null,
       "author": "Yuviverse",
-      "posterPath": "assets/images/posters/already-watched-collection.svg",
+      "posterPath": "assets/images/posters/already-watched-collection.webp",
       "movies": []
     },
     {
@@ -31,7 +31,7 @@
       "totalLikes": null,
       "totalSaves": null,
       "author": "Yuviverse",
-      "posterPath": "assets/images/posters/watchlist-collection.svg",
+      "posterPath": "assets/images/posters/watchlist-collection.webp",
       "movies": []
     },
     {
@@ -42,7 +42,7 @@
       "totalLikes": 2362,
       "totalSaves": 539,
       "author": "Yuviverse",
-      "posterPath": "assets/images/posters/horror-films-collection.svg",
+      "posterPath": "assets/images/posters/horror-films-collection.webp",
       "movies": []
     },
     {
@@ -53,7 +53,7 @@
       "totalLikes": 241,
       "totalSaves": 55,
       "author": "Yuviverse",
-      "posterPath": "assets/images/posters/actual-horror-films-collection.svg",
+      "posterPath": "assets/images/posters/actual-horror-films-collection.webp",
       "movies": []
     }
   ]
