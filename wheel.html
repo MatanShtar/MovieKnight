@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spin The Wheel - MovieKnight</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css">
+    <link rel="stylesheet" href="css/wheel.css">
+
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/common.js" defer></script>
+    <script src="js/wheel.js" defer></script>
+</head>
+
+<body class="app-body">
+    <div class="app-container">
+        <main class="main-content">
+            <div class="wheel-header">
+                <a href="wheel.html" class="back-btn">Back</a>
+                <img src="assets/images/login-logo-text.svg" alt="MovieKnight" class="wheel-main-logo">
+            </div>
+
+            <div class="feature-tabs" id="pickerTabs">
+                <p>SPIN THE WHEEL</p>
+            </div>
+
+            <section class="wheel-state-container">
+                <div class="active-wheel-layout">
+
+                    <div class="wheel-visual-container">
+                        <canvas id="rouletteWheel" width="500" height="500"></canvas>
+                        <button class="spin-btn" id="spinBtn">SPIN</button>
+                    </div>
+
+                    <div class="wheel-list-container">
+                        <div class="movie-list" id="wheelMovieList">
+                        </div>
+
+                        <div class="wheel-save-controls">
+                            <button class="save-btn ghost-btn">Load Latest Wheel</button>
+                            <button class="save-btn filled-btn">Save Current Wheel</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>
