@@ -1,96 +1,95 @@
-Project Description
+# 🎬 MovieKnight: Current State (README)
+## 📖 Project Description
 MovieKnight is a web-based, gamified movie organizer and selection application designed to solve "decision paralysis" when choosing what to watch. It allows users to browse movies, organize them into collections, and use interactive tools like "Spin the Wheel" to randomly select a movie based on specific filters (genres, local streaming providers).
 
-Current Tech Stack
+## 🛠️ Current Tech Stack
+**Frontend:** Vanilla HTML5, CSS3, JavaScript (ES6+).
 
-Frontend: Vanilla HTML5, CSS3, JavaScript (ES6+).
+**Data Handling:** Asynchronous fetch API pulling from local JSON structures (movies.json, collections.json).
 
-Data Handling: Asynchronous fetch API pulling from local JSON structures (movies.json, collections.json).
+**Storage:** Browser localStorage for session/auth mocking and state management.
 
-Storage: Browser localStorage for session/auth mocking and state management.
+## 🏗️ Core Architecture & Features Built
+### 1. App Shell & Layout (common.css, common.js)
 
-Core Architecture & Features Built
+- Fully responsive layout with a sticky sidebar navigation and a mobile-friendly hamburger drawer.
 
-App Shell & Layout (common.css, common.js):
+- Shared authentication widget (mocked via localStorage) with a profile dropdown.
 
-Fully responsive layout with a sticky sidebar navigation and a mobile-friendly hamburger drawer.
+- Global modal system (e.g., Sign Out confirmation) and custom scrollbar styling.
 
-Shared authentication widget (mocked via localStorage) with a profile dropdown.
+### 2. Home/Explore Interface (index.html, home.js)
 
-Global modal system (e.g., Sign Out confirmation) and custom scrollbar styling.
+- Advanced filter UI for Release Year, Genres, Ratings, Actors, Directors, Age Rating, and Platforms.
 
-Home/Explore Interface (index.html, home.js):
+- "Surprise Me" dice functionality and placeholder AI search mode.
 
-Advanced filter UI for Release Year, Genres, Ratings, Actors, Directors, Age Rating, and Platforms.
+### 3. Profile & Collections (profile.html, profile.js)
 
-"Surprise Me" dice functionality and placeholder AI search mode.
+- Asynchronous loading of user collections with CSS skeleton loading states.
 
-Profile & Collections (profile.html, profile.js):
+- Dynamic 3-dots context menu for collection management (Rename, Publish/Unpublish, Copy Link, Delete).
 
-Asynchronous loading of user collections with CSS skeleton loading states.
+### 4. Movie Picker Hub (picker.html, picker.js, picker.css)
 
-Dynamic 3-dots context menu for collection management (Rename, Publish/Unpublish, Copy Link, Delete).
+- Generic configuration funnel for selection tools.
 
-Movie Picker Hub (picker.html, picker.js, picker.css):
+- Interactive genre grid with CSS-drawn state animations (turning + to ×).
 
-Generic configuration funnel for selection tools.
+- Live-searchable provider list featuring custom SVG checkboxes and scrollable lists.
 
-Interactive genre grid with CSS-drawn state animations (turning + to ×).
+### 5. Spin The Wheel (wheel.html, wheel.js, wheel.css)
 
-Live-searchable provider list featuring custom SVG checkboxes and scrollable lists.
+- HTML5 <canvas> integration dynamically drawing roulette slices based on data.
 
-Spin The Wheel (wheel.html, wheel.js, wheel.css):
+- Physics-based spin animation using CSS transitions.
 
-HTML5 <canvas> integration dynamically drawing roulette slices based on data.
+- Side-by-side editable movie list UI.
 
-Physics-based spin animation using CSS transitions.
+### 6. Utility Modules (toast.js) * Custom, theme-matched notification system replacing default browser alerts.
 
-Side-by-side editable movie list UI.
+## 🚀 Development Roadmap (TODO List)
+_This roadmap is broken down from immediate frontend polish to advanced backend integration._
 
-Utility Modules (toast.js): Custom, theme-matched notification system replacing default browser alerts.
+### 🔌 Phase 1: Wiring the Frontend Logic (Immediate Next Steps)
+_Currently, the UI looks great, but the pages don't talk to each other._
 
-Development Roadmap (TODO List)
-This roadmap is broken down from immediate frontend polish to advanced backend integration.
+- [ ] **Step 1: Pass Configuration Data:** In picker.js, when "GENERATE WHEEL" is clicked, save the selected genres and providers to sessionStorage or localStorage before redirecting to wheel.html.
 
-Phase 1: Wiring the Frontend Logic (Immediate Next Steps)
-Currently, the UI looks great, but the pages don't talk to each other.
+- [ ] **Step 2: Read Configuration Data:** In wheel.js, read that saved data and filter the movies.json fetch so the wheel only displays movies that match the user's selected genres and platforms.
 
-[ ] Step 1: Pass Configuration Data: In picker.js, when "GENERATE WHEEL" is clicked, save the selected genres and providers to sessionStorage or localStorage before redirecting to wheel.html.
+- [ ] **Step 3: Wheel Spin Resolution:** Update the setTimeout in wheel.js to calculate exactly which slice is at the top (the pointer) when the rotation stops, and trigger a toast.success announcing the winning movie.
 
-[ ] Step 2: Read Configuration Data: In wheel.js, read that saved data and filter the movies.json fetch so the wheel only displays movies that match the user's selected genres and platforms.
+- [ ] **Step 4: Collection Menu Actions:** Wire up the stubs in profile.js so clicking "Delete Collection" actually removes the item from the DOM, and "Copy Link" copies a dummy URL to the user's clipboard.
 
-[ ] Step 3: Wheel Spin Resolution: Update the setTimeout in wheel.js to calculate exactly which slice is at the top (the pointer) when the rotation stops, and trigger a toast.success announcing the winning movie.
+### ⚔️ Phase 2: Building the Missing Selection Tools
+- [ ]** Step 1: The Chopping Block (chopping.html):** Design and build the UI where users are presented with two movies at a time and must eliminate one until only a single winner remains.
 
-[ ] Step 4: Collection Menu Actions: Wire up the stubs in profile.js so clicking "Delete Collection" actually removes the item from the DOM, and "Copy Link" copies a dummy URL to the user's clipboard.
+- [ ] **Step 2: Let AI Choose (ai.html):** Build a chat-like interface or a slot-machine-style generator where the user types a prompt ("I want a scary movie set in space") and the UI returns a specific recommendation.
 
-Phase 2: Building the Missing Selection Tools
-[ ] Step 1: The Chopping Block (chopping.html): Design and build the UI where users are presented with two movies at a time and must eliminate one until only a single winner remains.
+### 🗄️ Phase 3: Data Architecture & Backend Setup
+_To move beyond hardcoded JSON files, the app needs a real server._
 
-[ ] Step 2: Let AI Choose (ai.html): Build a chat-like interface or a slot-machine-style generator where the user types a prompt ("I want a scary movie set in space") and the UI returns a specific recommendation.
+- [ ] **Step 1: Choose a Backend Framework:** Decide between Node.js (Express), Python (Django/Flask), or a BaaS like Firebase/Supabase.
 
-Phase 3: Data Architecture & Backend Setup
-To move beyond hardcoded JSON files, the app needs a real server.
+- [ ] **Step 2: Database Schema Design:** Map out the database tables/collections (e.g., Users, Movies, Collections, Collection_Movies).
 
-[ ] Step 1: Choose a Backend Framework: Decide between Node.js (Express), Python (Django/Flask), or a BaaS like Firebase/Supabase.
+- [ ] **Step 3: Real Authentication:** Replace the fake localStorage login with secure JWT (JSON Web Tokens) or OAuth (Google/GitHub login).
 
-[ ] Step 2: Database Schema Design: Map out the database tables/collections (e.g., Users, Movies, Collections, Collection_Movies).
+- [ ] **Step 4: Build RESTful APIs:** Create the backend endpoints for your frontend to consume (e.g., GET /api/collections, POST /api/collections/new).
 
-[ ] Step 3: Real Authentication: Replace the fake localStorage login with secure JWT (JSON Web Tokens) or OAuth (Google/GitHub login).
-
-[ ] Step 4: Build RESTful APIs: Create the backend endpoints for your frontend to consume (e.g., GET /api/collections, POST /api/collections/new).
-
-Phase 4: External API Integration
+### 🌍 Phase 4: External API Integration
 Maintaining your own movie database is impossible; you need to pull live data.
 
-[ ] Step 1: TMDB/OMDB Integration: Register for a free API key from The Movie Database (TMDB).
+- [ ] **Step 1: TMDB/OMDB Integration:** Register for a free API key from The Movie Database (TMDB).
 
-[ ] Step 2: Dynamic Search: Wire the search bar on the home page to query the TMDB API so users can search any movie in the world.
+- [ ] **Step 2: Dynamic Search:** Wire the search bar on the home page to query the TMDB API so users can search any movie in the world.
 
-[ ] Step 3: Provider API: Use the TMDB "Watch Providers" endpoint to accurately show which streaming services currently have the movie in the user's specific region.
+- [ ] **Step 3: Provider API:** Use the TMDB "Watch Providers" endpoint to accurately show which streaming services currently have the movie in the user's specific region.
 
-Phase 5: AI Integration (The "Knight" in MovieKnight)
-[ ] Step 1: LLM Setup: Connect your backend to an AI API (like Google Gemini or OpenAI).
+### 🧠 Phase 5: AI Integration (The "Knight" in MovieKnight)
+- [ ] **Step 1: LLM Setup:** Connect your backend to an AI API (like Google Gemini or OpenAI).
 
-[ ] Step 2: Prompt Engineering: Design the system prompts so the AI understands how to take a user's mood ("Feeling sad, want to laugh") and query your movie database to return 3 highly specific recommendations.
+- [ ] **Step 2: Prompt Engineering:** Design the system prompts so the AI understands how to take a user's mood ("Feeling sad, want to laugh") and query your movie database to return 3 highly specific recommendations.
 
-[ ] Step 3: Connect to UI: Wire the "AI Mode" button on the home page and the "Let AI Choose" tab to this new endpoint.
+- [ ] **Step 3: Connect to UI:** Wire the "AI Mode" button on the home page and the "Let AI Choose" tab to this new endpoint.
