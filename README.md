@@ -63,7 +63,7 @@ _Currently, the UI looks great, but the pages don't talk to each other._
 - [ ] **Step 4: Collection Menu Actions:** Wire up the stubs in profile.js so clicking "Delete Collection" actually removes the item from the DOM, and "Copy Link" copies a dummy URL to the user's clipboard.
 
 ### ⚔️ Phase 2: Building the Missing Selection Tools
-- [ ] ** Step 1: The Chopping Block (chopping.html):** Design and build the UI where users are presented with two movies at a time and must eliminate one until only a single winner remains.
+- [ ] **Step 1: The Chopping Block (chopping.html):** Design and build the UI where users are presented with two movies at a time and must eliminate one until only a single winner remains.
 
 - [ ] **Step 2: Let AI Choose (ai.html):** Build a chat-like interface or a slot-machine-style generator where the user types a prompt ("I want a scary movie set in space") and the UI returns a specific recommendation.
 
