@@ -1,11 +1,9 @@
-/* profile.css — profile page only. Loaded by profile.html. */
+/* profile.css - profile page only. Loaded by profile.html. */
 
 /* ==========================================
    1. PROFILE GRID & HEADER LAYOUT
    ========================================== */
 .profile-main {
-  /* match the home content padding so the columns align and collection cards
-     share the movie-card width; the 72px top keeps the original vertical start */
   padding: 72px 50px 100px 50px;
 }
 
@@ -78,7 +76,7 @@
   gap: 10px;
 }
 
-.profile-meta>p {
+.profile-meta > p {
   font-size: 18px;
   opacity: 70%;
 }
@@ -95,14 +93,12 @@
   align-items: center;
   gap: 12px;
   width: 240px;
-  /* same width as the View All Badges button */
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap),
     opacity var(--t-base) ease;
 }
 
-/* icon stays on the left; label centers in the space that's left */
 .new-collection-btn img {
   flex-shrink: 0;
   transition: transform var(--t-base) var(--ease-pop);
@@ -253,7 +249,6 @@
 .badge-shield {
   position: relative;
   flex: 1 1 0;
-  /* share the row evenly and shrink when the column is narrow */
   min-width: 0;
   max-width: 132px;
   display: flex;
@@ -274,7 +269,6 @@
   filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
 }
 
-/* tier-coloured glow on hover (gold brightest) */
 .badge-shield:has(.silver-shield):hover {
   filter: drop-shadow(0 0 14px rgba(220, 220, 226, 0.75));
 }
@@ -391,7 +385,6 @@
 .collection-card {
   margin-bottom: 28px;
   cursor: pointer;
-  /* hover lift on the same timing as the home movie cards */
   transition: transform var(--t-base) var(--ease-snap);
 }
 
@@ -413,13 +406,11 @@
 .collection-poster-container {
   position: relative;
   overflow: hidden;
-  /* clip the poster zoom */
   transition: box-shadow var(--t-base) var(--ease-snap);
 }
 
 .collection-card:hover .collection-poster-container {
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
-  /* matches movie-card depth */
 }
 
 .collection-poster {
@@ -430,7 +421,6 @@
 
 .collection-card:hover .collection-poster {
   transform: scale(1.08);
-  /* same zoom as .movie-card */
 }
 
 .collection-menu-button {
@@ -447,7 +437,9 @@
   border-radius: 3px;
   border: 0;
   cursor: pointer;
-  transition: transform var(--t-fast) var(--ease-pop), opacity var(--t-fast) ease;
+  transition:
+    transform var(--t-fast) var(--ease-pop),
+    opacity var(--t-fast) ease;
 }
 
 .collection-menu-button:hover {
@@ -486,7 +478,7 @@
   gap: 12px;
 }
 
-.collections-stats-left>* {
+.collections-stats-left > * {
   display: flex;
   flex-direction: row;
   justify-content: start;
@@ -512,11 +504,18 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  opacity: 95%;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition:
+    opacity var(--t-base) ease,
+    transform var(--t-base) var(--ease-snap);
 }
 
-.collection-menu[hidden] {
-  display: none;
+.collection-menu:not([hidden]) {
+  opacity: 0.95;
+  pointer-events: auto;
+  transform: translateY(0);
 }
 
 .collection-menu-item {
@@ -549,7 +548,7 @@
 }
 
 /* footnote shown only for default collections (built in renderMenu), explaining
-   why Rename + Delete are missing — a quiet, italic system note under a divider */
+   why Rename + Delete are missing - an italic system note under a divider */
 .collection-menu-note {
   margin-top: 4px;
   padding: 8px 20px 2px;
@@ -580,7 +579,7 @@
 }
 
 .collection-card:nth-child(1) {
-  animation-delay: 0.00s;
+  animation-delay: 0s;
 }
 
 .collection-card:nth-child(2) {
@@ -611,10 +610,12 @@
 
 /* @keyframes shimmer lives in common.css (shared with the home movie grid) */
 .skeleton {
-  background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0.04) 25%,
-      rgba(255, 255, 255, 0.12) 37%,
-      rgba(255, 255, 255, 0.04) 63%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.4s ease-in-out infinite;
   border-radius: 6px;
@@ -675,7 +676,6 @@
 }
 
 @media (max-width: 768px) {
-
   /* reorder it: avatar -> name -> bio -> badges -> collections meta (count + New Collection). */
   .profile-header {
     align-items: center;
@@ -728,7 +728,7 @@
     gap: 10px;
   }
 
-  .profile-meta>p {
+  .profile-meta > p {
     text-align: left;
     margin-left: 2px;
   }
@@ -747,7 +747,6 @@
     gap: 14px;
   }
 
-  /* One collection per row so the poster and the stat icons get room to breathe. */
   .collections-row {
     grid-template-columns: 1fr;
     row-gap: 20px;
@@ -777,7 +776,7 @@
     gap: 18px;
   }
 
-  .collections-stats-left>* {
+  .collections-stats-left > * {
     gap: 5px;
   }
 }
