@@ -3,12 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MovieKnight - Profile</title>
+    <title>MovieKnight | Profile</title>
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
     <link rel="stylesheet" href="css/common.css" />
     <link rel="stylesheet" href="css/profile.css" />
     <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
-    <!-- defer: download during HTML parse, then run in order after the DOM is ready -->
     <script src="vendor/toastify/toastify.min.js" defer></script>
     <script src="js/toast.js" defer></script>
     <script src="js/common.js" defer></script>
@@ -152,6 +151,7 @@
                 </div>
               </div>
               <div class="profile-meta">
+                <!-- injected dynamically based on real collections amount -->
                 <p id="collectionCount">...</p>
                 <button
                   class="new-collection-btn"
@@ -179,7 +179,10 @@
                   data-toast="soon:Coming Soon!"
                   aria-label="Edit bio"
                 >
-                  <img src="assets/images/icons/rename-icon.svg" alt="Edit bio" />
+                  <img
+                    src="assets/images/icons/rename-icon.svg"
+                    alt="Edit bio"
+                  />
                 </button>
               </div>
             </div>
@@ -355,8 +358,7 @@
     </div>
 
     <!-- Shared popup menu for the collection cards' 3-dots button.
-         The publish/unpublish item's label + icon are set by profile.js per collection. -->
-    <!-- items are built in js/profile.js (renderMenu) per collection -->
+    items are built in js/profile.js (renderMenu) per collection -->
     <div class="collection-menu" id="collectionMenu" hidden></div>
   </body>
 </html>

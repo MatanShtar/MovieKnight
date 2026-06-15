@@ -25,7 +25,9 @@
 
 // Generate skeleton placeholders
 function movieSkeletonMarkup(n) {
-  return `<article class="movie-card movie-card--skeleton" aria-hidden="true"></article>`.repeat(n);
+  return `<article class="movie-card movie-card--skeleton" aria-hidden="true"></article>`.repeat(
+    n,
+  );
 }
 
 function buildMovieCard(m) {
@@ -132,7 +134,7 @@ if (filterBtn && filterMenu) {
   });
 }
 
-// Filter "Apply" button — closes the panel; the chosen filters stay selected.
+// Filter "Apply" button - closes the panel; the chosen filters stay selected.
 const filterApplyBtn = document.getElementById("filterApplyBtn");
 if (filterApplyBtn && filterMenu) {
   filterApplyBtn.addEventListener("click", (e) => {
@@ -646,7 +648,6 @@ function renderPlatforms() {
 }
 
 function renderPlatformDropdown() {
- 
   allPlatforms
     .filter((p) => !activePlatforms.includes(p))
     .forEach((platform) => {
@@ -684,19 +685,46 @@ if (clearPlatformBtn) {
 // ==========================================
 // Sorting configuration
 const sortOptionsData = [
-  { short: "Popular", long: "Popular This Week", key: "popularity", dir: "desc" },
-  { short: "Rating ↓", long: "Rating (Best to Worst)", key: "rating", dir: "desc" },
-  { short: "Rating ↑", long: "Rating (Worst to Best)", key: "rating", dir: "asc" },
+  {
+    short: "Popular",
+    long: "Popular This Week",
+    key: "popularity",
+    dir: "desc",
+  },
+  {
+    short: "Rating ↓",
+    long: "Rating (Best to Worst)",
+    key: "rating",
+    dir: "desc",
+  },
+  {
+    short: "Rating ↑",
+    long: "Rating (Worst to Best)",
+    key: "rating",
+    dir: "asc",
+  },
   { short: "A ➔ Z", long: "Alphabetical (A-->Z)", key: "title", dir: "asc" },
   { short: "Z ➔ A", long: "Alphabetical (Z-->A)", key: "title", dir: "desc" },
-  { short: "Newest", long: "Release Date (New to Old)", key: "year", dir: "desc" },
-  { short: "Oldest", long: "Release Date (Old to New)", key: "year", dir: "asc" },
+  {
+    short: "Newest",
+    long: "Release Date (New to Old)",
+    key: "year",
+    dir: "desc",
+  },
+  {
+    short: "Oldest",
+    long: "Release Date (Old to New)",
+    key: "year",
+    dir: "asc",
+  },
 ];
 
 function sortMovieGrid({ key, dir }) {
   const grid = document.getElementById("movieGrid");
   if (!grid) return;
-  const cards = [...grid.querySelectorAll(".movie-card:not(.movie-card--skeleton)")];
+  const cards = [
+    ...grid.querySelectorAll(".movie-card:not(.movie-card--skeleton)"),
+  ];
   if (!cards.length) return;
 
   const valueOf = (card) =>
@@ -762,8 +790,11 @@ if (movieGridEl) {
 
     const nowActive = btn.classList.toggle("active");
     const messages = {
-      "Mark watched": ["Added to Already Watched", "Removed from Already Watched"],
-      "Like": ["Added to Favorites", "Removed from Favorites"],
+      "Mark watched": [
+        "Added to Already Watched",
+        "Removed from Already Watched",
+      ],
+      Like: ["Added to Favorites", "Removed from Favorites"],
     };
     const [onMsg, offMsg] = messages[label] || ["Coming Soon!", "Coming Soon!"];
     toast[nowActive ? "success" : "info"](nowActive ? onMsg : offMsg);
@@ -815,51 +846,52 @@ if (searchInput) {
 // ==========================================
 // 17. SURPRISE ME RANDOMIZER
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const diceOne = document.getElementById('diceOne');
-    const diceTwo = document.getElementById('diceTwo');
-    const movieSearchInput = document.getElementById('movieSearch');
-    const surpriseTrigger = document.querySelector('.surprise-container');
-    let lastRandomIndex = -1; // Remembers the last movie picked
+document.addEventListener("DOMContentLoaded", () => {
+  const diceOne = document.getElementById("diceOne");
+  const diceTwo = document.getElementById("diceTwo");
+  const movieSearchInput = document.getElementById("movieSearch");
+  const surpriseTrigger = document.querySelector(".surprise-container");
+  let lastRandomIndex = -1; // Remembers the last movie picked
 
-    if (surpriseTrigger) {
-        surpriseTrigger.addEventListener('click', (e) => {
-            e.preventDefault();
+  if (surpriseTrigger) {
+    surpriseTrigger.addEventListener("click", (e) => {
+      e.preventDefault();
 
-            // --- 1. FIRE THE DUAL ANIMATION ---
-            if (diceOne && diceTwo) {
-                // Strip the animation classes
-                diceOne.classList.remove('roll-left');
-                diceTwo.classList.remove('roll-right');
+      // --- 1. FIRE THE DUAL ANIMATION ---
+      if (diceOne && diceTwo) {
+        // Strip the animation classes
+        diceOne.classList.remove("roll-left");
+        diceTwo.classList.remove("roll-right");
 
-                // force a reflow so the animation can replay from the start
-                void diceOne.offsetWidth;
-                
-                // Add the specific tumble classes back
-                diceOne.classList.add('roll-left');
-                diceTwo.classList.add('roll-right');
-            }
+        // force a reflow so the animation can replay from the start
+        void diceOne.offsetWidth;
 
-            // --- 2. RUN THE RANDOMIZER LOGIC ---
-            if (movieSearchInput) {
-                const titlePills = document.querySelectorAll(".movie-title-pill");
-                
-                if (titlePills.length > 0) {
-                    let randomIndex;
-                    if (titlePills.length > 1) {
-                        do {
-                            randomIndex = Math.floor(Math.random() * titlePills.length);
-                        } while (randomIndex === lastRandomIndex);
-                    } else {
-                        randomIndex = 0;
-                    }
-                    
-                    lastRandomIndex = randomIndex;
-                    const randomTitle = titlePills[randomIndex].closest(".movie-card").dataset.title;
-                    movieSearchInput.value = randomTitle;
-                    movieSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
-                }
-            }
-        });
-    }
+        // Add the specific tumble classes back
+        diceOne.classList.add("roll-left");
+        diceTwo.classList.add("roll-right");
+      }
+
+      // --- 2. RUN THE RANDOMIZER LOGIC ---
+      if (movieSearchInput) {
+        const titlePills = document.querySelectorAll(".movie-title-pill");
+
+        if (titlePills.length > 0) {
+          let randomIndex;
+          if (titlePills.length > 1) {
+            do {
+              randomIndex = Math.floor(Math.random() * titlePills.length);
+            } while (randomIndex === lastRandomIndex);
+          } else {
+            randomIndex = 0;
+          }
+
+          lastRandomIndex = randomIndex;
+          const randomTitle =
+            titlePills[randomIndex].closest(".movie-card").dataset.title;
+          movieSearchInput.value = randomTitle;
+          movieSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      }
+    });
+  }
 });

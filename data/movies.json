@@ -4,128 +4,128 @@
     {
       "title": "Bugonia",
       "rating": 7.4,
-      "popularity": 98.5, 
+      "popularity": 98.5,
       "releaseYear": 2025,
-      "posterPath": "assets/images/posters/bugonia-movie-poster.svg"
+      "posterPath": "assets/images/posters/bugonia-movie-poster.webp"
     },
     {
       "title": "One Battle After Another",
       "rating": 7.4,
       "popularity": 95.2,
       "releaseYear": 2025,
-      "posterPath": "assets/images/posters/one-battle-after-another-poster.svg"
+      "posterPath": "assets/images/posters/one-battle-after-another-poster.webp"
     },
     {
       "title": "Marty Supreme",
       "rating": 7.8,
       "popularity": 91.7,
       "releaseYear": 2025,
-      "posterPath": "assets/images/posters/marty-supreme-poster.svg"
+      "posterPath": "assets/images/posters/marty-supreme-poster.webp"
     },
     {
       "title": "Housemaid",
       "rating": 7.1,
       "popularity": 88.3,
       "releaseYear": 2025,
-      "posterPath": "assets/images/posters/housemaid-poster.svg"
+      "posterPath": "assets/images/posters/housemaid-poster.webp"
     },
     {
       "title": "10 Things I Hate About You",
       "rating": 7.6,
       "popularity": 84.6,
       "releaseYear": 1999,
-      "posterPath": "assets/images/posters/ten-things-i-hate-about-you-poster.svg"
+      "posterPath": "assets/images/posters/ten-things-i-hate-about-you-poster.webp"
     },
     {
       "title": "Interstellar",
       "rating": 8.5,
       "popularity": 81.0,
       "releaseYear": 2014,
-      "posterPath": "assets/images/posters/interstellar-poster.svg"
+      "posterPath": "assets/images/posters/interstellar-poster.webp"
     },
     {
       "title": "Frankenstein",
       "rating": 7.7,
       "popularity": 77.4,
       "releaseYear": 2025,
-      "posterPath": "assets/images/posters/frankenstein-poster.svg"
+      "posterPath": "assets/images/posters/frankenstein-poster.webp"
     },
     {
       "title": "Kill Bill: Volume 1",
       "rating": 8.0,
       "popularity": 73.9,
       "releaseYear": 2003,
-      "posterPath": "assets/images/posters/kill-bill-poster.svg"
+      "posterPath": "assets/images/posters/kill-bill-poster.webp"
     },
     {
       "title": "Dune: Part Two",
       "rating": 8.1,
       "popularity": 70.2,
       "releaseYear": 2024,
-      "posterPath": "assets/images/posters/dune-part-two-poster.svg"
+      "posterPath": "assets/images/posters/dune-part-two-poster.webp"
     },
     {
       "title": "Oppenheimer",
       "rating": 8.0,
       "popularity": 66.8,
       "releaseYear": 2023,
-      "posterPath": "assets/images/posters/oppenheimer-poster.svg"
+      "posterPath": "assets/images/posters/oppenheimer-poster.webp"
     },
     {
       "title": "Parasite",
       "rating": 8.5,
       "popularity": 63.1,
       "releaseYear": 2019,
-      "posterPath": "assets/images/posters/parasite-poster.svg"
+      "posterPath": "assets/images/posters/parasite-poster.webp"
     },
     {
       "title": "The Dark Knight",
       "rating": 8.5,
       "popularity": 59.5,
       "releaseYear": 2008,
-      "posterPath": "assets/images/posters/the-dark-knight-poster.svg"
+      "posterPath": "assets/images/posters/the-dark-knight-poster.webp"
     },
     {
       "title": "Pulp Fiction",
       "rating": 8.5,
       "popularity": 56.0,
       "releaseYear": 1994,
-      "posterPath": "assets/images/posters/pulp-fiction-poster.svg"
+      "posterPath": "assets/images/posters/pulp-fiction-poster.webp"
     },
     {
       "title": "Everything Everywhere All at Once",
       "rating": 7.7,
       "popularity": 52.3,
       "releaseYear": 2022,
-      "posterPath": "assets/images/posters/everything-everywhere-all-at-once-poster.svg"
+      "posterPath": "assets/images/posters/everything-everywhere-all-at-once-poster.webp"
     },
     {
       "title": "Spider-Man: Into the Spider-Verse",
       "rating": 8.4,
       "popularity": 48.7,
       "releaseYear": 2018,
-      "posterPath": "assets/images/posters/spider-man-into-the-spider-verse-poster.svg"
+      "posterPath": "assets/images/posters/spider-man-into-the-spider-verse-poster.webp"
     },
     {
       "title": "Whiplash",
       "rating": 8.4,
       "popularity": 45.0,
       "releaseYear": 2014,
-      "posterPath": "assets/images/posters/whiplash-poster.svg"
+      "posterPath": "assets/images/posters/whiplash-poster.webp"
     },
     {
       "title": "La La Land",
       "rating": 7.9,
       "popularity": 41.6,
       "releaseYear": 2016,
-      "posterPath": "assets/images/posters/la-la-land-poster.svg"
+      "posterPath": "assets/images/posters/la-la-land-poster.webp"
     },
     {
       "title": "The Substance",
       "rating": 7.1,
       "popularity": 38.2,
       "releaseYear": 2024,
-      "posterPath": "assets/images/posters/the-substance-poster.svg"
+      "posterPath": "assets/images/posters/the-substance-poster.webp"
     }
   ]
 }

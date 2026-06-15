@@ -15,11 +15,11 @@
     // Inject collections amount
     const countEl = document.getElementById("collectionCount");
     const colCount = totalCollections ?? collections.length;
-    countEl.textContent = `${colCount} Collections`
+    countEl.textContent = `${colCount} Collections`;
 
     const html = collections.map(buildCollectionCard).join("");
     await preloadImages(collections.map((c) => c.posterPath)); // wait for posters
-    row.innerHTML = html; // real cards now animate in (CSS .collection-card entrance)
+    row.innerHTML = html;
   } catch (err) {
     console.error("Could not load collections:", err);
     row.innerHTML = ""; // drop the skeletons rather than spin forever
@@ -48,10 +48,10 @@ function buildCollectionCard(c, i) {
     return `<span class="stat-icon" style="-webkit-mask-image: url('${url}'); mask-image: url('${url}');"></span>`;
   };
 
-  let stats = `<div class="movie-count">${icon('movie-clap')}<span>${c.totalMovies}</span></div>`;
+  let stats = `<div class="movie-count">${icon("movie-clap")}<span>${c.totalMovies}</span></div>`;
   if (c.published) {
-    stats += `<div class="likes-count">${icon('heart')}<span>${c.totalLikes}</span></div>
-              <div class="saves-count">${icon('download')}<span>${c.totalSaves}</span></div>`;
+    stats += `<div class="likes-count">${icon("heart")}<span>${c.totalLikes}</span></div>
+              <div class="saves-count">${icon("download")}<span>${c.totalSaves}</span></div>`;
   }
 
   return `
@@ -78,8 +78,6 @@ function buildCollectionCard(c, i) {
 // 3. COLLECTION 3-DOTS MENU
 // ==========================================
 (function () {
-  "use strict";
-
   const menu = document.getElementById("collectionMenu");
   const row = document.querySelector(".collections-row");
   if (!menu || !row) return;
@@ -91,7 +89,13 @@ function buildCollectionCard(c, i) {
     { action: "rename", icon: "rename", label: "Rename", defaultHidden: true },
     { toggle: true },
     { action: "copy-link", icon: "copy-link", label: "Copy Link" },
-    { action: "delete", icon: "red-delete", label: "Delete Collection", danger: true, defaultHidden: true },
+    {
+      action: "delete",
+      icon: "red-delete",
+      label: "Delete Collection",
+      danger: true,
+      defaultHidden: true,
+    },
   ];
 
   function buildItem(item, isPublished) {
@@ -134,7 +138,10 @@ function buildCollectionCard(c, i) {
 
     // Build this collection's menu. Default collections (data-default) drop the
     // Rename + Delete items; the Publish/Unpublish item reflects the published state.
-    renderMenu(card.dataset.default === "true", card.dataset.published === "true");
+    renderMenu(
+      card.dataset.default === "true",
+      card.dataset.published === "true",
+    );
 
     menu.hidden = false; // reveal first so we can measure its width
 
@@ -166,12 +173,12 @@ function buildCollectionCard(c, i) {
     else openMenu(button);
   });
 
-  // Menu item clicks — actions are stubs for now (wire these up later)
+  // Menu item clicks - actions are placeholders for now (will wire these up later)
   menu.addEventListener("click", (e) => {
     const item = e.target.closest(".collection-menu-item");
     if (!item) return;
     closeMenu();
-    toast.soon("Coming Soon!"); // menu actions aren't wired up yet
+    toast.soon("Coming Soon!");
   });
 
   // Close on outside click, Escape, or scroll
@@ -181,7 +188,11 @@ function buildCollectionCard(c, i) {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeMenu();
   });
-  window.addEventListener("scroll", () => {
-    if (!menu.hidden) closeMenu();
-  }, true);
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!menu.hidden) closeMenu();
+    },
+    true,
+  );
 })();
