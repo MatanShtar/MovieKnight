@@ -88,7 +88,10 @@ body {
   background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
-  overflow-x: hidden;
+  /* NOTE: no `overflow-x: hidden` here. Clipping the page horizontally hid
+     content when the user zoomed in (notably on the wheel) with no way to
+     scroll across to it. Spin/confetti overflow is contained at the component
+     level instead (.wheel-visual-container clips its own canvas sweep). */
 }
 
 .app-container {
@@ -96,6 +99,16 @@ body {
   display: flex;
   min-height: 100vh;
   align-items: stretch;
+}
+
+/* Feature pages (wheel / picker) keep their focused, standalone look on desktop:
+   no left rail there. The sidebar nav is reached on mobile via the hamburger,
+   exactly like the other pages (the responsive drawer rules below still apply). */
+@media (min-width: 1025px) {
+  .feature-page .sidebar,
+  .feature-page .user-rail {
+    display: none;
+  }
 }
 
 /* ==========================================

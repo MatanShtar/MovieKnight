@@ -173,10 +173,40 @@ function buildCollectionCard(c, i) {
     else openMenu(button);
   });
 
-  // Menu item clicks - actions are placeholders for now (will wire these up later)
+  // Flip a collection's visibility icon (globe = public, lock = private) to
+  // mirror the new Publish/Unpublish state. UI-only — no backend call.
+  function setCardPublished(card, nowPublished) {
+    card.dataset.published = String(nowPublished);
+    const iconEl = card.querySelector(".collections-stats-right .stat-icon");
+    if (iconEl) {
+      const url = `assets/images/icons/${nowPublished ? "globus" : "lock"}-icon.svg`;
+      iconEl.style.webkitMaskImage = `url('${url}')`;
+      iconEl.style.maskImage = `url('${url}')`;
+    }
+  }
+
+  // Menu item clicks. Publish/Unpublish toggles a purely visual state; the
+  // remaining actions are still placeholders (no backend yet).
   menu.addEventListener("click", (e) => {
     const item = e.target.closest(".collection-menu-item");
     if (!item) return;
+    const action = item.dataset.action;
+
+    if (action === "publish" || action === "unpublish") {
+      const card = row.querySelector(
+        `.collection-card[data-card="${menu.dataset.card}"]`,
+      );
+      if (card) {
+        const nowPublished = action === "publish";
+        setCardPublished(card, nowPublished);
+        toast.success(
+          nowPublished ? "Collection published." : "Collection unpublished.",
+        );
+      }
+      closeMenu();
+      return;
+    }
+
     closeMenu();
     toast.soon("Coming Soon!");
   });
@@ -195,4 +225,84 @@ function buildCollectionCard(c, i) {
     },
     true,
   );
+})();
+
+// ==========================================
+// 4. EDITABLE BIO (localStorage, UI-only for now)
+// ==========================================
+(function () {
+  const BIO_KEY = "movieKnightBio";
+  const BIO_PLACEHOLDER = "Add bio";
+  const bioEl = document.querySelector(".profile-bio");
+  const editBtn = document.querySelector(".bio-edit-btn");
+  if (!bioEl) return;
+
+  const getSavedBio = () => localStorage.getItem(BIO_KEY) || "";
+
+  // Show the saved bio, or the "Add bio" placeholder when there isn't one yet.
+  function renderBio() {
+    const saved = getSavedBio();
+    if (saved.trim()) {
+      bioEl.textContent = saved;
+      bioEl.classList.remove("profile-bio--placeholder");
+    } else {
+      bioEl.textContent = BIO_PLACEHOLDER;
+      bioEl.classList.add("profile-bio--placeholder");
+    }
+  }
+
+  let editing = false;
+  function startEditing() {
+    if (editing) return;
+    editing = true;
+    const prev = getSavedBio();
+
+    // Swap the static bio for a textarea (multi-line input) seeded with the
+    // current text. Enter (⌘/Ctrl) or blur saves; Escape cancels.
+    const textarea = document.createElement("textarea");
+    textarea.className = "profile-bio-input";
+    textarea.maxLength = 280;
+    textarea.value = prev;
+    textarea.setAttribute("aria-label", "Edit bio");
+    bioEl.replaceWith(textarea);
+    if (editBtn) editBtn.style.display = "none";
+    textarea.focus();
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+
+    let settled = false;
+    const finish = (save) => {
+      if (settled) return;
+      settled = true;
+      const next = textarea.value.trim();
+      if (save) localStorage.setItem(BIO_KEY, next);
+      textarea.replaceWith(bioEl);
+      if (editBtn) editBtn.style.display = "";
+      editing = false;
+      renderBio();
+      if (save && next !== prev && window.toast) toast.success("Bio updated.");
+    };
+
+    textarea.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        finish(false);
+      } else if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        finish(true);
+      }
+    });
+    textarea.addEventListener("blur", () => finish(true));
+  }
+
+  // Clicking the bio text (or the pencil button) opens the editor.
+  bioEl.addEventListener("click", startEditing);
+  if (editBtn) {
+    editBtn.removeAttribute("data-toast"); // was a "Coming Soon" stub
+    editBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      startEditing();
+    });
+  }
+
+  renderBio();
 })();

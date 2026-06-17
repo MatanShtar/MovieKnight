@@ -33,10 +33,16 @@ async function renderMovieGrid(movies) {
 }
 
 // Append cards for newly loaded movies without disturbing what's already shown.
+// If loading skeletons are currently pinned to the bottom, the real cards are
+// inserted ABOVE them (not after) so that clearing the skeletons afterwards
+// doesn't yank the freshly-added cards upward — that shift was the "jump".
 function appendMovieCards(movies) {
   const grid = document.getElementById("movieGrid");
   if (!grid || !movies.length) return;
-  grid.insertAdjacentHTML("beforeend", movies.map(buildMovieCard).join(""));
+  const html = movies.map(buildMovieCard).join("");
+  const firstSkeleton = grid.querySelector(".feed-skeleton");
+  if (firstSkeleton) firstSkeleton.insertAdjacentHTML("beforebegin", html);
+  else grid.insertAdjacentHTML("beforeend", html);
   applyActiveSort(); // keep the chosen order across appended pages
 }
 
@@ -664,12 +670,32 @@ function renderActorDropdown() {
     });
 }
 
-if (addActorBtn) {
-  addActorBtn.onclick = (e) => {
+// Actor / director look-up needs a backend people-search endpoint that doesn't
+// exist yet (the backend is a TMDB movie proxy only). Until then the "+" is
+// disabled, greyed out, and explains itself via a tooltip + a toast on click.
+function disableComingSoonAdd(btn) {
+  if (!btn) return;
+  btn.classList.add("pill-add-btn--soon");
+  btn.disabled = true;
+  btn.title = "Coming Soon";
+  btn.setAttribute("aria-disabled", "true");
+  // disabled buttons don't fire click, so listen on the wrapper instead.
+  const container = btn.closest(".pill-add-container") || btn;
+  // Drop a clean "Coming Soon" badge beside the disabled "+".
+  if (container && !container.querySelector(".coming-soon-badge")) {
+    const badge = document.createElement("span");
+    badge.className = "coming-soon-badge";
+    badge.textContent = "Coming Soon";
+    container.insertBefore(badge, btn);
+  }
+  container.addEventListener("click", (e) => {
     e.stopPropagation();
-    closeAllInnerDropdowns(actorDropdown);
-    actorDropdown.classList.toggle("show");
-  };
+    if (window.toast) toast.soon("Actor / Director filters — Coming Soon!");
+  });
+}
+
+if (addActorBtn) {
+  disableComingSoonAdd(addActorBtn);
 }
 if (clearActorBtn) {
   clearActorBtn.onclick = (e) => {
@@ -734,11 +760,7 @@ function renderDirectorDropdown() {
 }
 
 if (addDirectorBtn) {
-  addDirectorBtn.onclick = (e) => {
-    e.stopPropagation();
-    closeAllInnerDropdowns(directorDropdown);
-    directorDropdown.classList.toggle("show");
-  };
+  disableComingSoonAdd(addDirectorBtn);
 }
 if (clearDirectorBtn) {
   clearDirectorBtn.onclick = (e) => {
@@ -1041,51 +1063,50 @@ if (searchInput) {
 // ==========================================
 // 17. SURPRISE ME RANDOMIZER
 // ==========================================
+// Instead of picking from the movies already loaded in the grid, this asks the
+// backend for a genuinely random movie (GET /movies/random) and takes over the
+// screen with that single result — also filling the search bar with its title.
 document.addEventListener("DOMContentLoaded", () => {
   const diceOne = document.getElementById("diceOne");
   const diceTwo = document.getElementById("diceTwo");
   const movieSearchInput = document.getElementById("movieSearch");
   const surpriseTrigger = document.querySelector(".surprise-container");
-  let lastRandomIndex = -1; // Remembers the last movie picked
+  let surprising = false; // guard against double-clicks while a request is live
+
+  function rollDice() {
+    if (!diceOne || !diceTwo) return;
+    diceOne.classList.remove("roll-left");
+    diceTwo.classList.remove("roll-right");
+    void diceOne.offsetWidth; // force a reflow so the animation replays
+    diceOne.classList.add("roll-left");
+    diceTwo.classList.add("roll-right");
+  }
 
   if (surpriseTrigger) {
-    surpriseTrigger.addEventListener("click", (e) => {
+    surpriseTrigger.addEventListener("click", async (e) => {
       e.preventDefault();
+      rollDice();
+      if (surprising) return;
+      surprising = true;
 
-      // --- 1. FIRE THE DUAL ANIMATION ---
-      if (diceOne && diceTwo) {
-        // Strip the animation classes
-        diceOne.classList.remove("roll-left");
-        diceTwo.classList.remove("roll-right");
-
-        // force a reflow so the animation can replay from the start
-        void diceOne.offsetWidth;
-
-        // Add the specific tumble classes back
-        diceOne.classList.add("roll-left");
-        diceTwo.classList.add("roll-right");
-      }
-
-      // --- 2. RUN THE RANDOMIZER LOGIC ---
-      if (movieSearchInput) {
-        const titlePills = document.querySelectorAll(".movie-title-pill");
-
-        if (titlePills.length > 0) {
-          let randomIndex;
-          if (titlePills.length > 1) {
-            do {
-              randomIndex = Math.floor(Math.random() * titlePills.length);
-            } while (randomIndex === lastRandomIndex);
-          } else {
-            randomIndex = 0;
-          }
-
-          lastRandomIndex = randomIndex;
-          const randomTitle =
-            titlePills[randomIndex].closest(".movie-card").dataset.title;
-          movieSearchInput.value = randomTitle;
-          movieSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      try {
+        const movie = await MovieAPI.getRandomMovie();
+        if (!movie || !movie.title) {
+          if (window.toast) toast.info("Couldn't find a movie — try again!");
+          return;
         }
+        // Take over the grid with just this pick and pause feed pagination,
+        // and reflect the result in the search bar (without re-triggering a
+        // search — clearing the box later restores the feed as usual).
+        inSearch = true;
+        if (movieSearchInput) movieSearchInput.value = movie.title;
+        await renderMovieGrid([movie]);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (err) {
+        console.error("Surprise Me failed:", err);
+        if (window.toast) toast.error(err.message);
+      } finally {
+        surprising = false;
       }
     });
   }

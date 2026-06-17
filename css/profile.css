@@ -145,6 +145,49 @@
   font-size: 16px;
   opacity: 70%;
   line-height: 1.6;
+  white-space: pre-wrap; /* preserve the line breaks the user types in their bio */
+  cursor: pointer; /* the whole bio is clickable to edit */
+  transition: opacity var(--t-base) ease;
+}
+
+/* "Add bio" prompt shown when no bio has been saved yet */
+.profile-bio--placeholder {
+  font-style: italic;
+  opacity: 45%;
+}
+
+/* Inline editor the bio turns into when clicked */
+.profile-bio-input {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid rgba(var(--pink), 0.6);
+  border-radius: 8px;
+  background: rgba(var(--pink), 0.08);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color var(--t-fast) ease, background var(--t-base) ease;
+  animation: bio-input-in var(--t-base) var(--ease-snap);
+}
+
+.profile-bio-input:focus {
+  border-color: rgb(var(--pink));
+  background: rgba(var(--pink), 0.14);
+}
+
+@keyframes bio-input-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .bio-edit {
@@ -253,9 +296,18 @@
   max-width: 132px;
   display: flex;
   justify-content: center;
+  /* Badges are display-only: keep the normal arrow, not the text I-beam, when
+     hovering over the title / tooltip text inside them. */
+  cursor: default;
   transition:
     transform var(--t-base) var(--ease-pop),
     filter var(--t-base) ease;
+}
+
+.badge-shield,
+.badge-shield .badge-title,
+.badge-shield .badge-tooltip {
+  cursor: default;
 }
 
 .badge-shield svg {
