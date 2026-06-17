@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, in   itial-scale=1.0">
+    <title>Movie Picker - MovieKnight</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/picker.css">
+    <script src="js/common.js" defer></script>
+    <script src="js/picker.js" defer></script>
+</head>
+
+<body class="app-body">
+    <div class="app-container">
+        <main class="main-content">
+            <div class="picker-header">
+                <a href="index.html" class="back-btn">Back</a>
+                <img src="assets/images/login-logo-text.svg" alt="MovieKnight" class="wheel-main-logo">
+            </div>
+
+            <div class="feature-tabs" id="pickerTabs">
+                <button class="tab-btn active" data-target="wheel.html">SPIN THE WHEEL</button>
+                <button class="tab-btn" data-target="chopping.html">THE CHOPPING BLOCK</button>
+                <button class="tab-btn" data-target="ai.html">LET AI CHOOSE</button>
+            </div>
+
+            <section class="picker-state-container">
+                <div class="config-layout">
+                    <div class="config-column">
+                        <h3>Filter by genres</h3>
+                        <div class="genre-grid" id="genreGrid"></div>
+                    </div>
+
+                    <div class="config-column">
+                        <h3>Filter by your local providers</h3>
+                        <div class="provider-box">
+                            <div class="provider-search-bar">
+                                <input type="text" id="providerSearch" placeholder="|">
+                            </div>
+                            <div class="provider-list" id="providerList"> </div>
+                        </div>  
+                    </div>
+                </div>
+
+                <button class="generate-wheel-btn" id="generateBtn">GENERATE WHEEL</button>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

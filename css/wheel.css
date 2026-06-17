@@ -1,0 +1,219 @@
+/* wheel.css — Layout specifically for the active Spin The Wheel page */
+
+/* ==========================================
+   1. HEADER (Shared layout)
+   ========================================== */
+.feature-tabs {
+    display: flex;
+    width: 100%;
+    max-width: 1642px;
+    max-height: 64px;
+    background-color: rgba(193, 180, 179, 1);
+    border-radius: 50px;
+    padding: 10px;
+    gap: 10px;
+    margin-bottom: 50px;    
+}
+
+.feature-tabs p {
+    display: flex;
+    flex: 1;
+    background-color: rgba(var(--maroon),1);
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 50px;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color var(--t-base), color var(--t-base);
+    align-items: center;
+    justify-content: center;
+}
+
+.wheel-header {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: 50px;
+}
+
+.back-btn {
+    position: absolute;
+    left: 0;
+    color: var(--text-soft);
+    text-decoration: underline;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.wheel-main-logo {
+    height: 80px;
+    object-fit: contain;
+}
+
+/* ==========================================
+   2. WHEEL SPLIT LAYOUT
+   ========================================== */
+.wheel-state-container {
+    width: 100%;
+    max-width: 1000px; /* Tighter width to match your mockup */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.active-wheel-layout {
+    display: flex;
+    width: 100%;
+    gap: 80px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==========================================
+   3. THE CANVAS & SPIN BUTTON
+   ========================================== */
+.wheel-visual-container {
+    position: relative;
+    width: 500px;
+    height: 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#rouletteWheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 4px solid rgb(var(--pink-alt));
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    
+    /* The magic that allows JavaScript to spin the canvas smoothly */
+    transition: transform 4s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+/* The pointer at the top of the wheel */
+.wheel-pointer {
+    position: absolute;
+    top: -15px;
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-top: 35px solid rgb(var(--maroon-light));
+    z-index: 15;
+    filter: drop-shadow(0 4px 4px rgba(0,0,0,0.5));
+}
+
+.spin-btn {
+    position: absolute;
+    width: 120px;
+    height: 60px;
+    border-radius: 40px;
+    background-color: rgba(var(--maroon), 0.95);
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+    z-index: 10;
+    transition: transform var(--t-fast) var(--ease-pop), background-color var(--t-base);
+}
+
+.spin-btn:hover {
+    background-color: rgb(var(--maroon-light));
+    transform: scale(1.05);
+}
+
+.spin-btn:active {
+    transform: scale(0.95);
+}
+
+/* ==========================================
+   4. THE MOVIE LIST
+   ========================================== */
+.wheel-list-container {
+    display: flex;
+    flex-direction: column;
+    width: 380px;
+    gap: 30px;
+    /* Dotted separator line on the left side */
+    border-left: 1px dashed rgba(255,255,255,0.2);
+    padding-left: 80px;
+}
+
+.movie-list {
+    display: flex;
+    flex-direction: column;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 10px; /* Room for scrollbar */
+}
+
+/* Style for each injected row */
+.wheel-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding: 14px 0;
+    color: var(--text-soft);
+    font-size: 16px;
+}
+
+.wheel-list-item:last-child {
+    border-bottom: none;
+}
+
+.list-actions span {
+    cursor: pointer;
+    margin-left: 10px;
+    opacity: 0.6;
+    transition: opacity var(--t-base);
+}
+
+.list-actions span:hover {
+    opacity: 1;
+}
+
+/* ==========================================
+   5. SAVE & LOAD BUTTONS
+   ========================================== */
+.wheel-save-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.save-btn {
+    padding: 16px;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    transition: opacity var(--t-base), transform var(--t-fast);
+}
+
+.save-btn:hover {
+    opacity: 0.9;
+}
+
+.save-btn:active {
+    transform: scale(0.97);
+}
+
+.ghost-btn {
+    background-color: rgba(var(--rose), 0.4);
+    color: var(--text);
+}
+
+.filled-btn {
+    background-color: rgba(var(--text-heading), 0.4);
+    color: var(--text);
+}
