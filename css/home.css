@@ -600,6 +600,35 @@
   box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
 }
 
+/* Disabled "+" (Actor / Director — no backend people-search yet): greyed out,
+   not-allowed, and inert to hover/active so it clearly reads as unavailable. */
+.pill-add-btn--soon {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+.pill-add-btn--soon:hover,
+.pill-add-btn--soon:active {
+  background-color: rgba(255, 255, 255, 0.12);
+  transform: none;
+}
+
+/* Small "Coming Soon" badge sitting next to a not-yet-wired filter label. */
+.coming-soon-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  color: rgb(var(--pink));
+  background: rgba(var(--pink), 0.14);
+  border: 1px solid rgba(var(--pink), 0.4);
+  cursor: default;
+}
+
 /* 6. The Dropdown Menu */
 .pill-dropdown {
   opacity: 0;
@@ -895,6 +924,13 @@
 
 .movie-card--skeleton {
   cursor: default;
+  /* Reserve the exact same box a real card occupies so the grid never
+     collapses while a page is in flight. width fills the grid track and the
+     inherited aspect-ratio: 2/3 fixes the height off that width — keeping the
+     skeleton identical in size to the card that replaces it (no reflow jump). */
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  flex: 0 0 auto;
   border-color: rgba(var(--rose), 0.35);
   background: linear-gradient(
     90deg,

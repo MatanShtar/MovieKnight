@@ -23,16 +23,16 @@
     position: absolute;
     left: 0;
     top: 0;
-    color: var(--text-soft);
+    color: var(--text);
     text-decoration: underline;
     font-size: 24px;
     font-weight: 100;
     cursor: pointer;
-    transition: color var(--t-fast) ease;
+    transition: opacity var(--t-fast) ease;
 }
 
 .back-btn:hover {
-    color: var(--text);
+    opacity: 0.75;
 }
 
 .wheel-main-logo {
@@ -271,6 +271,28 @@
     max-width: 270px;
 }
 
+/* Inline rename field shown when a row's pencil icon is clicked */
+.wheel-rename-input {
+    flex: 1;
+    min-width: 0;
+    margin-right: 12px;
+    height: 38px;
+    border: 1px solid rgba(var(--pink), 0.6);
+    border-radius: 8px;
+    background-color: rgba(var(--wheel-empty-row), 0.18);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 20px;
+    padding: 0 10px;
+    outline: none;
+    transition: border-color var(--t-fast) ease, background-color var(--t-base);
+}
+
+.wheel-rename-input:focus {
+    border-color: rgb(var(--pink));
+    background-color: rgba(var(--wheel-empty-row), 0.28);
+}
+
 .list-actions {
     display: flex;
     align-items: center;
@@ -432,6 +454,24 @@
     transform: translateY(0) scale(0.96);
 }
 
+/* Disabled "Save Current Wheel" — shown when the wheel already matches what's
+   saved, so there's nothing to save. Greyed out and inert to hover/active. */
+.save-btn:disabled,
+.save-btn--disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    filter: grayscale(0.55) brightness(0.8);
+}
+
+.save-btn:disabled:hover,
+.save-btn--disabled:hover,
+.save-btn:disabled:active,
+.save-btn--disabled:active {
+    transform: none;
+    filter: grayscale(0.55) brightness(0.8);
+    box-shadow: none;
+}
+
 /* Floating tooltip showing a slice's full title on hover */
 .wheel-tooltip {
     position: fixed;
@@ -580,4 +620,83 @@
 .winner-close:hover {
     opacity: 1;
     transform: scale(1.12) rotate(90deg);
+}
+
+/* ==========================================
+   9. RESPONSIVE (mobile / tablet)
+   The stage stacks vertically: wheel on top, then the list + Save/Load below,
+   so everything fits a narrow screen. The hamburger nav (common.css) provides
+   navigation here just like on the home screen.
+   ========================================== */
+@media (max-width: 1024px) {
+    .wheel-page {
+        padding-top: 0;
+    }
+
+    .wheel-main-logo {
+        height: 120px;
+    }
+
+    .feature-tabs p {
+        font-size: 22px;
+        padding: 10px 14px;
+    }
+
+    .wheel-stage {
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+    }
+
+    .wheel-zone {
+        align-items: center;
+        width: 100%;
+    }
+
+    .wheel-visual-container {
+        width: min(420px, 80vw);
+        height: min(420px, 80vw);
+        margin-bottom: 0;
+    }
+
+    .wheel-panel {
+        flex-direction: column;
+        align-items: center;
+        gap: 24px;
+        padding-top: 0;
+        width: 100%;
+    }
+
+    .movie-list-box {
+        width: min(100%, 440px);
+        height: min(520px, 56vh);
+    }
+
+    .wheel-save-controls {
+        align-self: center;
+        margin-bottom: 28px;
+        width: min(100%, 440px);
+    }
+
+    .save-btn {
+        width: 100%;
+        height: 64px;
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 600px) {
+    .wheel-main-logo {
+        height: 88px;
+    }
+
+    .feature-tabs p {
+        font-size: 18px;
+    }
+
+    .spin-btn {
+        width: 132px;
+        height: 64px;
+        font-size: 30px;
+    }
 }

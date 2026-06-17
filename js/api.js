@@ -150,6 +150,16 @@ window.MovieAPI = (function () {
         return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
     }
 
+    // A single random movie, used by the home "Surprise Me" button. The backend
+    // may answer with a bare movie object, { movie: {...} }, or a one-item list —
+    // all are accepted and normalised to the app's movie shape.
+    async function getRandomMovie() {
+        const data = await request("/movies/random");
+        const list = extractList(data, "movies");
+        const raw = list.length ? list[0] : data && data.movie ? data.movie : data;
+        return normalizeMovie(raw);
+    }
+
     // Genres as { id, name }. The id is needed to filter movies by genre.
     async function getGenres() {
         const data = await request("/genres");
@@ -188,6 +198,7 @@ window.MovieAPI = (function () {
         API_BASE,
         getMovies,
         searchMovies,
+        getRandomMovie,
         getGenres,
         getProviders,
     };

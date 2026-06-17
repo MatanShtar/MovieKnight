@@ -1,6 +1,39 @@
 // common.js - sidebar + auth logic shared by every page (index.html, profile.html)
 
 // ==========================================
+// 0. BROKEN POSTER IMAGE FALLBACK (GLOBAL)
+// ==========================================
+// TMDB images occasionally 404 / fail to load. Rather than wiring an onerror
+// onto every single <img> we build, we listen for image error events globally
+// in the capture phase (the `error` event doesn't bubble, but it IS observable
+// while capturing). Any poster image that fails is swapped once for a local
+// placeholder that already matches the 2:3 poster aspect ratio.
+const POSTER_PLACEHOLDER = "assets/images/poster-placeholder.svg";
+
+function isPosterImg(el) {
+  return (
+    el &&
+    el.tagName === "IMG" &&
+    (el.classList.contains("poster-img") ||
+      el.classList.contains("collection-poster") ||
+      el.classList.contains("avatar-pic"))
+  );
+}
+
+document.addEventListener(
+  "error",
+  (e) => {
+    const img = e.target;
+    if (!isPosterImg(img)) return;
+    // Guard against an infinite loop if the placeholder itself can't load.
+    if (img.dataset.fallbackApplied === "true") return;
+    img.dataset.fallbackApplied = "true";
+    img.src = POSTER_PLACEHOLDER;
+  },
+  true, // capture: required because `error` does not bubble
+);
+
+// ==========================================
 // 1. IMAGE PRELOADING HELPER
 // ==========================================
 function preloadImages(urls, timeoutMs = 2500) {

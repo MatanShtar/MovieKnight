@@ -3,20 +3,15 @@
 // ==========================================
 // 1. STATE
 // ==========================================
-// The wheel starts populated with the design-mockup sample (8 slices, clockwise).
-let movies = [
-    "The Martian",
-    "La La Land",
-    "Drive",
-    "Arrival",
-    "Baby Driver",
-    "Her",
-    "Eternal Sunshine of the Spotless Mind",
-    "John Wick 1",
-];
+// localStorage key + the free-form title cap shared by "add" and "rename".
+const WHEEL_STORAGE_KEY = "movieKnightWheel";
+const MAX_TITLE_LEN = 20;
+
+// On initial load the wheel shows two editable placeholder items. (Saved wheels
+// are restored explicitly via the "Load Latest Wheel" button, not automatically.)
+let movies = ["Movie 1", "Movie 2"];
 
 let currentWinnerIdx = -1; // index in `movies` of the movie shown in the popup
-let searchDebounce;        // debounce timer for the live "add a movie" search
 
 // Circled-plus glyph for the empty "add a movie" rows.
 const PLUS_SVG = `
@@ -33,11 +28,13 @@ document.addEventListener('DOMContentLoaded', () => {
     setupListInteractions();
     setupWinnerControls();
     setupWheelHover();
+    setupSaveLoad();
 });
 
 function rerender() {
     renderMovieList(movies);
     drawWheel(movies);
+    updateSaveButtonState(); // keep "Save" enabled only when there are unsaved changes
 }
 
 // ==========================================
@@ -51,19 +48,23 @@ function renderMovieList(titles) {
         <div class="wheel-list-item" data-index="${i}">
             <span class="movie-title" title="${escapeHtml(title)}">${escapeHtml(title)}</span>
             <div class="list-actions">
-                <img src="assets/images/icons/edit-icon.svg" alt="Edit" title="Edit">
+                <img class="row-edit" src="assets/images/icons/edit-icon.svg"
+                     alt="Rename" title="Rename" data-index="${i}">
                 <img class="row-delete" src="assets/images/icons/trash-icon.svg"
                      alt="Delete" title="Delete" data-index="${i}">
             </div>
         </div>
     `).join("");
 
-    // A single live search field for adding a movie, pinned to the top.
+    // A single free-text field for adding to the wheel, pinned to the top. It
+    // accepts any text up to 20 chars — a movie title, or your own idea like
+    // "Do nothing tonight" — submitted with Enter or the + button.
     const addRow = `
         <div class="wheel-add-row">
             <div class="wheel-add-field">
-                <input class="wheel-add-input" type="text" aria-label="Search movies to add">
-                <ul class="wheel-add-results"></ul>
+                <input class="wheel-add-input" type="text" maxlength="${MAX_TITLE_LEN}"
+                       placeholder="Type anything, then press +"
+                       aria-label="Add text to the wheel">
             </div>
             <button class="wheel-add-btn" title="Add">${PLUS_SVG}</button>
         </div>`;
@@ -78,17 +79,12 @@ function setupListInteractions() {
     const listContainer = document.getElementById('wheelMovieList');
     if (!listContainer) return;
 
-    // Typing in an add field filters the backend's titles into a dropdown.
-    listContainer.addEventListener('input', (e) => {
-        if (e.target.classList.contains('wheel-add-input')) renderResults(e.target);
-    });
-
-    // mousedown (not click) so the pick registers before the input blurs.
-    listContainer.addEventListener('mousedown', (e) => {
-        const li = e.target.closest('.wheel-add-results li[data-title]');
-        if (li) {
+    // Enter submits whatever is typed as free-form text. maxlength on the input
+    // already caps it at 20 characters.
+    listContainer.addEventListener('keydown', (e) => {
+        if (e.target.classList.contains('wheel-add-input') && e.key === 'Enter') {
             e.preventDefault();
-            addMovie(li.dataset.title);
+            addMovie(e.target.value.trim());
         }
     });
 
@@ -99,51 +95,11 @@ function setupListInteractions() {
             addMovie(input.value.trim());
             return;
         }
+        const edit = e.target.closest('.row-edit');
+        if (edit) { startRename(Number(edit.dataset.index)); return; }
         const del = e.target.closest('.row-delete');
         if (del) removeMovie(Number(del.dataset.index));
     });
-
-    // Click anywhere else closes any open dropdown.
-    document.addEventListener('click', (e) => {
-        if (!e.target.closest('.wheel-add-field')) {
-            document.querySelectorAll('.wheel-add-results.show')
-                .forEach(ul => ul.classList.remove('show'));
-        }
-    });
-}
-
-// Live search the backend (debounced) and show titles not already on the wheel.
-function renderResults(input) {
-    const ul = input.closest('.wheel-add-field').querySelector('.wheel-add-results');
-    const q = input.value.trim();
-
-    clearTimeout(searchDebounce);
-    if (!q) {
-        ul.classList.remove('show');
-        ul.innerHTML = "";
-        return;
-    }
-
-    searchDebounce = setTimeout(async () => {
-        // Bail if the field was cleared while the request was in flight.
-        if (!input.value.trim()) return;
-        try {
-            const results = await MovieAPI.searchMovies(q);
-            const onWheel = new Set(movies.map(m => m.toLowerCase()));
-            const matches = results
-                .map(r => r.title)
-                .filter(t => t && !onWheel.has(t.toLowerCase()))
-                .slice(0, 6);
-
-            ul.innerHTML = matches.length
-                ? matches.map(t => `<li data-title="${escapeHtml(t)}">${escapeHtml(t)}</li>`).join("")
-                : `<li class="no-results">No matches</li>`;
-        } catch (err) {
-            console.error("Movie search failed:", err);
-            ul.innerHTML = `<li class="no-results">Search failed</li>`;
-        }
-        ul.classList.add('show');
-    }, 300);
 }
 
 function addMovie(title) {
@@ -154,6 +110,7 @@ function addMovie(title) {
     }
     movies.push(title);
     renderMovieList(movies);
+    updateSaveButtonState();
 
     // Wheel: the new slice emerges from between its two neighbouring slots.
     animateSlice(movies.length - 1, 'add');
@@ -186,7 +143,118 @@ function removeMovie(index) {
         movies.splice(index, 1);
         renderMovieList(movies);
         drawWheel(movies);
+        updateSaveButtonState();
     });
+}
+
+// ==========================================
+// 3b. RENAME AN EXISTING ITEM
+// ==========================================
+// Clicking a row's rename (pencil) icon swaps its title for an inline input,
+// capped at 20 characters like the add field. Enter / blur commits, Escape
+// cancels. The wheel and Save-button state refresh once the new name settles.
+function startRename(index) {
+    if (index < 0 || index >= movies.length) return;
+    const row = document.querySelector(
+        `#wheelMovieList .wheel-list-item[data-index="${index}"]`);
+    if (!row) return;
+    const titleEl = row.querySelector('.movie-title');
+    if (!titleEl || row.querySelector('.wheel-rename-input')) return; // already editing
+
+    const input = document.createElement('input');
+    input.className = 'wheel-rename-input';
+    input.type = 'text';
+    input.maxLength = MAX_TITLE_LEN;
+    input.value = movies[index];
+    titleEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    let settled = false;
+    const commit = () => {
+        if (settled) return;
+        settled = true;
+        const next = input.value.trim();
+        if (next && next.toLowerCase() !== movies[index].toLowerCase()) {
+            const dup = movies.some(
+                (m, i) => i !== index && m.toLowerCase() === next.toLowerCase());
+            if (dup) {
+                if (window.toast) toast.info(`"${next}" is already on the wheel.`);
+            } else {
+                movies[index] = next;
+            }
+        }
+        rerender(); // restores the title span (and refreshes the wheel + save state)
+    };
+    const cancel = () => {
+        if (settled) return;
+        settled = true;
+        rerender();
+    };
+
+    input.addEventListener('keydown', (e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    });
+    input.addEventListener('blur', commit);
+}
+
+// ==========================================
+// 3c. SAVE / LOAD (localStorage: "movieKnightWheel")
+// ==========================================
+function getSavedWheel() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(WHEEL_STORAGE_KEY));
+        return Array.isArray(parsed) ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
+// The current wheel exactly equals what's saved (same titles, same order)?
+function wheelMatchesSaved() {
+    const saved = getSavedWheel();
+    return saved !== null && JSON.stringify(saved) === JSON.stringify(movies);
+}
+
+// Save is pointless when there's nothing new to save — grey it out then.
+function updateSaveButtonState() {
+    const saveBtn = document.querySelector('.save-current-btn');
+    if (!saveBtn) return;
+    const matches = wheelMatchesSaved();
+    saveBtn.disabled = matches;
+    saveBtn.classList.toggle('save-btn--disabled', matches);
+}
+
+function setupSaveLoad() {
+    const saveBtn = document.querySelector('.save-current-btn');
+    const loadBtn = document.querySelector('.load-btn');
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            if (saveBtn.disabled) return;
+            localStorage.setItem(WHEEL_STORAGE_KEY, JSON.stringify(movies));
+            updateSaveButtonState();
+            if (window.toast) toast.success('Wheel saved.');
+        });
+    }
+
+    if (loadBtn) {
+        loadBtn.addEventListener('click', () => {
+            const saved = getSavedWheel();
+            if (!saved || !saved.length) {
+                if (window.toast) toast.info('No saved wheel to load yet.');
+                return;
+            }
+            movies = saved.slice();
+            currentRotation = 0; // reset the spin orientation for the loaded set
+            rerender();
+            if (window.toast) toast.success('Loaded your latest wheel.');
+        });
+    }
+
+    updateSaveButtonState();
 }
 
 // ==========================================
