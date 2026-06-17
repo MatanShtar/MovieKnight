@@ -1,0 +1,542 @@
+/* picker.css — Layout for the generic Movie Picker configuration hub */
+
+/* ==========================================
+   1. HEADER & TABS
+   ========================================== */
+/* Match wheel.html's tighter top spacing so the bar sits at the exact same
+   height on both pages (only loaded on picker.html, so this is page-scoped). */
+.main-content {
+    padding-top: 12px;
+    gap: 12px;
+}
+
+.picker-header {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: 4px;
+}
+
+.back-btn {
+    position: absolute;
+    left: 0;
+    top:0;
+    color: var(--text);
+    text-decoration: underline;
+    font-size: 24px;
+    cursor: pointer;
+    font-weight: 100;
+    transition: color var(--t-fast) ease;
+}
+
+.back-btn:hover {
+    color: var(--text);
+}
+
+.wheel-main-logo {
+    height: 228px;
+    object-fit: contain;
+}
+
+.feature-tabs {
+    display: flex;
+    width: 100%;
+    max-width: 1642px;
+    max-height: 64px;
+    background-color: rgb(var(--tabs-track));
+    border-radius: 50px;
+    padding: 10px;
+    gap: 10px;
+    margin-bottom: 30px;    
+}
+
+.tab-btn {
+    display: flex;
+    flex: 1;
+    background-color: rgba(var(--maroon-light), 0.5);
+    border: none;
+    color: var(--text-muted);
+    padding: 12px 20px;
+    border-radius: 0;
+    font-size: 30px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color var(--t-base), color var(--t-base);
+    align-items: center;
+    justify-content: center;
+}
+
+.tab-btn.active ,.tab-btn:hover{
+    background-color: rgba(var(--maroon), 1);
+    color: var(--text);
+}
+
+.tab-btn:first-child {
+    border-top-left-radius: 50px;
+    border-bottom-left-radius: 50px;
+}
+
+.tab-btn:last-child {
+    border-top-right-radius: 50px;
+    border-bottom-right-radius: 50px;
+}
+
+.tab-btn, .generate-wheel-btn {
+    font-family: 'Impact', sans-serif;
+    letter-spacing: 10%;
+    font-weight: 100;
+    text-transform: uppercase;
+}
+
+/* --- "Generate wheel" transition: collapse the two other game options so the
+   active "Spin the Wheel" tab stretches to fill the whole bar, matching the
+   single-bar header on wheel.html, then we navigate. --- */
+.feature-tabs.collapsing .tab-btn {
+    transition:
+        flex 0.55s var(--ease-snap),
+        opacity 0.4s ease,
+        padding 0.55s var(--ease-snap),
+        border-radius 0.55s var(--ease-snap);
+}
+
+.feature-tabs.collapsing .tab-btn:not(.active) {
+    flex: 0 0 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* The lone surviving tab rounds into a full pill, exactly like the wheel-page bar */
+.feature-tabs.collapsing .tab-btn.active {
+    border-radius: 50px;
+}
+
+/* ==========================================
+   2. CONFIGURATION LAYOUT
+   ========================================== */
+.picker-state-container {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Only the active game option's panel is shown; tabs switch between them. */
+.picker-panel {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+}
+
+.picker-panel.active {
+    display: flex;
+    animation: panel-fade-in var(--t-base) ease;
+}
+
+/* Opacity only — a transform here would become the containing block for the
+   fixed Generate/Send button and make it jump on every tab switch. */
+@keyframes panel-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* "Coming soon" placeholder (The Chopping Block) */
+.coming-soon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 320px;
+    color: var(--text-soft);
+}
+
+.coming-soon h2 {
+    font-size: 40px;
+    font-weight: 300;
+    margin: 0 0 12px;
+    color: var(--text);
+}
+
+.coming-soon p {
+    font-size: 26px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ==========================================
+   2b. LET AI CHOOSE (placeholder setup)
+   ========================================== */
+.ai-config {
+    width: 100%;
+    max-width: 740px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.ai-config h3 {
+    font-weight: 300;
+    font-size: 24px;
+    color: var(--text-soft);
+    margin: 0;
+}
+
+.ai-config h3:not(:first-child) {
+    margin-top: 28px;
+}
+
+/* Stepped "amount of suggestions" control: three dots on a track */
+.suggestion-stepper {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    width: 260px;
+    margin: 22px 0 4px;
+}
+
+.suggestion-stepper::before {
+    content: "";
+    position: absolute;
+    top: 11px;             /* line through the dot centres */
+    left: 11px;
+    right: 11px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.25);
+    z-index: 0;
+}
+
+.suggestion-stepper .step {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+}
+
+.suggestion-stepper .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #d7d7d7;
+    transition: transform var(--t-base) var(--ease-pop),
+                background-color var(--t-base) ease,
+                box-shadow var(--t-base) ease;
+}
+
+.suggestion-stepper .step:hover .dot {
+    transform: scale(1.12);
+}
+
+.suggestion-stepper .step.active .dot {
+    background: rgb(var(--maroon-bright));
+    transform: scale(1.12);
+    box-shadow: 0 0 0 4px rgba(var(--maroon-bright), 0.25);
+}
+
+.suggestion-stepper .num {
+    color: var(--text-soft);
+    font-size: 20px;
+}
+
+.ai-prompt {
+    width: 100%;
+    height: 150px;
+    resize: none;
+    border: none;
+    border-radius: 16px;
+    background: rgba(var(--maroon-light), 0.25);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 20px;
+    padding: 18px 22px;
+    outline: none;
+    margin-top: 12px;
+    transition: background-color var(--t-base) ease;
+}
+
+.ai-prompt::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.ai-prompt:focus {
+    background: rgba(var(--maroon-light), 0.35);
+}
+
+.ai-personal-data {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    align-self: flex-start;
+    margin-top: 22px;
+    cursor: pointer;
+    color: var(--text-soft);
+    font-size: 20px;
+}
+
+.config-layout {
+    display: flex;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.config-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.config-column h3 {
+    font-weight: 300;
+    font-size: 24px;
+    color: var(--text-soft);
+}
+
+.placeholder-box {
+    width: 100%;
+    height: 300px;
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    background-color: rgba(0,0,0,0.1);
+}
+
+/* ==========================================
+   3. GENERATE BUTTON
+   ========================================== */
+.generate-wheel-btn {
+    background: linear-gradient(90deg, rgb(var(--maroon)) 0%, rgb(var(--maroon-mid)) 45%, rgb(var(--maroon-bright)) 65%, rgb(var(--maroon-flare)) 100%);
+    color: var(--text);
+    border: none;
+    position:fixed;
+    width: 100%;
+    max-width: 847px;
+    height: 94px;
+    bottom: 0;
+    border-top-left-radius: 40px;
+    border-top-right-radius: 40px;
+    padding: 20px 60px;
+    font-size: 40px;    
+    cursor: pointer;
+    transition: transform var(--t-fast) var(--ease-snap), filter var(--t-base) ease;
+}
+
+.generate-wheel-btn:hover {
+    filter: brightness(1.05); 
+    transform: scale(1.02);
+}
+
+.generate-wheel-btn:active {
+    transform: scale(0.98);
+}
+
+/* ==========================================
+   4. GENRE GRID (LEFT COLUMN)
+   ========================================== */
+.genre-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 24px 20px; 
+    width: 600px;
+    margin-top: 30px;
+}
+
+.genre-btn {
+    position: relative;
+    width: 116px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;          /* centre multi-line names like "Science Fiction" */
+    padding: 0 8px;
+    background-color: rgba(0,0,0,0.6);
+    color: var(--text);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    font-family: 'Lao Sangam MN', sans-serif;
+    font-size: 18px;
+    line-height: 1.1;
+    cursor: pointer;
+    transition: all var(--t-slow) ease;
+}
+
+.genre-btn.dashed {
+    background-color: transparent;
+    border: 1px dashed rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.genre-btn:hover {
+    transform: scale(1.05);
+    transform:rotate(3deg);
+}
+
+.genre-icon {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    width: 24px;
+    height: 24px;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(0deg); 
+    transition: transform var(--t-slow) var(--ease-pop), 
+                opacity var(--t-slow) ease;
+}
+
+.genre-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.genre-btn.dashed .genre-icon {
+    transform: rotate(135deg);  
+}
+
+/* ==========================================
+   5. PROVIDER LIST (RIGHT COLUMN)
+   ========================================== */
+.provider-box {
+    margin-left: 100px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 400px;
+    height: 400px;
+    background-color: rgba(33,33,33,0.9);
+    border-radius: 8px;
+    overflow: hidden; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.provider-search-bar {
+    background-color: rgba(var(--maroon-mid), 0.3);
+    padding: 18px 24px; 
+    height: 40px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.provider-search-bar input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 16px;
+    outline: none;
+    font-family: inherit;
+    padding: 0;
+    margin: 0; 
+}
+
+.provider-search-bar input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    transition: color var(--t-fast) ease;
+}
+
+.provider-search-bar input:focus::placeholder {
+    color: transparent;
+}
+
+
+/* --- 2. The Scrollable List --- */
+.provider-list {
+    overflow-y: auto;
+    padding: 10px 0 0 0;
+}
+
+.provider-list::-webkit-scrollbar { 
+    width: 10px; 
+}
+.provider-list::-webkit-scrollbar-track { 
+    background-color: rgba(175,175,175); 
+    border-radius: 10px;
+    margin: 8px;
+}
+.provider-list::-webkit-scrollbar-thumb { 
+    background-color: black; 
+    border-radius: 10px; 
+    border: 2px solid rgba(175,175,175); 
+    background-clip: padding-box; 
+}
+
+.provider-item {
+    display: flex;
+    align-items: center;
+    margin: 0 24px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(106, 106, 106, 1);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.provider-item:last-child {
+    border-bottom: none;
+    margin-bottom: 20px; 
+}
+
+.provider-item:hover {
+    opacity: 0.7;
+}
+
+.provider-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 16px;
+    background-color: #111; 
+}
+
+.provider-name {
+    flex-grow: 1;
+    color: var(--text-soft);
+    font-size: 18px;
+}
+
+.provider-checkbox {
+    display: none; 
+}
+
+.custom-check {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 3px;
+    transition: all 0.2s ease;
+}
+
+.provider-checkbox:checked + .custom-check {
+    background-color: var(--text);
+    border-color: var(--text);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999999' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-size: 15px 15px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
