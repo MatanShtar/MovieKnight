@@ -902,6 +902,17 @@
   color: var(--text-muted);
 }
 
+/* Infinite-scroll sentinel: a 1px full-row marker the IntersectionObserver
+   watches. `overflow-anchor: none` keeps the browser from ever choosing it as
+   the scroll-anchor element, so appending cards above it can't yank the view. */
+#infinite-scroll-sentinel {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 1px;
+  pointer-events: none;
+  overflow-anchor: none;
+}
+
 .movie-card {
   display: flex;
   align-items: center;
@@ -967,7 +978,12 @@
 .poster-img {
   width: 100%;
   height: 100%;
+  aspect-ratio: 2 / 3; /* fixed ratio so the box is reserved before the asset loads */
   object-fit: cover;
+  display: block;
+  /* Skeleton fill shown until the image decodes — no flash of empty space and,
+     with the fixed ratio above, no reflow when the poster paints in. */
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .movie-card--skeleton {

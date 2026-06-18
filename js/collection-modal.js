@@ -11,10 +11,9 @@
 // success toast: "<Movie> added to <Collection>".
 
 window.CollectionModal = (function () {
-  // Mock collections shown in the grid — the six from the Figma frame, each with
-  // a 2x2 poster collage. (No backend yet; the checked state is purely the UI
-  // prep for the eventual handoff.) Order matches the Figma: the list flows
-  // left-to-right, top-to-bottom across two columns.
+  // Mock collections shown in the grid — the three default collections, each
+  // with a 2x2 poster collage. (No backend yet; the checked state is purely the
+  // UI prep for the eventual handoff.)
   const P = "assets/images/posters/";
   const COLLECTIONS = [
     { name: "Watchlist", checked: false, posters: [
@@ -26,22 +25,12 @@ window.CollectionModal = (function () {
     { name: "Already Watched", checked: false, posters: [
       P + "interstellar-poster.webp", P + "everything-everywhere-all-at-once-poster.webp",
       P + "whiplash-poster.webp", P + "spider-man-into-the-spider-verse-poster.webp" ] },
-    { name: "Chick Flicks", checked: false, posters: [
-      P + "la-la-land-poster.webp", P + "ten-things-i-hate-about-you-poster.webp",
-      P + "the-substance-poster.webp", P + "housemaid-poster.webp" ] },
-    { name: "Wheel 1", checked: false, posters: [
-      P + "dune-part-two-poster.webp", P + "frankenstein-poster.webp",
-      P + "the-dark-knight-poster.webp", P + "parasite-poster.webp" ] },
-    { name: "Wheel 2", checked: false, posters: [
-      P + "kill-bill-poster.webp", P + "housemaid-poster.webp",
-      P + "interstellar-poster.webp", P + "pulp-fiction-poster.webp" ] },
   ];
 
   let overlay = null; // built lazily on first open
   let nameInput = null;
   let listEl = null; // the collection rows container (for resetting checks)
   let currentMovie = "This movie";
-  let pushedState = false; // true while our history entry is on the stack
 
   // Build the modal DOM once and wire its interactions.
   function build() {
@@ -190,36 +179,19 @@ window.CollectionModal = (function () {
     resetChecks();
     overlay.classList.add("is-open");
     document.body.classList.add("cm-no-scroll");
-    // Push a history entry so the browser/in-app Back closes the overlay and
-    // returns to the page it was opened from (Home OR Movie Details).
-    pushedState = true;
-    history.pushState({ cmOpen: true }, "");
   }
 
-  // Hide the panel without touching history (used by both close() and popstate).
-  function hide() {
+  // The modal is a same-page overlay, so closing it simply hides it — it must
+  // NOT touch window.history. (It used to pushState on open + history.back() on
+  // close; that left the page's own "Back" button needing two clicks right after
+  // adding to a collection, because the modal's history.back() raced with the
+  // user's. Leaving history untouched lets smartBack() navigate correctly on the
+  // first click.)
+  function close() {
+    if (!overlay) return;
     overlay.classList.remove("is-open");
     document.body.classList.remove("cm-no-scroll");
   }
-
-  function close() {
-    if (!overlay) return;
-    hide();
-    // Consume the entry we added so a later Back doesn't re-trigger on it.
-    if (pushedState) {
-      pushedState = false;
-      history.back();
-    }
-  }
-
-  // Browser/in-app Back while the modal is open: just close it (the entry is
-  // already being popped, so don't call history.back() again).
-  window.addEventListener("popstate", () => {
-    if (overlay && overlay.classList.contains("is-open")) {
-      pushedState = false;
-      hide();
-    }
-  });
 
   return { open, close };
 })();

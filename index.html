@@ -375,6 +375,10 @@
 
         <section class="movie-grid" id="movieGrid">
           <!-- movie cards are injected by js/home.js via js/api.js (live backend) -->
+          <!-- Infinite-scroll sentinel: kept as the last grid child; the
+               IntersectionObserver in home.js watches it and new cards are
+               inserted before it. -->
+          <div id="infinite-scroll-sentinel" aria-hidden="true"></div>
         </section>
       </main>
 

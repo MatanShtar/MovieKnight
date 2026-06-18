@@ -116,6 +116,10 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   margin-bottom: 26px;
+  /* Full-width rule along the bottom of the grid (above the footer). With an odd
+     count the last cell sits alone, so the list draws this line rather than the
+     cell — keeping it the full width. */
+  border-bottom: 2px solid var(--cm-line);
 }
 
 /* The whole cell is one toggle button (square checkbox + name + 2x2 collage). */
@@ -139,6 +143,12 @@
 }
 .cm-item:nth-child(2n) {
   border-right: none; /* no rule on the outer right edge */
+}
+/* A lone last cell (odd count) drops its own rules — the centre line would
+   dangle into an empty cell and the bottom line is drawn by the list instead. */
+.cm-item:last-child {
+  border-right: none;
+  border-bottom: none;
 }
 .cm-item:hover {
   background: rgba(255, 255, 255, 0.04);
