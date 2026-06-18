@@ -1,0 +1,255 @@
+/* collection-modal.css — reusable "Add to Collection" modal.
+   Built/owned by js/collection-modal.js; styling follows the Figma
+   "Add to Collection - from movie page" frame (dark panel, pink accents). */
+
+.cm-no-scroll {
+  overflow: hidden;
+}
+
+.cm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--t-base) ease,
+    visibility var(--t-base) ease;
+}
+.cm-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.cm-panel {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: #212121;
+  border-radius: 18px;
+  border: 1px solid rgba(var(--pink), 0.45);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  padding: 26px 34px 30px;
+  color: #f0f0f0;
+  transform: translateY(16px) scale(0.97);
+  transition: transform var(--t-base) var(--ease-pop);
+}
+.cm-overlay.is-open .cm-panel {
+  transform: none;
+}
+
+/* ---- Header ---- */
+.cm-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22px;
+}
+.cm-title {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 1.1;
+  color: #f0f0f0;
+}
+.cm-close {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: #f0f0f0;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity var(--t-base) ease;
+}
+.cm-close:hover {
+  opacity: 1;
+}
+
+/* ---- Collection list ---- */
+.cm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.cm-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Checkbox + name (the whole left side toggles the checkbox). */
+.cm-item-toggle {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+.cm-check {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 7px;
+  border: 3px solid #d9d9d9;
+  background: transparent;
+  position: relative;
+  transition:
+    background-color var(--t-fast) ease,
+    border-color var(--t-fast) ease;
+}
+.cm-item-toggle.is-checked .cm-check {
+  background: rgb(var(--pink));
+  border-color: rgb(var(--pink));
+}
+.cm-item-toggle.is-checked .cm-check::after {
+  content: "";
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: 9px;
+  height: 16px;
+  border: solid #212121;
+  border-width: 0 3px 3px 0;
+  transform: translate(-50%, -55%) rotate(45deg);
+}
+.cm-name {
+  font-size: 28px;
+  color: #f0f0f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 2x2 placeholder collage standing in for the collection's posters. */
+.cm-collage {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, 46px);
+  grid-template-rows: repeat(2, 58px);
+  gap: 3px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.cm-tile {
+  display: block;
+}
+.cm-tile--1 {
+  background: linear-gradient(135deg, #8a5699, #ce698c);
+}
+.cm-tile--2 {
+  background: linear-gradient(135deg, #3b6fd4, #86d0e0);
+}
+.cm-tile--3 {
+  background: linear-gradient(135deg, #3cae5b, #f4d03f);
+}
+.cm-tile--4 {
+  background: linear-gradient(135deg, #f39c12, #e8453c);
+}
+
+/* ---- Footer: new collection ---- */
+.cm-footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.cm-newlabel {
+  font-size: 26px;
+  color: #f0f0f0;
+  white-space: nowrap;
+}
+.cm-newfield {
+  flex: 1;
+  min-width: 0;
+}
+.cm-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 24px;
+  border: 2px solid rgba(var(--pink), 0.5);
+  background: rgba(var(--maroon), 0.55);
+  color: #fff;
+  font-family: inherit;
+  font-size: 18px;
+  outline: none;
+  transition: border-color var(--t-base) ease;
+}
+.cm-input:focus {
+  border-color: rgb(var(--pink));
+}
+.cm-add {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: rgb(var(--pink));
+  color: #212121;
+  font-size: 30px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform var(--t-fast) var(--ease-snap),
+    filter var(--t-base) ease;
+}
+.cm-add:hover {
+  filter: brightness(1.08);
+}
+.cm-add:active {
+  transform: scale(0.92);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 560px) {
+  .cm-title {
+    font-size: 30px;
+  }
+  .cm-name {
+    font-size: 22px;
+  }
+  .cm-newlabel {
+    font-size: 20px;
+  }
+  .cm-collage {
+    grid-template-columns: repeat(2, 36px);
+    grid-template-rows: repeat(2, 46px);
+  }
+  .cm-footer {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-overlay,
+  .cm-panel {
+    transition: none;
+  }
+}

@@ -24,6 +24,8 @@ window.MovieAPI = (function () {
     // The backend returns bare TMDB paths (poster_path / logo_path) like
     // "/abc.jpg"; images must be prefixed with this CDN base + size to load.
     const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
+    // Backdrops are wider stills — pull them at a larger width than posters.
+    const TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280";
 
     // ==========================================
     // 1. LOW-LEVEL REQUEST HELPER
@@ -101,11 +103,43 @@ window.MovieAPI = (function () {
         }
 
         return {
+            // id is kept so a movie card can link to its details page.
+            id: m.id ?? null,
             title: m.title || m.name || "",
             rating: m.rating ?? m.vote_average ?? 0,
             popularity: m.popularity ?? 0,
             releaseYear: releaseYear || "",
             posterPath: posterPath || "",
+        };
+    }
+
+    // The Movie Details page payload from GET /api/movies/:id. Builds full image
+    // URLs and a year, and passes through the richer fields (overview, genres,
+    // director, cast, trailer) the details screen renders.
+    function normalizeDetails(d) {
+        if (!d) return null;
+        let posterPath = d.posterPath;
+        if (!posterPath && d.poster_path) posterPath = TMDB_IMAGE_BASE + d.poster_path;
+        let backdropPath = d.backdropPath;
+        if (!backdropPath && d.backdrop_path) backdropPath = TMDB_BACKDROP_BASE + d.backdrop_path;
+        let releaseYear = d.releaseYear;
+        if (!releaseYear && d.release_date) {
+            releaseYear = Number(String(d.release_date).slice(0, 4)) || "";
+        }
+        return {
+            id: d.id ?? null,
+            title: d.title || "",
+            releaseYear: releaseYear || "",
+            overview: d.overview || "",
+            tagline: d.tagline || "",
+            runtime: d.runtime || null,
+            rating: d.rating ?? d.vote_average ?? 0,
+            posterPath: posterPath || "",
+            backdropPath: backdropPath || "",
+            genres: Array.isArray(d.genres) ? d.genres : [],
+            director: d.director || "",
+            cast: Array.isArray(d.cast) ? d.cast : [],
+            trailerKey: d.trailerKey || null,
         };
     }
 
@@ -173,7 +207,7 @@ window.MovieAPI = (function () {
         if (typeof params === "string") params = { q: params };
         const {
             q, genres, yearFrom, yearTo, minRating, sort, page,
-            with_cast, with_crew,
+            with_cast, with_crew, minVotes, language,
         } = params;
 
         const qp = {};
@@ -187,9 +221,19 @@ window.MovieAPI = (function () {
         // Person filtering: cast for actors, crew for everyone else.
         if (with_cast) qp.with_cast = with_cast;
         if (with_crew) qp.with_crew = with_crew;
+        // Default-feed quality guards (vote count floor + language); only the
+        // empty-query feed sets these, so a real text search stays unrestricted.
+        if (minVotes) qp.minVotes = minVotes;
+        if (language) qp.language = language;
 
         const data = await request("/movies/search", { params: qp });
         return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
+    }
+
+    // Full details for one movie (GET /api/movies/:id) for the details page.
+    async function getMovieDetails(id) {
+        const data = await request(`/movies/${encodeURIComponent(id)}`);
+        return normalizeDetails(data);
     }
 
     // People autocomplete for the Actor / Director filter. Returns
@@ -266,6 +310,7 @@ window.MovieAPI = (function () {
         API_BASE,
         getMovies,
         searchMovies,
+        getMovieDetails,
         searchPeople,
         getPopularPeople,
         getRandomMovie,

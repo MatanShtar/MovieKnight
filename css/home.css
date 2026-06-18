@@ -321,9 +321,32 @@
 }
 
 /* Apply button - bottom-right of the filter panel; closes the panel (selections persist) */
-.filter-apply-btn {
-  align-self: flex-end;
+/* Footer row: "Clear Filters" sits to the left of "Apply". */
+.filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 4px;
+}
+
+.filter-clear-btn {
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  border: none;
+  padding: 9px 4px;
+  font-family: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color var(--t-base) ease;
+}
+.filter-clear-btn:hover {
+  color: var(--text);
+}
+
+.filter-apply-btn {
+  margin-top: 0;
   padding: 9px 28px;
   background: rgba(var(--maroon), 0.6);
   color: var(--text);
@@ -462,7 +485,7 @@
 .pill-list {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap; /* pills wrap onto new lines instead of overflowing the row */
+  flex-wrap: nowrap; /* pills stay side-by-side on one row */
   align-items: center;
   gap: 8px;
   flex: 1 1 auto;
@@ -485,6 +508,8 @@
   align-items: center;
   position: relative;
   white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0; /* let pills shrink (and names truncate) to stay on one row */
   animation: pillPop 0.25s var(--ease-pop) both;
 }
 
@@ -499,6 +524,20 @@
   }
 }
 
+/* Long names (e.g. actors) truncate with an ellipsis; the full name shows in a
+   hover tooltip (see .pill-tooltip). Keeps both pills on one row. */
+.pill-name {
+  display: inline-block;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: default; /* no text/I-beam cursor over the name */
+}
+
 .pill-item .pill-remove {
   font-size: 15px;
   line-height: 1;
@@ -509,15 +548,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition:
-    opacity var(--t-fast) ease,
-    transform var(--t-fast) var(--ease-pop);
+  flex: 0 0 auto; /* fixed size — never shrinks or shifts */
+  transition: opacity var(--t-fast) ease;
 }
 
-/* Just a subtle grow on hover — no circle background / glow. */
+/* Brighten on hover only — no scaling, so the × stays put. */
 .pill-item .pill-remove:hover {
   opacity: 1;
-  transform: scale(1.2);
 }
 
 .pill-overflow {
@@ -541,22 +578,23 @@
   bottom: 120%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(var(--maroon), 0.95);
+  background-color: rgba(20, 20, 20, 0.95); /* black, matching the wheel tooltip */
   color: white;
   text-shadow: none;
   line-height: 1;
-  padding: 6px 10px;
+  padding: 6px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 8px;
   white-space: nowrap;
   font-size: 13px;
   z-index: 1000;
   pointer-events: none;
 }
 
-.pill-overflow:hover .pill-tooltip {
+.pill-overflow:hover .pill-tooltip,
+.pill-item:hover .pill-tooltip {
   visibility: visible;
   opacity: 1;
 }
@@ -874,6 +912,7 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
+  cursor: pointer; /* the whole card opens the movie details page */
   aspect-ratio: 2 / 3; /* card fills its grid track; height follows from the 2:3 ratio */
   border: 3px solid rgb(var(--rose));
   transition:
