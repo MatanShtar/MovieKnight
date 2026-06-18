@@ -389,3 +389,93 @@ function buildCollectionCard(c, i) {
 
   renderBio();
 })();
+
+// ==========================================
+// 5. AVATAR UPLOAD (resize client-side -> data URL -> PATCH /api/users/me)
+// ==========================================
+// The camera button opens a file picker, downscales the chosen image to a
+// 256x256 square on a <canvas> (keeps the stored data URL tiny), then saves it
+// via MovieAPI.updateProfile. common.js then shows it on every page's header.
+(function () {
+  const camBtn = document.querySelector(".upload-new-pic");
+  if (!camBtn) return;
+  camBtn.removeAttribute("data-toast"); // was a "Coming Soon" stub
+  camBtn.style.cursor = "pointer";
+
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/*";
+  input.hidden = true;
+  document.body.appendChild(input);
+
+  camBtn.addEventListener("click", () => input.click());
+
+  // Draw the file to a square canvas (center-cropped) → JPEG data URL.
+  function toSquareDataUrl(file, size) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objUrl);
+        const canvas = document.createElement("canvas");
+        canvas.width = canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        const side = Math.min(img.naturalWidth, img.naturalHeight);
+        const sx = (img.naturalWidth - side) / 2;
+        const sy = (img.naturalHeight - side) / 2;
+        ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        try {
+          resolve(canvas.toDataURL("image/jpeg", 0.85));
+        } catch (e) {
+          reject(e); // e.g. a tainted/odd source
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objUrl);
+        reject(new Error("decode failed"));
+      };
+      img.src = objUrl;
+    });
+  }
+
+  input.addEventListener("change", async () => {
+    const file = input.files && input.files[0];
+    input.value = ""; // reset so the same file can be re-picked later
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      if (window.toast) toast.error("Please choose an image file.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      if (window.toast) toast.error("Image must be under 5 MB.");
+      return;
+    }
+
+    let dataUrl;
+    try {
+      dataUrl = await toSquareDataUrl(file, 256);
+    } catch {
+      if (window.toast) toast.error("Couldn't read that image. Try another.");
+      return;
+    }
+
+    // Optimistically show the new picture; revert if the save fails.
+    const imgs = [...document.querySelectorAll(".avatar-pic, .profile-pic")];
+    const prev = imgs.map((im) => im.src);
+    imgs.forEach((im) => (im.src = dataUrl));
+
+    try {
+      if (window.MovieAPI && MovieAPI.updateProfile) {
+        await MovieAPI.updateProfile({ avatarUrl: dataUrl }); // persist + refresh cache
+      } else {
+        const u = JSON.parse(localStorage.getItem("currentUser") || "{}");
+        u.avatarUrl = dataUrl;
+        localStorage.setItem("currentUser", JSON.stringify(u));
+      }
+      if (window.toast) toast.success("Profile picture updated.");
+    } catch (err) {
+      imgs.forEach((im, i) => (im.src = prev[i])); // revert
+      if (window.toast) toast.error(err.message || "Couldn't update your picture.");
+    }
+  });
+})();
