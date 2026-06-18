@@ -133,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const text = checked.length ? checked.join(", ") : "Any";
         providerSelectionLabel.textContent = text;
         // The chip ellipsis-truncates a long list; the tooltip shows it all on hover.
+        // The chip itself is a read-only summary — not clickable.
         if (providerSelectionTooltip) {
             providerSelectionTooltip.textContent = checked.length
                 ? `Selected: ${text}`
@@ -174,6 +175,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Generic Live Search Logic (attached once; it reads the list live).
         if (providerSearch) {
             providerSearch.addEventListener('input', (e) => {
+                // Smart scroll: typing should bring the results back to the top.
+                // The provider list is its own scroll container (overflow-y:auto),
+                // so glide IT to the top — and the page too if it's scrolled.
+                providerList.scrollTo({ top: 0, behavior: 'smooth' });
+                if (window.scrollY > 0) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
                 const searchTerm = e.target.value.toLowerCase();
                 const items = providerList.querySelectorAll('.provider-item');
 

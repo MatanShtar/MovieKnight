@@ -306,26 +306,35 @@
     cursor: default; /* heading text — no I-beam cursor */
 }
 
-/* Provider heading + its "Clear" reset, side by side. */
+/* Provider heading with its "Clear" reset stacked directly BELOW the title
+   (rather than awkwardly off to its right). */
 .provider-heading-row {
     display: flex;
-    align-items: baseline;
-    justify-content: center;
-    gap: 12px;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
+/* Small pill button under the heading — clearer than the old underlined text. */
 .provider-clear-btn {
-    background: transparent;
-    border: none;
+    background: rgba(var(--pink), 0.12);
+    border: 1px solid rgba(var(--pink), 0.4);
+    border-radius: 999px;
     color: var(--text-soft);
     font-family: inherit;
-    font-size: 15px;
-    text-decoration: underline;
+    font-size: 13px;
+    line-height: 1;
+    text-decoration: none;
     cursor: pointer;
-    padding: 0;
-    transition: color var(--t-base) ease;
+    padding: 5px 14px;
+    transition:
+        color var(--t-base) ease,
+        background-color var(--t-base) ease,
+        border-color var(--t-base) ease;
 }
 .provider-clear-btn:hover {
     color: var(--text);
+    background: rgba(var(--pink), 0.22);
+    border-color: rgba(var(--pink), 0.7);
 }
 
 .placeholder-box {
@@ -409,7 +418,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    cursor: default; /* it's a read-only summary, not interactive */
+    cursor: default; /* read-only summary — not interactive */
 }
 
 /* Floating tooltip with the full provider list on hover — mirrors the wheel's

@@ -233,17 +233,29 @@ function buildCollectionCard(c, i) {
 (function () {
   const BIO_KEY = "movieKnightBio";
   const BIO_PLACEHOLDER = "Add bio";
+  const BIO_MAX = 200; // strict cap to keep the bio block from overflowing
   const bioEl = document.querySelector(".profile-bio");
   const editBtn = document.querySelector(".bio-edit-btn");
   if (!bioEl) return;
 
+  // The bio was being mocked in localStorage, which left stale text pinned to
+  // this placeholder profile across reloads. Until it's tied to a real account,
+  // clear that cached value on load so the page always starts from the
+  // placeholder state.
+  localStorage.removeItem(BIO_KEY);
+
   const getSavedBio = () => localStorage.getItem(BIO_KEY) || "";
 
   // Show the saved bio, or the "Add bio" placeholder when there isn't one yet.
+  // Anything over the 200-char cap (e.g. a longer value saved before the limit
+  // existed) is truncated to 200 and shown with a trailing ellipsis.
   function renderBio() {
     const saved = getSavedBio();
     if (saved.trim()) {
-      bioEl.textContent = saved;
+      bioEl.textContent =
+        saved.length > BIO_MAX
+          ? saved.slice(0, BIO_MAX).trimEnd() + "…"
+          : saved;
       bioEl.classList.remove("profile-bio--placeholder");
     } else {
       bioEl.textContent = BIO_PLACEHOLDER;
@@ -259,12 +271,29 @@ function buildCollectionCard(c, i) {
 
     // Swap the static bio for a textarea (multi-line input) seeded with the
     // current text. Enter (⌘/Ctrl) or blur saves; Escape cancels.
+    // The editor is a textarea + a live "n/200" counter, grouped in one wrapper
+    // so they swap in/out of the layout as a single unit.
+    const wrap = document.createElement("div");
+    wrap.className = "bio-edit-wrap";
+
     const textarea = document.createElement("textarea");
     textarea.className = "profile-bio-input";
-    textarea.maxLength = 280;
+    textarea.maxLength = BIO_MAX; // hard cap input at 200 characters
     textarea.value = prev;
     textarea.setAttribute("aria-label", "Edit bio");
-    bioEl.replaceWith(textarea);
+
+    const counter = document.createElement("div");
+    counter.className = "bio-counter";
+    const updateCounter = () => {
+      counter.textContent = `${textarea.value.length}/${BIO_MAX}`;
+      // Warn as the user approaches the cap.
+      counter.classList.toggle("is-full", textarea.value.length >= BIO_MAX);
+    };
+    updateCounter();
+    textarea.addEventListener("input", updateCounter);
+
+    wrap.append(textarea, counter);
+    bioEl.replaceWith(wrap);
     if (editBtn) editBtn.style.display = "none";
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
@@ -273,9 +302,9 @@ function buildCollectionCard(c, i) {
     const finish = (save) => {
       if (settled) return;
       settled = true;
-      const next = textarea.value.trim();
+      const next = textarea.value.trim().slice(0, BIO_MAX); // enforce the cap
       if (save) localStorage.setItem(BIO_KEY, next);
-      textarea.replaceWith(bioEl);
+      wrap.replaceWith(bioEl);
       if (editBtn) editBtn.style.display = "";
       editing = false;
       renderBio();
