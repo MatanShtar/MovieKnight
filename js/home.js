@@ -46,13 +46,51 @@ function updateClearFiltersVisibility() {
   if (btn) btn.style.display = anyFilterActive() ? "" : "none";
 }
 
-// Show a friendly full-width message in place of the card grid.
-function showGridMessage(text) {
-  const grid = document.getElementById("movieGrid");
-  if (grid) grid.innerHTML = `<p class="grid-message">${text}</p>`;
+// The persistent infinite-scroll sentinel (lives in index.html as the grid's
+// last child). All card/skeleton/message inserts go BEFORE it, and it is never
+// removed, so the IntersectionObserver attached to it stays valid for the life
+// of the page.
+function getSentinel() {
+  return document.getElementById("infinite-scroll-sentinel");
 }
 
-// Build cards for a list of movies, preload posters, then REPLACE the grid.
+// Remove only the cards / skeletons / message — never the sentinel.
+function clearGridCards() {
+  const grid = document.getElementById("movieGrid");
+  if (!grid) return;
+  grid
+    .querySelectorAll(".movie-card, .grid-message")
+    .forEach((el) => el.remove());
+}
+
+// Insert a DocumentFragment (or node) just before the sentinel.
+function insertBeforeSentinel(node) {
+  const grid = document.getElementById("movieGrid");
+  if (!grid) return;
+  const sentinel = getSentinel();
+  if (sentinel) grid.insertBefore(node, sentinel);
+  else grid.appendChild(node);
+}
+
+// Build a DocumentFragment from an HTML string (off-DOM, one parse).
+function fragmentFromHTML(html) {
+  const tpl = document.createElement("template");
+  tpl.innerHTML = html;
+  return tpl.content;
+}
+
+// Show a friendly full-width message in place of the card grid.
+function showGridMessage(text) {
+  if (!document.getElementById("movieGrid")) return;
+  clearGridCards();
+  const p = document.createElement("p");
+  p.className = "grid-message";
+  p.textContent = text;
+  insertBeforeSentinel(p);
+}
+
+// Build cards for a list of movies, preload posters, then REPLACE the cards
+// (leaving the sentinel in place).
 async function renderMovieGrid(movies) {
   const grid = document.getElementById("movieGrid");
   if (!grid) return;
@@ -62,9 +100,9 @@ async function renderMovieGrid(movies) {
     return;
   }
 
-  const html = movies.map(buildMovieCard).join("");
   await preloadImages(movies.map((m) => m.posterPath)); // wait for posters
-  grid.innerHTML = html; // real cards now animate in (.movie-card entrance)
+  clearGridCards();
+  insertBeforeSentinel(fragmentFromHTML(movies.map(buildMovieCard).join("")));
   // No client-side re-ordering — the backend already returns them sorted.
 }
 
@@ -77,12 +115,13 @@ function appendMovieCards(movies) {
   if (!grid || !movies.length) return;
   // Build the whole batch off-DOM in a DocumentFragment, then insert it in a
   // single operation — one layout/paint instead of one per card.
-  const tpl = document.createElement("template");
-  tpl.innerHTML = movies.map(buildMovieCard).join("");
-  const fragment = tpl.content;
+  const fragment = fragmentFromHTML(movies.map(buildMovieCard).join(""));
+  // Insert ahead of the in-flight skeletons if present, otherwise just before
+  // the sentinel — always below the current viewport, so scroll anchoring keeps
+  // the view from jumping.
   const firstSkeleton = grid.querySelector(".feed-skeleton");
   if (firstSkeleton) grid.insertBefore(fragment, firstSkeleton);
-  else grid.appendChild(fragment);
+  else insertBeforeSentinel(fragment);
 }
 
 // Load the next BATCH (PAGES_PER_BATCH pages) for the current query and append
@@ -101,12 +140,13 @@ async function loadFeedBatch(token = feedToken) {
   const grid = document.getElementById("movieGrid");
   const firstLoad = feedPage === 0;
 
-  // While the batch is in flight, show skeletons at the bottom (after page 1) so
-  // the area isn't blank during the round-trip.
+  // While the batch is in flight, show skeletons just before the sentinel (after
+  // page 1) so the area isn't blank during the round-trip.
   if (!firstLoad && grid) {
-    grid.insertAdjacentHTML(
-      "beforeend",
-      '<article class="movie-card movie-card--skeleton feed-skeleton" aria-hidden="true"></article>'.repeat(10),
+    insertBeforeSentinel(
+      fragmentFromHTML(
+        '<article class="movie-card movie-card--skeleton feed-skeleton" aria-hidden="true"></article>'.repeat(10),
+      ),
     );
   }
 
@@ -191,20 +231,18 @@ async function loadFeedBatch(token = feedToken) {
   }
 }
 
-// True once the user is within the pre-load threshold of the bottom — i.e. still
-// ~1–2 screens away — so the next batch is fetched EARLY rather than at the very
-// bottom. Satisfied by either the sentinel entering the grown margin or the page
-// being scrolled past 80% of its height (whichever trips first).
+// A one-shot geometric check (NOT a scroll listener) used only by the post-batch
+// fill-loop: true while the sentinel is still within the pre-load margin of the
+// viewport bottom. The observer can't re-fire on its own when the sentinel stays
+// continuously intersecting (e.g. a page too short to scroll), so this lets the
+// loader keep pulling pages until the sentinel is pushed out past the margin.
 function feedNearBottom() {
-  const byRatio =
-    window.innerHeight + window.scrollY >=
-    document.documentElement.scrollHeight * 0.8;
-  const sentinel = document.getElementById("gridSentinel");
-  const bySentinel = sentinel
-    ? sentinel.getBoundingClientRect().top <=
-      window.innerHeight + PRELOAD_MARGIN_PX
-    : false;
-  return byRatio || bySentinel;
+  const sentinel = getSentinel();
+  if (!sentinel) return false;
+  return (
+    sentinel.getBoundingClientRect().top <=
+    window.innerHeight + PRELOAD_MARGIN_PX
+  );
 }
 
 // Start a fresh query from page 1, then keep paginating on scroll. Everything
@@ -219,7 +257,10 @@ function applyQuery(query) {
   feedDupeStreak = 0;
   const token = ++feedToken; // invalidate any in-flight page load
   const grid = document.getElementById("movieGrid");
-  if (grid) grid.innerHTML = movieSkeletonMarkup(10);
+  if (grid) {
+    clearGridCards(); // drop old cards but keep the sentinel + observer intact
+    insertBeforeSentinel(fragmentFromHTML(movieSkeletonMarkup(10)));
+  }
   loadFeedBatch(token);
 }
 
@@ -230,37 +271,24 @@ function runSearch() {
 
 // Load more BEFORE the user reaches the bottom. A bottom sentinel marks where
 // the grid ends; an IntersectionObserver with a tall bottom rootMargin fires the
-// next batch ~1–2 screens early (the pre-load threshold). A scroll/resize handler
-// backs it up — both for browsers without IntersectionObserver and because an
-// observer won't re-fire while the sentinel stays on-screen, which would stall
-// short pages. The feedLoading guard makes the overlapping triggers harmless.
+// next batch ~1–2 screens early (the pre-load threshold). This is the SOLE driver
+// — there is no window scroll listener — and the feedLoading guard makes repeated
+// observer callbacks during fast scrolling harmless. The post-batch fill-loop
+// (via feedNearBottom) covers the one case the observer can't: a page too short
+// to scroll, where the sentinel stays continuously intersecting.
 function setupInfiniteScroll() {
-  const grid = document.getElementById("movieGrid");
-  if (!grid || !grid.parentElement) return;
-  if (!document.getElementById("gridSentinel")) {
-    const sentinel = document.createElement("div");
-    sentinel.id = "gridSentinel";
-    grid.parentElement.appendChild(sentinel);
-  }
-  const sentinel = document.getElementById("gridSentinel");
+  const sentinel = getSentinel(); // permanent element from index.html
+  if (!sentinel || !("IntersectionObserver" in window)) return;
 
-  if ("IntersectionObserver" in window && sentinel) {
-    feedObserver = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) loadFeedBatch();
-      },
-      // Grow the observed area downward so the sentinel "enters" the viewport a
-      // full PRELOAD_MARGIN_PX before it's actually visible.
-      { root: null, rootMargin: `0px 0px ${PRELOAD_MARGIN_PX}px 0px`, threshold: 0 },
-    );
-    feedObserver.observe(sentinel);
-  }
-
-  const onView = () => {
-    if (feedNearBottom()) loadFeedBatch();
-  };
-  window.addEventListener("scroll", onView, { passive: true });
-  window.addEventListener("resize", onView);
+  feedObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((e) => e.isIntersecting)) loadFeedBatch();
+    },
+    // Grow the observed area downward so the sentinel "enters" the viewport a
+    // full 1000px (PRELOAD_MARGIN_PX) before it is actually visible.
+    { root: null, rootMargin: `0px 0px ${PRELOAD_MARGIN_PX}px 0px`, threshold: 0 },
+  );
+  feedObserver.observe(sentinel);
 }
 
 // Sentinel must exist before the first load so its fill-loop can chain.
@@ -323,7 +351,7 @@ function movieSkeletonMarkup(n) {
 function buildMovieCard(m) {
   return `
     <article class="movie-card" data-id="${m.id ?? ""}" data-title="${m.title}" data-rating="${m.rating}" data-year="${m.releaseYear}" data-popularity="${m.popularity}" data-poster="${m.posterPath}">
-      <img src="${m.posterPath}" alt="${m.title}" class="poster-img">
+      <img src="${m.posterPath}" alt="${m.title}" class="poster-img" loading="lazy" decoding="async">
       <div class="rating-badge">
         ${Number(m.rating).toFixed(1)}
         <img src="assets/images/icons/ratings-star.svg" alt="Rating" class="ratings-star-img">
