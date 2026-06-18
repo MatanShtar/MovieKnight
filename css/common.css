@@ -32,6 +32,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* !important is required here: this accessibility reset must override every
+     animation/transition declared elsewhere, regardless of selector specificity. */
   *,
   *::before,
   *::after {
@@ -403,8 +405,10 @@ body {
 }
 
 .header-profile-btn {
-  background: transparent !important;
-  border: none !important;
+  background: transparent;
+  border: none;
+  /* !important: beats the global :focus-visible rule (equal specificity) so the
+     ring renders on .profile-pic instead of the button box. */
   outline: none !important;
   cursor: pointer;
   padding: 0;
@@ -482,6 +486,9 @@ body {
   color: var(--text);
 }
 
+/* !important: these win over the more specific `.header-dropdown a` /
+   `.header-dropdown a:hover` rules (0,1,1 / 0,2,1) that would otherwise set the
+   sign-out link's color and hover background. */
 .danger-text {
   color: rgb(var(--danger)) !important;
 }
