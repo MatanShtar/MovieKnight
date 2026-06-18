@@ -303,6 +303,29 @@
     font-weight: 300;
     font-size: 24px;
     color: var(--text-soft);
+    cursor: default; /* heading text — no I-beam cursor */
+}
+
+/* Provider heading + its "Clear" reset, side by side. */
+.provider-heading-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 12px;
+}
+.provider-clear-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-soft);
+    font-family: inherit;
+    font-size: 15px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    transition: color var(--t-base) ease;
+}
+.provider-clear-btn:hover {
+    color: var(--text);
 }
 
 .placeholder-box {

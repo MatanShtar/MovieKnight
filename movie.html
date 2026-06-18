@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieKnight | Movie Details</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/movie.css" />
+    <link rel="stylesheet" href="css/collection-modal.css" />
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/common.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/collection-modal.js" defer></script>
+    <script src="js/movie.js" defer></script>
+  </head>
+
+  <body class="app-body movie-details-body">
+    <main class="movie-details" id="movieDetails">
+      <a href="index.html" class="md-back" id="mdBack">Back</a>
+
+      <div class="md-layout">
+        <!-- Left: poster + the three quick actions, aligned to the poster width -->
+        <div class="md-poster-col">
+          <figure class="md-poster">
+            <img id="mdPoster" src="" alt="" />
+          </figure>
+
+          <div class="md-actions">
+            <button
+              class="md-action md-action--watched"
+              id="mdWatched"
+              type="button"
+              data-tip="Add to &ldquo;Already Watched&rdquo;"
+            >
+              <img src="assets/images/icons/eye-icon.svg" alt="Mark as watched" />
+            </button>
+            <button class="md-action" id="mdLike" type="button" data-tip="Add to Favorites">
+              <img src="assets/images/icons/heart-icon.svg" alt="Add to favorites" />
+            </button>
+            <button class="md-action" id="mdAdd" type="button" data-tip="Add to Collection">
+              <img src="assets/images/icons/plus-icon.svg" alt="Add to collection" />
+            </button>
+          </div>
+        </div>
+
+        <!-- Right: title, director, synopsis, trailer, then cast + genres -->
+        <div class="md-info">
+          <div class="md-info-top">
+            <h1 class="md-title" id="mdTitle">&nbsp;</h1>
+            <p class="md-director" id="mdDirector"></p>
+
+            <div class="md-overview-wrap">
+              <p class="md-overview" id="mdOverview"></p>
+              <button class="md-readmore" id="mdReadMore" type="button" hidden>
+                Read more
+              </button>
+            </div>
+
+            <!-- Trailer: a YouTube embed. movie.js injects the src into
+                 #trailer-player; dimensions/radius match the Figma trailer. -->
+            <div class="md-trailer">
+              <iframe
+                id="trailer-player"
+                class="md-trailer-iframe"
+                title="Trailer"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </div>
+
+          <div class="md-meta">
+            <p class="md-cast" id="mdCast"></p>
+            <p class="md-genres" id="mdGenres"></p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

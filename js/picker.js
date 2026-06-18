@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const providerSearch = document.getElementById('providerSearch');
     const providerSelectionLabel = document.getElementById('providerSelection');
     const providerSelectionTooltip = document.getElementById('providerSelectionTooltip');
+    const clearProvidersBtn = document.getElementById('clearProvidersBtn');
 
     // Reflect the provider selection in the heading. With nothing checked the
     // filter means "any provider", so the UI says exactly that.
@@ -137,6 +138,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? `Selected: ${text}`
                 : "Any provider";
         }
+        // "Clear" only makes sense when at least one provider is picked.
+        if (clearProvidersBtn) clearProvidersBtn.hidden = checked.length === 0;
+    }
+
+    // Reset the provider filter back to "Any": uncheck everything, clear the
+    // search box, and re-show every provider row.
+    if (clearProvidersBtn && providerList) {
+        clearProvidersBtn.addEventListener('click', () => {
+            providerList.querySelectorAll('.provider-checkbox:checked')
+                .forEach((cb) => { cb.checked = false; });
+            if (providerSearch) providerSearch.value = "";
+            providerList.querySelectorAll('.provider-item')
+                .forEach((item) => { item.style.display = "flex"; });
+            refreshProviderSelectionLabel();
+        });
     }
 
     if (providerList) {

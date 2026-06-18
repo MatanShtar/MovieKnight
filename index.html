@@ -7,11 +7,13 @@
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
     <link rel="stylesheet" href="css/common.css" />
     <link rel="stylesheet" href="css/home.css" />
+    <link rel="stylesheet" href="css/collection-modal.css" />
     <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
     <script src="vendor/toastify/toastify.min.js" defer></script>
     <script src="js/toast.js" defer></script>
     <script src="js/common.js" defer></script>
     <script src="js/api.js" defer></script>
+    <script src="js/collection-modal.js" defer></script>
     <script src="js/home.js" defer></script>
   </head>
 
@@ -350,9 +352,14 @@
                   </div>
                 </div>
 
-                <button class="filter-apply-btn" id="filterApplyBtn">
-                  Apply
-                </button>
+                <div class="filter-actions">
+                  <button class="filter-clear-btn" id="filterClearBtn">
+                    Clear Filters
+                  </button>
+                  <button class="filter-apply-btn" id="filterApplyBtn">
+                    Apply
+                  </button>
+                </div>
               </div>
             </div>
             <div class="sort-dropdown" id="sortDropdownContainer">

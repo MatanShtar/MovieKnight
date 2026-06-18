@@ -10,6 +10,33 @@ let feedLoading = false;
 let feedDone = false;  // no more pages for this query
 let feedToken = 0;     // bumped on every new query so stale fetches are ignored
 
+// Guards the "Clear Filters" visibility check: the filter state vars/elements it
+// reads are declared further down, so the early (init-time) calls from render
+// helpers must no-op until everything is wired. Flipped true at end of init.
+let filtersReady = false;
+
+// True when any filter (not sort) is set away from its default.
+function anyFilterActive() {
+  const ageBtn = document.getElementById("ageRatingBtn");
+  return (
+    (typeof activeGenres !== "undefined" && activeGenres.length > 0) ||
+    (typeof activePlatforms !== "undefined" && activePlatforms.length > 0) ||
+    (typeof currentRating !== "undefined" && currentRating > 0) ||
+    (typeof currentFromYear !== "undefined" && currentFromYear !== "Any") ||
+    (typeof currentTillYear !== "undefined" && currentTillYear !== "Any") ||
+    (ageBtn && ageBtn.textContent.trim() !== "Any") ||
+    (typeof actorFilter !== "undefined" && actorFilter && actorFilter.getSelected().length > 0) ||
+    (typeof directorFilter !== "undefined" && directorFilter && directorFilter.getSelected().length > 0)
+  );
+}
+
+// Show the "Clear Filters" button only when at least one filter is active.
+function updateClearFiltersVisibility() {
+  if (!filtersReady) return;
+  const btn = document.getElementById("filterClearBtn");
+  if (btn) btn.style.display = anyFilterActive() ? "" : "none";
+}
+
 // Show a friendly full-width message in place of the card grid.
 function showGridMessage(text) {
   const grid = document.getElementById("movieGrid");
@@ -93,6 +120,10 @@ async function loadFeedPage(token = feedToken) {
 
   if (!fresh.length) {
     feedDone = true; // no new movies -> end of results
+    // Nothing loaded for this query at all (e.g. an over-constrained filter set):
+    // replace the initial skeletons with a clear "no results" message instead of
+    // leaving the skeleton placeholders spinning forever.
+    if (feedPage === 0) showGridMessage("No movies found. Try removing a filter.");
   } else {
     feedMovies.push(...fresh);
     feedPage = page;
@@ -161,7 +192,9 @@ function setupInfiniteScroll() {
 // than via collectQuery) so this can run before the filter/sort state further
 // down is initialised — avoiding a temporal-dead-zone error.
 setupInfiniteScroll();
-applyQuery({ sort: "popularity" });
+// Matches the empty-box branch of collectQuery(): the first feed is the
+// popular, well-known English catalog (vote-count floor + English language).
+applyQuery({ sort: "popularity", minVotes: 500, language: "en" });
 
 // Gather the live UI state into one query object for GET /api/movies/search.
 // Genres are stored as names in the UI, so resolve them to ids here. Anything
@@ -172,7 +205,16 @@ function collectQuery() {
 
   const searchEl = document.getElementById("movieSearch");
   const term = searchEl ? searchEl.value.trim() : "";
-  if (term) query.q = term;
+  if (term) {
+    // A real text search hits the whole TMDB catalog — no quality guards, so
+    // obscure / foreign titles the user is looking for aren't filtered out.
+    query.q = term;
+  } else {
+    // Default feed (empty box): keep it to well-known English movies by
+    // requiring a healthy vote count and an English language.
+    query.minVotes = 500;
+    query.language = "en";
+  }
 
   const genreIds = activeGenres.map((n) => genreNameToId[n]).filter(Boolean);
   if (genreIds.length) query.genres = genreIds;
@@ -204,7 +246,7 @@ function movieSkeletonMarkup(n) {
 
 function buildMovieCard(m) {
   return `
-    <article class="movie-card" data-title="${m.title}" data-rating="${m.rating}" data-year="${m.releaseYear}" data-popularity="${m.popularity}" data-toast="soon:Coming Soon!">
+    <article class="movie-card" data-id="${m.id ?? ""}" data-title="${m.title}" data-rating="${m.rating}" data-year="${m.releaseYear}" data-popularity="${m.popularity}" data-poster="${m.posterPath}">
       <img src="${m.posterPath}" alt="${m.title}" class="poster-img">
       <div class="rating-badge">
         ${Number(m.rating).toFixed(1)}
@@ -338,6 +380,60 @@ if (filterApplyBtn && filterMenu) {
   });
 }
 
+// "Clear Filters" — reset every filter row and the sort back to its default
+// "Any" / "Popular" state, then run one fresh search. All the state it touches
+// (activeGenres, activePlatforms, currentRating, the year vars, the person
+// filters) lives at module scope and is initialised by the time this can fire.
+const filterClearBtn = document.getElementById("filterClearBtn");
+if (filterClearBtn) {
+  filterClearBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+
+    // Genres + providers (platforms).
+    activeGenres = [];
+    if (genreList) {
+      renderTags();
+      renderDropdown();
+    }
+    activePlatforms = [];
+    if (platformList) {
+      renderPlatforms();
+      renderPlatformDropdown();
+    }
+
+    // Actors (multi) + director (single).
+    if (actorFilter) actorFilter.clear();
+    if (directorFilter) directorFilter.clear();
+
+    // Release year -> Any (and rebuild the constrained year menus).
+    currentFromYear = "Any";
+    currentTillYear = "Any";
+    if (fromYearBtn) fromYearBtn.textContent = "Any";
+    if (tillYearBtn) tillYearBtn.textContent = "Any";
+    updateYearConstraints();
+
+    // Star rating -> none.
+    currentRating = 0;
+    stars.forEach((s) => {
+      s.src = BLANK_STAR_PATH;
+    });
+
+    // Age rating -> Any.
+    if (ageRatingBtn) ageRatingBtn.textContent = "Any";
+
+    // Sort -> default "Popular".
+    const sortSelectedText = document.getElementById("sortSelectedText");
+    if (sortSelectedText) sortSelectedText.textContent = "Popular";
+    document.querySelectorAll(".sort-option").forEach((opt) => {
+      opt.classList.toggle("selected", opt.textContent === "Popular This Week");
+    });
+
+    closeAllInnerDropdowns();
+    updateClearFiltersVisibility(); // nothing active now -> hides itself
+    runSearch();
+  });
+}
+
 // Main Sort By Toggle (Closes Filter Menu)
 if (sortCustomBtn && sortCustomMenu) {
   sortCustomBtn.addEventListener("click", (e) => {
@@ -425,6 +521,8 @@ function injectSearchBar(dropdownElement) {
 
   // Live filter logic
   searchInput.oninput = (e) => {
+    // Typing while scrolled down the list glides the dropdown back to the top.
+    dropdownElement.scrollTo({ top: 0, behavior: "smooth" });
     const term = e.target.value.toLowerCase();
     dropdownElement.querySelectorAll(".pill-option").forEach((opt) => {
       opt.style.display = opt.textContent.toLowerCase().includes(term)
@@ -494,6 +592,7 @@ function updateYearConstraints() {
     currentTillYear === "Any" ? MAX_YEAR : parseInt(currentTillYear);
   populateYearMenu(tillYearMenu, tillYearBtn, allowedMin, MAX_YEAR, false);
   populateYearMenu(fromYearMenu, fromYearBtn, MIN_YEAR, allowedMax, true);
+  updateClearFiltersVisibility();
 }
 
 if (fromYearBtn && tillYearBtn) {
@@ -549,6 +648,7 @@ function renderTags() {
     addGenreBtn.style.display =
       activeGenres.length === allGenres.length ? "none" : "flex";
   genreDropdown.classList.remove("show");
+  updateClearFiltersVisibility();
 }
 
 function renderDropdown() {
@@ -619,6 +719,7 @@ if (starContainer) {
         const starValue = parseInt(s.getAttribute("data-value"));
         s.src = starValue <= currentRating ? FILLED_STAR_PATH : BLANK_STAR_PATH;
       });
+      updateClearFiltersVisibility();
     });
   });
 }
@@ -692,6 +793,7 @@ function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple,
       const pill = document.createElement("div");
       pill.className = "pill-item";
       const label = document.createElement("span");
+      label.className = "pill-name";
       label.textContent = person.name;
       const remove = document.createElement("span");
       remove.className = "pill-remove";
@@ -700,9 +802,15 @@ function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple,
         e.stopPropagation();
         selected = selected.filter((p) => p.id !== person.id);
         renderPills();
-        runSearch();
+        // Like the other filters, the change applies when "Apply" is pressed.
       };
-      pill.append(label, document.createTextNode(" "), remove);
+      pill.append(label, remove);
+      // Black hover tooltip with the full name (matches the "..." overflow tip),
+      // so a truncated actor name is always readable on hover.
+      const tip = document.createElement("span");
+      tip.className = "pill-tooltip";
+      tip.textContent = person.name;
+      pill.appendChild(tip);
       listEl.appendChild(pill);
     });
 
@@ -720,6 +828,7 @@ function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple,
     if (clearBtn) clearBtn.style.display = selected.length ? "block" : "none";
     // Single-select (director): once chosen, hide "+" until it's cleared.
     addBtn.style.display = !multiple && selected.length >= 1 ? "none" : "flex";
+    updateClearFiltersVisibility();
   }
 
   function renderOptions(people) {
@@ -740,12 +849,13 @@ function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple,
       opt.textContent = person.name;
       opt.onclick = (e) => {
         e.stopPropagation();
-        if (multiple) selected.push(person);
+        // Newest first (LIFO): the most recently added actor shows leftmost.
+        if (multiple) selected.unshift(person);
         else selected = [person];
         renderPills();
         dropdownEl.classList.remove("show");
         if (searchInput) searchInput.value = "";
-        runSearch();
+        // Selection is staged; it applies when "Apply" is pressed.
       };
       optionsWrap.appendChild(opt);
     });
@@ -761,6 +871,8 @@ function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple,
     searchInput.onclick = (e) => e.stopPropagation();
     searchInput.onkeydown = (e) => e.stopPropagation();
     searchInput.oninput = () => {
+      // Typing while scrolled down the people list glides it back to the top.
+      dropdownEl.scrollTo({ top: 0, behavior: "smooth" });
       const q = searchInput.value.trim();
       clearTimeout(searchDebounce);
       if (q.length < 2) {
@@ -803,12 +915,21 @@ function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple,
       e.stopPropagation();
       selected = [];
       renderPills();
-      runSearch();
+      // Cleared selection applies when "Apply" is pressed (like every filter).
     };
   }
 
   renderPills();
-  return { getSelected: () => selected };
+  // `clear()` resets the row without firing its own search — the global
+  // "Clear Filters" button resets every row, then runs a single runSearch().
+  return {
+    getSelected: () => selected,
+    clear: () => {
+      selected = [];
+      if (searchInput) searchInput.value = "";
+      renderPills();
+    },
+  };
 }
 
 actorFilter = setupPersonFilter({
@@ -848,6 +969,7 @@ function buildAgeRatings() {
       e.stopPropagation();
       ageRatingBtn.textContent = age;
       ageRatingMenu.classList.remove("show");
+      updateClearFiltersVisibility();
     };
     ageRatingMenu.appendChild(opt);
   });
@@ -899,6 +1021,7 @@ function renderPlatforms() {
     addPlatformBtn.style.display =
       activePlatforms.length === allPlatforms.length ? "none" : "flex";
   platformDropdown.classList.remove("show");
+  updateClearFiltersVisibility();
 }
 
 function renderPlatformDropdown() {
@@ -986,6 +1109,16 @@ if (sortCustomBtn && sortCustomMenu) {
   });
 }
 
+// All filter state + elements are wired now: enable the "Clear Filters" toggle
+// and set its initial (hidden) state.
+filtersReady = true;
+updateClearFiltersVisibility();
+
+// Refresh the button's visibility whenever the filter panel is opened.
+if (filterBtn) {
+  filterBtn.addEventListener("click", () => updateClearFiltersVisibility());
+}
+
 // ==========================================
 // 14. CARD INTERACTIONS (LIKE / WATCHED)
 // ==========================================
@@ -993,12 +1126,33 @@ const movieGridEl = document.getElementById("movieGrid");
 if (movieGridEl) {
   movieGridEl.addEventListener("click", (e) => {
     const btn = e.target.closest(".icon-btn");
-    if (!btn) return;
+    if (!btn) {
+      // A click anywhere else on a card opens its details page. The basic
+      // fields are stashed so the details page can paint instantly while it
+      // fetches the full record (overview, cast, trailer) in the background.
+      const card = e.target.closest(".movie-card");
+      if (!card || !card.dataset.id) return;
+      sessionStorage.setItem(
+        "mk:lastMovie",
+        JSON.stringify({
+          id: card.dataset.id,
+          title: card.dataset.title,
+          releaseYear: card.dataset.year,
+          rating: card.dataset.rating,
+          posterPath: card.dataset.poster,
+        }),
+      );
+      window.location.href = `movie.html?id=${encodeURIComponent(card.dataset.id)}`;
+      return;
+    }
     e.stopPropagation();
     const label = btn.querySelector("img")?.alt || "";
 
     if (label === "Add to collection") {
-      toast.soon("Coming Soon!");
+      const card = btn.closest(".movie-card");
+      const title = (card && card.dataset.title) || "This movie";
+      if (window.CollectionModal) CollectionModal.open(title);
+      else toast.soon("Coming Soon!");
       return;
     }
 
@@ -1044,6 +1198,9 @@ if (aiModeBtn && searchContainer && searchInput) {
 if (searchInput) {
   let searchDebounce;
   searchInput.addEventListener("input", () => {
+    // If the user scrolled down the feed and starts typing again, glide back to
+    // the top so the fresh results aren't hidden below the fold.
+    window.scrollTo({ top: 0, behavior: "smooth" });
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(runSearch, 300);
   });

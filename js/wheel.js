@@ -123,6 +123,11 @@ function addMovie(title) {
         newRow.addEventListener('animationend',
             () => newRow.classList.remove('is-entering'), { once: true });
     }
+
+    // renderMovieList() rebuilt the add-row, so the input is a fresh element —
+    // return focus to it so the user can type the next title without clicking.
+    const addInput = document.querySelector('#wheelMovieList .wheel-add-input');
+    if (addInput) addInput.focus();
 }
 
 function removeMovie(index) {
