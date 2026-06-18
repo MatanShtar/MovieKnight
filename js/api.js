@@ -28,13 +28,44 @@ window.MovieAPI = (function () {
     const TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280";
 
     // ==========================================
+    // 0. AUTH SESSION (token + cached user in localStorage)
+    // ==========================================
+    // The JWT returned by /api/auth/(login|signup) is stored here and sent as a
+    // Bearer token on every request. `currentUser` is the cached safe user object
+    // the shared shell (common.js) reads to toggle the logged-in UI.
+    const TOKEN_KEY = "authToken";
+    const USER_KEY = "currentUser";
+
+    function getToken() {
+        return localStorage.getItem(TOKEN_KEY) || null;
+    }
+    function getCurrentUser() {
+        try {
+            return JSON.parse(localStorage.getItem(USER_KEY));
+        } catch {
+            return null;
+        }
+    }
+    function setSession(token, user) {
+        if (token) localStorage.setItem(TOKEN_KEY, token);
+        if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
+    }
+    function clearSession() {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+    }
+    function isLoggedIn() {
+        return !!getToken();
+    }
+
+    // ==========================================
     // 1. LOW-LEVEL REQUEST HELPER
     // ==========================================
     // One fetch wrapper so every call gets the same JSON parsing and error
     // handling. `path` is relative to API_BASE, e.g. "/movies/search".
     // Any non-2xx is treated as a failure; the backend's { error: "..." }
     // body is surfaced as the thrown message when present.
-    async function request(path, { params, ...options } = {}) {
+    async function request(path, { params, body, headers, ...options } = {}) {
         const url = new URL(API_BASE + API_PREFIX + path);
         if (params) {
             Object.entries(params).forEach(([k, v]) => {
@@ -44,10 +75,21 @@ window.MovieAPI = (function () {
             });
         }
 
+        // Always accept JSON; attach the Bearer token when we have one (harmless
+        // on public routes, required on protected ones); serialise a JSON body
+        // and set Content-Type when one is supplied (POST/PUT/PATCH).
+        const finalHeaders = { Accept: "application/json", ...(headers || {}) };
+        const token = getToken();
+        if (token) finalHeaders.Authorization = `Bearer ${token}`;
+        if (body !== undefined && body !== null) {
+            finalHeaders["Content-Type"] = "application/json";
+            options.body = JSON.stringify(body);
+        }
+
         let res;
         try {
             res = await fetch(url, {
-                headers: { Accept: "application/json" },
+                headers: finalHeaders,
                 ...options,
             });
         } catch (networkErr) {
@@ -154,41 +196,6 @@ window.MovieAPI = (function () {
     // ==========================================
     // 3. PUBLIC API
     // ==========================================
-
-    // The movie grid. Called with no filters it returns the popular feed; with
-    // filters it returns a filtered catalog. `filters` is a plain object of the
-    // user's selections — this maps them to TMDB-native discover params. Each
-    // param is sent only when actually set, so an empty `filters` produces no
-    // query string at all (popular feed).
-    //
-    //   filters = {
-    //     genres:    [28, 12],   // genre ids        -> with_genres (comma)
-    //     providers: [8, 9],     // provider ids     -> with_watch_providers (pipe) + watch_region=US
-    //     yearFrom:  2000,       // -> primary_release_date.gte = 2000-01-01
-    //     yearTo:    2024,       // -> primary_release_date.lte = 2024-12-31
-    //     minRating: 7,          // 0-10             -> vote_average.gte
-    //   }
-    async function getMovies(filters = {}) {
-        const params = {};
-        const { genres, providers, yearFrom, yearTo, minRating } = filters;
-
-        if (Array.isArray(genres) && genres.length) {
-            params.with_genres = genres.join(",");
-        }
-        if (Array.isArray(providers) && providers.length) {
-            params.with_watch_providers = providers.join("|");
-            params.watch_region = "US"; // required by TMDB alongside providers
-        }
-        if (yearFrom) params["primary_release_date.gte"] = `${yearFrom}-01-01`;
-        if (yearTo) params["primary_release_date.lte"] = `${yearTo}-12-31`;
-        if (minRating) params["vote_average.gte"] = minRating;
-        if (filters.page) params.page = filters.page; // TMDB paginates 20/page
-
-        // request() feeds these to URLSearchParams (single, correct encoding —
-        // the dotted keys and the "|" / "," separators are not double-encoded).
-        const data = await request("/movies", { params });
-        return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
-    }
 
     // The home grid's single source of truth: text search + filters + sort all
     // go through GET /api/movies/search. Accepts a query object built from the UI
@@ -306,9 +313,52 @@ window.MovieAPI = (function () {
             .filter((p) => p.name);
     }
 
+    // ==========================================
+    // 4. AUTH (signup / login / me / logout)
+    // ==========================================
+    // signup/login store the returned token + user and resolve with the user.
+    // On failure they throw with the server's message (e.g. "An account with that
+    // email already exists", "Invalid credentials") for the form to display.
+    async function signup({ name, email, username, password, dateOfBirth }) {
+        const data = await request("/auth/signup", {
+            method: "POST",
+            body: { name, email, username, password, dateOfBirth },
+        });
+        setSession(data.token, data.user);
+        return data.user;
+    }
+
+    async function login(emailOrUsername, password) {
+        const data = await request("/auth/login", {
+            method: "POST",
+            body: { emailOrUsername, password },
+        });
+        setSession(data.token, data.user);
+        return data.user;
+    }
+
+    // Re-fetch the current user from the stored token (refreshes the cached copy).
+    // Resolves null if there's no/invalid token.
+    async function me() {
+        const data = await request("/auth/me");
+        if (data && data.user) setSession(null, data.user);
+        return data ? data.user : null;
+    }
+
+    function logout() {
+        clearSession();
+    }
+
+    // Update the signed-in user's own profile (e.g. bio). Persists via
+    // PATCH /api/users/me and refreshes the cached user. Throws on failure.
+    async function updateProfile(fields) {
+        const data = await request("/users/me", { method: "PATCH", body: fields });
+        if (data && data.user) setSession(null, data.user);
+        return data ? data.user : null;
+    }
+
     return {
         API_BASE,
-        getMovies,
         searchMovies,
         getMovieDetails,
         searchPeople,
@@ -316,5 +366,15 @@ window.MovieAPI = (function () {
         getRandomMovie,
         getGenres,
         getProviders,
+        // auth
+        signup,
+        login,
+        me,
+        logout,
+        updateProfile,
+        isLoggedIn,
+        getToken,
+        getCurrentUser,
+        clearSession,
     };
 })();

@@ -1,4 +1,38 @@
 // ==========================================
+// 0. LOGGED-IN USER → PROFILE HEADER
+// ==========================================
+// Profile is personal. Read the real signed-in user (stored by js/api.js on
+// login/signup) and fill the header; guests are bounced to the login page.
+// Wrapped in an IIFE so locals stay off the global scope — common.js (also a
+// classic script on this page) already declares a global `currentUser`.
+(function () {
+  const user = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("currentUser"));
+    } catch {
+      return null;
+    }
+  })();
+
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+
+  const DEFAULT_AVATAR = "assets/images/default-avatar.svg";
+  const avatar = user.avatarUrl || DEFAULT_AVATAR;
+
+  const nameEl = document.querySelector(".profile-username");
+  if (nameEl) nameEl.textContent = user.username || user.name || "Member";
+
+  // Big profile avatar + the header-rail thumbnail. (common.js fills the rail
+  // username via #displayUsername.)
+  document.querySelectorAll(".avatar-pic, .profile-pic").forEach((img) => {
+    img.src = avatar;
+  });
+})();
+
+// ==========================================
 // 1. FETCH & RENDER COLLECTIONS
 // ==========================================
 (async () => {
@@ -228,28 +262,42 @@ function buildCollectionCard(c, i) {
 })();
 
 // ==========================================
-// 4. EDITABLE BIO (localStorage, UI-only for now)
+// 4. EDITABLE BIO (persisted to the server via PATCH /api/users/me)
 // ==========================================
 (function () {
-  const BIO_KEY = "movieKnightBio";
   const BIO_PLACEHOLDER = "Add bio";
   const bioEl = document.querySelector(".profile-bio");
   const editBtn = document.querySelector(".bio-edit-btn");
   if (!bioEl) return;
 
-  const getSavedBio = () => localStorage.getItem(BIO_KEY) || "";
+  // The bio lives on the user object. Saving persists to the server via
+  // MovieAPI.updateProfile (PATCH /api/users/me), which also refreshes the
+  // cached user; if the API isn't on the page we fall back to the local cache.
+  const readUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem("currentUser")) || {};
+    } catch {
+      return {};
+    }
+  };
+  const getSavedBio = () => readUser().bio || "";
+  const saveBioLocal = (text) => {
+    const u = readUser();
+    u.bio = text;
+    localStorage.setItem("currentUser", JSON.stringify(u));
+  };
 
-  // Show the saved bio, or the "Add bio" placeholder when there isn't one yet.
-  function renderBio() {
-    const saved = getSavedBio();
-    if (saved.trim()) {
-      bioEl.textContent = saved;
+  // Show the given text, or the "Add bio" placeholder when it's empty.
+  function applyBioText(text) {
+    if (text && text.trim()) {
+      bioEl.textContent = text;
       bioEl.classList.remove("profile-bio--placeholder");
     } else {
       bioEl.textContent = BIO_PLACEHOLDER;
       bioEl.classList.add("profile-bio--placeholder");
     }
   }
+  const renderBio = () => applyBioText(getSavedBio());
 
   let editing = false;
   function startEditing() {
@@ -270,16 +318,32 @@ function buildCollectionCard(c, i) {
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
 
     let settled = false;
-    const finish = (save) => {
+    const finish = async (save) => {
       if (settled) return;
       settled = true;
       const next = textarea.value.trim();
-      if (save) localStorage.setItem(BIO_KEY, next);
       textarea.replaceWith(bioEl);
       if (editBtn) editBtn.style.display = "";
       editing = false;
-      renderBio();
-      if (save && next !== prev && window.toast) toast.success("Bio updated.");
+
+      if (!save || next === prev) {
+        renderBio();
+        return;
+      }
+
+      applyBioText(next); // optimistic — show the new bio while it saves
+
+      try {
+        if (window.MovieAPI && MovieAPI.updateProfile) {
+          await MovieAPI.updateProfile({ bio: next }); // persist + refresh cache
+        } else {
+          saveBioLocal(next); // no API on the page — cache only
+        }
+        if (window.toast) toast.success("Bio updated.");
+      } catch (err) {
+        renderBio(); // cached user still holds the old bio -> reverts
+        if (window.toast) toast.error(err.message || "Couldn't save your bio.");
+      }
     };
 
     textarea.addEventListener("keydown", (e) => {

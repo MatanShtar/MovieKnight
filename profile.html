@@ -11,6 +11,7 @@
     <script src="vendor/toastify/toastify.min.js" defer></script>
     <script src="js/toast.js" defer></script>
     <script src="js/common.js" defer></script>
+    <script src="js/api.js" defer></script>
     <script src="js/profile.js" defer></script>
   </head>
 
@@ -137,7 +138,7 @@
               <div class="profile-avatar-container">
                 <div class="profile-avatar">
                   <img
-                    src="assets/images/yuviverse-profile-pic.png"
+                    src="assets/images/default-avatar.svg"
                     alt="Profile picture"
                     class="avatar-pic"
                   />
@@ -166,7 +167,7 @@
             </div>
 
             <div class="profile-info-right-col">
-              <h2 class="profile-username">Yuviverse7</h2>
+              <h2 class="profile-username"></h2>
               <div class="bio-edit">
                 <p class="profile-bio profile-bio--placeholder">Add bio</p>
                 <button
@@ -327,12 +328,12 @@
           >
             <div class="user-welcome">
               <span class="welcome-text">Good to see you,</span>
-              <span class="username-text">Yuviverse7</span>
+              <span class="username-text" id="displayUsername"></span>
             </div>
 
             <button id="headerProfileBtn" class="header-profile-btn">
               <img
-                src="assets/images/yuviverse-profile-pic.png"
+                src="assets/images/default-avatar.svg"
                 alt="Profile"
                 class="profile-pic"
               />

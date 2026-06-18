@@ -120,7 +120,13 @@ function showSignOutConfirm() {
       if (e.target === overlay || action === "cancel") {
         hideSignOutConfirm();
       } else if (action === "confirm") {
-        localStorage.removeItem("currentUser"); // clear the saved login
+        // Clear the saved login + JWT. Use MovieAPI when it's loaded so the
+        // storage keys live in one place; fall back to clearing both directly.
+        if (window.MovieAPI) MovieAPI.logout();
+        else {
+          localStorage.removeItem("currentUser");
+          localStorage.removeItem("authToken");
+        }
         window.location.href = "index.html"; // reload as a guest
       }
     });

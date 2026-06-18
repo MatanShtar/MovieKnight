@@ -1,24 +1,60 @@
+// validation.js — login + signup forms, wired to the real auth API (window.MovieAPI).
+//
+// Replaces the old admin/1234 mock: credentials are now verified by the server,
+// which hashes passwords (bcrypt) and returns a JWT that MovieAPI stores in
+// localStorage. All feedback is in-page (inline message + toast) — never
+// alert/confirm/prompt — and submits show a loading state.
+
+// Greys out the submit button (unclickable) and shows a status line BENEATH it
+// while a request is in flight. The button label is left unchanged (the pill is
+// too narrow for "Creating account…"). Call with isLoading:false to restore.
+function setLoading(submitBtn, isLoading, message) {
+  if (!submitBtn) return;
+  submitBtn.disabled = isLoading;
+
+  let line = submitBtn.parentElement.querySelector(".form-loading");
+  if (!line) {
+    line = document.createElement("p");
+    line.className = "form-loading";
+    line.setAttribute("role", "status");
+    line.setAttribute("aria-live", "polite");
+    submitBtn.insertAdjacentElement("afterend", line); // beneath the button
+  }
+
+  if (isLoading) {
+    line.textContent = message;
+    line.classList.add("show");
+  } else {
+    line.classList.remove("show");
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
-  // 1. LOGIN VALIDATION
+  // 1. LOGIN
   // ==========================================
   const loginForm = document.getElementById("loginForm");
 
   if (loginForm) {
-    const usernameInput = document.getElementById("loginUsername");
+    const usernameInput = document.getElementById("loginUsername"); // email OR username
     const passwordInput = document.getElementById("loginPassword");
     const errorMsg = document.getElementById("loginErrorMsg");
+    const submitBtn = loginForm.querySelector(".submit-btn");
 
-    loginForm.addEventListener("submit", (e) => {
+    const showError = (msg) => {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add("show");
+      toast.error(msg);
+    };
+
+    loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // Reset states
       usernameInput.classList.remove("input-error");
       passwordInput.classList.remove("input-error");
       errorMsg.classList.remove("show");
 
       let hasError = false;
-
       if (!usernameInput.value.trim()) {
         usernameInput.classList.add("input-error");
         hasError = true;
@@ -27,32 +63,27 @@ document.addEventListener("DOMContentLoaded", () => {
         passwordInput.classList.add("input-error");
         hasError = true;
       }
+      if (hasError) return showError("Please fill in all required fields.");
 
-      if (hasError) {
-        errorMsg.textContent = "Please fill in all required fields.";
-        errorMsg.classList.add("show");
-        toast.error("Please fill in all required fields.");
-        return;
+      if (!window.MovieAPI) {
+        return showError("Login is unavailable right now. Please try again later.");
       }
 
-      // Mock login check
-      if (usernameInput.value !== "admin" || passwordInput.value !== "1234") {
+      // Loading state — grey out the button (unclickable) + status line beneath it.
+      setLoading(submitBtn, true, "Logging in…");
+
+      try {
+        await MovieAPI.login(usernameInput.value.trim(), passwordInput.value);
+        toast.success("Welcome back!");
+        window.location.href = "index.html";
+      } catch (err) {
         usernameInput.classList.add("input-error");
         passwordInput.classList.add("input-error");
-        errorMsg.textContent = "Incorrect email or password.";
-        errorMsg.classList.add("show");
-        toast.error("Incorrect email or password.");
-      } else {
-        // Save the logged-in user
-        localStorage.setItem(
-          "currentUser",
-          JSON.stringify({ username: usernameInput.value }),
-        );
-        window.location.href = "index.html";
+        showError(err.message || "Incorrect email or password.");
+        setLoading(submitBtn, false);
       }
     });
 
-    // Remove red border when user starts typing
     [usernameInput, passwordInput].forEach((input) => {
       input.addEventListener("input", () => {
         input.classList.remove("input-error");
@@ -62,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ==========================================
-  // 2. SIGNUP VALIDATION
+  // 2. SIGNUP
   // ==========================================
   const signupForm = document.getElementById("signupForm");
 
@@ -72,10 +103,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const emailInput = document.getElementById("signupEmail");
     const usernameInput = document.getElementById("signupUsername");
     const passwordInput = document.getElementById("signupPassword");
-    const confirmPasswordInput = document.getElementById(
-      "signupConfirmPassword",
-    );
+    const confirmPasswordInput = document.getElementById("signupConfirmPassword");
     const errorMsg = document.getElementById("signupErrorMsg");
+    const submitBtn = signupForm.querySelector(".submit-btn");
 
     const allInputs = [
       nameInput,
@@ -86,53 +116,66 @@ document.addEventListener("DOMContentLoaded", () => {
       confirmPasswordInput,
     ];
 
-    signupForm.addEventListener("submit", (e) => {
+    const showError = (msg) => {
+      errorMsg.textContent = msg;
+      errorMsg.classList.add("show");
+      toast.error(msg);
+    };
+
+    signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      // Reset states
       allInputs.forEach((input) => input.classList.remove("input-error"));
       errorMsg.classList.remove("show");
 
       let hasError = false;
-
-      // Check for empty fields
       allInputs.forEach((input) => {
         if (!input.value.trim()) {
           input.classList.add("input-error");
           hasError = true;
         }
       });
+      if (hasError) return showError("Please fill in all required fields.");
 
-      if (hasError) {
-        errorMsg.textContent = "Please fill in all required fields.";
-        errorMsg.classList.add("show");
-        toast.error("Please fill in all required fields.");
-        return;
-      }
-
-      // Check if passwords match
       if (passwordInput.value !== confirmPasswordInput.value) {
         passwordInput.classList.add("input-error");
         confirmPasswordInput.classList.add("input-error");
-        errorMsg.textContent = "Passwords do not match.";
-        errorMsg.classList.add("show");
-        toast.error("Passwords do not match.");
-        return;
+        return showError("Passwords do not match.");
+      }
+      // Match the server's minimum so the user gets instant feedback.
+      if (passwordInput.value.length < 6) {
+        passwordInput.classList.add("input-error");
+        confirmPasswordInput.classList.add("input-error");
+        return showError("Password must be at least 6 characters.");
       }
 
-      // Log the new user in straight away, then go to the home page
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify({
-          username: usernameInput.value,
-          name: nameInput.value,
-          email: emailInput.value,
-        }),
-      );
-      window.location.href = "index.html";
+      if (!window.MovieAPI) {
+        return showError("Sign up is unavailable right now. Please try again later.");
+      }
+
+      setLoading(submitBtn, true, "Creating account…");
+
+      try {
+        await MovieAPI.signup({
+          name: nameInput.value.trim(),
+          dateOfBirth: dobInput.value, // <input type="date"> → "YYYY-MM-DD"
+          email: emailInput.value.trim(),
+          username: usernameInput.value.trim(),
+          password: passwordInput.value,
+        });
+        toast.success("Account created! Welcome to MovieKnight.");
+        window.location.href = "profile.html";
+      } catch (err) {
+        const msg = err.message || "Could not create your account.";
+        // Highlight the field the server complained about, when we can tell.
+        const lower = msg.toLowerCase();
+        if (lower.includes("email")) emailInput.classList.add("input-error");
+        if (lower.includes("username")) usernameInput.classList.add("input-error");
+        showError(msg);
+        setLoading(submitBtn, false);
+      }
     });
 
-    // Remove red border when user starts typing
     allInputs.forEach((input) => {
       input.addEventListener("input", () => {
         input.classList.remove("input-error");
@@ -147,6 +190,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // ==========================================
 function continueAsGuest(e) {
   e.preventDefault();
-  localStorage.removeItem("currentUser");
+  // Clear any saved login + JWT before browsing as a guest.
+  if (window.MovieAPI) MovieAPI.logout();
+  else {
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("authToken");
+  }
   window.location.href = "index.html";
 }
