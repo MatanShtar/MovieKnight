@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieKnight | About</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/about.css" />
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/common.js" defer></script>
+  </head>
+
+  <body class="app-body about-page">
+    <!-- Icon sprite: each social icon is defined once here and referenced with
+         <use href="#..."> in the dev cards below. -->
+    <svg class="svg-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="ic-github" viewBox="0 0 24 24">
+        <path
+          d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.88-.01-1.73-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.5-1.11-1.5-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.36-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.27 2.75 1.05a9.36 9.36 0 0 1 2.5-.34c.85 0 1.71.12 2.5.34 1.91-1.32 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.06.36.32.68.94.68 1.9 0 1.37-.01 2.48-.01 2.82 0 .27.18.6.69.49A10.02 10.02 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"
+        />
+      </symbol>
+      <symbol id="ic-linkedin" viewBox="0 0 24 24">
+        <path
+          d="M4.98 3.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5ZM3 9h4v12H3V9Zm6.5 0H13v1.64h.05c.49-.88 1.69-1.8 3.48-1.8C20.4 8.84 21 11.06 21 14.2V21h-4v-6c0-1.43-.03-3.27-2-3.27-2 0-2.31 1.56-2.31 3.17V21h-4V9Z"
+        />
+      </symbol>
+      <symbol id="ic-mail" viewBox="0 0 24 24">
+        <path
+          d="M3 5h18a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Zm9 7.2L4.4 7H19.6L12 12.2ZM4 8.5V17h16V8.5l-8 5.5-8-5.5Z"
+        />
+      </symbol>
+    </svg>
+
+    <div class="app-container">
+      <header class="mobile-topbar">
+        <a class="mobile-brand" href="index.html">
+          <img
+            class="mobile-brand-knight"
+            src="assets/images/knight-minimal-logo.svg"
+            alt=""
+          />
+          <img
+            class="mobile-brand-text"
+            src="assets/images/movie-knight-wordmark.svg"
+            alt="MovieKnight"
+          />
+        </a>
+      </header>
+
+      <aside class="sidebar">
+        <a class="sidebar-logo" href="index.html">
+          <img
+            src="assets/images/movie-knight-logo-sidebar.svg"
+            alt="MovieKnight"
+            class="nav-logo"
+          />
+        </a>
+
+        <nav class="main-nav">
+          <a href="index.html" class="nav-link">
+            <img
+              src="assets/images/icons/home-icon.svg"
+              alt="Home Icon"
+              class="nav-logo"
+            />
+            Home
+          </a>
+
+          <a href="#" class="nav-link" data-toast="soon:Coming Soon!">
+            <img
+              src="assets/images/icons/explore-icon.svg"
+              alt="Explore Icon"
+              class="nav-logo"
+            />
+            Explore
+          </a>
+          <a href="profile.html" class="nav-link">
+            <img
+              src="assets/images/icons/profile-icon.svg"
+              alt="Profile Icon"
+              class="nav-logo"
+            />
+            Profile
+          </a>
+          <div
+            class="settings-container"
+            id="sidebarSettings"
+            style="display: none"
+          >
+            <a href="#" class="nav-link" id="settingsToggleBtn">
+              <svg
+                class="nav-logo custom-gear"
+                width="42"
+                height="42"
+                viewBox="0 0 42 42"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M21 30C25.9706 30 30 25.9705 30 21C30 16.0294 25.9706 12 21 12C16.0294 12 12 16.0294 12 21C12 25.9705 16.0294 30 21 30Z"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-miterlimit="10"
+                />
+                <path
+                  d="M32.2273 37.5584C33.8076 36.4882 35.2079 35.2079 36.3881 33.7676L31.8072 31.6072L36.0581 22.6053L40.639 24.7658C40.9891 22.9354 41.0891 21.045 40.9191 19.1446L36.1481 20.855L32.7874 11.4831L37.5584 9.7727C36.4882 8.19238 35.2079 6.79212 33.7676 5.61188L31.6072 10.1928L22.6053 5.9419L24.7658 1.36101C22.9354 1.01094 21.045 0.910888 19.1446 1.08092L20.915 6.01192L11.5431 9.37266L9.7727 4.44159C8.19238 5.51181 6.7921 6.79211 5.61186 8.23241L10.1928 10.3928L5.94192 19.3947L1.36099 17.2342C1.01091 19.0646 0.910895 20.955 1.08093 22.8554L5.8519 21.145L9.21259 30.5169L4.44162 32.2273C5.51184 33.8076 6.79209 35.2079 8.23239 36.3881L10.3928 31.8072L19.3947 36.0581L17.2342 40.639C19.0646 40.9891 20.955 41.0891 22.8554 40.9191L21.205 36.3082L30.577 32.9474L32.2273 37.5584Z"
+                  stroke="white"
+                  stroke-width="2"
+                  stroke-miterlimit="10"
+                />
+              </svg>
+              Settings
+              <span class="settings-arrow"></span>
+            </a>
+            <div class="settings-submenu" id="settingsSubmenu">
+              <a href="#" data-toast="soon:Coming Soon!"
+                ><img
+                  src="assets/images/icons/preferences-icon.svg"
+                  alt="Pref"
+                />
+                Preferences</a
+              >
+              <a href="#" data-toast="soon:Coming Soon!"
+                ><img
+                  src="assets/images/icons/account-icon.svg"
+                  alt="Account"
+                />
+                Account Settings</a
+              >
+            </div>
+          </div>
+
+          <a href="about.html" class="nav-link about-link active">
+            <img
+              src="assets/images/icons/about-icon.svg"
+              alt="About Icon"
+              class="nav-logo"
+            />
+            <span>About</span>
+          </a>
+        </nav>
+      </aside>
+
+      <main class="main-content about-main">
+        <h1 class="about-title">ABOUT US</h1>
+
+        <p class="about-intro">
+          MovieKnight is the ultimate cure for decision paralysis, designed to
+          transform how you discover and decide on your next watch. By combining
+          the vast library of The Movie Database (TMDB) with intelligent
+          features like AI-powered search and personalized recommendations, we
+          streamline the journey from browsing to watching. Whether you're
+          exploring trending collections, letting fate decide with "Spin the
+          Wheel," or battling it out with friends in "The Chopping Block," our
+          platform puts the fun back into selection. Our mission is to ensure
+          you spend less time scrolling and more time enjoying the show -
+        </p>
+
+        <p class="about-tagline">Because We're here to Save your (K)night.</p>
+
+        <section class="dev-cards">
+          <article class="dev-card">
+            <img
+              class="dev-avatar"
+              src="assets/images/about/niv-avatar.png"
+              alt="Niv Shteingart"
+              width="124"
+              height="124"
+            />
+            <h2 class="dev-name">Niv Shteingart</h2>
+            <p class="dev-bio">
+              Software Engineer student at Shenkar Passionate about AI automation
+              &amp; Integration
+            </p>
+            <div class="dev-socials">
+              <a
+                class="dev-social"
+                href="https://github.com/niv1999"
+                target="_blank"
+                rel="noopener"
+                aria-label="Niv on GitHub"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <use href="#ic-github" />
+                </svg>
+              </a>
+              <a
+                class="dev-social"
+                href="https://www.linkedin.com/in/niv-shteingart-429a762a3/"
+                target="_blank"
+                rel="noopener"
+                aria-label="Niv on LinkedIn"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <use href="#ic-linkedin" />
+                </svg>
+              </a>
+              <a
+                class="dev-social"
+                href="mailto:niv1999@gmail.com"
+                aria-label="Email Niv"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <use href="#ic-mail" />
+                </svg>
+              </a>
+            </div>
+          </article>
+
+          <article class="dev-card">
+            <img
+              class="dev-avatar"
+              src="assets/images/about/matan-avatar.png"
+              alt="Matan Shtar"
+              width="124"
+              height="124"
+            />
+            <h2 class="dev-name">Matan Shtar</h2>
+            <p class="dev-bio">
+              Software Engineering Student at Shenkar Aspiring Software Developer
+            </p>
+            <div class="dev-socials">
+              <a
+                class="dev-social"
+                href="https://github.com/MatanShtar"
+                target="_blank"
+                rel="noopener"
+                aria-label="Matan on GitHub"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <use href="#ic-github" />
+                </svg>
+              </a>
+              <a
+                class="dev-social"
+                href="https://www.linkedin.com/in/matan-shtar-8114173a4/"
+                target="_blank"
+                rel="noopener"
+                aria-label="Matan on LinkedIn"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <use href="#ic-linkedin" />
+                </svg>
+              </a>
+              <a
+                class="dev-social"
+                href="mailto:matanshtar2@gmail.com"
+                aria-label="Email Matan"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <use href="#ic-mail" />
+                </svg>
+              </a>
+            </div>
+          </article>
+        </section>
+
+        <footer class="about-footer">
+          <p class="tmdb-attribution">
+            This product uses the TMDB API but is not endorsed or certified by
+            TMDB
+          </p>
+
+          <img
+            class="tmdb-logo"
+            src="assets/images/about/tmdb-logo.png"
+            alt="The Movie Database (TMDB)"
+            width="96"
+            height="96"
+            loading="lazy"
+          />
+        </footer>
+      </main>
+
+      <aside class="user-rail">
+        <div class="header-login-container" id="headerAuthContainer">
+          <button
+            class="header-login-btn"
+            id="loginBtn"
+            onclick="window.location.href = 'login.html'"
+          >
+            <p>Login</p>
+          </button>
+
+          <div
+            class="user-profile-display"
+            id="userProfileDisplay"
+            style="display: none"
+          >
+            <div class="user-welcome">
+              <span class="welcome-text">Good to see you,</span>
+              <span class="username-text" id="displayUsername">User</span>
+            </div>
+
+            <button id="headerProfileBtn" class="header-profile-btn">
+              <img
+                src="assets/images/icons/account-icon.svg"
+                alt="Profile"
+                class="profile-pic"
+              />
+            </button>
+
+            <div class="header-dropdown" id="headerDropdown">
+              <a href="profile.html">Profile</a>
+              <a href="#" data-toast="soon:Coming Soon!">Settings</a>
+              <a href="index.html" id="signOutBtn" class="danger-text"
+                >Sign Out</a
+              >
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="nav-backdrop" id="navBackdrop" hidden></div>
+    </div>
+  </body>
+</html>
