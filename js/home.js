@@ -397,8 +397,6 @@ const filterMenu = document.getElementById("filterMenu");
 const sortCustomBtn = document.getElementById("sortCustomBtn");
 const sortCustomMenu = document.getElementById("sortCustomMenu");
 let allGenres = [],
-  allActors = [],
-  allDirectors = [],
   allAgeRatings = [],
   allPlatforms = [];
 // Name -> TMDB id, so the filters can send ids while the UI shows names.
@@ -407,15 +405,14 @@ let genreNameToId = {},
 
 // Load the filter options once, then build the dropdowns that depend on them.
 // Genres + providers come from the live backend (with ids for filtering);
-// actors / directors / age-ratings still come from the static file because
-// the backend has no endpoints for them yet.
+// age-ratings still come from the static file because the backend has no
+// endpoint for them yet. (Actors/directors don't read this file — they use the
+// popular-people endpoint and DIRECTOR_DEFAULTS respectively.)
 (async () => {
   try {
     const res = await fetch("data/filterData.json");
     if (res.ok) {
       const data = await res.json();
-      allActors = data.actors || [];
-      allDirectors = data.directors || [];
       allAgeRatings = data.ageRating || [];
       allGenres = data.genres || []; // fallback until the backend call returns
       allPlatforms = data.watchProviders || [];
@@ -1060,7 +1057,7 @@ directorFilter = setupPersonFilter({
 });
 
 // ==========================================
-// 11. FILTER: AGE RATINGS
+// 10. FILTER: AGE RATINGS
 // ==========================================
 const ageRatingBtn = document.getElementById("ageRatingBtn");
 const ageRatingMenu = document.getElementById("ageRatingMenu");
@@ -1089,7 +1086,7 @@ function buildAgeRatings() {
 }
 
 // ==========================================
-// 12. FILTER: PLATFORMS
+// 11. FILTER: PLATFORMS
 // ==========================================
 let activePlatforms = [];
 
@@ -1170,7 +1167,7 @@ if (clearPlatformBtn) {
   };
 }
 // ==========================================
-// 13. SORTING (server-side)
+// 12. SORTING (server-side)
 // ==========================================
 // The backend sorts natively; we just pass the chosen option as a `sort` query
 // param and re-run the query. No client-side re-ordering of the grid.
@@ -1227,7 +1224,7 @@ if (filterBtn) {
 }
 
 // ==========================================
-// 14. CARD INTERACTIONS (LIKE / WATCHED)
+// 13. CARD INTERACTIONS (LIKE / WATCHED)
 // ==========================================
 const movieGridEl = document.getElementById("movieGrid");
 if (movieGridEl) {
@@ -1281,7 +1278,7 @@ if (movieGridEl) {
 }
 
 // ==========================================
-// 15. AI MODE TOGGLE
+// 14. AI MODE TOGGLE
 // ==========================================
 const aiModeBtn = document.querySelector(".ai-mode-btn");
 const searchContainer = document.querySelector(".search-container");
@@ -1301,7 +1298,7 @@ if (aiModeBtn && searchContainer && searchInput) {
 }
 
 // ==========================================
-// 16. LIVE TEXT SEARCH (debounced -> runSearch)
+// 15. LIVE TEXT SEARCH (debounced -> runSearch)
 // ==========================================
 // Typing just re-runs the consolidated query (text + filters + sort). An empty
 // box is a valid query too — it returns the default feed. Out-of-order responses
@@ -1318,7 +1315,7 @@ if (searchInput) {
 }
 
 // ==========================================
-// 17. SURPRISE ME RANDOMIZER
+// 16. SURPRISE ME RANDOMIZER
 // ==========================================
 // Picks a random movie to take over the screen with one result. Rather than the
 // generic /movies/random endpoint (which surfaced obscure / foreign titles), it
