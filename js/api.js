@@ -17,6 +17,10 @@ window.MovieAPI = (function () {
     // URL (e.g. a Render instance) later — nothing else needs to change.
     const API_BASE = "http://localhost:3000";
 
+    // All endpoints live under the /api prefix per the API contract
+    // (e.g. /api/movies/search, /api/movies/random).
+    const API_PREFIX = "/api";
+
     // The backend returns bare TMDB paths (poster_path / logo_path) like
     // "/abc.jpg"; images must be prefixed with this CDN base + size to load.
     const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
@@ -29,7 +33,7 @@ window.MovieAPI = (function () {
     // Any non-2xx is treated as a failure; the backend's { error: "..." }
     // body is surfaced as the thrown message when present.
     async function request(path, { params, ...options } = {}) {
-        const url = new URL(API_BASE + path);
+        const url = new URL(API_BASE + API_PREFIX + path);
         if (params) {
             Object.entries(params).forEach(([k, v]) => {
                 if (v !== undefined && v !== null && v !== "") {
@@ -53,6 +57,7 @@ window.MovieAPI = (function () {
             let message = `Request failed (HTTP ${res.status})`;
             try {
                 const body = await res.json();
+                // contract error shape: { ok: false, error }
                 if (body && body.error) message = body.error;
             } catch {
                 /* non-JSON error body — keep the generic message */
@@ -60,7 +65,17 @@ window.MovieAPI = (function () {
             throw new Error(message);
         }
 
-        return res.json();
+        const json = await res.json();
+        // API contract envelope: { ok: true, data } / { ok: false, error }.
+        // Unwrap to the inner `data` so the normalisers below see the payload
+        // directly. Bare/legacy responses (array or object) pass through as-is.
+        if (json && typeof json === "object" && !Array.isArray(json) && "ok" in json) {
+            if (!json.ok) {
+                throw new Error(json.error || `Request failed (HTTP ${res.status})`);
+            }
+            return json.data;
+        }
+        return json;
     }
 
     // ==========================================
@@ -141,13 +156,66 @@ window.MovieAPI = (function () {
         return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
     }
 
-    // Full-text search. Used by the wheel's "add a movie" box and the home search.
-    async function searchMovies(query) {
-        if (!query || !query.trim()) return [];
-        const data = await request("/movies/search", {
-            params: { query: query.trim() },
-        });
+    // The home grid's single source of truth: text search + filters + sort all
+    // go through GET /api/movies/search. Accepts a query object built from the UI
+    // state; a bare string is still accepted as just the text query.
+    //
+    //   params = {
+    //     q:         "dune",        // text query        -> q
+    //     genres:    [28, 12],      // genre ids         -> genre (comma)
+    //     yearFrom:  2000,          // -> yearFrom
+    //     yearTo:    2024,          // -> yearTo
+    //     minRating: 7,             // 0-10              -> minRating
+    //     sort:      "rating_desc", // server-side sort  -> sort
+    //     page:      2,             // -> page
+    //   }
+    async function searchMovies(params = {}) {
+        if (typeof params === "string") params = { q: params };
+        const {
+            q, genres, yearFrom, yearTo, minRating, sort, page,
+            with_cast, with_crew,
+        } = params;
+
+        const qp = {};
+        if (q) qp.q = q;
+        if (Array.isArray(genres) && genres.length) qp.genre = genres.join(",");
+        if (yearFrom) qp.yearFrom = yearFrom;
+        if (yearTo) qp.yearTo = yearTo;
+        if (minRating) qp.minRating = minRating;
+        if (sort) qp.sort = sort;
+        if (page) qp.page = page;
+        // Person filtering: cast for actors, crew for everyone else.
+        if (with_cast) qp.with_cast = with_cast;
+        if (with_crew) qp.with_crew = with_crew;
+
+        const data = await request("/movies/search", { params: qp });
         return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
+    }
+
+    // People autocomplete for the Actor / Director filter. Returns
+    // { id, name, department } where department is TMDB's known_for_department.
+    function normalizePerson(p) {
+        if (!p) return null;
+        const id = p.id ?? p.person_id ?? null;
+        const name = p.name || "";
+        const department = p.known_for_department || p.department || "";
+        if (!id || !name) return null;
+        return { id, name, department };
+    }
+
+    async function searchPeople(query) {
+        if (!query || !query.trim()) return [];
+        const data = await request("/people/search", {
+            params: { q: query.trim() },
+        });
+        return extractList(data, "people").map(normalizePerson).filter(Boolean);
+    }
+
+    // The "most popular" people used to seed the actor/director dropdowns before
+    // the user types (the dropdown then live-searches via searchPeople()).
+    async function getPopularPeople() {
+        const data = await request("/people/popular");
+        return extractList(data, "people").map(normalizePerson).filter(Boolean);
     }
 
     // A single random movie, used by the home "Surprise Me" button. The backend
@@ -198,6 +266,8 @@ window.MovieAPI = (function () {
         API_BASE,
         getMovies,
         searchMovies,
+        searchPeople,
+        getPopularPeople,
         getRandomMovie,
         getGenres,
         getProviders,
