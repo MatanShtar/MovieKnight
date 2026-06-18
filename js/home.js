@@ -3,12 +3,12 @@
 // ==========================================
 // --- Feed state. The home feed pages through TMDB on scroll (20/page), so you
 // can browse thousands of movies without loading them all at once. ---
-let feedMovies = [];     // everything loaded for the feed so far (for search-clear restore)
-let feedFilters = {};    // active discover filters ({} = popular)
-let feedPage = 0;        // highest page loaded so far
+let feedMovies = [];   // everything loaded for the current query so far
+let feedQuery = {};    // { q, genres, yearFrom, yearTo, minRating, sort }
+let feedPage = 0;      // highest page loaded so far
 let feedLoading = false;
-let feedDone = false;    // no more pages (or backend not paginating)
-let inSearch = false;    // search results are showing instead of the feed
+let feedDone = false;  // no more pages for this query
+let feedToken = 0;     // bumped on every new query so stale fetches are ignored
 
 // Show a friendly full-width message in place of the card grid.
 function showGridMessage(text) {
@@ -29,7 +29,7 @@ async function renderMovieGrid(movies) {
   const html = movies.map(buildMovieCard).join("");
   await preloadImages(movies.map((m) => m.posterPath)); // wait for posters
   grid.innerHTML = html; // real cards now animate in (.movie-card entrance)
-  applyActiveSort(); // order to match the current "Sort by" selection
+  // No client-side re-ordering — the backend already returns them sorted.
 }
 
 // Append cards for newly loaded movies without disturbing what's already shown.
@@ -43,14 +43,13 @@ function appendMovieCards(movies) {
   const firstSkeleton = grid.querySelector(".feed-skeleton");
   if (firstSkeleton) firstSkeleton.insertAdjacentHTML("beforebegin", html);
   else grid.insertAdjacentHTML("beforeend", html);
-  applyActiveSort(); // keep the chosen order across appended pages
 }
 
-// Load the next page of the feed and append it. Stops cleanly when TMDB runs
-// out of pages, or when a page brings nothing new (e.g. the backend isn't
-// forwarding ?page yet, so every page is page 1 — we show that one page).
-async function loadFeedPage() {
-  if (inSearch || feedLoading || feedDone) return;
+// Load the next page for the current query and append it. `token` ties the
+// request to the query that started it; if a newer query begins while this is
+// in flight, the stale result is dropped instead of polluting the grid.
+async function loadFeedPage(token = feedToken) {
+  if (token !== feedToken || feedLoading || feedDone) return;
   feedLoading = true;
   const page = feedPage + 1;
   const grid = document.getElementById("movieGrid");
@@ -64,41 +63,50 @@ async function loadFeedPage() {
     );
   }
 
+  let results;
   try {
-    const results = await MovieAPI.getMovies({ ...feedFilters, page });
-
-    const seen = new Set(feedMovies.map((m) => m.title.toLowerCase()));
-    const fresh = results.filter((m) => {
-      const k = m.title.toLowerCase();
-      if (seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    });
-
-    if (!fresh.length) {
-      feedDone = true; // no new movies -> end of catalog (or no pagination)
-    } else {
-      feedMovies.push(...fresh);
-      feedPage = page;
-      if (page === 1) await renderMovieGrid(feedMovies);
-      else appendMovieCards(fresh); // real cards go in before the skeletons clear
-    }
+    results = await MovieAPI.searchMovies({ ...feedQuery, page });
   } catch (err) {
     console.error("Could not load movies:", err);
-    feedDone = true; // stop hammering the server on error
-    if (feedPage === 0) {
-      showGridMessage("Couldn't load movies. Please try again later.");
-      if (window.toast) toast.error(err.message);
+    if (token === feedToken) {
+      feedDone = true; // stop hammering the server on error
+      if (grid) grid.querySelectorAll(".feed-skeleton").forEach((el) => el.remove());
+      if (feedPage === 0) {
+        showGridMessage("Couldn't load movies. Please try again later.");
+        if (window.toast) toast.error(err.message);
+      }
     }
-  } finally {
-    // Clear the loading skeletons once the real cards (or an error) are in.
-    if (grid) grid.querySelectorAll(".feed-skeleton").forEach((el) => el.remove());
     feedLoading = false;
+    return;
   }
 
-  // Keep loading until the page is actually tall enough to scroll (short pages /
-  // big screens), then stop until the user scrolls down again.
-  if (!feedDone && !inSearch && feedNearBottom()) loadFeedPage();
+  // A newer query superseded this one while it was fetching — drop the result.
+  if (token !== feedToken) return;
+
+  const seen = new Set(feedMovies.map((m) => m.title.toLowerCase()));
+  const fresh = results.filter((m) => {
+    const k = m.title.toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+
+  if (!fresh.length) {
+    feedDone = true; // no new movies -> end of results
+  } else {
+    feedMovies.push(...fresh);
+    feedPage = page;
+    if (page === 1) await renderMovieGrid(feedMovies);
+    else appendMovieCards(fresh); // real cards go in before the skeletons clear
+  }
+
+  // Clear the loading skeletons once the real cards are in.
+  if (grid) grid.querySelectorAll(".feed-skeleton").forEach((el) => el.remove());
+  feedLoading = false;
+
+  // Keep loading until the page is actually tall enough to scroll, then stop
+  // until the user scrolls down again.
+  if (!feedDone && feedNearBottom()) loadFeedPage(token);
 }
 
 // True when the bottom sentinel is near the viewport bottom. Kept fairly small
@@ -110,16 +118,24 @@ function feedNearBottom() {
   return sentinel.getBoundingClientRect().top <= window.innerHeight + 300;
 }
 
-// Start (or restart) the feed from page 1 with the given filters.
-function resetFeed(filters = {}) {
-  feedFilters = filters;
+// Start a fresh query from page 1, then keep paginating on scroll. Everything
+// flows through here — the search box, the filters Apply button, and the sort
+// dropdown all end up calling runSearch().
+function applyQuery(query) {
+  feedQuery = query;
   feedMovies = [];
   feedPage = 0;
   feedDone = false;
-  inSearch = false;
+  feedLoading = false;
+  const token = ++feedToken; // invalidate any in-flight page load
   const grid = document.getElementById("movieGrid");
   if (grid) grid.innerHTML = movieSkeletonMarkup(10);
-  loadFeedPage();
+  loadFeedPage(token);
+}
+
+// Gather the live UI state into one query object and run it.
+function runSearch() {
+  applyQuery(collectQuery());
 }
 
 // Load more whenever the user nears the bottom. A bottom sentinel marks where
@@ -141,34 +157,42 @@ function setupInfiniteScroll() {
 }
 
 // Sentinel must exist before the first load so its fill-loop can chain.
+// Initial load is the default popular feed; we pass the query directly (rather
+// than via collectQuery) so this can run before the filter/sort state further
+// down is initialised — avoiding a temporal-dead-zone error.
 setupInfiniteScroll();
-resetFeed();
+applyQuery({ sort: "popularity" });
 
-// Collect the current filter selections as a plain object; MovieAPI.getMovies
-// maps these to TMDB params. Genres/providers are stored as names in the UI, so
-// resolve them to ids here. Anything left at its default is omitted.
-function collectFilters() {
-  const filters = {};
+// Gather the live UI state into one query object for GET /api/movies/search.
+// Genres are stored as names in the UI, so resolve them to ids here. Anything
+// left at its default is omitted. (Providers aren't part of the search contract
+// yet, so the "Where To Watch" filter isn't sent.)
+function collectQuery() {
+  const query = {};
+
+  const searchEl = document.getElementById("movieSearch");
+  const term = searchEl ? searchEl.value.trim() : "";
+  if (term) query.q = term;
 
   const genreIds = activeGenres.map((n) => genreNameToId[n]).filter(Boolean);
-  if (genreIds.length) filters.genres = genreIds;
+  if (genreIds.length) query.genres = genreIds;
 
-  const providerIds = activePlatforms.map((n) => platformNameToId[n]).filter(Boolean);
-  if (providerIds.length) filters.providers = providerIds;
+  if (currentFromYear !== "Any") query.yearFrom = currentFromYear;
+  if (currentTillYear !== "Any") query.yearTo = currentTillYear;
 
-  if (currentFromYear !== "Any") filters.yearFrom = currentFromYear;
-  if (currentTillYear !== "Any") filters.yearTo = currentTillYear;
+  // Star rating is 1–10 in the UI, matching the backend's 0–10 scale.
+  if (currentRating > 0) query.minRating = currentRating;
 
-  // Star rating is 1–10 in the UI, matching TMDB's 0–10 vote_average.
-  if (currentRating > 0) filters.minRating = currentRating;
+  // People filters: actors -> with_cast (one or more), director -> with_crew.
+  const castIds = actorFilter ? actorFilter.getSelected().map((p) => p.id) : [];
+  if (castIds.length) query.with_cast = castIds.join(",");
 
-  return filters;
-}
+  const director = directorFilter ? directorFilter.getSelected()[0] : null;
+  if (director) query.with_crew = director.id;
 
-// Run the active filters against the backend — restarts the feed from page 1,
-// then keeps paginating on scroll.
-function applyFilters() {
-  resetFeed(collectFilters());
+  query.sort = currentSortValue(); // always send a sort (default: popularity)
+
+  return query;
 }
 
 // Generate skeleton placeholders
@@ -280,14 +304,6 @@ let genreNameToId = {},
     renderTags();
     renderDropdown();
   }
-  if (actorList) {
-    renderActors();
-    renderActorDropdown();
-  }
-  if (directorList) {
-    renderDirector();
-    renderDirectorDropdown();
-  }
   if (platformList) {
     renderPlatforms();
     renderPlatformDropdown();
@@ -317,9 +333,8 @@ if (filterApplyBtn && filterMenu) {
     e.stopPropagation();
     closeAllInnerDropdowns();
     filterMenu.classList.remove("show");
-    const search = document.getElementById("movieSearch");
-    if (search) search.value = ""; // filters replace any active text search
-    applyFilters();
+    // Text search + filters + sort all run together through one query now.
+    runSearch();
   });
 }
 
@@ -609,167 +624,212 @@ if (starContainer) {
 }
 
 // ==========================================
-// 9. FILTER: ACTORS
+// 9. FILTER: PEOPLE (ACTORS — multi / DIRECTOR — single)
 // ==========================================
-let activeActors = [];
+// Each dropdown behaves like the providers one: a search box pinned to the top
+// and a list that starts with the most popular people. Typing live-searches the
+// backend (GET /api/people/search); the list returns to "popular" when cleared.
+// Actors allow multiple selections (sent as with_cast); director allows one
+// (sent as with_crew). Their selections are read by collectQuery().
+let actorFilter = null;
+let directorFilter = null;
+let popularPeople = null; // cached popular list, fetched once on first open
 
-const actorList = document.getElementById("actorList");
-const actorDropdown = document.getElementById("actorDropdown");
-const addActorBtn = document.getElementById("addActorBtn");
-const clearActorBtn = document.getElementById("clearActorBtn");
-
-function renderActors() {
-  actorList.innerHTML = "";
-  activeActors.slice(0, 1).forEach((actor) => {
-    const pill = document.createElement("div");
-    pill.className = "pill-item";
-    pill.innerHTML = `${actor} <span class="pill-remove">×</span>`;
-    pill.querySelector(".pill-remove").onclick = (e) => {
-      e.stopPropagation();
-      activeActors = activeActors.filter((i) => i !== actor);
-      renderActors();
-      renderActorDropdown();
-    };
-    actorList.appendChild(pill);
-  });
-
-  if (activeActors.length > 1) {
-    const hidden = activeActors.slice(1);
-    const overflow = document.createElement("div");
-    overflow.className = "pill-overflow";
-    overflow.innerHTML = `... <div class="pill-tooltip">${hidden.join(", ")}</div>`;
-    actorList.appendChild(overflow);
+async function loadPopularPeople() {
+  if (popularPeople) return popularPeople;
+  try {
+    popularPeople = await MovieAPI.getPopularPeople();
+  } catch (err) {
+    console.error("Could not load popular people:", err);
+    popularPeople = []; // search still works even if there's no popular list
   }
-
-  if (clearActorBtn)
-    clearActorBtn.style.display = activeActors.length > 0 ? "block" : "none";
-  if (addActorBtn)
-    addActorBtn.style.display =
-      activeActors.length === allActors.length ? "none" : "flex";
-  actorDropdown.classList.remove("show");
+  return popularPeople;
 }
 
-function renderActorDropdown() {
-  actorDropdown.innerHTML = "";
-  injectSearchBar(actorDropdown);
+// TMDB's "popular people" list is almost all actors, so the Director row uses a
+// curated preset instead of the popular endpoint (typing still live-searches).
+const DIRECTOR_DEFAULTS = [
+  { id: 488, name: "Steven Spielberg", department: "Directing" },
+  { id: 525, name: "Christopher Nolan", department: "Directing" },
+  { id: 1032, name: "Martin Scorsese", department: "Directing" },
+  { id: 138, name: "Quentin Tarantino", department: "Directing" },
+  { id: 111303, name: "Greta Gerwig", department: "Directing" },
+  { id: 110816, name: "Denis Villeneuve", department: "Directing" },
+  { id: 2710, name: "James Cameron", department: "Directing" },
+  { id: 7467, name: "David Fincher", department: "Directing" },
+  { id: 240, name: "Stanley Kubrick", department: "Directing" },
+  { id: 21684, name: "Bong Joon-ho", department: "Directing" },
+];
 
-  allActors
-    .filter((a) => !activeActors.includes(a))
-    .forEach((actor) => {
+// Build one person filter. `multiple` = actors (many) vs director (one).
+function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple, loadDefaults }) {
+  const listEl = document.getElementById(listId);
+  const dropdownEl = document.getElementById(dropdownId);
+  const addBtn = document.getElementById(addBtnId);
+  const clearBtn = document.getElementById(clearBtnId);
+  if (!listEl || !dropdownEl || !addBtn) return null;
+
+  let selected = []; // [{ id, name, department }]
+  let defaults = null; // this row's default list (popular actors / preset directors)
+  let optionsWrap, searchInput, searchDebounce, searchSeq = 0;
+
+  // The list shown before the user types — resolved once, then cached.
+  async function ensureDefaults() {
+    if (!defaults) {
+      try {
+        defaults = (await loadDefaults()) || [];
+      } catch (err) {
+        console.error("Could not load default people:", err);
+        defaults = [];
+      }
+    }
+    return defaults;
+  }
+
+  function renderPills() {
+    listEl.innerHTML = "";
+    selected.slice(0, 2).forEach((person) => {
+      const pill = document.createElement("div");
+      pill.className = "pill-item";
+      const label = document.createElement("span");
+      label.textContent = person.name;
+      const remove = document.createElement("span");
+      remove.className = "pill-remove";
+      remove.textContent = "×";
+      remove.onclick = (e) => {
+        e.stopPropagation();
+        selected = selected.filter((p) => p.id !== person.id);
+        renderPills();
+        runSearch();
+      };
+      pill.append(label, document.createTextNode(" "), remove);
+      listEl.appendChild(pill);
+    });
+
+    if (selected.length > 2) {
+      const overflow = document.createElement("div");
+      overflow.className = "pill-overflow";
+      overflow.append(document.createTextNode("... "));
+      const tip = document.createElement("div");
+      tip.className = "pill-tooltip";
+      tip.textContent = selected.slice(2).map((p) => p.name).join(", ");
+      overflow.appendChild(tip);
+      listEl.appendChild(overflow);
+    }
+
+    if (clearBtn) clearBtn.style.display = selected.length ? "block" : "none";
+    // Single-select (director): once chosen, hide "+" until it's cleared.
+    addBtn.style.display = !multiple && selected.length >= 1 ? "none" : "flex";
+  }
+
+  function renderOptions(people) {
+    optionsWrap.innerHTML = "";
+    const available = (people || []).filter(
+      (p) => !selected.some((s) => s.id === p.id),
+    );
+    if (!available.length) {
+      const empty = document.createElement("div");
+      empty.className = "pill-option pill-option--empty";
+      empty.textContent = "No people found";
+      optionsWrap.appendChild(empty);
+      return;
+    }
+    available.forEach((person) => {
       const opt = document.createElement("div");
       opt.className = "pill-option";
-      opt.textContent = actor;
+      opt.textContent = person.name;
       opt.onclick = (e) => {
         e.stopPropagation();
-        activeActors.unshift(actor);
-        renderActors();
-        renderActorDropdown();
-        actorDropdown.classList.remove("show");
+        if (multiple) selected.push(person);
+        else selected = [person];
+        renderPills();
+        dropdownEl.classList.remove("show");
+        if (searchInput) searchInput.value = "";
+        runSearch();
       };
-      actorDropdown.appendChild(opt);
+      optionsWrap.appendChild(opt);
     });
-}
-
-// Actor / director look-up needs a backend people-search endpoint that doesn't
-// exist yet (the backend is a TMDB movie proxy only). Until then the "+" is
-// disabled, greyed out, and explains itself via a tooltip + a toast on click.
-function disableComingSoonAdd(btn) {
-  if (!btn) return;
-  btn.classList.add("pill-add-btn--soon");
-  btn.disabled = true;
-  btn.title = "Coming Soon";
-  btn.setAttribute("aria-disabled", "true");
-  // disabled buttons don't fire click, so listen on the wrapper instead.
-  const container = btn.closest(".pill-add-container") || btn;
-  // Drop a clean "Coming Soon" badge beside the disabled "+".
-  if (container && !container.querySelector(".coming-soon-badge")) {
-    const badge = document.createElement("span");
-    badge.className = "coming-soon-badge";
-    badge.textContent = "Coming Soon";
-    container.insertBefore(badge, btn);
   }
-  container.addEventListener("click", (e) => {
-    e.stopPropagation();
-    if (window.toast) toast.soon("Actor / Director filters — Coming Soon!");
-  });
-}
 
-if (addActorBtn) {
-  disableComingSoonAdd(addActorBtn);
-}
-if (clearActorBtn) {
-  clearActorBtn.onclick = (e) => {
-    e.stopPropagation();
-    activeActors = [];
-    renderActors();
-    renderActorDropdown();
-  };
-}
-
-// ==========================================
-// 10. FILTER: DIRECTORS
-// ==========================================
-let activeDirector = null;
-
-const directorList = document.getElementById("directorList");
-const directorDropdown = document.getElementById("directorDropdown");
-const addDirectorBtn = document.getElementById("addDirectorBtn");
-const clearDirectorBtn = document.getElementById("clearDirectorBtn");
-
-function renderDirector() {
-  directorList.innerHTML = "";
-  if (activeDirector) {
-    const pill = document.createElement("div");
-    pill.className = "pill-item";
-    pill.innerHTML = `${activeDirector} <span class="pill-remove">×</span>`;
-    pill.querySelector(".pill-remove").onclick = (e) => {
-      e.stopPropagation();
-      activeDirector = null;
-      renderDirector();
-      renderDirectorDropdown();
+  // Persistent shell: a search box on top + a results container below.
+  function buildShell() {
+    dropdownEl.innerHTML = "";
+    searchInput = document.createElement("input");
+    searchInput.type = "text";
+    searchInput.className = "dropdown-search";
+    searchInput.placeholder = "Search...";
+    searchInput.onclick = (e) => e.stopPropagation();
+    searchInput.onkeydown = (e) => e.stopPropagation();
+    searchInput.oninput = () => {
+      const q = searchInput.value.trim();
+      clearTimeout(searchDebounce);
+      if (q.length < 2) {
+        renderOptions(defaults); // back to this row's default list
+        return;
+      }
+      searchDebounce = setTimeout(async () => {
+        const seq = ++searchSeq;
+        try {
+          const people = await MovieAPI.searchPeople(q);
+          if (seq === searchSeq) renderOptions(people); // ignore stale
+        } catch (err) {
+          console.error("Person search failed:", err);
+          if (seq === searchSeq && window.toast) toast.error(err.message);
+        }
+      }, 300);
     };
-    directorList.appendChild(pill);
+    dropdownEl.appendChild(searchInput);
+    optionsWrap = document.createElement("div");
+    optionsWrap.className = "people-options";
+    dropdownEl.appendChild(optionsWrap);
   }
 
-  if (clearDirectorBtn)
-    clearDirectorBtn.style.display = activeDirector ? "block" : "none";
-  if (addDirectorBtn)
-    addDirectorBtn.style.display = activeDirector ? "none" : "flex";
-  directorDropdown.classList.remove("show");
-}
+  buildShell();
 
-function renderDirectorDropdown() {
-  directorDropdown.innerHTML = "";
-  injectSearchBar(directorDropdown);
-
-  allDirectors
-    .filter((d) => d !== activeDirector)
-    .forEach((director) => {
-      const opt = document.createElement("div");
-      opt.className = "pill-option";
-      opt.textContent = director;
-      opt.onclick = (e) => {
-        e.stopPropagation();
-        activeDirector = director;
-        renderDirector();
-        renderDirectorDropdown();
-        directorDropdown.classList.remove("show");
-      };
-      directorDropdown.appendChild(opt);
-    });
-}
-
-if (addDirectorBtn) {
-  disableComingSoonAdd(addDirectorBtn);
-}
-if (clearDirectorBtn) {
-  clearDirectorBtn.onclick = (e) => {
+  addBtn.onclick = async (e) => {
     e.stopPropagation();
-    activeDirector = null;
-    renderDirector();
-    renderDirectorDropdown();
+    closeAllInnerDropdowns(dropdownEl);
+    const opening = !dropdownEl.classList.contains("show");
+    dropdownEl.classList.toggle("show");
+    if (opening) {
+      await ensureDefaults();
+      if (!searchInput.value.trim()) renderOptions(defaults);
+      searchInput.focus();
+    }
   };
+
+  if (clearBtn) {
+    clearBtn.onclick = (e) => {
+      e.stopPropagation();
+      selected = [];
+      renderPills();
+      runSearch();
+    };
+  }
+
+  renderPills();
+  return { getSelected: () => selected };
 }
+
+actorFilter = setupPersonFilter({
+  listId: "actorList",
+  dropdownId: "actorDropdown",
+  addBtnId: "addActorBtn",
+  clearBtnId: "clearActorBtn",
+  multiple: true,
+  // Popular list is mostly actors anyway — keep only the Acting department.
+  loadDefaults: async () =>
+    (await loadPopularPeople()).filter((p) => p.department === "Acting"),
+});
+directorFilter = setupPersonFilter({
+  listId: "directorList",
+  dropdownId: "directorDropdown",
+  addBtnId: "addDirectorBtn",
+  clearBtnId: "clearDirectorBtn",
+  multiple: false,
+  // Curated directors (no popular fetch); typing still live-searches.
+  loadDefaults: async () => DIRECTOR_DEFAULTS,
+});
 
 // ==========================================
 // 11. FILTER: AGE RATINGS
@@ -842,6 +902,11 @@ function renderPlatforms() {
 }
 
 function renderPlatformDropdown() {
+  // Rebuild from scratch and add a live filter box (like the person search),
+  // so a long provider list can be narrowed down by typing.
+  platformDropdown.innerHTML = "";
+  injectSearchBar(platformDropdown);
+
   allPlatforms
     .filter((p) => !activePlatforms.includes(p))
     .forEach((platform) => {
@@ -875,72 +940,26 @@ if (clearPlatformBtn) {
   };
 }
 // ==========================================
-// 13. SORTING LOGIC
+// 13. SORTING (server-side)
 // ==========================================
-// Sorting configuration
+// The backend sorts natively; we just pass the chosen option as a `sort` query
+// param and re-run the query. No client-side re-ordering of the grid.
 const sortOptionsData = [
-  {
-    short: "Popular",
-    long: "Popular This Week",
-    key: "popularity",
-    dir: "desc",
-  },
-  {
-    short: "Rating ↓",
-    long: "Rating (Best to Worst)",
-    key: "rating",
-    dir: "desc",
-  },
-  {
-    short: "Rating ↑",
-    long: "Rating (Worst to Best)",
-    key: "rating",
-    dir: "asc",
-  },
-  { short: "A ➔ Z", long: "Alphabetical (A-->Z)", key: "title", dir: "asc" },
-  { short: "Z ➔ A", long: "Alphabetical (Z-->A)", key: "title", dir: "desc" },
-  {
-    short: "Newest",
-    long: "Release Date (New to Old)",
-    key: "year",
-    dir: "desc",
-  },
-  {
-    short: "Oldest",
-    long: "Release Date (Old to New)",
-    key: "year",
-    dir: "asc",
-  },
+  { short: "Popular", long: "Popular This Week", sort: "popularity" },
+  { short: "Rating ↓", long: "Rating (Best to Worst)", sort: "rating_desc" },
+  { short: "Rating ↑", long: "Rating (Worst to Best)", sort: "rating_asc" },
+  { short: "A ➔ Z", long: "Alphabetical (A-->Z)", sort: "title_asc" },
+  { short: "Z ➔ A", long: "Alphabetical (Z-->A)", sort: "title_desc" },
+  { short: "Newest", long: "Release Date (New to Old)", sort: "year_desc" },
+  { short: "Oldest", long: "Release Date (Old to New)", sort: "year_asc" },
 ];
 
-function sortMovieGrid({ key, dir }) {
-  const grid = document.getElementById("movieGrid");
-  if (!grid) return;
-  const cards = [
-    ...grid.querySelectorAll(".movie-card:not(.movie-card--skeleton)"),
-  ];
-  if (!cards.length) return;
-
-  const valueOf = (card) =>
-    key === "title"
-      ? (card.dataset.title || "").toLowerCase()
-      : parseFloat(card.dataset[key]) || 0;
-
-  cards
-    .sort((a, b) => {
-      const va = valueOf(a);
-      const vb = valueOf(b);
-      const cmp = va < vb ? -1 : va > vb ? 1 : 0;
-      return dir === "asc" ? cmp : -cmp;
-    })
-    .forEach((card) => grid.appendChild(card)); // moving a node re-appends it in order
-}
-
-function applyActiveSort() {
+// The server `sort` value for the currently selected option (default popularity).
+function currentSortValue() {
   const label = document.getElementById("sortSelectedText");
-  const current = label ? label.textContent.trim() : "";
+  const current = label ? label.textContent.trim() : "Popular";
   const option = sortOptionsData.find((o) => o.short === current);
-  if (option) sortMovieGrid(option);
+  return option ? option.sort : "popularity";
 }
 
 if (sortCustomBtn && sortCustomMenu) {
@@ -960,7 +979,7 @@ if (sortCustomBtn && sortCustomMenu) {
         .forEach((opt) => opt.classList.remove("selected"));
       div.classList.add("selected");
       sortCustomMenu.classList.remove("show");
-      sortMovieGrid(option);
+      runSearch(); // re-fetch from the backend ordered by the new sort
       window.scrollTo({ top: 0, behavior: "smooth" }); // jump back to the new top
     };
     sortCustomMenu.appendChild(div);
@@ -1017,46 +1036,16 @@ if (aiModeBtn && searchContainer && searchInput) {
 }
 
 // ==========================================
-// 16. LIVE TEXT SEARCH (hits the backend via MovieAPI)
+// 16. LIVE TEXT SEARCH (debounced -> runSearch)
 // ==========================================
+// Typing just re-runs the consolidated query (text + filters + sort). An empty
+// box is a valid query too — it returns the default feed. Out-of-order responses
+// are handled by the feedToken guard inside loadFeedPage().
 if (searchInput) {
   let searchDebounce;
-  let searchSeq = 0; // guards against out-of-order responses
-
-  searchInput.addEventListener("input", (e) => {
-    const term = e.target.value.trim();
-    const grid = document.getElementById("movieGrid");
+  searchInput.addEventListener("input", () => {
     clearTimeout(searchDebounce);
-
-    // Short/empty query restores the feed (already loaded; no request needed)
-    // and re-enables scroll pagination.
-    if (term.length < 2) {
-      inSearch = false;
-      // Restore the feed, then top up if it's too short to scroll.
-      renderMovieGrid(feedMovies).then(() => {
-        if (feedNearBottom()) loadFeedPage();
-      });
-      return;
-    }
-
-    // Searching takes over the grid and pauses feed pagination.
-    inSearch = true;
-
-    // Debounce so we don't fire a request on every keystroke.
-    searchDebounce = setTimeout(async () => {
-      const seq = ++searchSeq;
-      if (grid) grid.innerHTML = movieSkeletonMarkup(10);
-      try {
-        const results = await MovieAPI.searchMovies(term);
-        if (seq === searchSeq) await renderMovieGrid(results); // ignore stale
-      } catch (err) {
-        console.error("Search failed:", err);
-        if (seq === searchSeq) {
-          showGridMessage("Search failed. Please try again.");
-          if (window.toast) toast.error(err.message);
-        }
-      }
-    }, 300);
+    searchDebounce = setTimeout(runSearch, 300);
   });
 }
 
@@ -1095,10 +1084,14 @@ document.addEventListener("DOMContentLoaded", () => {
           if (window.toast) toast.info("Couldn't find a movie — try again!");
           return;
         }
-        // Take over the grid with just this pick and pause feed pagination,
-        // and reflect the result in the search bar (without re-triggering a
-        // search — clearing the box later restores the feed as usual).
-        inSearch = true;
+        // Take over the grid with just this pick and pause pagination, and
+        // reflect the result in the search bar (without re-triggering a search —
+        // editing/clearing the box later runs a fresh query as usual).
+        feedQuery = {};
+        feedMovies = [movie];
+        feedPage = 0;
+        feedDone = true; // no more pages for a single random pick
+        feedToken++; // abandon any in-flight page load
         if (movieSearchInput) movieSearchInput.value = movie.title;
         await renderMovieGrid([movie]);
         window.scrollTo({ top: 0, behavior: "smooth" });
