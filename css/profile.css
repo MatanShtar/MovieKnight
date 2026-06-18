@@ -148,7 +148,15 @@
   white-space: pre-wrap; /* preserve the line breaks the user types in their bio */
   word-wrap: break-word;
   overflow-wrap: break-word; /* break long unbroken strings instead of overflowing */
-  overflow: hidden; /* no scroll — the 200-char cap keeps it short */
+  /* Cap the DISPLAYED bio at 12 visual rows (including typed line breaks) so a
+     newline-heavy bio can't stretch the profile; overflow gets a trailing "…".
+     max-height is a hard fallback for browsers that ignore line-clamp. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 12;
+  line-clamp: 12;
+  max-height: calc(1.6em * 12);
+  overflow: hidden;
   cursor: pointer; /* the whole bio is clickable to edit */
   transition: opacity var(--t-base) ease;
 }
@@ -182,7 +190,9 @@
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: break-word; /* wrap to new lines instead of a horizontal scroll */
-  overflow: hidden; /* no scrollbar — the 200-char cap keeps it within ~5 lines */
+  max-height: 240px; /* bounded so a tall bio scrolls inside the editor, never stretches the page */
+  overflow-y: auto; /* let the user scroll to text past the visible area while editing */
+  overflow-x: hidden;
   transition: border-color var(--t-fast) ease, background var(--t-base) ease;
 }
 
