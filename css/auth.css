@@ -136,6 +136,37 @@
   transform: scale(0.96);
 }
 
+/* Loading state: greyed out + unclickable, with no hover lift or press scale. */
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submit-btn:disabled:hover {
+  background-color: rgba(var(--rose), 0.5);
+  box-shadow: none;
+}
+
+.submit-btn:disabled:active {
+  transform: none;
+}
+
+/* Status line shown BENEATH the submit button while a request is in flight. */
+.form-loading {
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  margin: -2px 0 8px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.form-loading.show {
+  visibility: visible;
+  opacity: 1;
+}
+
 /* Bottom Links */
 .form-links p {
   color: var(--text);
