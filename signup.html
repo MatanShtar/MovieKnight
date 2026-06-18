@@ -1,56 +1,86 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SignUp - MovieKnight</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body class="signup-body">
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieKnight | Sign Up</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/validation.js" defer></script>
+  </head>
+  <body class="signup-body">
     <div class="signup-wrapper">
-        <div class="logo-container">
-            <img src="assets/images/login-logo-text.svg" alt="MovieKnight Logo" class="main-logo" >
+      <div class="logo-container">
+        <img
+          src="assets/images/login-logo-text.svg"
+          alt="MovieKnight Logo"
+          class="main-logo"
+        />
+      </div>
+
+      <form class="signup-box" id="signupForm" autocomplete="off" novalidate>
+        <h2>SIGN UP</h2>
+
+        <div class="input-group">
+          <input type="text" id="signupName" placeholder="Full Name" required />
         </div>
 
-        <form class="signup-box" id="signupForm" autocomplete="off" novalidate>
-            <h2>SIGN UP</h2>
-            
-            <div class="input-group">
-                <input type="text" id="signupName" placeholder="Full Name" required>
-            </div>
+        <div class="input-group">
+          <input
+            type="date"
+            id="signupDob"
+            placeholder="DD / MM / YYYY"
+            required
+          />
+        </div>
 
-            <div class="input-group">
-                <input type="date" id="signupDob" placeholder="DD / MM / YYYY" required>
-            </div>
+        <div class="input-group">
+          <input type="email" id="signupEmail" placeholder="Email" required />
+        </div>
 
-            <div class="input-group">
-                <input type="email" id="signupEmail" placeholder="Email" required>
-            </div>
+        <div class="input-group">
+          <input
+            type="text"
+            id="signupUsername"
+            placeholder="Username"
+            required
+          />
+        </div>
 
-            <div class="input-group">
-                <input type="text" id="signupUsername" placeholder="Username" required>
-            </div>
-            
-            <div class="input-group">
-                <input type="password" id="signupPassword" placeholder="Password" required>
-            </div>
+        <div class="input-group">
+          <input
+            type="password"
+            id="signupPassword"
+            placeholder="Password"
+            required
+          />
+        </div>
 
-            <div class="input-group">
-                <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required>
-            </div>
-            
-            <div id="signupErrorMsg" class="error-message"></div>
-            
-            <button type="submit" class="submit-btn">SIGN UP</button>
-            
-            <div class="form-links">
-                <p>already a member? LOGIN <a href="login.html">here</a></p>
-                <p>or continue as a <a href="#" onclick="continueAsGuest(event)">guest</a></p>
-            </div>
-        </form>
+        <div class="input-group">
+          <input
+            type="password"
+            id="signupConfirmPassword"
+            placeholder="Confirm Password"
+            required
+          />
+        </div>
+
+        <div id="signupErrorMsg" class="error-message"></div>
+
+        <button type="submit" class="submit-btn">SIGN UP</button>
+
+        <div class="form-links">
+          <p>already a member? LOGIN <a href="login.html">here</a></p>
+          <p>
+            or continue as a
+            <a href="#" onclick="continueAsGuest(event)">guest</a>
+          </p>
+        </div>
+      </form>
     </div>
-
-    <script src="js/validation.js"></script>
-</body>
+  </body>
 </html>

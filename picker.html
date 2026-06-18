@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, in   itial-scale=1.0">
+    <title>Movie Picker - MovieKnight</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css">
+    <link rel="stylesheet" href="css/picker.css">
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/common.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/picker.js" defer></script>
+</head>
+
+<body class="app-body feature-page">
+    <div class="app-container">
+        <header class="mobile-topbar">
+            <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open menu" aria-expanded="false">
+                <img src="assets/images/icons/hamburger-menu-icon.svg" alt="">
+            </button>
+            <a class="mobile-brand" href="index.html">
+                <img class="mobile-brand-knight" src="assets/images/knight-minimal-logo.svg" alt="">
+                <img class="mobile-brand-text" src="assets/images/movie-knight-wordmark.svg" alt="MovieKnight">
+            </a>
+        </header>
+
+        <aside class="sidebar">
+            <a class="sidebar-logo" href="index.html">
+                <img src="assets/images/movie-knight-logo-sidebar.svg" alt="MovieKnight" class="nav-logo">
+            </a>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link">
+                    <img src="assets/images/icons/home-icon.svg" alt="Home Icon" class="nav-logo"> Home
+                </a>
+                <a href="#" class="nav-link" data-toast="soon:Coming Soon!">
+                    <img src="assets/images/icons/explore-icon.svg" alt="Explore Icon" class="nav-logo"> Explore
+                </a>
+                <a href="profile.html" class="nav-link">
+                    <img src="assets/images/icons/profile-icon.svg" alt="Profile Icon" class="nav-logo"> Profile
+                </a>
+                <div class="settings-container" id="sidebarSettings" style="display: none">
+                    <a href="#" class="nav-link" id="settingsToggleBtn">
+                        <img src="assets/images/icons/settings-icon.svg" alt="Settings" class="nav-logo"> Settings
+                        <span class="settings-arrow"></span>
+                    </a>
+                    <div class="settings-submenu" id="settingsSubmenu">
+                        <a href="#" data-toast="soon:Coming Soon!"><img src="assets/images/icons/preferences-icon.svg" alt="Pref"> Preferences</a>
+                        <a href="#" data-toast="soon:Coming Soon!"><img src="assets/images/icons/account-icon.svg" alt="Account"> Account Settings</a>
+                    </div>
+                </div>
+                <a href="about.html" class="nav-link about-link">
+                    <img src="assets/images/icons/about-icon.svg" alt="About Icon" class="nav-logo">
+                    <span>About</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="picker-header">
+                <a href="index.html" class="back-btn">Back</a>
+                <img src="assets/images/login-logo-text.svg" alt="MovieKnight" class="wheel-main-logo">
+            </div>
+
+            <div class="feature-tabs" id="pickerTabs">
+                <button class="tab-btn active" data-panel="wheel">SPIN THE WHEEL</button>
+                <button class="tab-btn" data-panel="chopping">THE CHOPPING BLOCK</button>
+                <button class="tab-btn" data-panel="ai">LET AI CHOOSE</button>
+            </div>
+
+            <section class="picker-state-container">
+                <!-- SPIN THE WHEEL: genre + provider filters -->
+                <div class="picker-panel active" data-panel="wheel">
+                    <div class="config-layout">
+                        <div class="config-column">
+                            <h3>Filter by genres</h3>
+                            <div class="genre-grid" id="genreGrid"></div>
+                        </div>
+
+                        <div class="config-column">
+                            <h3>Filter by your local providers</h3>
+                            <div class="provider-selection-box">
+                                <span class="provider-selection" id="providerSelection">Any</span>
+                                <span class="provider-selection-tooltip" id="providerSelectionTooltip">Any provider</span>
+                            </div>
+                            <div class="provider-box">
+                                <div class="provider-search-bar">
+                                    <input type="text" id="providerSearch" placeholder="|">
+                                </div>
+                                <div class="provider-list" id="providerList"> </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="generate-wheel-btn" id="generateBtn">GENERATE WHEEL</button>
+                </div>
+
+                <!-- THE CHOPPING BLOCK: not built yet -->
+                <div class="picker-panel" data-panel="chopping">
+                    <div class="coming-soon">
+                        <h2>The Chopping Block</h2>
+                        <p>Coming Soon</p>
+                    </div>
+                </div>
+
+                <!-- LET AI CHOOSE: placeholder setup (no LLM wired up yet) -->
+                <div class="picker-panel" data-panel="ai">
+                    <div class="ai-config">
+                        <h3>Amount of Suggestions</h3>
+                        <div class="suggestion-stepper" id="suggestionStepper">
+                            <div class="step" data-value="1"><span class="dot"></span><span class="num">1</span></div>
+                            <div class="step" data-value="2"><span class="dot"></span><span class="num">2</span></div>
+                            <div class="step active" data-value="3"><span class="dot"></span><span class="num">3</span></div>
+                        </div>
+
+                        <h3>Prompt</h3>
+                        <textarea class="ai-prompt" id="aiPrompt" placeholder="e.g. &ldquo;No scary movies&rdquo;"></textarea>
+
+                        <label class="ai-personal-data">
+                            <input type="checkbox" class="provider-checkbox" id="usePersonalData" checked>
+                            <div class="custom-check"></div>
+                            <span>Use my personal data</span>
+                        </label>
+                    </div>
+
+                    <button class="generate-wheel-btn" id="aiSendBtn">SEND</button>
+                </div>
+            </section>
+        </main>
+
+        <aside class="user-rail">
+            <div class="header-login-container" id="headerAuthContainer">
+                <button class="header-login-btn" id="loginBtn" onclick="window.location.href = 'login.html'">
+                    <p>Login</p>
+                </button>
+                <div class="user-profile-display" id="userProfileDisplay" style="display: none">
+                    <div class="user-welcome">
+                        <span class="welcome-text">Good to see you,</span>
+                        <span class="username-text" id="displayUsername">User</span>
+                    </div>
+                    <button id="headerProfileBtn" class="header-profile-btn">
+                        <img src="assets/images/icons/account-icon.svg" alt="Profile" class="profile-pic">
+                    </button>
+                    <div class="header-dropdown" id="headerDropdown">
+                        <a href="profile.html">Profile</a>
+                        <a href="#" data-toast="soon:Coming Soon!">Settings</a>
+                        <a href="index.html" id="signOutBtn" class="danger-text">Sign Out</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="nav-backdrop" id="navBackdrop" hidden></div>
+    </div>
+</body>
+
+</html>

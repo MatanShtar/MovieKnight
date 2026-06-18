@@ -1,0 +1,834 @@
+/* profile.css - profile page only. Loaded by profile.html. */
+
+/* ==========================================
+   1. PROFILE GRID & HEADER LAYOUT
+   ========================================== */
+.profile-main {
+  padding: 72px 50px 100px 50px;
+}
+
+.profile-header {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  max-width: var(--content-width);
+}
+
+.profile-info {
+  flex: 3;
+  min-height: 320px;
+  display: flex;
+}
+
+.profile-info-left-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================
+   2. AVATAR & PROFILE METADATA
+   ========================================== */
+.profile-avatar-container {
+  flex: 2;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+}
+
+.profile-avatar {
+  position: relative;
+  width: 80%;
+  aspect-ratio: 1;
+}
+
+.avatar-pic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 5px solid var(--text);
+  box-sizing: border-box;
+  transition: box-shadow var(--t-base) ease;
+}
+
+.profile-avatar:hover .avatar-pic {
+  box-shadow: 0 0 0 6px rgba(var(--pink), 0.35);
+}
+
+.upload-new-pic {
+  position: absolute;
+  top: -6%;
+  right: -15%;
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease-pop);
+}
+
+.upload-new-pic:hover {
+  transform: scale(1.15);
+}
+
+.profile-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  gap: 10px;
+}
+
+.profile-meta > p {
+  font-size: 18px;
+  opacity: 70%;
+}
+
+.new-collection-btn {
+  border: 0px;
+  background-color: rgba(var(--pink), 0.13);
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text);
+  font-size: 18px;
+  opacity: 85%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 240px;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap),
+    opacity var(--t-base) ease;
+}
+
+.new-collection-btn img {
+  flex-shrink: 0;
+  transition: transform var(--t-base) var(--ease-pop);
+}
+
+.new-collection-btn span {
+  flex: 1;
+  text-align: center;
+}
+
+.new-collection-btn:hover {
+  cursor: pointer;
+  background: rgba(var(--pink), 0.3);
+  opacity: 1;
+}
+
+.new-collection-btn:hover img {
+  transform: scale(1.2);
+}
+
+.new-collection-btn:active {
+  transform: scale(0.98);
+}
+
+.profile-info-right-col {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  padding-left: 26px;
+}
+
+.profile-username {
+  flex: 1;
+  display: flex;
+  font-size: 40px;
+  letter-spacing: 3%;
+  font-weight: 300;
+}
+
+/* ==========================================
+   3. USER BIO & EDIT CONTROLS
+   ========================================== */
+.profile-bio {
+  font-size: 16px;
+  opacity: 70%;
+  line-height: 1.6;
+  white-space: pre-wrap; /* preserve the line breaks the user types in their bio */
+  cursor: pointer; /* the whole bio is clickable to edit */
+  transition: opacity var(--t-base) ease;
+}
+
+/* "Add bio" prompt shown when no bio has been saved yet */
+.profile-bio--placeholder {
+  font-style: italic;
+  opacity: 45%;
+}
+
+/* Inline editor the bio turns into when clicked */
+.profile-bio-input {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid rgba(var(--pink), 0.6);
+  border-radius: 8px;
+  background: rgba(var(--pink), 0.08);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.6;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color var(--t-fast) ease, background var(--t-base) ease;
+  animation: bio-input-in var(--t-base) var(--ease-snap);
+}
+
+.profile-bio-input:focus {
+  border-color: rgb(var(--pink));
+  background: rgba(var(--pink), 0.14);
+}
+
+@keyframes bio-input-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.bio-edit {
+  flex: 5;
+  position: relative;
+  padding-top: 16px;
+}
+
+.bio-edit-btn {
+  position: absolute;
+  top: 12px;
+  right: 4px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(var(--pink), 0.2);
+  cursor: pointer;
+  transition:
+    background var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+
+.bio-edit-btn:hover {
+  background: rgba(var(--pink), 0.32);
+}
+
+.bio-edit-btn:active {
+  transform: scale(0.92);
+}
+
+.bio-edit-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+/* desktop + real mouse only: thin dashed rectangle + edit icon while hovering the bio */
+@media (hover: hover) and (min-width: 1025px) {
+  .bio-edit:hover .profile-bio {
+    outline: 1px dashed rgba(var(--pink), 0.65);
+    outline-offset: 6px;
+    border-radius: 6px;
+  }
+
+  .bio-edit:hover .bio-edit-btn {
+    display: flex;
+  }
+}
+
+/* ==========================================
+   4. PROGRESSION BADGES
+   ========================================== */
+.profile-badges {
+  flex: 2;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.prog-badges-header {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  font-size: 40px;
+  font-weight: 300;
+  letter-spacing: 3%;
+}
+
+.badges-display {
+  flex: 3;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.shield-path {
+  stroke: white;
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+
+/* FILLS: Links the specific classes to the gradient IDs in the HTML */
+.silver-shield {
+  fill: url(#silver-gradient);
+}
+
+.gold-shield {
+  fill: url(#gold-gradient);
+}
+
+.bronze-shield {
+  fill: url(#bronze-gradient);
+}
+
+.badge-shield {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 132px;
+  display: flex;
+  justify-content: center;
+  /* Badges are display-only: keep the normal arrow, not the text I-beam, when
+     hovering over the title / tooltip text inside them. */
+  cursor: default;
+  transition:
+    transform var(--t-base) var(--ease-pop),
+    filter var(--t-base) ease;
+}
+
+.badge-shield,
+.badge-shield .badge-title,
+.badge-shield .badge-tooltip {
+  cursor: default;
+}
+
+.badge-shield svg {
+  width: 100%;
+  height: auto;
+  max-width: 120px;
+}
+
+.badge-shield:hover {
+  transform: translateY(-6px) scale(1.06) rotate(-2deg);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+}
+
+.badge-shield:has(.silver-shield):hover {
+  filter: drop-shadow(0 0 14px rgba(220, 220, 226, 0.75));
+}
+
+.badge-shield:has(.gold-shield):hover {
+  filter: drop-shadow(0 0 22px rgba(251, 201, 38, 0.95));
+}
+
+.badge-shield:has(.bronze-shield):hover {
+  filter: drop-shadow(0 0 14px rgba(203, 149, 82, 0.8));
+}
+
+/* hover tooltip above the shield */
+.badge-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 112%;
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background-color: rgba(0, 0, 0, 0.95);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 8px;
+  white-space: nowrap;
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  z-index: 10;
+  transition:
+    opacity var(--t-base) ease,
+    transform var(--t-base) var(--ease-snap);
+}
+
+.badge-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.95);
+}
+
+.badge-shield:hover .badge-tooltip {
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.badge-title {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -40%);
+  text-align: center;
+  width: 80%;
+  color: var(--surface-chip);
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+
+.view-badges-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.view-badges-btn {
+  background-color: rgba(var(--pink), 0.13);
+  border: 0;
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text);
+  font-size: 18px;
+  opacity: 85%;
+  width: 240px;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap),
+    opacity var(--t-base) ease;
+}
+
+.view-badges-btn:hover {
+  cursor: pointer;
+  background: rgba(var(--pink), 0.3);
+  opacity: 1;
+}
+
+.view-badges-btn:active {
+  transform: scale(0.98);
+}
+
+/* ==========================================
+   5. COLLECTIONS CARDS
+   ========================================== */
+.collections-row {
+  padding-top: 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  column-gap: 40px;
+  row-gap: 20px;
+  width: 100%;
+  max-width: var(--content-width);
+  min-height: 420px;
+}
+
+.collection-card {
+  margin-bottom: 28px;
+  cursor: pointer;
+  transition: transform var(--t-base) var(--ease-snap);
+}
+
+.collection-card:hover {
+  transform: translateY(-3px) scale(1.02);
+}
+
+.collection-name {
+  text-align: center;
+  margin-bottom: 8px;
+  transition: color var(--t-base) ease;
+}
+
+/* on hover, tint the name with the card's accent (--card-accent is set per card in profile.js) */
+.collection-card:hover .collection-name {
+  color: var(--card-accent, rgb(var(--pink)));
+}
+
+.collection-poster-container {
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow var(--t-base) var(--ease-snap);
+}
+
+.collection-card:hover .collection-poster-container {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+}
+
+.collection-poster {
+  width: 100%;
+  display: block;
+  transition: transform var(--t-base) var(--ease-snap);
+}
+
+.collection-card:hover .collection-poster {
+  transform: scale(1.08);
+}
+
+.collection-menu-button {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--surface-chip);
+  width: 18px;
+  height: 18px;
+  opacity: 90%;
+  border-radius: 3px;
+  border: 0;
+  cursor: pointer;
+  transition:
+    transform var(--t-fast) var(--ease-pop),
+    opacity var(--t-fast) ease;
+}
+
+.collection-menu-button:hover {
+  transform: scale(1.18);
+  opacity: 1;
+}
+
+.collection-stats .stat-icon {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  background-color: currentColor;
+  /* the paint = inherited color */
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.collection-stats {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px;
+}
+
+.collections-stats-left {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+  gap: 12px;
+}
+
+.collections-stats-left > * {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================
+   6. COLLECTION CONTEXT MENU
+   ========================================== */
+.collection-menu-button--active {
+  opacity: 1;
+}
+
+.collection-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 200px;
+  padding: 8px 0;
+  background-color: var(--surface-menu);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition:
+    opacity var(--t-base) ease,
+    transform var(--t-base) var(--ease-snap);
+}
+
+.collection-menu:not([hidden]) {
+  opacity: 0.95;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.collection-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: none;
+  border: 0;
+  text-align: left;
+  padding: 11px 20px;
+  font-size: 15px;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.collection-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.collection-menu-item--danger {
+  color: #9c3442;
+}
+
+.menu-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* footnote shown only for default collections (built in renderMenu), explaining
+   why Rename + Delete are missing - an italic system note under a divider */
+.collection-menu-note {
+  margin-top: 4px;
+  padding: 8px 20px 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+/* ==========================================
+   7. LOADING SKELETONS & ANIMATIONS
+   ========================================== */
+@keyframes collectionEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.collection-card:not(.collection-card--skeleton) {
+  animation: collectionEnter 0.45s var(--ease-snap) backwards;
+}
+
+.collection-card:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.collection-card:nth-child(2) {
+  animation-delay: 0.07s;
+}
+
+.collection-card:nth-child(3) {
+  animation-delay: 0.14s;
+}
+
+.collection-card:nth-child(4) {
+  animation-delay: 0.21s;
+}
+
+.collection-card:nth-child(5) {
+  animation-delay: 0.28s;
+}
+
+.collection-card:nth-child(n + 6) {
+  animation-delay: 0.35s;
+}
+
+/* skeleton placeholders shown while collections load */
+.collection-card--skeleton {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* @keyframes shimmer lives in common.css (shared with the home movie grid) */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.skeleton-name {
+  height: 16px;
+  width: 60%;
+  margin: 0 auto 8px;
+}
+
+.skeleton-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+}
+
+.skeleton-stats {
+  height: 16px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ==========================================
+   8. RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================== */
+@media (max-width: 1280px) {
+  .profile-header {
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  .profile-info,
+  .profile-badges {
+    min-height: 0;
+  }
+
+  .profile-badges {
+    gap: 20px;
+  }
+
+  .badges-display {
+    padding: 4px 0;
+  }
+
+  .view-badges-container {
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .profile-main {
+    padding: 16px 16px 64px;
+  }
+
+  .badge-tooltip {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  /* reorder it: avatar -> name -> bio -> badges -> collections meta (count + New Collection). */
+  .profile-header {
+    align-items: center;
+    text-align: center;
+    gap: 18px;
+  }
+
+  .profile-info,
+  .profile-info-left-col,
+  .profile-info-right-col,
+  .bio-edit {
+    display: contents;
+  }
+
+  .profile-avatar-container {
+    order: 0;
+    justify-content: center;
+  }
+
+  .profile-avatar {
+    width: 128px;
+  }
+
+  .profile-username {
+    order: 1;
+    justify-content: center;
+    font-size: 30px;
+  }
+
+  .profile-bio {
+    order: 2;
+    padding-top: 0;
+    max-width: 540px;
+  }
+
+  .profile-badges {
+    order: 3;
+    width: 100%;
+    margin-top: 6px;
+  }
+
+  /* the collections box is a fixed-width column; the count sits at the button's
+     left edge (not centred) so it reads as a label for the button */
+  .profile-meta {
+    order: 4;
+    align-items: stretch;
+    width: 100%;
+    max-width: 340px;
+    margin-top: 8px;
+    gap: 10px;
+  }
+
+  .profile-meta > p {
+    text-align: left;
+    margin-left: 2px;
+  }
+
+  .new-collection-btn,
+  .view-badges-btn {
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .prog-badges-header {
+    font-size: 28px;
+  }
+
+  .badges-display {
+    gap: 14px;
+  }
+
+  .collections-row {
+    grid-template-columns: 1fr;
+    row-gap: 20px;
+    min-height: 0;
+    padding-top: 8px;
+  }
+
+  .collection-card {
+    margin-bottom: 0;
+  }
+
+  .collection-name {
+    font-size: 16px;
+  }
+
+  .collection-stats {
+    font-size: 15px;
+    padding: 8px 4px;
+  }
+
+  .collection-stats .stat-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .collections-stats-left {
+    gap: 18px;
+  }
+
+  .collections-stats-left > * {
+    gap: 5px;
+  }
+}

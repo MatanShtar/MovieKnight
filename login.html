@@ -1,40 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - MovieKnight</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body class="login-body">
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieKnight | Login</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/auth.css" />
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/validation.js" defer></script>
+  </head>
+  <body class="login-body">
     <div class="login-wrapper">
-        <div class="logo-container">
-            <img src="assets/images/login-logo-text.svg" alt="MovieKnight Logo" class="main-logo" >
+      <div class="logo-container">
+        <img
+          src="assets/images/login-logo-text.svg"
+          alt="MovieKnight Logo"
+          class="main-logo"
+        />
+      </div>
+
+      <form class="login-box" id="loginForm" novalidate>
+        <h2>LOGIN</h2>
+
+        <div class="input-group">
+          <input
+            type="text"
+            id="loginUsername"
+            placeholder="Email or Username"
+            required
+          />
         </div>
 
-        <form class="login-box" id="loginForm" novalidate>
-            <h2>LOGIN</h2>
-            
-            <div class="input-group">
-                <input type="text" id="loginUsername" placeholder="Email or Username" required>
-            </div>
-            
-            <div class="input-group">
-                <input type="password" id="loginPassword" placeholder="Password" required>
-            </div>
-            
-            <div id="loginErrorMsg" class="error-message"></div>
-            
-            <button type="submit" class="submit-btn">LOGIN</button>
-            
-            <div class="form-links">
-                <p>not a member? SIGN UP <a href="signup.html">here</a></p>
-                <p>or continue as a <a href="#" onclick="continueAsGuest(event)">guest</a></p>
-            </div>
-        </form>
-    </div>
+        <div class="input-group">
+          <input
+            type="password"
+            id="loginPassword"
+            placeholder="Password"
+            required
+          />
+        </div>
 
-    <script src="js/validation.js"></script>
-</body>
+        <div id="loginErrorMsg" class="error-message"></div>
+
+        <button type="submit" class="submit-btn">LOGIN</button>
+
+        <div class="form-links">
+          <p>not a member? SIGN UP <a href="signup.html">here</a></p>
+          <p>
+            or continue as a
+            <a href="#" onclick="continueAsGuest(event)">guest</a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </body>
 </html>
