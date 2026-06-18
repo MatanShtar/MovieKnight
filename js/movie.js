@@ -86,11 +86,12 @@ function paintDetails(d) {
   el("mdTitle").textContent = titleWithYear(d.title, d.releaseYear);
   document.title = `MovieKnight | ${d.title}`;
 
-  if (d.posterPath) {
-    const poster = el("mdPoster");
-    poster.src = d.posterPath;
-    poster.alt = d.title || "Movie poster";
-  }
+  // Show the poster, or the shared 2:3 placeholder when the movie has none.
+  // (A poster URL that 404s is handled separately by the global broken-image
+  // fallback in common.js, which now matches #mdPoster via its poster-img class.)
+  const poster = el("mdPoster");
+  poster.src = d.posterPath || POSTER_PLACEHOLDER;
+  poster.alt = d.title || "Movie poster";
   // The wide backdrop looks better blurred; fall back to the poster.
   setBackdrop(d.backdropPath || d.posterPath);
 
@@ -138,28 +139,68 @@ function paintDetails(d) {
   setupReadMore();
 }
 
-// Collapse a long synopsis to a few lines with a "Read more" toggle so the page
-// stays a single screen. Only shows the toggle when the text actually overflows.
+// "Read more" only earns its place when the full synopsis would actually push
+// the page tall enough to scroll at default zoom — otherwise it's just noise, so
+// the full text is shown and the toggle stays hidden. On mobile the toggle is
+// cancelled entirely (vertical scrolling is expected there), so the synopsis is
+// always shown in full. Re-evaluated on resize since both the breakpoint and the
+// "does it scroll" answer depend on the viewport.
+let readMoreWired = false;
 function setupReadMore() {
   const overview = el("mdOverview");
   const btn = el("mdReadMore");
   if (!overview || !btn) return;
 
-  overview.classList.add("is-clamped");
-  // Let layout settle, then decide whether the toggle is needed.
-  requestAnimationFrame(() => {
-    const overflows = overview.scrollHeight > overview.clientHeight + 2;
-    btn.hidden = !overflows;
-    if (!overflows) overview.classList.remove("is-clamped");
-  });
+  const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
+  let expanded = false;
+
+  function sync() {
+    // Mobile: no clamp, no toggle — always show the whole synopsis.
+    if (isMobile()) {
+      expanded = false;
+      overview.classList.remove("is-clamped", "is-expanded");
+      btn.hidden = true;
+      return;
+    }
+    if (expanded) return; // don't collapse out from under the user
+
+    // Measure with the text fully expanded: if the document now overflows the
+    // viewport (a scrollbar would appear), the synopsis is the long pole, so
+    // clamp it and offer the toggle. If everything still fits, leave it open.
+    overview.classList.remove("is-clamped", "is-expanded");
+    const pageScrolls =
+      document.documentElement.scrollHeight > window.innerHeight + 2;
+
+    if (pageScrolls) {
+      overview.classList.add("is-clamped");
+      btn.hidden = false;
+      btn.textContent = "Read more";
+    } else {
+      btn.hidden = true;
+    }
+  }
 
   btn.onclick = () => {
-    const clamped = overview.classList.toggle("is-clamped");
-    btn.textContent = clamped ? "Read more" : "Read less";
+    expanded = !expanded;
+    // is-expanded carries the override that beats the clamp.
+    overview.classList.toggle("is-expanded", expanded);
+    overview.classList.toggle("is-clamped", !expanded);
+    btn.textContent = expanded ? "Read less" : "Read more";
   };
+
+  // Measure after layout settles (and again shortly after, for late font/image
+  // reflow), then keep it in sync with viewport changes.
+  requestAnimationFrame(sync);
+  setTimeout(sync, 200);
+  if (!readMoreWired) {
+    readMoreWired = true;
+    window.addEventListener("resize", sync);
+  }
 }
 
 // Quick-action buttons: toggle + toast (no persistence wired up yet).
+// Like / Watched / Add to Collection all require an account — guests are blocked
+// with a toast via the shared requireAuth() guard before anything happens.
 function setupActions() {
   const messages = {
     mdWatched: ["Added to Already Watched", "Removed from Already Watched"],
@@ -169,6 +210,7 @@ function setupActions() {
     const btn = el(id);
     if (!btn) return;
     btn.addEventListener("click", () => {
+      if (window.requireAuth && !window.requireAuth()) return; // guests blocked
       const active = btn.classList.toggle("is-active");
       const [on, off] = messages[id];
       if (window.toast) toast[active ? "success" : "info"](active ? on : off);
@@ -178,6 +220,7 @@ function setupActions() {
   const add = el("mdAdd");
   if (add) {
     add.addEventListener("click", () => {
+      if (window.requireAuth && !window.requireAuth()) return; // guests blocked
       if (window.CollectionModal) {
         CollectionModal.open(currentTitle || "This movie");
       } else if (window.toast) {
@@ -187,21 +230,8 @@ function setupActions() {
   }
 }
 
-// The Back link returns to the previous page when there is in-app history.
-function setupBack() {
-  const back = el("mdBack");
-  if (!back) return;
-  back.addEventListener("click", (e) => {
-    if (window.history.length > 1 && document.referrer) {
-      e.preventDefault();
-      window.history.back();
-    }
-  });
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
   setupActions();
-  setupBack();
 
   const id = getMovieId();
 

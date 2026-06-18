@@ -182,7 +182,63 @@ if (headerProfileBtn && headerDropdown) {
 }
 
 // ==========================================
-// 7. MOBILE NAV DRAWER & RESPONSIVE LAYOUT
+// 7. SMART BACK NAVIGATION (GLOBAL)
+// ==========================================
+// Any element marked `data-back` returns to the *previous* in-app page using the
+// browser history when there is same-origin history to go back to; otherwise it
+// falls back to the URL in `data-back` (or its href). This makes a single "Back"
+// control behave correctly no matter which page the user arrived from.
+function smartBack(fallbackUrl) {
+  let sameOrigin = false;
+  try {
+    sameOrigin =
+      !!document.referrer &&
+      new URL(document.referrer).origin === window.location.origin;
+  } catch (_) {
+    sameOrigin = false;
+  }
+  if (window.history.length > 1 && sameOrigin) {
+    window.history.back();
+  } else {
+    window.location.href = fallbackUrl || "index.html";
+  }
+}
+window.smartBack = smartBack;
+
+document.addEventListener("click", (e) => {
+  const back = e.target.closest("[data-back]");
+  if (!back) return;
+  e.preventDefault();
+  const fallback =
+    back.getAttribute("data-back") ||
+    back.getAttribute("href") ||
+    "index.html";
+  smartBack(fallback);
+});
+
+// ==========================================
+// 8. GUEST USER GUARD (GLOBAL)
+// ==========================================
+// Some actions (Add to Collection, Like, Watched) require an account. Pages call
+// requireAuth() before running such an action; for guests it shows a toast and
+// returns false so the caller can bail out.
+function isGuest() {
+  return !localStorage.getItem("currentUser"); // checked live (not the cached var)
+}
+function requireAuth() {
+  if (isGuest()) {
+    if (window.toast) {
+      toast.info("You must be a logged user in order to do this.");
+    }
+    return false;
+  }
+  return true;
+}
+window.isGuest = isGuest;
+window.requireAuth = requireAuth;
+
+// ==========================================
+// 9. MOBILE NAV DRAWER & RESPONSIVE LAYOUT
 // ==========================================
 (function () {
   const mq = window.matchMedia("(max-width: 1024px)");
