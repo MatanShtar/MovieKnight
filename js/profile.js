@@ -266,6 +266,7 @@ function buildCollectionCard(c, i) {
 // ==========================================
 (function () {
   const BIO_PLACEHOLDER = "Add bio";
+  const BIO_MAX = 200; // strict cap to keep the bio block from overflowing
   const bioEl = document.querySelector(".profile-bio");
   const editBtn = document.querySelector(".bio-edit-btn");
   if (!bioEl) return;
@@ -287,10 +288,11 @@ function buildCollectionCard(c, i) {
     localStorage.setItem("currentUser", JSON.stringify(u));
   };
 
-  // Show the given text, or the "Add bio" placeholder when it's empty.
+  // Show the bio (truncated past the BIO_MAX cap), or the "Add bio" placeholder.
   function applyBioText(text) {
-    if (text && text.trim()) {
-      bioEl.textContent = text;
+    const t = (text || "").trim();
+    if (t) {
+      bioEl.textContent = t.length > BIO_MAX ? t.slice(0, BIO_MAX).trimEnd() + "…" : t;
       bioEl.classList.remove("profile-bio--placeholder");
     } else {
       bioEl.textContent = BIO_PLACEHOLDER;
@@ -307,12 +309,29 @@ function buildCollectionCard(c, i) {
 
     // Swap the static bio for a textarea (multi-line input) seeded with the
     // current text. Enter (⌘/Ctrl) or blur saves; Escape cancels.
+    // The editor is a textarea + a live "n/200" counter, grouped in one wrapper
+    // so they swap in/out of the layout as a single unit.
+    const wrap = document.createElement("div");
+    wrap.className = "bio-edit-wrap";
+
     const textarea = document.createElement("textarea");
     textarea.className = "profile-bio-input";
-    textarea.maxLength = 280;
+    textarea.maxLength = BIO_MAX; // hard cap input at 200 characters
     textarea.value = prev;
     textarea.setAttribute("aria-label", "Edit bio");
-    bioEl.replaceWith(textarea);
+
+    const counter = document.createElement("div");
+    counter.className = "bio-counter";
+    const updateCounter = () => {
+      counter.textContent = `${textarea.value.length}/${BIO_MAX}`;
+      // Warn as the user approaches the cap.
+      counter.classList.toggle("is-full", textarea.value.length >= BIO_MAX);
+    };
+    updateCounter();
+    textarea.addEventListener("input", updateCounter);
+
+    wrap.append(textarea, counter);
+    bioEl.replaceWith(wrap);
     if (editBtn) editBtn.style.display = "none";
     textarea.focus();
     textarea.setSelectionRange(textarea.value.length, textarea.value.length);
@@ -321,8 +340,8 @@ function buildCollectionCard(c, i) {
     const finish = async (save) => {
       if (settled) return;
       settled = true;
-      const next = textarea.value.trim();
-      textarea.replaceWith(bioEl);
+      const next = textarea.value.trim().slice(0, BIO_MAX); // enforce the cap
+      wrap.replaceWith(bioEl);
       if (editBtn) editBtn.style.display = "";
       editing = false;
 

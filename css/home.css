@@ -320,31 +320,21 @@
   transform: translateY(0);
 }
 
-/* Apply button - bottom-right of the filter panel; closes the panel (selections persist) */
-/* Footer row: "Clear Filters" sits to the left of "Apply". */
+/* Apply button - statically anchored to the bottom-right of the filter panel at
+   all times; closes the panel (selections persist). "Clear Filters" (shown only
+   when a filter is active) is pushed to the far left via margin-right:auto, so
+   Apply never shifts position whether or not Clear is present. */
 .filter-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   margin-top: 4px;
 }
 
-.filter-clear-btn {
-  background: transparent;
-  color: rgba(255, 255, 255, 0.75);
-  border: none;
-  padding: 9px 4px;
-  font-family: inherit;
-  font-size: 14px;
-  text-decoration: underline;
-  cursor: pointer;
-  transition: color var(--t-base) ease;
-}
-.filter-clear-btn:hover {
-  color: var(--text);
-}
-
+/* Clear + Apply share the same button styling; Clear is just pushed to the far
+   left (margin-right:auto) so Apply stays anchored bottom-right. */
+.filter-clear-btn,
 .filter-apply-btn {
   margin-top: 0;
   padding: 9px 28px;
@@ -354,14 +344,20 @@
   border-radius: 10px;
   font-family: inherit;
   font-size: 15px;
+  text-decoration: none;
   cursor: pointer;
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap);
 }
+.filter-clear-btn {
+  margin-right: auto; /* keeps Apply pinned right regardless of Clear's presence */
+}
+.filter-clear-btn:hover,
 .filter-apply-btn:hover {
   background: rgba(var(--maroon), 0.9);
 }
+.filter-clear-btn:active,
 .filter-apply-btn:active {
   transform: scale(0.96);
 }
@@ -906,6 +902,17 @@
   color: var(--text-muted);
 }
 
+/* Infinite-scroll sentinel: a 1px full-row marker the IntersectionObserver
+   watches. `overflow-anchor: none` keeps the browser from ever choosing it as
+   the scroll-anchor element, so appending cards above it can't yank the view. */
+#infinite-scroll-sentinel {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 1px;
+  pointer-events: none;
+  overflow-anchor: none;
+}
+
 .movie-card {
   display: flex;
   align-items: center;
@@ -971,7 +978,12 @@
 .poster-img {
   width: 100%;
   height: 100%;
+  aspect-ratio: 2 / 3; /* fixed ratio so the box is reserved before the asset loads */
   object-fit: cover;
+  display: block;
+  /* Skeleton fill shown until the image decodes — no flash of empty space and,
+     with the fixed ratio above, no reflow when the poster paints in. */
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .movie-card--skeleton {

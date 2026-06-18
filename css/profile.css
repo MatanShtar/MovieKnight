@@ -146,6 +146,9 @@
   opacity: 70%;
   line-height: 1.6;
   white-space: pre-wrap; /* preserve the line breaks the user types in their bio */
+  word-wrap: break-word;
+  overflow-wrap: break-word; /* break long unbroken strings instead of overflowing */
+  overflow: hidden; /* no scroll — the 200-char cap keeps it short */
   cursor: pointer; /* the whole bio is clickable to edit */
   transition: opacity var(--t-base) ease;
 }
@@ -157,10 +160,16 @@
 }
 
 /* Inline editor the bio turns into when clicked */
+.bio-edit-wrap {
+  position: relative;
+  width: 100%;
+  animation: bio-input-in var(--t-base) var(--ease-snap);
+}
+
 .profile-bio-input {
   width: 100%;
-  min-height: 96px;
-  resize: vertical;
+  min-height: 120px; /* room for ~5 wrapped lines without a scrollbar */
+  resize: none; /* no manual drag-stretch — it was breaking the layout */
   border: 1px solid rgba(var(--pink), 0.6);
   border-radius: 8px;
   background: rgba(var(--pink), 0.08);
@@ -170,13 +179,30 @@
   line-height: 1.6;
   padding: 10px 12px;
   outline: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word; /* wrap to new lines instead of a horizontal scroll */
+  overflow: hidden; /* no scrollbar — the 200-char cap keeps it within ~5 lines */
   transition: border-color var(--t-fast) ease, background var(--t-base) ease;
-  animation: bio-input-in var(--t-base) var(--ease-snap);
 }
 
 .profile-bio-input:focus {
   border-color: rgb(var(--pink));
   background: rgba(var(--pink), 0.14);
+}
+
+/* Live "n/200" character counter under the editor. */
+.bio-counter {
+  margin-top: 6px;
+  text-align: right;
+  font-size: 13px;
+  opacity: 0.6;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--t-base) ease, opacity var(--t-base) ease;
+}
+.bio-counter.is-full {
+  color: rgb(var(--pink));
+  opacity: 1;
 }
 
 @keyframes bio-input-in {

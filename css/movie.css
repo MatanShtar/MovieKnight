@@ -217,6 +217,16 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+/* Expanded state — forcibly defeats the line-clamp at EVERY breakpoint (incl. the
+   short-viewport / mobile overrides below that re-clamp to 3 lines), so tapping
+   "Read more" always reveals the full synopsis on phones. */
+.md-overview.is-expanded,
+.md-overview.is-expanded.is-clamped {
+  display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: horizontal;
+  overflow: visible;
+}
 .md-readmore {
   margin-top: 6px;
   background: none;
@@ -234,15 +244,15 @@
   opacity: 1;
 }
 
-/* ---- Trailer (YouTube embed) — dims/radius match the Figma trailer element ---- */
+/* ---- Trailer (YouTube embed) — enlarged and pushed lower down the column ---- */
 .md-trailer {
-  width: 496px;
+  width: 640px;
   max-width: 100%;
-  margin-top: 40px;
+  margin-top: 72px;
 }
 .md-trailer-iframe {
   display: block;
-  width: 496px;
+  width: 640px;
   max-width: 100%;
   aspect-ratio: 16 / 9;
   border: 0;
@@ -326,8 +336,8 @@
     -webkit-line-clamp: 3;
   }
   .md-trailer {
-    width: min(496px, 40vh);
-    margin-top: clamp(14px, 2.4vh, 40px);
+    width: min(640px, 52vh);
+    margin-top: clamp(20px, 3.2vh, 72px);
   }
   .md-cast,
   .md-genres {
