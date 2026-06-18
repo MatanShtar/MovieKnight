@@ -1325,7 +1325,7 @@ if (searchInput) {
 // draws from the SAME pool as the default feed — popular, well-voted, English
 // movies — so the "surprise" is always a recognisable, normal pick. It grabs a
 // random page from the top of that pool and chooses a movie from it at random.
-const SURPRISE_PAGES = 20; // sample from roughly the top ~400 popular movies
+const SURPRISE_PAGES = 50; // sample from roughly the top ~1000 popular movies
 
 async function fetchSurpriseMovie() {
   const page = Math.floor(Math.random() * SURPRISE_PAGES) + 1;
