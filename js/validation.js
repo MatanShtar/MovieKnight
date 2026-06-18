@@ -29,6 +29,16 @@ function setLoading(submitBtn, isLoading, message) {
   }
 }
 
+// Builds a showError(msg) for a given inline error element: reveals the inline
+// message and mirrors it as a toast. Shared by both the login and signup forms.
+function makeShowError(errorMsg) {
+  return (msg) => {
+    errorMsg.textContent = msg;
+    errorMsg.classList.add("show");
+    toast.error(msg);
+  };
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   // 1. LOGIN
@@ -41,11 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const errorMsg = document.getElementById("loginErrorMsg");
     const submitBtn = loginForm.querySelector(".submit-btn");
 
-    const showError = (msg) => {
-      errorMsg.textContent = msg;
-      errorMsg.classList.add("show");
-      toast.error(msg);
-    };
+    const showError = makeShowError(errorMsg);
 
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -116,11 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
       confirmPasswordInput,
     ];
 
-    const showError = (msg) => {
-      errorMsg.textContent = msg;
-      errorMsg.classList.add("show");
-      toast.error(msg);
-    };
+    const showError = makeShowError(errorMsg);
 
     signupForm.addEventListener("submit", async (e) => {
       e.preventDefault();
