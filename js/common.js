@@ -67,6 +67,12 @@ if (currentUser) {
   if (userProfileDisplay) userProfileDisplay.style.display = "flex";
   if (sidebarSettings) sidebarSettings.style.display = "flex";
   if (displayUsername) displayUsername.textContent = currentUser.username;
+  // Show the user's uploaded avatar (if any) in every page's header/profile pics.
+  if (currentUser.avatarUrl) {
+    document.querySelectorAll(".profile-pic, .avatar-pic").forEach((img) => {
+      img.src = currentUser.avatarUrl;
+    });
+  }
 } else {
   if (loginBtn) loginBtn.style.display = "flex";
   if (userProfileDisplay) userProfileDisplay.style.display = "none";
