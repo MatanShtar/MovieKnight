@@ -1,4 +1,5 @@
-// common.js - sidebar + auth logic shared by every page (index.html, profile.html)
+// common.js - shared shell loaded on every page: sidebar/nav, auth UI,
+// sign-out modal, profile dropdown, mobile nav drawer, and global guards.
 
 // ==========================================
 // 0. BROKEN POSTER IMAGE FALLBACK (GLOBAL)
