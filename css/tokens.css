@@ -18,6 +18,7 @@
   --surface-menu: #1c1613;      /* collection popup menu */
   --surface-dropdown: #492828;  /* header profile dropdown */
   --surface-chip: #2d2319;      /* collection menu button, badge title ink */
+  --surface-card: 166, 133, 137; /* About dev-card fill (#a68589), used at low alpha */
   --text: #ffffff;
   --text-muted: rgba(226, 226, 226, 0.7);
   --text-soft: rgba(255, 255, 255, 0.7);
