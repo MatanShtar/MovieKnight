@@ -50,14 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return [...genreGrid.querySelectorAll('.genre-btn:not(.dashed)')];
     }
 
-    // The genre ids currently selected (only live/backend genres carry ids;
-    // fallback ids are best-effort so offline still behaves sensibly).
-    function activeGenreIds() {
-        return activeGenreButtons()
-            .map((btn) => Number(btn.dataset.genreId))
-            .filter((id) => !Number.isNaN(id) && id > 0);
-    }
-
     // Faithful to the requirement: when a genre is switched off, hide any movie
     // elements on the page tagged with that genre id. The picker itself shows no
     // movie list, so this is a no-op here, but it correctly drives any movie grid
