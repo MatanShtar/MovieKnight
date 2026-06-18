@@ -2,7 +2,7 @@
 //
 // Triggered from a home movie card's "+" action or the Movie Details page.
 // Backend collections don't exist yet, so this runs entirely on mock data:
-// one existing collection ("Placeholder") with a 4-tile placeholder collage.
+// three default collections, each shown with a 2x2 placeholder poster collage.
 //
 // Usage:
 //   CollectionModal.open("Some Movie Title");
