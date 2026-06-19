@@ -3,20 +3,27 @@
 /* ==========================================
    1. HEADER & TABS
    ========================================== */
+/* Match wheel.html's tighter top spacing so the bar sits at the exact same
+   height on both pages (only loaded on picker.html, so this is page-scoped). */
+.main-content {
+    padding-top: 12px;
+    gap: 12px;
+}
+
 .picker-header {
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
-    margin-bottom: 30px;
+    margin-bottom: 4px;
 }
 
 .back-btn {
     position: absolute;
     left: 0;
     top:0;
-    color: white;
+    color: var(--text);
     text-decoration: underline;
     font-size: 24px;
     cursor: pointer;
@@ -38,7 +45,7 @@
     width: 100%;
     max-width: 1642px;
     max-height: 64px;
-    background-color: rgba(193, 180, 179, 1);
+    background-color: rgb(var(--tabs-track));
     border-radius: 50px;
     padding: 10px;
     gap: 10px;
@@ -48,7 +55,7 @@
 .tab-btn {
     display: flex;
     flex: 1;
-    background-color: rgba(132,52,63,0.5);
+    background-color: rgba(var(--maroon-light), 0.5);
     border: none;
     color: var(--text-muted);
     padding: 12px 20px;
@@ -83,6 +90,31 @@
     text-transform: uppercase;
 }
 
+/* --- "Generate wheel" transition: collapse the two other game options so the
+   active "Spin the Wheel" tab stretches to fill the whole bar, matching the
+   single-bar header on wheel.html, then we navigate. --- */
+.feature-tabs.collapsing .tab-btn {
+    transition:
+        flex 0.55s var(--ease-snap),
+        opacity 0.4s ease,
+        padding 0.55s var(--ease-snap),
+        border-radius 0.55s var(--ease-snap);
+}
+
+.feature-tabs.collapsing .tab-btn:not(.active) {
+    flex: 0 0 0;
+    padding-left: 0;
+    padding-right: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* The lone surviving tab rounds into a full pill, exactly like the wheel-page bar */
+.feature-tabs.collapsing .tab-btn.active {
+    border-radius: 50px;
+}
+
 /* ==========================================
    2. CONFIGURATION LAYOUT
    ========================================== */
@@ -94,9 +126,169 @@
     align-items: center;
 }
 
+/* Only the active game option's panel is shown; tabs switch between them. */
+.picker-panel {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+}
+
+.picker-panel.active {
+    display: flex;
+    animation: panel-fade-in var(--t-base) ease;
+}
+
+/* Opacity only — a transform here would become the containing block for the
+   fixed Generate/Send button and make it jump on every tab switch. */
+@keyframes panel-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* "Coming soon" placeholder (The Chopping Block) */
+.coming-soon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 320px;
+    color: var(--text-soft);
+}
+
+.coming-soon h2 {
+    font-size: 40px;
+    font-weight: 300;
+    margin: 0 0 12px;
+    color: var(--text);
+}
+
+.coming-soon p {
+    font-size: 26px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* ==========================================
+   2b. LET AI CHOOSE (placeholder setup)
+   ========================================== */
+.ai-config {
+    width: 100%;
+    max-width: 740px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.ai-config h3 {
+    font-weight: 300;
+    font-size: 24px;
+    color: var(--text-soft);
+    margin: 0;
+}
+
+.ai-config h3:not(:first-child) {
+    margin-top: 28px;
+}
+
+/* Stepped "amount of suggestions" control: three dots on a track */
+.suggestion-stepper {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    width: 260px;
+    margin: 22px 0 4px;
+}
+
+.suggestion-stepper::before {
+    content: "";
+    position: absolute;
+    top: 11px;             /* line through the dot centres */
+    left: 11px;
+    right: 11px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.25);
+    z-index: 0;
+}
+
+.suggestion-stepper .step {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+}
+
+.suggestion-stepper .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #d7d7d7;
+    transition: transform var(--t-base) var(--ease-pop),
+                background-color var(--t-base) ease,
+                box-shadow var(--t-base) ease;
+}
+
+.suggestion-stepper .step:hover .dot {
+    transform: scale(1.12);
+}
+
+.suggestion-stepper .step.active .dot {
+    background: rgb(var(--maroon-bright));
+    transform: scale(1.12);
+    box-shadow: 0 0 0 4px rgba(var(--maroon-bright), 0.25);
+}
+
+.suggestion-stepper .num {
+    color: var(--text-soft);
+    font-size: 20px;
+}
+
+.ai-prompt {
+    width: 100%;
+    height: 150px;
+    resize: none;
+    border: none;
+    border-radius: 16px;
+    background: rgba(var(--maroon-light), 0.25);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 20px;
+    padding: 18px 22px;
+    outline: none;
+    margin-top: 12px;
+    transition: background-color var(--t-base) ease;
+}
+
+.ai-prompt::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.ai-prompt:focus {
+    background: rgba(var(--maroon-light), 0.35);
+}
+
+.ai-personal-data {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    align-self: flex-start;
+    margin-top: 22px;
+    cursor: pointer;
+    color: var(--text-soft);
+    font-size: 20px;
+}
+
 .config-layout {
     display: flex;
     width: 100%;
+    gap: 80px;            /* space between the genre + provider columns */
     margin-bottom: 40px;
 }
 
@@ -111,6 +303,38 @@
     font-weight: 300;
     font-size: 24px;
     color: var(--text-soft);
+    cursor: default; /* heading text — no I-beam cursor */
+}
+
+/* Provider heading with its "Clear" reset stacked directly BELOW the title
+   (rather than awkwardly off to its right). */
+.provider-heading-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+/* Small pill button under the heading — clearer than the old underlined text. */
+.provider-clear-btn {
+    background: rgba(var(--pink), 0.12);
+    border: 1px solid rgba(var(--pink), 0.4);
+    border-radius: 999px;
+    color: var(--text-soft);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    padding: 5px 14px;
+    transition:
+        color var(--t-base) ease,
+        background-color var(--t-base) ease,
+        border-color var(--t-base) ease;
+}
+.provider-clear-btn:hover {
+    color: var(--text);
+    background: rgba(var(--pink), 0.22);
+    border-color: rgba(var(--pink), 0.7);
 }
 
 .placeholder-box {
@@ -129,7 +353,7 @@
    3. GENERATE BUTTON
    ========================================== */
 .generate-wheel-btn {
-    background: linear-gradient(90deg, #591E26 0%, #7D2A35 45%, #9C3442 65%, #BF4052 100%); 
+    background: linear-gradient(90deg, rgb(var(--maroon)) 0%, rgb(var(--maroon-mid)) 45%, rgb(var(--maroon-bright)) 65%, rgb(var(--maroon-flare)) 100%);
     color: var(--text);
     border: none;
     position:fixed;
@@ -154,6 +378,83 @@
     transform: scale(0.98);
 }
 
+/* Safeguard state: no usable selection (e.g. no genres) — greyed + not-allowed */
+.generate-wheel-btn:disabled,
+.generate-wheel-btn--disabled {
+    cursor: not-allowed;
+    filter: grayscale(0.6) brightness(0.65);
+    opacity: 0.7;
+}
+
+.generate-wheel-btn:disabled:hover,
+.generate-wheel-btn--disabled:hover,
+.generate-wheel-btn:disabled:active,
+.generate-wheel-btn--disabled:active {
+    transform: none;
+    filter: grayscale(0.6) brightness(0.65);
+}
+
+/* "Any" / selected-providers summary shown under the provider column heading.
+   The wrapper carries spacing + the hover tooltip; the chip clips its own text
+   with an ellipsis, so the tooltip lives on the (un-clipped) wrapper. */
+.provider-selection-box {
+    position: relative;
+    display: inline-flex;
+    justify-content: center;
+    margin: 6px 0 16px;
+}
+
+.provider-selection {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 400;
+    vertical-align: middle;
+    color: var(--text);
+    background: rgba(var(--pink), 0.18);
+    border: 1px solid rgba(var(--pink), 0.4);
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default; /* read-only summary — not interactive */
+}
+
+/* Floating tooltip with the full provider list on hover — mirrors the wheel's
+   slice-title tooltip. */
+.provider-selection-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    z-index: 50;
+    width: max-content;
+    max-width: 320px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background-color: rgba(20, 20, 20, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.4;
+    text-align: center;
+    white-space: normal;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+        opacity var(--t-fast) ease,
+        transform var(--t-fast) ease;
+}
+
+.provider-selection-box:hover .provider-selection-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
 /* ==========================================
    4. GENRE GRID (LEFT COLUMN)
    ========================================== */
@@ -173,12 +474,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0,0,0,0.6); 
+    text-align: center;          /* centre multi-line names like "Science Fiction" */
+    padding: 0 8px;
+    background-color: rgba(0,0,0,0.6);
     color: var(--text);
     border: 1px solid transparent;
     border-radius: 8px;
     font-family: 'Lao Sangam MN', sans-serif;
     font-size: 18px;
+    line-height: 1.1;
     cursor: pointer;
     transition: all var(--t-slow) ease;
 }
@@ -223,7 +527,6 @@
    5. PROVIDER LIST (RIGHT COLUMN)
    ========================================== */
 .provider-box {
-    margin-left: 100px;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -236,7 +539,7 @@
 }
 
 .provider-search-bar {
-    background-color: rgba(125, 42, 53, 0.3);
+    background-color: rgba(var(--maroon-mid), 0.3);
     padding: 18px 24px; 
     height: 40px;
     display: flex;
@@ -248,7 +551,7 @@
     width: 100%;
     background: transparent;
     border: none;
-    color: white;
+    color: var(--text);
     font-size: 16px;
     outline: none;
     font-family: inherit;
@@ -338,11 +641,86 @@
 }
 
 .provider-checkbox:checked + .custom-check {
-    background-color: white;
-    border-color: white;
+    background-color: var(--text);
+    border-color: var(--text);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999999' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
     background-size: 15px 15px;
     background-position: center;
     background-repeat: no-repeat;
+}
+
+/* ==========================================
+   6. RESPONSIVE (mobile / tablet)
+   The two config columns (genres | providers) stack vertically, and the fixed
+   "Generate Wheel" button gets clearance below the content. Navigation here is
+   the same hamburger drawer used on the home screen (common.css).
+   ========================================== */
+@media (max-width: 1024px) {
+    .main-content {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .wheel-main-logo {
+        height: 120px;
+    }
+
+    .tab-btn {
+        font-size: 20px;
+        padding: 10px 8px;
+    }
+
+    .config-layout {
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+        margin-bottom: 130px; /* clear the fixed Generate button */
+    }
+
+    .config-column {
+        width: 100%;
+    }
+
+    .genre-grid {
+        width: 100%;
+        max-width: 600px;
+    }
+
+    .provider-box {
+        margin-left: 0;
+        align-self: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .wheel-main-logo {
+        height: 88px;
+    }
+
+    .tab-btn {
+        font-size: 15px;
+        padding: 10px 4px;
+    }
+
+    .genre-grid {
+        gap: 16px 12px;
+    }
+
+    .genre-btn {
+        width: 92px;
+        height: 52px;
+        font-size: 15px;
+    }
+
+    .provider-selection {
+        font-size: 14px;
+        max-width: 60vw;
+    }
+
+    .generate-wheel-btn {
+        font-size: 28px;
+        height: 78px;
+        padding: 16px 24px;
+    }
 }
 

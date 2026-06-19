@@ -1,4 +1,55 @@
-// common.js - sidebar + auth logic shared by every page (index.html, profile.html)
+// common.js - shared shell loaded on every page: sidebar/nav, auth UI,
+// sign-out modal, profile dropdown, mobile nav drawer, and global guards.
+
+// ==========================================
+// 0. BROKEN POSTER IMAGE FALLBACK (GLOBAL)
+// ==========================================
+// TMDB images occasionally 404 / fail to load. Rather than wiring an onerror
+// onto every single <img> we build, we listen for image error events globally
+// in the capture phase (the `error` event doesn't bubble, but it IS observable
+// while capturing). Any poster image that fails is swapped once for a local
+// placeholder that already matches the 2:3 poster aspect ratio.
+const POSTER_PLACEHOLDER = "assets/images/poster-placeholder.svg";
+
+function isPosterImg(el) {
+  return (
+    el &&
+    el.tagName === "IMG" &&
+    (el.classList.contains("poster-img") ||
+      el.classList.contains("collection-poster") ||
+      el.classList.contains("avatar-pic"))
+  );
+}
+
+document.addEventListener(
+  "error",
+  (e) => {
+    const img = e.target;
+    if (!isPosterImg(img)) return;
+    // Guard against an infinite loop if the placeholder itself can't load.
+    if (img.dataset.fallbackApplied === "true") return;
+    img.dataset.fallbackApplied = "true";
+    img.src = POSTER_PLACEHOLDER;
+  },
+  true, // capture: required because `error` does not bubble
+);
+
+// ==========================================
+// 0b. HTML ESCAPING (GLOBAL)
+// ==========================================
+// Escape a value for safe interpolation into HTML text or a double-quoted
+// attribute. Used wherever we build markup from TMDB / user data via template
+// strings (movie titles, cast, genres, collection names) so a stray quote or
+// angle bracket can't break the attribute or inject markup.
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+window.escapeHtml = escapeHtml;
 
 // ==========================================
 // 1. IMAGE PRELOADING HELPER
@@ -27,13 +78,27 @@ const displayUsername = document.getElementById("displayUsername");
 const sidebarSettings = document.getElementById("sidebarSettings");
 const settingsToggleBtn = document.getElementById("settingsToggleBtn");
 const settingsSubmenu = document.getElementById("settingsSubmenu");
-const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+// Guard the parse: a corrupt "currentUser" value would otherwise throw here at
+// load time and abort the rest of common.js (nav, auth toggle, sign-out modal,
+// requireAuth/isGuest) on EVERY page. Fall back to logged-out on bad JSON.
+let currentUser = null;
+try {
+  currentUser = JSON.parse(localStorage.getItem("currentUser"));
+} catch (_) {
+  currentUser = null;
+}
 
 if (currentUser) {
   if (loginBtn) loginBtn.style.display = "none";
   if (userProfileDisplay) userProfileDisplay.style.display = "flex";
   if (sidebarSettings) sidebarSettings.style.display = "flex";
   if (displayUsername) displayUsername.textContent = currentUser.username;
+  // Show the user's uploaded avatar (if any) in every page's header/profile pics.
+  if (currentUser.avatarUrl) {
+    document.querySelectorAll(".profile-pic, .avatar-pic").forEach((img) => {
+      img.src = currentUser.avatarUrl;
+    });
+  }
 } else {
   if (loginBtn) loginBtn.style.display = "flex";
   if (userProfileDisplay) userProfileDisplay.style.display = "none";
@@ -87,7 +152,13 @@ function showSignOutConfirm() {
       if (e.target === overlay || action === "cancel") {
         hideSignOutConfirm();
       } else if (action === "confirm") {
-        localStorage.removeItem("currentUser"); // clear the saved login
+        // Clear the saved login + JWT. Use MovieAPI when it's loaded so the
+        // storage keys live in one place; fall back to clearing both directly.
+        if (window.MovieAPI) MovieAPI.logout();
+        else {
+          localStorage.removeItem("currentUser");
+          localStorage.removeItem("authToken");
+        }
         window.location.href = "index.html"; // reload as a guest
       }
     });
@@ -143,7 +214,63 @@ if (headerProfileBtn && headerDropdown) {
 }
 
 // ==========================================
-// 7. MOBILE NAV DRAWER & RESPONSIVE LAYOUT
+// 7. SMART BACK NAVIGATION (GLOBAL)
+// ==========================================
+// Any element marked `data-back` returns to the *previous* in-app page using the
+// browser history when there is same-origin history to go back to; otherwise it
+// falls back to the URL in `data-back` (or its href). This makes a single "Back"
+// control behave correctly no matter which page the user arrived from.
+function smartBack(fallbackUrl) {
+  let sameOrigin = false;
+  try {
+    sameOrigin =
+      !!document.referrer &&
+      new URL(document.referrer).origin === window.location.origin;
+  } catch (_) {
+    sameOrigin = false;
+  }
+  if (window.history.length > 1 && sameOrigin) {
+    window.history.back();
+  } else {
+    window.location.href = fallbackUrl || "index.html";
+  }
+}
+window.smartBack = smartBack;
+
+document.addEventListener("click", (e) => {
+  const back = e.target.closest("[data-back]");
+  if (!back) return;
+  e.preventDefault();
+  const fallback =
+    back.getAttribute("data-back") ||
+    back.getAttribute("href") ||
+    "index.html";
+  smartBack(fallback);
+});
+
+// ==========================================
+// 8. GUEST USER GUARD (GLOBAL)
+// ==========================================
+// Some actions (Add to Collection, Like, Watched) require an account. Pages call
+// requireAuth() before running such an action; for guests it shows a toast and
+// returns false so the caller can bail out.
+function isGuest() {
+  return !localStorage.getItem("currentUser"); // checked live (not the cached var)
+}
+function requireAuth() {
+  if (isGuest()) {
+    if (window.toast) {
+      toast.info("You must be a logged user in order to do this.");
+    }
+    return false;
+  }
+  return true;
+}
+window.isGuest = isGuest;
+window.requireAuth = requireAuth;
+
+// ==========================================
+// 9. MOBILE NAV DRAWER & RESPONSIVE LAYOUT
 // ==========================================
 (function () {
   const mq = window.matchMedia("(max-width: 1024px)");

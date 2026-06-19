@@ -1,0 +1,679 @@
+/* chopping.css — The Chopping Block: the setup panel (inside picker.html) and
+   the standalone game screen (chopping.html). Exact sizes/colours come from the
+   Figma frames "Movie Picker - Chopping Block Setup", "Not Enough Movies Error"
+   and "Chopping Block Game". Reuses tokens.css + the shared shell. */
+
+/* ==========================================================================
+   PART A — SETUP PANEL  (rendered inside picker.html's .picker-panel)
+   ========================================================================== */
+
+/* The setup form is wider than the picker's default 1200px column, so let this
+   panel use the fuller content width. */
+.picker-panel[data-panel="chopping"].active {
+    width: 100%;
+    max-width: 1540px;
+}
+
+.cb-setup {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+}
+
+/* Two columns: [Add Player + tags]   [eliminations / totals / random order].
+   Fixed height so a long player list overflows downward (on the left, clear of
+   everything else) instead of shoving the centred "Random Movies" block — and
+   its error message — down under the fixed START bar. Mirrors the Figma, where
+   these blocks sit at fixed positions regardless of how many players there are. */
+.cb-config {
+    width: 100%;
+    height: 326px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 120px;
+    margin-top: 111px;   /* Figma leaves a wide gap below the tab bar */
+}
+
+.cb-col-left,
+.cb-col-right {
+    display: flex;
+    flex-direction: column;
+}
+
+/* shared label look: Lao Sangam MN 24px, white @ 70% */
+.cb-label {
+    font-family: "Lao Sangam MN", sans-serif;
+    font-size: 24px;
+    line-height: 31px;
+    color: var(--text-soft);
+    white-space: nowrap;
+}
+
+/* --- Add Player row: label + input pill + circular "+" --- */
+.cb-add-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+
+.cb-input-pill {
+    width: 410px;
+    height: 56px;
+    border: none;
+    border-radius: 50px;
+    background: rgba(var(--maroon-light), 0.5);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 20px;
+    padding: 0 24px;
+    outline: none;
+    transition: background-color var(--t-base) ease;
+}
+
+.cb-input-pill::placeholder { color: rgba(255, 255, 255, 0.45); }
+.cb-input-pill:focus { background: rgba(var(--maroon-light), 0.65); }
+
+.cb-add-btn {
+    flex-shrink: 0;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: transform var(--t-fast) var(--ease-pop), opacity var(--t-base);
+}
+
+.cb-add-btn img { width: 35px; height: 35px; }
+.cb-add-btn:hover { opacity: 1; transform: scale(1.12) rotate(90deg); }
+
+/* --- Player tags (removable), aligned under the input --- */
+.cb-players {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;   /* tags keep their own width, don't stretch */
+    gap: 16px;
+    padding-left: 156px;   /* line the tags up under the input, past the label */
+}
+
+.cb-tag {
+    position: relative;
+    width: 150px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 26px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 100px;
+    /* leaving animation collapses width + fades */
+    transition:
+        opacity var(--t-base) ease,
+        transform var(--t-base) var(--ease-snap),
+        min-width var(--t-base) ease,
+        margin var(--t-base) ease,
+        padding var(--t-base) ease;
+}
+
+.cb-tag-name {
+    font-size: 18px;
+    line-height: 30px;
+    color: var(--text);
+    white-space: nowrap;
+}
+
+.cb-tag-remove {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.85);
+    cursor: pointer;
+    opacity: 0.85;
+    transition: transform var(--t-fast) var(--ease-pop), opacity var(--t-base);
+}
+
+.cb-tag-remove img { width: 14px; height: 14px; }
+.cb-tag-remove:hover { opacity: 1; transform: scale(1.15) rotate(90deg); }
+
+@keyframes cb-tag-in {
+    0%   { transform: translateX(-24px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+}
+
+.cb-tag.is-entering { animation: cb-tag-in 0.32s var(--ease-pop) both; }
+
+.cb-tag.is-leaving {
+    opacity: 0;
+    transform: translateX(-24px) scale(0.9);
+    min-width: 0;
+    padding: 0;
+    margin-top: -16px;   /* swallow the gap so the rest reflow up */
+}
+
+/* --- Right column: three stat rows, each label (right) + control.
+   Uniform 129px centre-to-centre pitch, matching the Figma. --- */
+.cb-col-right { gap: 86px; }
+
+.cb-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    min-height: 43px;
+}
+
+.cb-stat-row .cb-label {
+    width: 262px;
+    text-align: right;
+}
+
+/* dark value pill (Total players / Random movies): 84×43, black @ 60% */
+.cb-pill {
+    min-width: 84px;
+    height: 43px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 100px;
+    font-size: 24px;
+    color: var(--text-soft);
+    transition: transform var(--t-base) var(--ease-pop);
+}
+
+/* a quick pop when the number changes */
+.cb-pill.bump { transform: scale(1.16); }
+
+/* --- The 1 / 2 / 3 eliminations slider --- */
+.cb-slider {
+    position: relative;
+    width: 328px;
+    height: 25px;          /* dots only; numbers hang below (absolute) */
+    display: flex;
+    justify-content: space-between;
+}
+
+.cb-slider-track {
+    position: absolute;
+    top: 12px;             /* aligns with the 25px dot centres */
+    left: 12px;
+    right: 12px;
+    height: 6px;
+    border-radius: 3px;
+    background: #ffffff;
+    z-index: 0;
+}
+
+.cb-slider-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    background: rgb(var(--maroon-light));
+    z-index: 2;
+    box-shadow: 0 0 0 4px rgba(var(--maroon-light), 0.25);
+    transition: left 0.3s var(--ease-snap);
+}
+
+.cb-slider-dot {
+    position: relative;
+    z-index: 1;
+    width: 25px;
+    height: 25px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.cb-slider-dot::before {
+    content: "";
+    display: block;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: #d9d9d9;
+    transition: transform var(--t-base) var(--ease-pop);
+}
+
+.cb-slider-dot:hover::before { transform: scale(1.12); }
+
+/* numbers hang below the dots without adding to the row's height */
+.cb-slider-num {
+    position: absolute;
+    top: 39px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    line-height: 31px;
+    color: var(--text-soft);
+}
+
+.cb-slider-dot.active .cb-slider-num { color: var(--text); }
+
+/* --- Random Order toggle (71×32, #591e26, white 24px handle) --- */
+.cb-toggle {
+    position: relative;
+    width: 71px;
+    height: 32px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.cb-toggle input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+
+.cb-toggle-track {
+    position: absolute;
+    inset: 0;
+    border-radius: 100px;
+    background: #591e26;
+    transition: background-color var(--t-base) ease;
+}
+
+.cb-toggle-handle {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #ffffff;
+    transition: left var(--t-base) var(--ease-snap);
+}
+
+.cb-toggle input:checked ~ .cb-toggle-handle { left: calc(100% - 28px); }
+
+/* --- Random Movies Selected (centred block) --- */
+.cb-random {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+}
+
+.cb-random .cb-label { text-align: center; }
+
+/* --- "Not enough movies" error message --- */
+.cb-error {
+    color: #f10024;
+    font-size: 16px;
+    line-height: 21px;
+    text-align: center;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: opacity var(--t-base) ease, height var(--t-base) ease;
+}
+
+.cb-error.show { opacity: 1; height: 21px; }
+
+/* START button reuses .generate-wheel-btn (gradient bar fixed to the bottom).
+   Its font/disabled handling already live in picker.css. */
+.cb-start { letter-spacing: 4px; }
+
+/* ==========================================================================
+   PART B — GAME SCREEN  (chopping.html)
+   ========================================================================== */
+.cb-game {
+    min-height: 100vh;
+    padding-top: 12px;
+    padding-bottom: 0;
+    gap: 16px;
+}
+
+/* header (Back + MOVIE KNIGHT logo) — mirrors wheel/picker */
+.cb-page-header {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: 4px;
+}
+
+.cb-page-header .back-btn {
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--text);
+    text-decoration: underline;
+    font-size: 24px;
+    font-weight: 100;
+    cursor: pointer;
+    transition: opacity var(--t-fast) ease;
+}
+
+.cb-page-header .back-btn:hover { opacity: 0.75; }
+
+.cb-page-header .wheel-main-logo { height: 228px; object-fit: contain; }
+
+/* single-bar header that "expands" on entry, echoing the wheel hand-off */
+.feature-tabs {
+    display: flex;
+    width: 100%;
+    max-width: 1642px;
+    max-height: 64px;
+    background-color: rgb(var(--tabs-track));
+    border-radius: 50px;
+    padding: 10px;
+    margin-bottom: 10px;
+    transform-origin: center;
+    animation: cb-bar-expand 0.55s var(--ease-snap) both;
+}
+
+.feature-tabs p {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 12px 20px;
+    background-color: rgb(var(--maroon));
+    color: var(--text);
+    border-radius: 50px;
+    font-family: "Impact", sans-serif;
+    font-size: 30px;
+    font-weight: 100;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    animation: cb-text-in 0.4s ease 0.32s both;
+}
+
+@keyframes cb-bar-expand {
+    from { transform: scaleX(0.25); }
+    to   { transform: scaleX(1); }
+}
+
+@keyframes cb-text-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* whose turn it is */
+.cb-turn {
+    font-family: "Lao Sangam MN", sans-serif;
+    font-size: 40px;
+    line-height: 52px;
+    color: var(--text);
+    text-align: center;
+    transition: opacity 0.18s ease, transform 0.18s var(--ease-snap);
+}
+
+.cb-turn.is-swapping { opacity: 0; transform: translateY(8px); }
+
+/* the carousel of candidate movies */
+.cb-stage {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: cb-stage-in 0.55s var(--ease-snap) both;
+}
+
+@keyframes cb-stage-in {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.cb-carousel {
+    display: flex;
+    align-items: flex-start;
+    gap: 40px;
+    width: 100%;
+    max-width: 1642px;
+    padding: 8px 4px 28px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+}
+
+.cb-carousel::-webkit-scrollbar { height: 10px; }
+.cb-carousel::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.08); border-radius: 10px; }
+.cb-carousel::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
+
+.cb-card {
+    flex: 0 0 auto;
+    width: 266px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* FLIP slide is applied inline; this is the resting transition */
+    transition: transform 0.5s var(--ease-snap);
+}
+
+.cb-poster {
+    width: 262px;
+    height: 379px;
+    border: 1px solid #000000;
+    box-shadow: -6px 8px 7px 0 rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0.95;
+    transition: opacity var(--t-slow) ease, transform var(--t-base) var(--ease-pop);
+}
+
+.cb-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.cb-card:not(.eliminated):hover .cb-poster { transform: translateY(-4px); }
+
+.cb-eliminate {
+    width: 266px;
+    height: 60px;
+    margin-top: 18px;
+    border: none;
+    border-radius: 50px;
+    background-color: #591e26;
+    color: var(--text);
+    opacity: 0.9;
+    font-family: "Lao Sangam MN", sans-serif;
+    font-size: 28px;
+    line-height: 36px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: filter var(--t-base) ease, transform var(--t-fast) var(--ease-snap), opacity var(--t-slow) ease;
+}
+
+.cb-eliminate:hover { filter: brightness(1.15); transform: scale(1.03); }
+.cb-eliminate:active { transform: scale(0.97); }
+
+.cb-card-title {
+    margin-top: 14px;
+    max-width: 262px;
+    font-size: 28px;
+    line-height: 36px;
+    color: var(--text-soft);
+    text-align: center;
+}
+
+/* eliminated state: dim the poster + button, lock the card */
+.cb-card.eliminated .cb-poster { opacity: 0.3; }
+.cb-card.eliminated .cb-eliminate { opacity: 0.5; cursor: default; filter: none; transform: none; }
+.cb-card.eliminated .cb-card-title { opacity: 0.45; }
+
+/* ==========================================================================
+   PART C — WINNER OVERLAY + CONFETTI  (game screen)
+   ========================================================================== */
+.confetti-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 3000;
+}
+
+.winner-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--t-base) ease, visibility var(--t-base);
+}
+
+.winner-overlay.show { opacity: 1; visibility: visible; }
+
+.winner-box {
+    position: relative;
+    width: 480px;
+    max-width: 92vw;
+    border-radius: 50px;
+    background-color: rgba(215, 215, 215, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    transform: scale(0.9);
+    transition: transform var(--t-base) var(--ease-pop);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.winner-overlay.show .winner-box { transform: scale(1); }
+
+.winner-header {
+    width: 100%;
+    text-align: center;
+    font-family: "Impact", sans-serif;
+    letter-spacing: 2px;
+    font-size: 34px;
+    color: var(--text);
+    background-color: #591e26;
+    padding: 18px 0;
+}
+
+.winner-poster {
+    width: 200px;
+    height: 290px;
+    object-fit: cover;
+    margin: 26px 0 16px;
+    border-radius: 8px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+
+.winner-title {
+    text-align: center;
+    padding: 0 24px;
+    font-size: 28px;
+    color: var(--text);
+}
+
+.winner-remove {
+    width: 328px;
+    max-width: 80%;
+    height: 72px;
+    margin: 22px 0 26px;
+    border: none;
+    border-radius: 50px;
+    background-color: rgb(var(--maroon-light));
+    color: var(--text);
+    font-family: inherit;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform var(--t-base) var(--ease-pop), filter var(--t-base) ease;
+}
+
+.winner-remove:hover { filter: brightness(1.12); transform: scale(1.04); }
+.winner-remove:active { transform: scale(0.96); }
+
+.winner-close {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background: transparent;
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity var(--t-fast), transform var(--t-fast) var(--ease-pop);
+}
+
+.winner-close:hover { opacity: 1; transform: scale(1.12) rotate(90deg); }
+
+/* ==========================================================================
+   PART D — RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1024px) {
+    .picker-panel[data-panel="chopping"].active { max-width: 100%; }
+
+    .cb-config {
+        height: auto;
+        flex-direction: column;
+        align-items: center;
+        gap: 40px;
+        margin-top: 24px;
+        margin-bottom: 140px;   /* clear the fixed START button */
+    }
+
+    .cb-col-left, .cb-col-right { align-items: center; }
+    .cb-col-right { gap: 40px; }
+
+    .cb-add-row { flex-wrap: wrap; justify-content: center; }
+    .cb-input-pill { width: min(410px, 78vw); }
+    .cb-players { padding-left: 0; align-items: center; }
+
+    .cb-stat-row { gap: 20px; }
+    .cb-stat-row .cb-label { width: auto; text-align: right; }
+
+    /* game header logo shrinks like the other feature pages */
+    .cb-page-header .wheel-main-logo { height: 120px; }
+    .feature-tabs p { font-size: 22px; }
+
+    .cb-turn { font-size: 30px; }
+
+    .cb-stage { align-items: flex-start; }
+    .cb-carousel { justify-content: flex-start; }
+}
+
+@media (max-width: 600px) {
+    .cb-label { font-size: 20px; }
+
+    /* stack each stat row so the 328px slider + label never overflow the screen */
+    .cb-stat-row {
+        flex-direction: column;
+        gap: 12px;
+        min-height: 0;
+    }
+    .cb-stat-row .cb-label { text-align: center; }
+    .cb-slider { width: min(328px, 80vw); }
+    .cb-page-header .wheel-main-logo { height: 88px; }
+    .feature-tabs p { font-size: 18px; }
+
+    .cb-card { width: 200px; }
+    .cb-poster { width: 196px; height: 284px; }
+    .cb-eliminate { width: 200px; height: 52px; font-size: 22px; }
+    .cb-card-title { font-size: 20px; max-width: 196px; }
+}

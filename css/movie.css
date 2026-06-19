@@ -1,0 +1,434 @@
+/* movie.css — Movie Details page.
+   Full-bleed screen (no app shell, matching the Figma frame): a blurred backdrop
+   of the movie itself, the poster + quick actions on the left, and the title,
+   synopsis, trailer and metadata on the right. Pixel values follow the 1920×1084
+   Figma frame; the layout reflows to a single column on narrow screens. */
+
+.movie-details-body {
+  /* Keeps the shared brand gradient background (from .app-body) — the same
+     full-frame backdrop the Figma uses for this screen. */
+  overflow-x: hidden;
+}
+
+.movie-details {
+  position: relative;
+  min-height: 100vh;
+  color: var(--text);
+  isolation: isolate;
+}
+
+/* ---- Back link (top-left) ---- */
+.md-back {
+  position: absolute;
+  top: 27px;
+  left: 27px;
+  z-index: 2;
+  color: var(--text);
+  font-size: 20px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity var(--t-base) ease;
+}
+.md-back:hover {
+  opacity: 0.75;
+}
+
+/* ---- Two-column layout ---- */
+.md-layout {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  gap: 154px;
+  padding: 139px 100px 80px 207px;
+}
+
+/* ---- Poster column ---- */
+.md-poster-col {
+  flex: 0 0 511px;
+  width: 511px;
+}
+
+/* Poster "opens" — expands and settles into place as the page loads, echoing
+   the card the user clicked on the home feed. */
+@keyframes mdPosterOpen {
+  from {
+    opacity: 0;
+    transform: translate(-48px, 26px) scale(0.62);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes mdRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.md-poster {
+  transform-origin: center center;
+  animation: mdPosterOpen 0.6s var(--ease-pop) both;
+}
+.md-actions {
+  animation: mdRise 0.5s ease 0.25s both;
+}
+.md-info {
+  animation: mdRise 0.55s ease 0.15s both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .md-poster,
+  .md-actions,
+  .md-info {
+    animation: none;
+  }
+}
+
+.md-poster {
+  width: 511px;
+  height: 740px;
+  margin: 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: -10px 8px 4px rgba(0, 0, 0, 0.25);
+}
+.md-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Three circular actions spread across the poster width. */
+.md-actions {
+  display: flex;
+  justify-content: space-between;
+  width: 511px;
+  margin-top: 22px;
+}
+
+.md-action {
+  width: 74px;
+  height: 74px;
+  border: none;
+  border-radius: 50%;
+  background: rgb(var(--wine));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+.md-action img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.md-action:hover {
+  background: rgb(var(--rose));
+}
+.md-action:active {
+  transform: scale(0.93);
+}
+.md-action.is-active {
+  background: rgb(var(--rose));
+}
+
+/* Hover tooltip above an action (the "Add to Already Watched" label in Figma). */
+.md-action[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 9px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: rgba(0, 0, 0, 0.7);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 7px 11px;
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--t-base) ease,
+    transform var(--t-base) ease;
+}
+.md-action[data-tip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ---- Info column ---- */
+.md-info {
+  flex: 1;
+  min-width: 0;
+  max-width: 820px;
+  /* Matches the poster + actions height so cast/genres sit at the bottom,
+     level with the action row (Figma). */
+  min-height: 843px;
+  display: flex;
+  flex-direction: column;
+}
+
+.md-title {
+  margin: 0;
+  font-size: 44px;
+  line-height: 41px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.md-director {
+  margin: 14px 0 0;
+  font-size: 32px;
+  line-height: 34px;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.md-overview {
+  margin: 24px 0 0;
+  max-width: 811px;
+  font-size: 30px;
+  line-height: 39px;
+  color: var(--text);
+  opacity: 0.7;
+}
+
+/* ---- Read more (collapses a long synopsis so the page stays one screen) ---- */
+.md-overview-wrap {
+  max-width: 811px;
+}
+.md-overview.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+/* Expanded state — forcibly defeats the line-clamp at EVERY breakpoint (incl. the
+   short-viewport / mobile overrides below that re-clamp to 3 lines), so tapping
+   "Read more" always reveals the full synopsis on phones. */
+.md-overview.is-expanded,
+.md-overview.is-expanded.is-clamped {
+  display: block;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: horizontal;
+  overflow: visible;
+}
+.md-readmore {
+  margin-top: 6px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 18px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  opacity: 0.85;
+}
+.md-readmore:hover {
+  opacity: 1;
+}
+
+/* ---- Trailer (YouTube embed) — enlarged and pushed lower down the column ---- */
+.md-trailer {
+  width: 640px;
+  max-width: 100%;
+  margin-top: 72px;
+}
+.md-trailer-iframe {
+  display: block;
+  width: 640px;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 12px;
+  background: #000;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+/* ---- Cast + genres, pinned to the bottom of the info column ---- */
+.md-meta {
+  margin-top: auto;
+  padding-top: 28px;
+}
+.md-cast,
+.md-genres {
+  margin: 0;
+  font-size: 24px;
+  line-height: 28px;
+  color: var(--text);
+}
+.md-genres {
+  margin-top: 28px;
+}
+.md-meta strong {
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   SHORT VIEWPORTS — scale the layout to the available height so the page stays
+   a single screen (no scroll) on typical laptop heights. Above the design
+   height (1084) the fixed Figma values apply unchanged.
+   ========================================================================== */
+@media (max-height: 1065px) {
+  .md-layout {
+    padding-top: clamp(44px, 7vh, 96px);
+    padding-bottom: clamp(20px, 4vh, 56px);
+    gap: clamp(44px, 8vw, 120px);
+    align-items: flex-start;
+  }
+  .md-poster-col {
+    flex: 0 0 auto;
+    width: auto;
+  }
+  .md-poster {
+    width: auto;
+    height: min(740px, calc(100vh - 220px));
+    aspect-ratio: 511 / 740;
+  }
+  .md-actions {
+    width: 100%;
+  }
+  .md-action {
+    width: clamp(46px, 6.4vh, 74px);
+    height: clamp(46px, 6.4vh, 74px);
+  }
+  .md-action img {
+    width: clamp(22px, 2.8vh, 30px);
+    height: clamp(22px, 2.8vh, 30px);
+  }
+  .md-info {
+    min-height: 0;
+  }
+  .md-meta {
+    margin-top: clamp(18px, 3vh, 40px);
+  }
+  .md-title {
+    font-size: clamp(26px, 3.4vh, 44px);
+    line-height: 1.05;
+  }
+  .md-director {
+    font-size: clamp(18px, 2.4vh, 32px);
+    line-height: 1.1;
+    margin-top: clamp(8px, 1.4vh, 14px);
+  }
+  .md-overview {
+    font-size: clamp(15px, 2.1vh, 30px);
+    line-height: 1.32;
+    margin-top: clamp(12px, 1.8vh, 24px);
+  }
+  .md-overview.is-clamped {
+    -webkit-line-clamp: 3;
+  }
+  .md-trailer {
+    width: min(640px, 52vh);
+    margin-top: clamp(20px, 3.2vh, 72px);
+  }
+  .md-cast,
+  .md-genres {
+    font-size: clamp(15px, 2vh, 24px);
+    line-height: 1.2;
+  }
+  .md-genres {
+    margin-top: clamp(12px, 2vh, 28px);
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE — reflow to a single column; never overflow.
+   ========================================================================== */
+@media (max-width: 1280px) {
+  .md-layout {
+    gap: 56px;
+    padding: 96px 56px 56px;
+  }
+  .md-info {
+    min-height: 0;
+  }
+  .md-meta {
+    margin-top: 32px;
+  }
+  .md-title {
+    font-size: 34px;
+    line-height: 38px;
+  }
+  .md-overview {
+    font-size: 22px;
+    line-height: 30px;
+  }
+}
+
+@media (max-width: 900px) {
+  .md-layout {
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+    padding: 84px 24px 48px;
+  }
+  .md-poster-col,
+  .md-poster,
+  .md-actions {
+    width: min(360px, 80vw);
+    flex-basis: auto;
+  }
+  .md-poster {
+    height: auto;
+    aspect-ratio: 511 / 740;
+  }
+  .md-info {
+    width: 100%;
+    max-width: 640px;
+    text-align: center;
+  }
+  .md-overview,
+  .md-trailer {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .md-title {
+    font-size: 28px;
+    line-height: 32px;
+  }
+  .md-director {
+    font-size: 18px;
+  }
+  .md-overview {
+    font-size: 18px;
+    line-height: 26px;
+  }
+}
+
+@media (max-width: 480px) {
+  .md-back {
+    top: 16px;
+    left: 16px;
+    font-size: 17px;
+  }
+  .md-action {
+    width: 60px;
+    height: 60px;
+  }
+  .md-action img {
+    width: 24px;
+    height: 24px;
+  }
+  .md-cast,
+  .md-genres {
+    font-size: 16px;
+  }
+}
