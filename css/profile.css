@@ -38,7 +38,8 @@
 
 .profile-avatar {
   position: relative;
-  width: 80%;
+  width: 228px;
+  max-width: 100%;
   aspect-ratio: 1;
 }
 
@@ -47,7 +48,7 @@
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
-  border: 5px solid var(--text);
+  border: 9px solid var(--text);
   box-sizing: border-box;
   transition: box-shadow var(--t-base) ease;
 }
@@ -73,26 +74,25 @@
   display: flex;
   flex-direction: column;
   justify-content: end;
-  gap: 10px;
+  gap: 14px;
 }
 
 .profile-meta > p {
-  font-size: 18px;
+  font-size: 22px;
   opacity: 70%;
 }
 
 .new-collection-btn {
   border: 0px;
-  background-color: rgba(var(--pink), 0.13);
+  background-color: rgba(var(--pink), 0.18);
   border-radius: 12px;
   padding: 16px;
   color: var(--text);
-  font-size: 18px;
-  opacity: 85%;
+  font-size: 24px;
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 240px;
+  width: 253px;
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap),
@@ -123,6 +123,18 @@
   transform: scale(0.98);
 }
 
+.new-collection-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.new-collection-btn:focus-visible,
+.view-badges-btn:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+
 .profile-info-right-col {
   flex: 2;
   display: flex;
@@ -132,10 +144,27 @@
 
 .profile-username {
   flex: 1;
-  display: flex;
+  display: block;
   font-size: 40px;
   letter-spacing: 3%;
   font-weight: 300;
+  /* keep the line box reserved before JS hydrates the name */
+  min-height: 56px;
+  /* never overflow the viewport / collide with the badges column */
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* on laptop/desktop, bound the name to its column with a single-line ellipsis
+   so a long username can't bleed into the Progression Badges region */
+@media (min-width: 1441px) {
+  .profile-username {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* ==========================================
@@ -161,10 +190,16 @@
   transition: opacity var(--t-base) ease;
 }
 
-/* "Add bio" prompt shown when no bio has been saved yet */
+/* "Add bio" prompt shown when no bio has been saved yet — Figma pink chip:
+   bg #f387b1 @0.18, white label 18px @0.7 (not italic) */
 .profile-bio--placeholder {
-  font-style: italic;
-  opacity: 45%;
+  display: inline-block;
+  background: rgba(var(--pink), 0.18);
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 18px;
+  font-style: normal;
+  opacity: 0.7;
 }
 
 /* Inline editor the bio turns into when clicked */
@@ -259,6 +294,21 @@
   transform: scale(0.92);
 }
 
+.bio-edit-btn:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+
+/* On touch devices the hover-reveal never fires, so keep the edit affordance
+   persistently visible and at a 44px touch target. */
+@media (hover: none) {
+  .bio-edit-btn {
+    display: flex;
+    width: 44px;
+    height: 44px;
+  }
+}
+
 .bio-edit-btn img {
   width: 16px;
   height: 16px;
@@ -285,20 +335,25 @@
   min-height: 320px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  /* explicit gaps between header / shields / View-All so they breathe at every
+     width (flex-distribution collapsed them when the header stacks). The View-All
+     button is pushed to the bottom (margin-top:auto) so on desktop it lines up
+     with the New Collection button in the meta column. */
+  gap: 20px;
 }
 
 .prog-badges-header {
-  flex: 1;
   display: flex;
   justify-content: center;
   text-align: center;
   font-size: 40px;
   font-weight: 300;
   letter-spacing: 3%;
+  white-space: nowrap;
 }
 
 .badges-display {
-  flex: 3;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -424,22 +479,42 @@
   text-transform: uppercase;
 }
 
+/* empty / unearned badge — a dashed WHITE shield outline, no metal fill, no label
+   (Figma "Profile Page - Just Created"). Shown when the user has no badges. */
+.badge-shield--empty .shield-path {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 2;
+  stroke-dasharray: 7 6;
+  opacity: 0.55;
+}
+.badge-shield--empty {
+  cursor: default;
+}
+.badge-shield--empty:hover {
+  filter: none;
+  transform: none;
+}
+
 .view-badges-container {
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
+  /* bottom-align with the New Collection button on desktop; harmless (no free
+     space) once the header stacks and the gap handles spacing */
+  margin-top: auto;
 }
 
 .view-badges-btn {
-  background-color: rgba(var(--pink), 0.13);
+  background-color: rgba(var(--pink), 0.18);
   border: 0;
   border-radius: 12px;
   padding: 16px;
   color: var(--text);
-  font-size: 18px;
-  opacity: 85%;
-  width: 240px;
+  font-size: 24px;
+  opacity: 90%;
+  width: 253px;
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap),
@@ -462,17 +537,21 @@
 .collections-row {
   padding-top: 24px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  column-gap: 40px;
+  /* Cards target 253px (Figma) but the track is capped at ~half the row so there
+     are ALWAYS at least 2 columns — a single 253px portrait card can never take a
+     whole row at any width above the phone breakpoint (where it goes 1-up + wide). */
+  grid-template-columns: repeat(auto-fill, minmax(min(253px, calc(50% - 31px)), 1fr));
+  column-gap: 61px;
   row-gap: 20px;
   width: 100%;
   max-width: var(--content-width);
-  min-height: 420px;
 }
 
 .collection-card {
   margin-bottom: 28px;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
   transition: transform var(--t-base) var(--ease-snap);
 }
 
@@ -483,6 +562,11 @@
 .collection-name {
   text-align: center;
   margin-bottom: 8px;
+  /* single-line ellipsis so a long name never wraps and de-aligns the row */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
   transition: color var(--t-base) ease;
 }
 
@@ -494,10 +578,24 @@
 .collection-poster-container {
   position: relative;
   overflow: hidden;
+  /* accent frame (gold for default / rose for custom) — --card-accent is set
+     inline on the .collection-card and inherits down to here */
+  border: 2px solid var(--card-accent, rgb(var(--rose)));
+  border-radius: 2px; /* near-square corners (Figma), not a rounded card */
   transition: box-shadow var(--t-base) var(--ease-snap);
 }
 
 .collection-card:hover .collection-poster-container {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+}
+
+/* keyboard focus ring on the navigable card */
+.collection-card:focus-visible {
+  outline: 2px solid var(--card-accent, rgb(var(--pink)));
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.collection-card:focus-visible .collection-poster-container {
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
 }
 
@@ -508,7 +606,112 @@
 }
 
 .collection-card:hover .collection-poster {
-  transform: scale(1.08);
+  transform: scale(1.05);
+}
+
+/* ---- Auto-collage cover (first ≤4 movie posters) ----
+   The COVER is a fixed-aspect box (2:3) so EVERY card cover is the same height
+   regardless of poster count. Tiles fill that box; they never drive the height. */
+.collection-cover {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  height: auto;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  border-radius: 1px;
+  transition: transform var(--t-base) var(--ease-snap);
+}
+.collection-card:hover .collection-cover {
+  transform: scale(1.05);
+}
+.collection-cover .cover-tile {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  display: block;
+  background: #4f454b; /* fallback so a missing/broken poster is never a blank cell */
+}
+/* missing-poster placeholder tile */
+.cover-tile--empty {
+  background: #4f454b;
+}
+/* layouts: rows are explicit so tiles stretch to fill the fixed-height box */
+.cover-1 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.cover-2 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+.cover-4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+/* ---- Empty (0-movie) cover ----
+   The Figma placeholder: a light gray/white CHECKERBOARD with a centered circled
+   "+" (clicking it jumps to the add-movies page). Works with the new .cover-empty
+   markup AND the legacy 4-span .cover-0 markup. */
+.cover-empty,
+.cover-0 {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* light gray/white checkerboard (~22px squares) */
+  background: repeating-conic-gradient(#e9e9e9 0% 25%, #ffffff 0% 50%) 0 0 / 44px 44px;
+  cursor: pointer; /* the empty cover / "+" is a shortcut to add movies */
+}
+.cover-0 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.cover-0 .cover-tile--empty {
+  display: none; /* collapse the four legacy placeholder squares into one fill */
+}
+/* circled "+" — medium gray so it reads on the light checkerboard */
+.cover-empty__plus,
+.cover-0::after {
+  content: "";
+  width: 56px;
+  height: 56px;
+  border: 4px solid rgba(0, 0, 0, 0.32);
+  border-radius: 50%;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.32)) center / 26px 4px no-repeat,
+    linear-gradient(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.32)) center / 4px 26px no-repeat;
+  /* no transform on hover — scaling a CSS-painted "+" rasterises and looks blurry,
+     so we change colour only */
+  transition: border-color var(--t-base) ease;
+}
+.cover-0::after {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+.collection-card:hover .cover-empty__plus,
+.collection-card:hover .cover-0::after {
+  border-color: rgba(0, 0, 0, 0.5);
+}
+
+/* inline rename editor on a card's name */
+.collection-name-input {
+  width: 100%;
+  text-align: center;
+  font: inherit;
+  color: var(--text);
+  background: rgba(var(--pink), 0.12);
+  border: 1px solid rgba(var(--pink), 0.6);
+  border-radius: 8px;
+  padding: 2px 8px;
+  outline: none;
+}
+.collection-name-input:focus {
+  border-color: rgb(var(--pink));
+  background: rgba(var(--pink), 0.18);
 }
 
 .collection-menu-button {
@@ -519,15 +722,23 @@
   justify-content: center;
   align-items: center;
   background-color: var(--surface-chip);
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
   opacity: 90%;
-  border-radius: 3px;
+  border-radius: 4px;
   border: 0;
+  padding: 0;
   cursor: pointer;
   transition:
     transform var(--t-fast) var(--ease-pop),
     opacity var(--t-fast) ease;
+}
+
+/* keep the 18px visual chip but extend the clickable region to >=44px (Fitts/WCAG 2.5.5) */
+.collection-menu-button::before {
+  content: "";
+  position: absolute;
+  inset: -13px;
 }
 
 .collection-menu-button:hover {
@@ -535,10 +746,15 @@
   opacity: 1;
 }
 
+.collection-menu-button:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+
 .collection-stats .stat-icon {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   vertical-align: middle;
   background-color: currentColor;
   /* the paint = inherited color */
@@ -556,6 +772,10 @@
   justify-content: space-between;
   align-items: center;
   padding: 4px;
+  margin-top: auto; /* pin the stats row to the card bottom for cross-card alignment */
+  min-height: 24px;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .collections-stats-left {
@@ -584,11 +804,11 @@
 .collection-menu {
   position: fixed;
   z-index: 1000;
-  min-width: 200px;
+  min-width: 243px;
   padding: 8px 0;
-  background-color: var(--surface-menu);
+  background-color: #212121;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+  border-radius: 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
@@ -601,7 +821,7 @@
 }
 
 .collection-menu:not([hidden]) {
-  opacity: 0.95;
+  opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
 }
@@ -614,15 +834,26 @@
   border: 0;
   text-align: left;
   padding: 11px 20px;
-  font-size: 15px;
+  font-size: 18px;
   color: var(--text);
   font-family: inherit;
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
 
+/* 1px hairline divider between every item (Figma #6a6a6a) */
+.collection-menu-item + .collection-menu-item {
+  border-top: 1px solid #6a6a6a;
+}
+
 .collection-menu-item:hover {
   background-color: rgba(255, 255, 255, 0.07);
+}
+
+.collection-menu-item:focus-visible {
+  background-color: rgba(255, 255, 255, 0.07);
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: -2px;
 }
 
 .collection-menu-item--danger {
@@ -645,6 +876,73 @@
   font-style: italic;
   opacity: 0.5;
   white-space: nowrap;
+}
+
+/* ==========================================
+   6b. EMPTY STATE (0 collections)
+   ========================================== */
+/* First-run empty state injected into .collections-row when the user has no
+   collections — spans the full grid so it isn't a lone column, and replaces the
+   old reserved dead band (the row no longer has a min-height). */
+.collections-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 48px 24px;
+  opacity: 0.7;
+}
+
+.collections-empty__icon {
+  width: 64px;
+  height: 64px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  opacity: 0.7;
+  background:
+    linear-gradient(#fff, #fff) center / 30px 4px no-repeat,
+    linear-gradient(#fff, #fff) center / 4px 30px no-repeat;
+}
+
+.collections-empty__title {
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.collections-empty__text {
+  font-size: 16px;
+  opacity: 0.85;
+  max-width: 420px;
+}
+
+.collections-empty__cta {
+  margin-top: 8px;
+  border: 0;
+  background-color: rgba(var(--pink), 0.18);
+  border-radius: 12px;
+  padding: 14px 24px;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+
+.collections-empty__cta:hover {
+  background: rgba(var(--pink), 0.3);
+}
+
+.collections-empty__cta:active {
+  transform: scale(0.98);
+}
+
+.collections-empty__cta:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
 }
 
 /* ==========================================
@@ -729,27 +1027,80 @@
 /* ==========================================
    8. RESPONSIVE DESIGN (MEDIA QUERIES)
    ========================================== */
-@media (max-width: 1280px) {
+/* Below 1440 the header stacks — and when it stacks EVERYTHING centers (avatar,
+   name, bio, badges, collections meta) so it never reads half-right/half-centre.
+   `display: contents` flattens the info wrappers so the children can be reordered
+   into one centred column: avatar -> name -> bio -> badges -> collections meta. */
+@media (max-width: 1440px) {
   .profile-header {
     flex-direction: column;
-    gap: 40px;
+    align-items: center;
+    text-align: center;
+    /* explicit margins per block below — `gap` mis-spaces here because `order` +
+       display:contents make the visually-adjacent badges/meta non-DOM-adjacent */
+    gap: 0;
   }
 
   .profile-info,
+  .profile-info-left-col,
+  .profile-info-right-col,
+  .bio-edit {
+    display: contents;
+  }
+
+  /* These carry desktop flex-grow (1/2/3/5). In the stacked column that growth
+     made them expand vertically and collide — reset to content height. */
+  .profile-avatar-container,
+  .profile-username,
+  .bio-edit,
+  .profile-meta,
   .profile-badges {
+    flex: 0 0 auto;
+  }
+
+  .profile-avatar-container {
+    order: 0;
+    justify-content: center;
+  }
+  .profile-avatar {
+    width: 180px;
+  }
+
+  .profile-username {
+    order: 1;
+    justify-content: center;
+    text-align: center;
+    margin-top: 28px;
+  }
+
+  .profile-bio {
+    order: 2;
+    padding-top: 0;
+    max-width: 600px;
+    margin-top: 14px;
+  }
+
+  .profile-badges {
+    order: 3;
+    width: 100%;
     min-height: 0;
+    margin-top: 44px;
   }
 
-  .profile-badges {
-    gap: 20px;
+  .profile-meta {
+    order: 4;
+    align-items: center;
+    min-height: 0;
+    gap: 18px; /* keep the count clear of the New Collection button */
+    margin-top: 44px; /* clear of the badges block above */
   }
-
-  .badges-display {
-    padding: 4px 0;
+  .profile-meta > p {
+    text-align: center;
+    margin: 0;
   }
 
   .view-badges-container {
-    margin-top: 4px;
+    margin-top: 0; /* stacked: rely on the badges-block gap, not the bottom-push */
   }
 }
 
@@ -761,26 +1112,15 @@
   .badge-tooltip {
     display: none;
   }
+
+  .collections-row {
+    column-gap: 32px;
+  }
 }
 
 @media (max-width: 768px) {
-  /* reorder it: avatar -> name -> bio -> badges -> collections meta (count + New Collection). */
   .profile-header {
-    align-items: center;
-    text-align: center;
     gap: 18px;
-  }
-
-  .profile-info,
-  .profile-info-left-col,
-  .profile-info-right-col,
-  .bio-edit {
-    display: contents;
-  }
-
-  .profile-avatar-container {
-    order: 0;
-    justify-content: center;
   }
 
   .profile-avatar {
@@ -788,62 +1128,25 @@
   }
 
   .profile-username {
-    order: 1;
-    justify-content: center;
     font-size: 30px;
-  }
-
-  .profile-bio {
-    order: 2;
-    padding-top: 0;
-    max-width: 540px;
-  }
-
-  .profile-badges {
-    order: 3;
-    width: 100%;
-    margin-top: 6px;
-  }
-
-  /* the collections box is a fixed-width column; the count sits at the button's
-     left edge (not centred) so it reads as a label for the button */
-  .profile-meta {
-    order: 4;
-    align-items: stretch;
-    width: 100%;
-    max-width: 340px;
-    margin-top: 8px;
-    gap: 10px;
-  }
-
-  .profile-meta > p {
-    text-align: left;
-    margin-left: 2px;
-  }
-
-  .new-collection-btn,
-  .view-badges-btn {
-    width: 100%;
-    max-width: 340px;
   }
 
   .prog-badges-header {
     font-size: 28px;
   }
 
+  /* bigger breathing room between the header, the shields and View All Badges */
+  .profile-badges {
+    gap: 30px;
+  }
+
   .badges-display {
-    gap: 14px;
+    gap: 22px;
   }
 
-  .collections-row {
-    grid-template-columns: 1fr;
-    row-gap: 20px;
-    min-height: 0;
-    padding-top: 8px;
-  }
-
-  .collection-card {
-    margin-bottom: 0;
+  .new-collection-btn,
+  .view-badges-btn {
+    max-width: 340px;
   }
 
   .collection-name {
@@ -856,8 +1159,8 @@
   }
 
   .collection-stats .stat-icon {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
   }
 
   .collections-stats-left {
@@ -866,5 +1169,36 @@
 
   .collections-stats-left > * {
     gap: 5px;
+  }
+}
+
+/* Phone: ONE full-width card per row, but with a HORIZONTAL cover (the first ≤4
+   posters in a wide banner) so a single card never absorbs the whole screen.
+   Every width ABOVE this keeps ≥2 columns via the min() track on .collections-row. */
+@media (max-width: 600px) {
+  .collections-row {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    padding-top: 8px;
+  }
+
+  .collection-card {
+    margin-bottom: 0;
+  }
+
+  .collection-cover {
+    aspect-ratio: 5 / 2; /* wide banner, not a screen-tall 2:3 portrait */
+  }
+  .cover-1 {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+  }
+  .cover-2 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+  }
+  .cover-4 {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr;
   }
 }

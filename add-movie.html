@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieKnight | Add to Collection</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32.png?v=2" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16.png?v=2" />
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon-192.png?v=2" />
+    <link rel="apple-touch-icon" href="assets/images/favicon-180.png?v=2" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/add-movie.css" />
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/common.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/add-movie.js" defer></script>
+  </head>
+
+  <!-- Standalone full page (Figma 92:34): no sidebar/rail — just the dark
+       app-body gradient, like the 404 page. -->
+  <body class="app-body am-body">
+    <main class="am-page">
+      <!-- Top-left underlined Back link → returns to the collection. The href is
+           filled in by add-movie.js once ?collection is read (so a hard load
+           still works); defaults to history-style nav. -->
+      <a class="am-back" id="amBack" href="collection.html">
+        <span class="am-back__chevron" aria-hidden="true"></span>
+        <span class="am-back__label">Back</span>
+      </a>
+
+      <header class="am-head">
+        <!-- H1 = the collection name (UPPERCASE via CSS). Filled by add-movie.js. -->
+        <h1 class="am-title collection-title" id="amTitle">&nbsp;</h1>
+        <p class="am-subtitle">Search Movie To Add To List</p>
+      </header>
+
+      <div class="am-search" role="search">
+        <span class="am-search__icon" aria-hidden="true"></span>
+        <input
+          type="search"
+          class="am-search__input"
+          id="amSearchInput"
+          placeholder="Search movies…"
+          aria-label="Search movies to add to this list"
+          autocomplete="off"
+        />
+      </div>
+
+      <!-- Results strip (desktop) / wrapped grid (mobile). Populated by add-movie.js. -->
+      <section class="am-results" id="amResults" aria-live="polite" aria-busy="false"></section>
+    </main>
+  </body>
+</html>
