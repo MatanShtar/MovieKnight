@@ -540,7 +540,7 @@
 // 4. EDITABLE BIO (persisted to the server via PATCH /api/users/me)
 // ==========================================
 (function () {
-  const BIO_PLACEHOLDER = "add bio";
+  const BIO_PLACEHOLDER = "Add bio";
   const BIO_MAX = 200; // strict cap to keep the bio block from overflowing
   const bioEl = document.querySelector(".profile-bio");
   const editBtn = document.querySelector(".bio-edit-btn");
@@ -597,10 +597,6 @@
 
     const counter = document.createElement("div");
     counter.className = "bio-counter";
-    counter.setAttribute("aria-live", "polite");
-    // Tie the textarea to its counter so AT announces the remaining-chars hint.
-    counter.id = counter.id || "bioCounter";
-    textarea.setAttribute("aria-describedby", counter.id);
     const updateCounter = () => {
       counter.textContent = `${textarea.value.length}/${BIO_MAX}`;
       // Warn as the user approaches the cap.
