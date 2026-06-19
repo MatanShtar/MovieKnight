@@ -144,11 +144,14 @@
                             <span class="cb-label">Random Movies Selected :</span>
                             <span class="cb-pill" id="cbTotalMovies">5</span>
                         </div>
-
-                        <p class="cb-error" id="cbError">Not enough movies in the collection</p>
                     </div>
 
-                    <button class="generate-wheel-btn cb-start" id="cbStartBtn">START</button>
+                    <!-- Error + START pinned together so the message is always
+                         visible above the button, no matter the player count. -->
+                    <div class="cb-actionbar">
+                        <p class="cb-error" id="cbError"></p>
+                        <button class="generate-wheel-btn cb-start" id="cbStartBtn">START</button>
+                    </div>
                 </div>
 
                 <!-- LET AI CHOOSE: placeholder setup (no LLM wired up yet) -->
