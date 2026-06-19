@@ -80,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         await MovieAPI.login(usernameInput.value.trim(), passwordInput.value);
-        toast.success("Welcome back!");
         window.location.href = "index.html";
       } catch (err) {
         usernameInput.classList.add("input-error");

@@ -46,6 +46,11 @@
   container-type: inline-size;
   width: min(1468px, calc(100vw - 48px));
   aspect-ratio: 1468 / 829;
+  /* On short laptop heights the aspect-ratio lock would push the title/footer
+     off-screen with no scroll recovery. Cap the panel to the viewport (minus the
+     24px overlay padding top+bottom); the column flexbox below pins header/footer
+     while .cm-list (flex:1 1 auto, overflow-y:auto) absorbs the shrink. */
+  max-height: calc(100dvh - 48px);
   display: flex;
   flex-direction: column;
   /* Frosted translucent tint — the overlay blurs the page behind, and the panel
@@ -138,14 +143,14 @@
   grid-auto-rows: calc(182 * var(--u));
   align-content: start;
   scrollbar-width: thin;
-  scrollbar-color: #ff88b3 rgba(175, 175, 175, 0.25);
+  scrollbar-color: #ff88b3 rgba(0, 0, 0, 0.35);
 }
 /* Custom scrollbar (Line 14 track + Line 15 pink thumb). */
 .cm-list::-webkit-scrollbar {
   width: 14px;
 }
 .cm-list::-webkit-scrollbar-track {
-  background: rgba(175, 175, 175, 0.25);
+  background: rgba(0, 0, 0, 0.35);
   border-radius: 10px;
   margin: 6px 0;
 }
@@ -154,6 +159,15 @@
   border-radius: 10px;
   border: 3px solid transparent;
   background-clip: padding-box;
+}
+
+/* Loading / empty / error notice shown in place of the rows. */
+.cm-empty {
+  grid-column: 1 / -1;
+  padding: 40px 32px;
+  text-align: center;
+  color: #d8d8d8;
+  font-size: clamp(16px, calc(28 * var(--u)), 28px);
 }
 
 /* The whole cell is one toggle (square checkbox + name + 2x2 collage). */
@@ -172,7 +186,7 @@
   cursor: pointer;
   transition: background-color var(--t-base) ease;
 }
-.cm-item:nth-child(odd) {
+.cm-item:nth-child(odd):not(:last-child) {
   border-right: calc(2 * var(--u)) solid var(--line); /* centre vertical rule */
 }
 .cm-item:nth-child(even) {
@@ -229,9 +243,9 @@
   flex: 0 0 auto;
   width: calc(40 * var(--u));
   height: calc(40 * var(--u));
-  border-radius: calc(5 * var(--u));
+  border-radius: 0; /* Figma Rectangle 16-19: square corners, no rounding */
   border: calc(3 * var(--u)) solid var(--line);
-  background: transparent;
+  background: rgba(217, 217, 217, 0.1); /* faint #d9d9d9 @ 10% fill */
   position: relative;
   transition:
     background-color var(--t-fast) ease,
@@ -244,12 +258,13 @@
   content: "";
   position: absolute;
   left: 50%;
-  top: 46%;
-  width: calc(12 * var(--u));
-  height: calc(22 * var(--u));
+  top: 44%;
+  /* Broad, shallow check matching Figma's 27x18 (wider-than-tall) vector. */
+  width: calc(18 * var(--u));
+  height: calc(11 * var(--u));
   border: solid #afafaf;
   border-width: 0 calc(4 * var(--u)) calc(4 * var(--u)) 0;
-  transform: translate(-50%, -58%) rotate(45deg);
+  transform: translate(-50%, -60%) rotate(45deg);
 }
 .cm-name {
   flex: 0 1 auto;
@@ -417,10 +432,12 @@
     width: 26px;
     height: 26px;
     border-width: 2px;
+    border-radius: 0; /* square corners, match Figma */
+    background: rgba(217, 217, 217, 0.1);
   }
   .cm-item.is-selected .cm-check::after {
-    width: 8px;
-    height: 15px;
+    width: 12px;
+    height: 7px;
     border-width: 0 3px 3px 0;
   }
   .cm-name {
