@@ -190,16 +190,9 @@
   transition: opacity var(--t-base) ease;
 }
 
-/* "Add bio" prompt shown when no bio has been saved yet — Figma pink chip:
-   bg #f387b1 @0.18, white label 18px @0.7 (not italic) */
 .profile-bio--placeholder {
-  display: inline-block;
-  background: rgba(var(--pink), 0.18);
-  border-radius: 8px;
-  padding: 4px 12px;
-  font-size: 18px;
-  font-style: normal;
-  opacity: 0.7;
+  font-style: italic;
+  opacity: 45%;
 }
 
 /* Inline editor the bio turns into when clicked */
@@ -556,7 +549,9 @@
 }
 
 .collection-card:hover {
-  transform: translateY(-3px) scale(1.02);
+  /* lift only — a hover SCALE rasterises the empty cover's CSS-painted "+" and
+     blurs it; poster covers still get their own zoom via the rules below */
+  transform: translateY(-3px);
 }
 
 .collection-name {
@@ -678,14 +673,16 @@
   content: "";
   width: 56px;
   height: 56px;
-  border: 4px solid rgba(0, 0, 0, 0.32);
+  /* ONE colour drives both the ring (border) and the "+" (the two gradient bars)
+     via currentColor, so on hover they darken TOGETHER. Previously only
+     border-color changed and the "+" stayed pale — which read as "blurry". */
+  color: rgba(0, 0, 0, 0.42);
+  border: 4px solid currentColor;
   border-radius: 50%;
   background:
-    linear-gradient(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.32)) center / 26px 4px no-repeat,
-    linear-gradient(rgba(0, 0, 0, 0.32), rgba(0, 0, 0, 0.32)) center / 4px 26px no-repeat;
-  /* no transform on hover — scaling a CSS-painted "+" rasterises and looks blurry,
-     so we change colour only */
-  transition: border-color var(--t-base) ease;
+    linear-gradient(currentColor, currentColor) center / 26px 4px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 4px 26px no-repeat;
+  transition: color var(--t-base) ease;
 }
 .cover-0::after {
   position: absolute;
@@ -694,7 +691,16 @@
 }
 .collection-card:hover .cover-empty__plus,
 .collection-card:hover .cover-0::after {
-  border-color: rgba(0, 0, 0, 0.5);
+  color: rgba(0, 0, 0, 0.62);
+}
+
+/* The empty cover paints a crisp CSS "+"; the card no longer scales (lift only,
+   above), and here we also cancel the empty cover's OWN zoom so the "+" gets
+   zero scale on hover and stays sharp. Poster covers still zoom. */
+.collection-card:hover .collection-cover.cover-empty,
+.collection-card:hover .collection-cover.cover-0,
+.collection-card:hover .cover-0 {
+  transform: none;
 }
 
 /* inline rename editor on a card's name */
