@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieKnight | Collection</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32.png?v=2" />
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16.png?v=2" />
+    <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon-192.png?v=2" />
+    <link rel="apple-touch-icon" href="assets/images/favicon-180.png?v=2" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/collection.css" />
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/common.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/collection.js" defer></script>
+  </head>
+
+  <body class="app-body">
+    <div class="app-container">
+      <header class="mobile-topbar">
+        <button
+          class="mobile-nav-toggle"
+          id="mobileNavToggle"
+          aria-label="Open menu"
+          aria-expanded="false"
+        >
+          <img src="assets/images/icons/hamburger-menu-icon.svg" alt="" />
+        </button>
+        <button class="mobile-add-btn" id="colMobileAddBtn" aria-label="Add to collection" hidden>
+          <img src="assets/images/icons/plus-icon.svg" alt="" />
+        </button>
+        <a class="mobile-brand" href="index.html">
+          <img class="mobile-brand-knight" src="assets/images/knight-minimal-logo.svg" alt="" />
+          <img class="mobile-brand-text" src="assets/images/movie-knight-wordmark.svg" alt="MovieKnight" />
+        </a>
+      </header>
+
+      <aside class="sidebar">
+        <a class="sidebar-logo" href="index.html">
+          <img src="assets/images/movie-knight-logo-sidebar.svg" alt="MovieKnight" class="nav-logo" />
+        </a>
+        <nav class="main-nav">
+          <a href="index.html" class="nav-link">
+            <img src="assets/images/icons/home-icon.svg" alt="Home Icon" class="nav-logo" />
+            Home
+          </a>
+          <a href="#" class="nav-link" data-toast="soon:Coming Soon!">
+            <img src="assets/images/icons/explore-icon.svg" alt="Explore Icon" class="nav-logo" />
+            Explore
+          </a>
+          <a href="profile.html" class="nav-link active">
+            <img src="assets/images/icons/profile-icon.svg" alt="Profile Icon" class="nav-logo" />
+            Profile
+          </a>
+          <div class="settings-container" id="sidebarSettings">
+            <a href="#" class="nav-link" id="settingsToggleBtn">
+              <svg class="nav-logo custom-gear" width="42" height="42" viewBox="0 0 42 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 30C25.9706 30 30 25.9705 30 21C30 16.0294 25.9706 12 21 12C16.0294 12 12 16.0294 12 21C12 25.9705 16.0294 30 21 30Z" stroke="white" stroke-width="2" stroke-miterlimit="10" />
+                <path d="M32.2273 37.5584C33.8076 36.4882 35.2079 35.2079 36.3881 33.7676L31.8072 31.6072L36.0581 22.6053L40.639 24.7658C40.9891 22.9354 41.0891 21.045 40.9191 19.1446L36.1481 20.855L32.7874 11.4831L37.5584 9.7727C36.4882 8.19238 35.2079 6.79212 33.7676 5.61188L31.6072 10.1928L22.6053 5.9419L24.7658 1.36101C22.9354 1.01094 21.045 0.910888 19.1446 1.08092L20.915 6.01192L11.5431 9.37266L9.7727 4.44159C8.19238 5.51181 6.7921 6.79211 5.61186 8.23241L10.1928 10.3928L5.94192 19.3947L1.36099 17.2342C1.01091 19.0646 0.910895 20.955 1.08093 22.8554L5.8519 21.145L9.21259 30.5169L4.44162 32.2273C5.51184 33.8076 6.79209 35.2079 8.23239 36.3881L10.3928 31.8072L19.3947 36.0581L17.2342 40.639C19.0646 40.9891 20.955 41.0891 22.8554 40.9191L21.205 36.3082L30.577 32.9474L32.2273 37.5584Z" stroke="white" stroke-width="2" stroke-miterlimit="10" />
+              </svg>
+              Settings
+              <span class="settings-arrow"></span>
+            </a>
+            <div class="settings-submenu" id="settingsSubmenu">
+              <a href="#" data-toast="soon:Coming Soon!"><img src="assets/images/icons/preferences-icon.svg" alt="Pref" /> Preferences</a>
+              <a href="#" data-toast="soon:Coming Soon!"><img src="assets/images/icons/account-icon.svg" alt="Account" /> Account Settings</a>
+            </div>
+          </div>
+          <a href="about.html" class="nav-link about-link">
+            <img src="assets/images/icons/about-icon.svg" alt="About Icon" class="nav-logo" />
+            <span>About</span>
+          </a>
+        </nav>
+      </aside>
+
+      <main class="main-content collection-main">
+        <!-- Header: title (+ rename pencil for owner), meta line, and action buttons
+             (owner: Add to Collection + Publish/Unpublish · visitor: Like + Save).
+             collection.js fills these per owner/visitor. -->
+        <header class="collection-head">
+          <div class="collection-title-row">
+            <h1 class="collection-title" id="colTitle">&nbsp;</h1>
+            <button class="collection-rename-btn" id="colRenameBtn" type="button" aria-label="Rename collection" hidden>
+              <img src="assets/images/icons/rename-icon.svg" alt="" />
+            </button>
+          </div>
+          <p class="collection-meta" id="colMeta"></p>
+        </header>
+
+        <!-- Controls row: Sort (left) + action buttons (right), per Figma y≈253 -->
+        <div class="collection-controls">
+          <div class="sort-area">
+            <span class="sort-label">Sort by</span>
+            <div class="sort-select" id="colSortSelect">
+              <button class="sort-pill" id="colSortBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="colSortText">Date Added (Latest &rarr; Earliest)</span>
+                <span class="sort-caret" aria-hidden="true"></span>
+              </button>
+              <div class="sort-menu" id="colSortMenu" role="listbox" hidden></div>
+            </div>
+          </div>
+
+          <div class="collection-actions" id="colActions" hidden></div>
+        </div>
+
+        <!-- Movie grid (cards injected by collection.js) -->
+        <section class="collection-grid" id="colGrid" aria-live="polite"></section>
+
+        <!-- Bottom toolbar (owner only): Movie Picker + Enhance My Collection -->
+        <div class="collection-toolbar" id="colToolbar" hidden>
+          <button class="toolbar-btn toolbar-btn--picker" id="colPickerBtn" type="button">
+            <span class="toolbar-deco" aria-hidden="true"></span>
+            <span class="toolbar-label">MOVIE PICKER</span>
+            <span class="toolbar-deco" aria-hidden="true"></span>
+          </button>
+          <button class="toolbar-btn toolbar-btn--enhance" id="colEnhanceBtn" type="button">
+            <span class="toolbar-star" aria-hidden="true"></span>
+            <span class="toolbar-label">ENHANCE MY COLLECTION</span>
+            <span class="toolbar-star" aria-hidden="true"></span>
+          </button>
+        </div>
+      </main>
+
+      <aside class="user-rail">
+        <div class="header-login-container" id="headerAuthContainer">
+          <button class="header-login-btn" id="loginBtn" onclick="window.location.href = 'login.html'">
+            <p>Login</p>
+          </button>
+
+          <div class="user-profile-display" id="userProfileDisplay" style="display: none">
+            <div class="user-welcome">
+              <span class="welcome-text">Good to see you,</span>
+              <span class="username-text" id="displayUsername"></span>
+            </div>
+            <button id="headerProfileBtn" class="header-profile-btn">
+              <img src="assets/images/default-avatar.svg" alt="Profile" class="profile-pic" />
+            </button>
+            <div class="header-dropdown" id="headerDropdown">
+              <a href="profile.html">Profile</a>
+              <a href="#" data-toast="soon:Coming Soon!">Settings</a>
+              <a href="index.html" id="signOutBtn" class="danger-text">Sign Out</a>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="nav-backdrop" id="navBackdrop" hidden></div>
+    </div>
+  </body>
+</html>

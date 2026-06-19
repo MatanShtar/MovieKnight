@@ -224,7 +224,7 @@ function setupActions() {
     add.addEventListener("click", () => {
       if (window.requireAuth && !window.requireAuth()) return; // guests blocked
       if (window.CollectionModal) {
-        CollectionModal.open(currentTitle || "This movie");
+        CollectionModal.open(getMovieId(), currentTitle || "This movie");
       } else if (window.toast) {
         toast.soon("Add to Collection — Coming Soon!");
       }

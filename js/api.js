@@ -13,9 +13,19 @@
 // so home.js / wheel.js need almost no other changes.
 
 window.MovieAPI = (function () {
-    // The TMDB proxy backend. Change this ONE constant to point at a deployed
-    // URL (e.g. a Render instance) later — nothing else needs to change.
-    const API_BASE = "https://movieknight-server.onrender.com";
+    // The backend base URL, chosen by where the client is being served from:
+    //   • localhost / 127.0.0.1 / file:// (local dev)  → the local dev server on
+    //     :3000, so un-deployed server changes (e.g. new endpoints) are visible
+    //     while developing — run `npm run dev` in server/ first.
+    //   • anything else (the deployed site)            → the deployed Render API.
+    // To force one, set localStorage "mk:apiBase" to a URL (cleared = auto).
+    const DEPLOYED_API = "https://movieknight-server.onrender.com";
+    const LOCAL_API = "http://localhost:3000";
+    const API_BASE =
+        localStorage.getItem("mk:apiBase") ||
+        (["localhost", "127.0.0.1", ""].includes(location.hostname)
+            ? LOCAL_API
+            : DEPLOYED_API);
 
     // All endpoints live under the /api prefix per the API contract
     // (e.g. /api/movies/search, /api/movies/random).
@@ -107,7 +117,11 @@ window.MovieAPI = (function () {
             } catch {
                 /* non-JSON error body — keep the generic message */
             }
-            throw new Error(message);
+            // Attach the HTTP status so callers can branch on it (e.g. a 404 from
+            // GET /collections/:id means "private or missing" → redirect to 404.html).
+            const err = new Error(message);
+            err.status = res.status;
+            throw err;
         }
 
         const json = await res.json();
@@ -358,6 +372,122 @@ window.MovieAPI = (function () {
         return data ? data.user : null;
     }
 
+    // ==========================================
+    // 5. COLLECTIONS (CRUD + add/remove movie)
+    // ==========================================
+    // Backend stores BARE TMDB poster paths (e.g. "/abc.jpg"); the cover collage and
+    // grid need full URLs. A custom cover (posterUrl) or an already-absolute/data URL
+    // is passed through untouched.
+    function toPosterUrl(path) {
+        if (!path) return "";
+        if (/^(https?:)?\/\//i.test(path) || /^data:/i.test(path)) return path;
+        return TMDB_IMAGE_BASE + path;
+    }
+
+    // A collection "card" (profile grid): identity + visibility + up to 4 cover
+    // posters (as full URLs) + counts. Likes/saves are deferred (always 0).
+    function normalizeCollectionCard(c) {
+        if (!c) return null;
+        return {
+            id: c.id,
+            name: c.name || "",
+            isDefault: !!c.isDefault,
+            isPublic: !!c.isPublic,
+            posterUrl: c.posterUrl ? toPosterUrl(c.posterUrl) : null,
+            movieCount: c.movieCount || 0,
+            posters: (c.posters || []).map(toPosterUrl).filter(Boolean),
+            likesCount: c.likesCount || 0,
+            savesCount: c.savesCount || 0,
+            author: c.author || null,
+            isOwner: c.isOwner !== false,
+        };
+    }
+
+    // The full collection-page payload: the card meta + the joined movie objects
+    // (each normalised to the app shape, keeping addedAt/sortOrder for client sorts).
+    function normalizeCollectionFull(c) {
+        if (!c) return null;
+        return {
+            id: c.id,
+            name: c.name || "",
+            isDefault: !!c.isDefault,
+            isPublic: !!c.isPublic,
+            posterUrl: c.posterUrl ? toPosterUrl(c.posterUrl) : null,
+            author: c.author || null,
+            authorId: c.authorId || null,
+            isOwner: !!c.isOwner,
+            movieCount: c.movieCount || 0,
+            likesCount: c.likesCount || 0,
+            savesCount: c.savesCount || 0,
+            createdAt: c.createdAt || null,
+            movies: (c.movies || [])
+                .map((m) => {
+                    const n = normalizeMovie(m);
+                    if (!n) return null;
+                    return { ...n, addedAt: m.addedAt || null, sortOrder: m.sortOrder || 0 };
+                })
+                .filter(Boolean),
+        };
+    }
+
+    // GET /api/collections — the signed-in user's own collections (profile grid).
+    async function listCollections() {
+        const data = await request("/collections");
+        const list = Array.isArray(data) ? data : extractList(data, "collections");
+        return list.map(normalizeCollectionCard).filter(Boolean);
+    }
+
+    // GET /api/collections/:id — one collection + its movies. Works for a guest on a
+    // PUBLIC collection (visitor mode). A 404 (missing OR private-and-not-yours) is
+    // thrown with err.status === 404 so the page can redirect to 404.html.
+    async function getCollection(id) {
+        const data = await request(`/collections/${encodeURIComponent(id)}`);
+        return normalizeCollectionFull(data);
+    }
+
+    // POST /api/collections — create a list. With no name the server auto-names it.
+    async function createCollection(name) {
+        const data = await request("/collections", {
+            method: "POST",
+            body: { name },
+        });
+        return normalizeCollectionCard(data);
+    }
+
+    // PATCH /api/collections/:id — rename and/or publish-toggle. Owner only.
+    async function updateCollection(id, fields) {
+        const data = await request(`/collections/${encodeURIComponent(id)}`, {
+            method: "PATCH",
+            body: fields,
+        });
+        return normalizeCollectionCard(data);
+    }
+
+    // DELETE /api/collections/:id — owner only; defaults are undeletable (400).
+    async function deleteCollection(id) {
+        return request(`/collections/${encodeURIComponent(id)}`, { method: "DELETE" });
+    }
+
+    // POST /api/collections/:id/movies — add a movie (idempotent). Returns the full
+    // collection so the caller can repaint the grid + count.
+    async function addMovieToCollection(id, tmdbId) {
+        const data = await request(`/collections/${encodeURIComponent(id)}/movies`, {
+            method: "POST",
+            body: { tmdbId },
+        });
+        return normalizeCollectionFull(data);
+    }
+
+    // DELETE /api/collections/:id/movies/:tmdbId — remove a movie. Returns the full
+    // collection.
+    async function removeMovieFromCollection(id, tmdbId) {
+        const data = await request(
+            `/collections/${encodeURIComponent(id)}/movies/${encodeURIComponent(tmdbId)}`,
+            { method: "DELETE" }
+        );
+        return normalizeCollectionFull(data);
+    }
+
     return {
         API_BASE,
         searchMovies,
@@ -377,5 +507,14 @@ window.MovieAPI = (function () {
         getToken,
         getCurrentUser,
         clearSession,
+        // collections
+        listCollections,
+        getCollection,
+        createCollection,
+        updateCollection,
+        deleteCollection,
+        addMovieToCollection,
+        removeMovieFromCollection,
+        toPosterUrl,
     };
 })();

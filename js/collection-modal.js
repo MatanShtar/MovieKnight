@@ -1,60 +1,50 @@
 // collection-modal.js — reusable "Add to Collection" modal.
 //
-// Triggered from a home movie card's "+" action or the Movie Details page.
-// Backend collections don't exist yet, so this runs entirely on mock data:
-// three default collections, each shown with a 2x2 placeholder poster collage.
+// Triggered from a home movie card's "+" action or the Movie Details page. Lists
+// the signed-in user's REAL collections (GET /api/collections) and, on submit,
+// adds the current movie to each selected list (POST /api/collections/:id/movies).
+// A "New Collection" field creates a list (POST /api/collections) and adds to it.
 //
 // Usage:
-//   CollectionModal.open("Some Movie Title");
+//   CollectionModal.open(tmdbId, "Some Movie Title");
 //
-// The movie title is stored so the "New Collection" flow can name it in the
-// success toast: "<Movie> added to <Collection>".
+// The caller (home.js / movie.js) guards with requireAuth() first, so by the time
+// we open we have a logged-in session whose token MovieAPI attaches automatically.
 
 window.CollectionModal = (function () {
-  // Mock collections shown in the grid — two per row, each with a 2x2 poster
-  // collage, matching the Figma frame (Watchlist + Chick Flicks pre-checked).
-  // The list scrolls (custom pink scrollbar) when there are more than fit. No
-  // backend yet; the checked state is UI prep for the eventual handoff.
-  const P = "assets/images/posters/";
-  const COLLECTIONS = [
-    { name: "Watchlist", checked: true, posters: [
-      P + "bugonia-movie-poster.webp", P + "one-battle-after-another-poster.webp",
-      P + "ten-things-i-hate-about-you-poster.webp", P + "marty-supreme-poster.webp" ] },
-    { name: "Favorites", checked: false, posters: [
-      P + "the-dark-knight-poster.webp", P + "pulp-fiction-poster.webp",
-      P + "parasite-poster.webp", P + "oppenheimer-poster.webp" ] },
-    { name: "Already Watched", checked: false, posters: [
-      P + "interstellar-poster.webp", P + "everything-everywhere-all-at-once-poster.webp",
-      P + "whiplash-poster.webp", P + "spider-man-into-the-spider-verse-poster.webp" ] },
-    { name: "Chick Flicks", checked: true, posters: [
-      P + "la-la-land-poster.webp", P + "ten-things-i-hate-about-you-poster.webp",
-      P + "the-substance-poster.webp", P + "housemaid-poster.webp" ] },
-    { name: "Wheel 1", checked: false, posters: [
-      P + "dune-part-two-poster.webp", P + "kill-bill-poster.webp",
-      P + "frankenstein-poster.webp", P + "spider-man-into-the-spider-verse-poster.webp" ] },
-    { name: "Wheel 2", checked: false, posters: [
-      P + "oppenheimer-poster.webp", P + "parasite-poster.webp",
-      P + "interstellar-poster.webp", P + "whiplash-poster.webp" ] },
-    { name: "Horror Night", checked: false, posters: [
-      P + "frankenstein-poster.webp", P + "the-substance-poster.webp",
-      P + "housemaid-poster.webp", P + "actual-horror-films-collection.webp" ] },
-    { name: "Date Night", checked: false, posters: [
-      P + "la-la-land-poster.webp", P + "ten-things-i-hate-about-you-poster.webp",
-      P + "pulp-fiction-poster.webp", P + "marty-supreme-poster.webp" ] },
-    { name: "Sci-Fi Picks", checked: false, posters: [
-      P + "dune-part-two-poster.webp", P + "interstellar-poster.webp",
-      P + "spider-man-into-the-spider-verse-poster.webp", P + "oppenheimer-poster.webp" ] },
-    { name: "Comedies", checked: false, posters: [
-      P + "la-la-land-poster.webp", P + "everything-everywhere-all-at-once-poster.webp",
-      P + "kill-bill-poster.webp", P + "bugonia-movie-poster.webp" ] },
-  ];
-  // Remember each row's default checked state so resetChecks() can restore it.
-  COLLECTIONS.forEach((c) => (c.def = c.checked));
+  const P = "assets/images/poster-placeholder.svg";
+
+  // Self-contained fallback so the standalone demo page (no common.js) still
+  // escapes interpolated strings. Prefers the shared global when present.
+  const escapeHtml =
+    typeof window.escapeHtml === "function"
+      ? window.escapeHtml
+      : function (value) {
+          return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => {
+            switch (ch) {
+              case "&":
+                return "&amp;";
+              case "<":
+                return "&lt;";
+              case ">":
+                return "&gt;";
+              case '"':
+                return "&quot;";
+              default:
+                return "&#39;";
+            }
+          });
+        };
 
   let overlay = null; // built lazily on first open
   let nameInput = null;
-  let listEl = null; // the collection rows container (for resetting checks)
+  let listEl = null; // the collection rows container
+  let currentMovieId = null;
   let currentMovie = "This movie";
+  let collections = []; // live list fetched per open
+  let opener = null; // element focused before open, restored on close
+  const selected = new Set(); // ids the user has ticked this session
+  const initiallyIn = new Set(); // ids of lists that already contain the movie
 
   // Build the modal DOM once and wire its interactions.
   function build() {
@@ -67,20 +57,16 @@ window.CollectionModal = (function () {
     const panel = document.createElement("div");
     panel.className = "cm-panel";
 
-    // Header
     const header = document.createElement("div");
     header.className = "cm-header";
     header.innerHTML = `
       <h2 class="cm-title">Add to Collection</h2>
       <button class="cm-close" type="button" aria-label="Close">&times;</button>`;
 
-    // Collection list
     const list = document.createElement("div");
     list.className = "cm-list";
-    COLLECTIONS.forEach((c) => list.appendChild(buildItem(c)));
     listEl = list;
 
-    // Footer — new collection
     const footer = document.createElement("div");
     footer.className = "cm-footer";
     footer.innerHTML = `
@@ -107,6 +93,25 @@ window.CollectionModal = (function () {
       if (e.key === "Escape" && overlay.classList.contains("is-open")) close();
     });
 
+    // Trap Tab within the panel while the dialog is open.
+    overlay.addEventListener("keydown", (e) => {
+      if (e.key !== "Tab" || !overlay.classList.contains("is-open")) return;
+      const focusable = panel.querySelectorAll(
+        '.cm-close, .cm-item, .cm-input, .cm-add',
+      );
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+
     footer.querySelector(".cm-add").addEventListener("click", submitAdd);
     nameInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -116,107 +121,192 @@ window.CollectionModal = (function () {
     });
   }
 
-  // Restore each row to its default checked state and sync the toggle UI. Run on
-  // each open so a stale selection from a previous movie doesn't carry over.
-  function resetChecks() {
-    COLLECTIONS.forEach((c) => (c.checked = c.def));
-    if (!listEl) return;
-    listEl.querySelectorAll(".cm-item").forEach((item, i) => {
-      const on = COLLECTIONS[i] && COLLECTIONS[i].checked;
-      item.classList.toggle("is-selected", !!on);
-      item.classList.remove("is-confirmed");
-      item.setAttribute("aria-checked", String(!!on));
-    });
-  }
-
-  // One collection cell: the whole cell is a toggle (square checkbox + name +
-  // 2x2 poster collage). Clicking anywhere on it flips its checked state.
+  // A whole-cell toggle: square checkbox + name + 2×2 poster collage from the
+  // collection's first ≤4 movies.
   function buildItem(c) {
     const item = document.createElement("button");
     item.type = "button";
-    item.className = "cm-item" + (c.checked ? " is-selected" : "");
+    item.className = "cm-item";
+    item.dataset.id = c.id;
     item.setAttribute("role", "checkbox");
-    item.setAttribute("aria-checked", String(c.checked));
 
-    const posters = (c.posters || [])
-      .slice(0, 4)
-      .map((src) => `<img class="cm-poster" src="${src}" alt="" loading="lazy">`)
+    // Pad to a full 2×2 collage using the poster placeholder so collections with
+    // 0–3 posters don't show dark empty cells (Figma always shows 4 fills).
+    const srcs = (c.posters || []).slice(0, 4);
+    while (srcs.length < 4) srcs.push(P);
+    const posters = srcs
+      .map(
+        (src) =>
+          `<img class="cm-poster" src="${escapeHtml(src)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${escapeHtml(P)}'">`,
+      )
       .join("");
 
     item.innerHTML = `
       <span class="cm-check" aria-hidden="true"></span>
       <span class="cm-name"></span>
       <span class="cm-collage" aria-hidden="true">${posters}</span>`;
-    item.querySelector(".cm-name").textContent = c.name;
+    const nameEl = item.querySelector(".cm-name");
+    nameEl.textContent = c.name;
+    // Surface the full name on hover when it ellipsis-truncates.
+    nameEl.title = c.name;
+    item.setAttribute("aria-label", `${c.name} collection`);
+
+    // Pre-check lists the movie is already in (membership seeded in renderRows).
+    const startsChecked = initiallyIn.has(c.id);
+    if (startsChecked) {
+      selected.add(c.id);
+      item.classList.add("is-selected");
+    }
+    item.setAttribute("aria-checked", String(startsChecked));
 
     item.addEventListener("click", () => {
-      c.checked = !c.checked;
-      item.classList.toggle("is-selected", c.checked);
-      item.setAttribute("aria-checked", String(c.checked));
+      const on = !selected.has(c.id);
+      if (on) selected.add(c.id);
+      else selected.delete(c.id);
+      item.classList.toggle("is-selected", on);
+      item.setAttribute("aria-checked", String(on));
     });
 
     return item;
   }
 
-  // The "+" / Enter is the single submit action. It now serves double duty:
-  //   • if existing collections are ticked, it confirms "add to those", and
-  //   • if a new-collection name is typed, it creates that one and adds too.
-  // Both can happen at once. With nothing selected and no name, it just nudges
-  // the name field instead of doing nothing silently.
-  function submitAdd() {
-    const name = (nameInput.value || "").trim();
-    const selected = COLLECTIONS.filter((c) => c.checked).map((c) => c.name);
-    const targets = name ? [...selected, name] : selected;
+  function renderRows() {
+    listEl.innerHTML = "";
+    if (!collections.length) {
+      const empty = document.createElement("p");
+      empty.className = "cm-empty";
+      empty.textContent = "You don't have any collections yet — create one below.";
+      listEl.appendChild(empty);
+      return;
+    }
+    collections.forEach((c) => listEl.appendChild(buildItem(c)));
+  }
 
-    if (!targets.length) {
-      nameInput.focus(); // nothing to add to — hint at creating one
+  // The "+" / Enter submits: add the movie to every newly-ticked collection,
+  // remove it from any that were pre-checked and un-ticked, and create + add a
+  // new one if a name was typed. With no changes and no name, it nudges the name
+  // field instead of doing nothing silently.
+  async function submitAdd() {
+    const name = (nameInput.value || "").trim();
+    const ids = [...selected];
+    // Diff against the lists the movie started in so un-checking removes it.
+    const toAdd = ids.filter((id) => !initiallyIn.has(id));
+    const toRemove = [...initiallyIn].filter((id) => !selected.has(id));
+
+    if (!toAdd.length && !toRemove.length && !name) {
+      nameInput.focus();
+      return;
+    }
+    if (currentMovieId == null) {
+      if (window.toast) toast.error("Couldn't tell which movie to add.");
       return;
     }
 
-    const toastMsg = () => {
-      if (!window.toast) return;
-      const where =
-        targets.length === 1
-          ? targets[0]
-          : targets.slice(0, -1).join(", ") + " and " + targets[targets.length - 1];
-      toast.success(`${currentMovie} added to ${where}`);
-    };
+    const addBtn = overlay.querySelector(".cm-add");
+    addBtn.disabled = true;
 
-    // Visually confirm the choice: pulse the selected tiles, then close + toast.
-    const chosen = listEl
-      ? [...listEl.querySelectorAll(".cm-item.is-selected")]
-      : [];
-    if (chosen.length) {
-      chosen.forEach((it) => it.classList.add("is-confirmed"));
-      setTimeout(() => {
-        close();
-        toastMsg();
-      }, 280);
-    } else {
-      close();
-      toastMsg();
+    // Fire the confirm pulse on the lists that are ticked at submit time.
+    if (listEl) {
+      ids.forEach((id) => {
+        const row = listEl.querySelector(`.cm-item[data-id="${CSS.escape(String(id))}"]`);
+        if (row) row.classList.add("is-confirmed");
+      });
+    }
+
+    const names = [];
+    try {
+      // add to each newly-ticked existing collection
+      for (const id of toAdd) {
+        await MovieAPI.addMovieToCollection(id, currentMovieId);
+        const c = collections.find((x) => x.id === id);
+        names.push(c ? c.name : "collection");
+      }
+      // remove from any pre-checked list the user un-ticked
+      for (const id of toRemove) {
+        await MovieAPI.removeMovieFromCollection(id, currentMovieId);
+      }
+      // create a new list (if named) and add to it too
+      if (name) {
+        const created = await MovieAPI.createCollection(name);
+        await MovieAPI.addMovieToCollection(created.id, currentMovieId);
+        names.push(created.name);
+      }
+    } catch (err) {
+      addBtn.disabled = false;
+      if (window.toast) toast.error(err.message || "Couldn't add to collection.");
+      return;
+    }
+
+    // Let the pulse play briefly before the overlay hides.
+    setTimeout(close, 200);
+    if (window.toast && names.length) {
+      const where =
+        names.length === 1
+          ? names[0]
+          : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+      toast.success(`${currentMovie} added to ${where}`);
     }
   }
 
-  function open(movieTitle) {
+  async function open(movieId, movieTitle) {
     if (!overlay) build();
+    // Remember who opened us so focus can be restored on close.
+    opener = document.activeElement;
+    currentMovieId = movieId != null ? movieId : null;
     currentMovie = movieTitle || "This movie";
     nameInput.value = "";
-    resetChecks();
+    selected.clear();
+    initiallyIn.clear();
+
     overlay.classList.add("is-open");
     document.body.classList.add("cm-no-scroll");
+
+    // Move focus into the dialog (the close button) so Tab is trapped inside.
+    const closeBtn = overlay.querySelector(".cm-close");
+    if (closeBtn) closeBtn.focus();
+
+    // Load the user's real collections fresh each open.
+    listEl.innerHTML = `<p class="cm-empty">Loading your collections…</p>`;
+    try {
+      collections = await MovieAPI.listCollections();
+      // Pre-check the lists this movie is already in. listCollections() carries
+      // no membership flag, so fetch each list's movies in parallel (only for
+      // the currently-open movie) and seed initiallyIn from the join.
+      if (currentMovieId != null && collections.length) {
+        const target = String(currentMovieId);
+        const full = await Promise.all(
+          collections.map((c) =>
+            MovieAPI.getCollection(c.id).catch(() => null),
+          ),
+        );
+        full.forEach((detail, i) => {
+          if (!detail) return;
+          const has = (detail.movies || []).some(
+            (m) => String(m.id) === target,
+          );
+          if (has) initiallyIn.add(collections[i].id);
+        });
+      }
+      renderRows();
+    } catch (err) {
+      collections = [];
+      listEl.innerHTML = `<p class="cm-empty">${escapeHtml(
+        err.message || "Couldn't load your collections.",
+      )}</p>`;
+    }
   }
 
-  // The modal is a same-page overlay, so closing it simply hides it — it must
-  // NOT touch window.history. (It used to pushState on open + history.back() on
-  // close; that left the page's own "Back" button needing two clicks right after
-  // adding to a collection, because the modal's history.back() raced with the
-  // user's. Leaving history untouched lets smartBack() navigate correctly on the
-  // first click.)
+  // The modal is a same-page overlay, so closing it simply hides it — it must NOT
+  // touch window.history (that used to break the page's own Back button).
   function close() {
     if (!overlay) return;
     overlay.classList.remove("is-open");
     document.body.classList.remove("cm-no-scroll");
+    // Restore focus to whatever opened the dialog (ARIA dialog pattern).
+    if (opener && typeof opener.focus === "function") {
+      opener.focus();
+    }
+    opener = null;
   }
 
   return { open, close };

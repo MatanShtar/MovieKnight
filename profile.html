@@ -147,18 +147,16 @@
                   />
                   <img
                     src="assets/images/icons/upload-profile-pic-icon.svg"
-                    alt="Profile picture"
+                    alt="Change profile picture"
                     class="upload-new-pic"
-                    data-toast="soon:Coming Soon!"
                   />
                 </div>
               </div>
               <div class="profile-meta">
                 <!-- injected dynamically based on real collections amount -->
-                <p id="collectionCount">...</p>
+                <p id="collectionCount" aria-live="polite"></p>
                 <button
                   class="new-collection-btn"
-                  data-toast="soon:Coming Soon!"
                 >
                   <img
                     src="assets/images/icons/plus-icon.svg"
@@ -175,7 +173,6 @@
                 <p class="profile-bio profile-bio--placeholder">Add bio</p>
                 <button
                   class="bio-edit-btn"
-                  data-toast="soon:Coming Soon!"
                   aria-label="Edit bio"
                 >
                   <img
@@ -189,118 +186,22 @@
 
           <div class="profile-badges">
             <h2 class="prog-badges-header">Progression Badges</h2>
-            <div class="badges-display">
-              <div class="badge-shield">
-                <svg
-                  width="120"
-                  height="118"
-                  viewBox="0 0 120 141"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    <linearGradient
-                      id="silver-gradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="100%"
-                    >
-                      <stop offset="0%" stop-color="#DED9D6" />
-                      <stop offset="6%" stop-color="#CFCAC8" />
-                      <stop offset="18%" stop-color="#A8A4A6" />
-                      <stop offset="26%" stop-color="#8B878D" />
-                      <stop offset="52%" stop-color="#F3F4F4" />
-                      <stop offset="58%" stop-color="#E4E5E5" />
-                      <stop offset="70%" stop-color="#BFBEC0" />
-                      <stop offset="86%" stop-color="#847F84" />
-                      <stop offset="88%" stop-color="#807B80" />
-                      <stop offset="100%" stop-color="#A7A9AC" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    class="shield-path silver-shield"
-                    d="M59.8442 140.437C49.3608 125.189 30.6421 126.191 16.3498 113.564C11.7487 109.499 7.33404 106.622 6.16922 93.7854C5.13253 82.2653 9.19764 76.6509 8.96468 58.5379C8.85984 50.3492 10.875 33.0516 0.391602 23.0458C10.3042 15.9986 16.6525 8.06611 16.1284 0.436523C29.2326 7.55359 48.1611 7.70503 59.0289 8.01953H58.7027H61.0788H60.6712C71.539 7.70503 90.5256 7.55359 103.63 0.436523C103.106 8.06611 109.454 15.9986 119.367 23.0458C108.883 33.0516 111.038 50.3492 110.922 58.5379C110.689 76.6392 114.754 82.2537 113.717 93.7854C112.552 106.622 108.149 109.499 103.537 113.564C89.2443 126.191 70.3276 125.189 59.8442 140.437Z"
-                  />
-                </svg>
-                <span class="badge-title">Movie Enthusiast</span>
-                <span class="badge-tooltip"
-                  >Silver Tier · 63 movies until Gold</span
-                >
-              </div>
-
-              <div class="badge-shield">
-                <svg
-                  width="120"
-                  height="118"
-                  viewBox="0 0 120 141"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    <linearGradient
-                      id="gold-gradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="100%"
-                    >
-                      <stop offset="0%" stop-color="#FBC926" />
-                      <stop offset="25%" stop-color="#FFFBCC" />
-                      <stop offset="30%" stop-color="#F8EFBA" />
-                      <stop offset="41%" stop-color="#E7D18D" />
-                      <stop offset="55%" stop-color="#CCA246" />
-                      <stop offset="60%" stop-color="#C3922E" />
-                      <stop offset="87%" stop-color="#EED688" />
-                      <stop offset="100%" stop-color="#FFFBCC" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    class="shield-path gold-shield"
-                    d="M59.8442 140.437C49.3608 125.189 30.6421 126.191 16.3498 113.564C11.7487 109.499 7.33404 106.622 6.16922 93.7854C5.13253 82.2653 9.19764 76.6509 8.96468 58.5379C8.85984 50.3492 10.875 33.0516 0.391602 23.0458C10.3042 15.9986 16.6525 8.06611 16.1284 0.436523C29.2326 7.55359 48.1611 7.70503 59.0289 8.01953H58.7027H61.0788H60.6712C71.539 7.70503 90.5256 7.55359 103.63 0.436523C103.106 8.06611 109.454 15.9986 119.367 23.0458C108.883 33.0516 111.038 50.3492 110.922 58.5379C110.689 76.6392 114.754 82.2537 113.717 93.7854C112.552 106.622 108.149 109.499 103.537 113.564C89.2443 126.191 70.3276 125.189 59.8442 140.437Z"
-                  />
-                </svg>
-                <span class="badge-title">Old-School Enjoyer</span>
-                <span class="badge-tooltip">Gold Tier · 262 / 200 movies</span>
-              </div>
-
-              <div class="badge-shield">
-                <svg
-                  width="120"
-                  height="118"
-                  viewBox="0 0 120 141"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <defs>
-                    <linearGradient
-                      id="bronze-gradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="100%"
-                    >
-                      <stop offset="0%" stop-color="#541513" />
-                      <stop offset="21%" stop-color="#8D5027" />
-                      <stop offset="45%" stop-color="#CB9552" />
-                      <stop offset="56%" stop-color="#FFF2DB" />
-                      <stop offset="70%" stop-color="#D7B189" />
-                      <stop offset="84%" stop-color="#AB6B2D" />
-                      <stop offset="89%" stop-color="#9C530D" />
-                      <stop offset="100%" stop-color="#9C530D" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    class="shield-path bronze-shield"
-                    d="M59.8442 140.437C49.3608 125.189 30.6421 126.191 16.3498 113.564C11.7487 109.499 7.33404 106.622 6.16922 93.7854C5.13253 82.2653 9.19764 76.6509 8.96468 58.5379C8.85984 50.3492 10.875 33.0516 0.391602 23.0458C10.3042 15.9986 16.6525 8.06611 16.1284 0.436523C29.2326 7.55359 48.1611 7.70503 59.0289 8.01953H58.7027H61.0788H60.6712C71.539 7.70503 90.5256 7.55359 103.63 0.436523C103.106 8.06611 109.454 15.9986 119.367 23.0458C108.883 33.0516 111.038 50.3492 110.922 58.5379C110.689 76.6392 114.754 82.2537 113.717 93.7854C112.552 106.622 108.149 109.499 103.537 113.564C89.2443 126.191 70.3276 125.189 59.8442 140.437Z"
-                  />
-                </svg>
-                <span class="badge-title">Collection Master</span>
-                <span class="badge-tooltip"
-                  >Bronze Tier · 21 collections until Silver</span
-                >
-              </div>
-            </div>
+            <!-- shield metal gradients, referenced by the JS-rendered shields in js/profile.js -->
+            <svg width="0" height="0" class="badge-gradient-defs" aria-hidden="true" focusable="false">
+              <defs>
+                <linearGradient id="silver-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#DED9D6" /><stop offset="6%" stop-color="#CFCAC8" /><stop offset="18%" stop-color="#A8A4A6" /><stop offset="26%" stop-color="#8B878D" /><stop offset="52%" stop-color="#F3F4F4" /><stop offset="58%" stop-color="#E4E5E5" /><stop offset="70%" stop-color="#BFBEC0" /><stop offset="86%" stop-color="#847F84" /><stop offset="88%" stop-color="#807B80" /><stop offset="100%" stop-color="#A7A9AC" />
+                </linearGradient>
+                <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#FBC926" /><stop offset="25%" stop-color="#FFFBCC" /><stop offset="30%" stop-color="#F8EFBA" /><stop offset="41%" stop-color="#E7D18D" /><stop offset="55%" stop-color="#CCA246" /><stop offset="60%" stop-color="#C3922E" /><stop offset="87%" stop-color="#EED688" /><stop offset="100%" stop-color="#FFFBCC" />
+                </linearGradient>
+                <linearGradient id="bronze-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#541513" /><stop offset="21%" stop-color="#8D5027" /><stop offset="45%" stop-color="#CB9552" /><stop offset="56%" stop-color="#FFF2DB" /><stop offset="70%" stop-color="#D7B189" /><stop offset="84%" stop-color="#AB6B2D" /><stop offset="89%" stop-color="#9C530D" /><stop offset="100%" stop-color="#9C530D" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <!-- shields rendered from the current user's badges (js/profile.js) -->
+            <div class="badges-display" id="badgesDisplay"></div>
             <div class="view-badges-container">
               <button class="view-badges-btn" data-toast="soon:Coming Soon!">
                 View All Badges

@@ -1264,7 +1264,8 @@ if (movieGridEl) {
     if (label === "Add to collection") {
       const card = btn.closest(".movie-card");
       const title = (card && card.dataset.title) || "This movie";
-      if (window.CollectionModal) CollectionModal.open(title);
+      const id = card && card.dataset.id ? card.dataset.id : null;
+      if (window.CollectionModal) CollectionModal.open(id, title);
       else toast.soon("Coming Soon!");
       return;
     }
