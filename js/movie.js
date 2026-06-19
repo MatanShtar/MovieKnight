@@ -28,26 +28,28 @@ const el = (id) => document.getElementById(id);
 // The title of the movie currently shown — passed to the collection modal.
 let currentTitle = "";
 
+// Read the movie basics the home card stashed before navigating here.
+// Returns the parsed object, or null if absent/unparseable.
+function readLastMovie() {
+  try {
+    return JSON.parse(sessionStorage.getItem("mk:lastMovie"));
+  } catch (_) {
+    return null;
+  }
+}
+
 function getMovieId() {
   const fromQuery = new URLSearchParams(location.search).get("id");
   if (fromQuery) return fromQuery;
   // Fall back to whatever the home card stashed (if any).
-  try {
-    const cached = JSON.parse(sessionStorage.getItem("mk:lastMovie"));
-    if (cached && cached.id) return cached.id;
-  } catch (_) {
-    /* ignore */
-  }
+  const cached = readLastMovie();
+  if (cached && cached.id) return cached.id;
   return null; // nothing selected -> show the demo record
 }
 
 function getCachedBasics(id) {
-  try {
-    const cached = JSON.parse(sessionStorage.getItem("mk:lastMovie"));
-    if (cached && String(cached.id) === String(id)) return cached;
-  } catch (_) {
-    /* ignore */
-  }
+  const cached = readLastMovie();
+  if (cached && String(cached.id) === String(id)) return cached;
   return null;
 }
 

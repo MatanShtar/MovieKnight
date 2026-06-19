@@ -92,7 +92,7 @@ window.MovieAPI = (function () {
                 headers: finalHeaders,
                 ...options,
             });
-        } catch (networkErr) {
+        } catch {
             // Server down / CORS / offline — give a clear, user-facing reason.
             throw new Error("Can't reach the movie server. Is the backend running?");
         }
@@ -100,9 +100,10 @@ window.MovieAPI = (function () {
         if (!res.ok) {
             let message = `Request failed (HTTP ${res.status})`;
             try {
-                const body = await res.json();
+                // Named `errorBody` to avoid shadowing the request `body` param.
+                const errorBody = await res.json();
                 // contract error shape: { ok: false, error }
-                if (body && body.error) message = body.error;
+                if (errorBody && errorBody.error) message = errorBody.error;
             } catch {
                 /* non-JSON error body — keep the generic message */
             }
