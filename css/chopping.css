@@ -1,14 +1,13 @@
 /* chopping.css — The Chopping Block: the setup panel (inside picker.html) and
    the standalone game screen (chopping.html). Exact sizes/colours come from the
-   Figma frames "Movie Picker - Chopping Block Setup", "Not Enough Movies Error"
-   and "Chopping Block Game". Reuses tokens.css + the shared shell. */
+   Figma frames. Reuses tokens.css + the shared shell. The game screen also loads
+   Bootstrap (carousel shell), which this file enhances into a 3D coverflow. */
 
 /* ==========================================================================
    PART A — SETUP PANEL  (rendered inside picker.html's .picker-panel)
    ========================================================================== */
 
-/* The setup form is wider than the picker's default 1200px column, so let this
-   panel use the fuller content width. */
+/* The setup form is wider than the picker's default 1200px column. */
 .picker-panel[data-panel="chopping"].active {
     width: 100%;
     max-width: 1540px;
@@ -20,13 +19,12 @@
     flex-direction: column;
     align-items: center;
     gap: 36px;
+    padding-bottom: 24px;   /* breathing room above the fixed action bar */
 }
 
 /* Two columns: [Add Player + tags]   [eliminations / totals / random order].
    Fixed height so a long player list overflows downward (on the left, clear of
-   everything else) instead of shoving the centred "Random Movies" block — and
-   its error message — down under the fixed START bar. Mirrors the Figma, where
-   these blocks sit at fixed positions regardless of how many players there are. */
+   everything else) instead of shoving the centred "Random Movies" block down. */
 .cb-config {
     width: 100%;
     height: 326px;
@@ -34,7 +32,7 @@
     justify-content: center;
     align-items: flex-start;
     gap: 120px;
-    margin-top: 111px;   /* Figma leaves a wide gap below the tab bar */
+    margin-top: 91px;    /* Figma leaves a wide gap below the tab bar */
 }
 
 .cb-col-left,
@@ -95,13 +93,16 @@
 .cb-add-btn img { width: 35px; height: 35px; }
 .cb-add-btn:hover { opacity: 1; transform: scale(1.12) rotate(90deg); }
 
-/* --- Player tags (removable), aligned under the input --- */
+/* --- Player tags: fill the first column, then wrap into a second column --- */
 .cb-players {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;   /* tags keep their own width, don't stretch */
-    gap: 16px;
-    padding-left: 156px;   /* line the tags up under the input, past the label */
+    flex-wrap: wrap;
+    align-content: flex-start;
+    align-items: flex-start;
+    max-height: 272px;          /* 4 tags (56) + 3 gaps (16) → 4 per column */
+    gap: 16px 28px;             /* row-gap / column-gap */
+    padding-left: 156px;        /* line the tags up under the input, past the label */
 }
 
 .cb-tag {
@@ -114,13 +115,9 @@
     padding: 0 26px;
     background: rgba(0, 0, 0, 0.6);
     border-radius: 100px;
-    /* leaving animation collapses width + fades */
     transition:
         opacity var(--t-base) ease,
-        transform var(--t-base) var(--ease-snap),
-        min-width var(--t-base) ease,
-        margin var(--t-base) ease,
-        padding var(--t-base) ease;
+        transform var(--t-base) var(--ease-snap);
 }
 
 .cb-tag-name {
@@ -128,6 +125,8 @@
     line-height: 30px;
     color: var(--text);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .cb-tag-remove {
@@ -157,17 +156,47 @@
 }
 
 .cb-tag.is-entering { animation: cb-tag-in 0.32s var(--ease-pop) both; }
+.cb-tag.is-leaving { opacity: 0; transform: scale(0.85); }
 
-.cb-tag.is-leaving {
-    opacity: 0;
-    transform: translateX(-24px) scale(0.9);
-    min-width: 0;
-    padding: 0;
-    margin-top: -16px;   /* swallow the gap so the rest reflow up */
+/* "+N …" overflow chip with a hover/focus tooltip listing the hidden players */
+.cb-tag-more {
+    cursor: default;
+    color: var(--text);
+    background: rgba(var(--maroon-light), 0.55);
+    font-size: 18px;
 }
 
-/* --- Right column: three stat rows, each label (right) + control.
-   Uniform 129px centre-to-centre pitch, matching the Figma. --- */
+.cb-more-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    z-index: 60;
+    width: max-content;
+    max-width: 240px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgba(20, 20, 20, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity var(--t-fast) ease, transform var(--t-fast) ease;
+}
+
+.cb-tag-more:hover .cb-more-tooltip,
+.cb-tag-more:focus .cb-more-tooltip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* --- Right column: three stat rows, uniform 129px centre-to-centre pitch --- */
 .cb-col-right { gap: 86px; }
 
 .cb-stat-row {
@@ -182,7 +211,7 @@
     text-align: right;
 }
 
-/* dark value pill (Total players / Random movies): 84×43, black @ 60% */
+/* dark value pill (Total players / Random movies): 84×43, black @ 60% — read-only */
 .cb-pill {
     min-width: 84px;
     height: 43px;
@@ -194,48 +223,53 @@
     border-radius: 100px;
     font-size: 24px;
     color: var(--text-soft);
+    cursor: default;            /* read-only — no I-beam/pointer */
     transition: transform var(--t-base) var(--ease-pop);
 }
 
-/* a quick pop when the number changes */
 .cb-pill.bump { transform: scale(1.16); }
 
-/* --- The 1 / 2 / 3 eliminations slider --- */
+/* --- The 1 / 2 / 3 eliminations slider: grey track + smoothly-growing red fill --- */
 .cb-slider {
     position: relative;
     width: 328px;
-    height: 25px;          /* dots only; numbers hang below (absolute) */
+    height: 25px;               /* dots only; numbers hang below (absolute) */
     display: flex;
     justify-content: space-between;
 }
 
 .cb-slider-track {
     position: absolute;
-    top: 12px;             /* aligns with the 25px dot centres */
+    top: 12px;
     left: 12px;
     right: 12px;
     height: 6px;
     border-radius: 3px;
-    background: #ffffff;
+    background: rgba(255, 255, 255, 0.85);
     z-index: 0;
 }
 
-.cb-slider-thumb {
+/* The red liquid lives in its own goo-filtered layer so the two blobs merge into
+   each other (and only the red is gooed — the grey track/dots stay crisp). */
+.cb-slider-liquid {
     position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 21px;
-    height: 21px;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    filter: url(#cb-goo);
+}
+
+/* the chain of red blobs (sizes + per-blob lag are set inline by the JS) */
+.cb-slider-blob {
+    position: absolute;
     border-radius: 50%;
     background: rgb(var(--maroon-light));
-    z-index: 2;
-    box-shadow: 0 0 0 4px rgba(var(--maroon-light), 0.25);
-    transition: left 0.3s var(--ease-snap);
+    transition: left 0.6s cubic-bezier(0.45, 0, 0.55, 1);   /* even ease → steady spacing */
 }
 
 .cb-slider-dot {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     width: 25px;
     height: 25px;
     background: none;
@@ -256,7 +290,6 @@
 
 .cb-slider-dot:hover::before { transform: scale(1.12); }
 
-/* numbers hang below the dots without adding to the row's height */
 .cb-slider-num {
     position: absolute;
     top: 39px;
@@ -269,7 +302,7 @@
 
 .cb-slider-dot.active .cb-slider-num { color: var(--text); }
 
-/* --- Random Order toggle (71×32, #591e26, white 24px handle) --- */
+/* --- Random Order toggle: grey when off, maroon when on --- */
 .cb-toggle {
     position: relative;
     width: 71px;
@@ -284,9 +317,11 @@
     position: absolute;
     inset: 0;
     border-radius: 100px;
-    background: #591e26;
+    background: rgba(255, 255, 255, 0.22);       /* inactive */
     transition: background-color var(--t-base) ease;
 }
+
+.cb-toggle input:checked ~ .cb-toggle-track { background: #591e26; }  /* active */
 
 .cb-toggle-handle {
     position: absolute;
@@ -311,23 +346,44 @@
 
 .cb-random .cb-label { text-align: center; }
 
-/* --- "Not enough movies" error message --- */
+/* ==========================================================================
+   PART A2 — ACTION BAR (error + START), fixed directly above the bottom
+   so the error message is ALWAYS visible regardless of player-list height.
+   ========================================================================== */
+.cb-actionbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;       /* let clicks through the empty margins */
+}
+
+.cb-actionbar > * { pointer-events: auto; }
+
+/* reserved slot — keeps START from shifting as the message toggles */
 .cb-error {
+    min-height: 24px;
+    margin-bottom: 6px;
+    padding: 0 16px;
     color: #f10024;
     font-size: 16px;
     line-height: 21px;
     text-align: center;
-    height: 0;
     opacity: 0;
-    overflow: hidden;
-    transition: opacity var(--t-base) ease, height var(--t-base) ease;
+    transition: opacity var(--t-base) ease;
 }
 
-.cb-error.show { opacity: 1; height: 21px; }
+.cb-error.show { opacity: 1; }
 
-/* START button reuses .generate-wheel-btn (gradient bar fixed to the bottom).
-   Its font/disabled handling already live in picker.css. */
-.cb-start { letter-spacing: 4px; }
+/* START reuses .generate-wheel-btn but lives INSIDE the action bar now */
+.cb-start.generate-wheel-btn {
+    position: static;
+    letter-spacing: 4px;
+}
 
 /* ==========================================================================
    PART B — GAME SCREEN  (chopping.html)
@@ -337,6 +393,7 @@
     padding-top: 12px;
     padding-bottom: 0;
     gap: 16px;
+    overflow-x: clip;            /* the full-bleed carousel must not add scroll */
 }
 
 /* header (Back + MOVIE KNIGHT logo) — mirrors wheel/picker */
@@ -362,11 +419,12 @@
 }
 
 .cb-page-header .back-btn:hover { opacity: 0.75; }
-
 .cb-page-header .wheel-main-logo { height: 228px; object-fit: contain; }
 
-/* single-bar header that "expands" on entry, echoing the wheel hand-off */
-.feature-tabs {
+/* single-bar header that "expands" on entry, echoing the wheel hand-off.
+   Scoped to .cb-game so these never touch the picker's 3-tab bar (chopping.css
+   is loaded on picker.html too). */
+.cb-game .feature-tabs {
     display: flex;
     width: 100%;
     max-width: 1642px;
@@ -379,7 +437,7 @@
     animation: cb-bar-expand 0.55s var(--ease-snap) both;
 }
 
-.feature-tabs p {
+.cb-game .feature-tabs p {
     display: flex;
     flex: 1;
     align-items: center;
@@ -397,31 +455,26 @@
     animation: cb-text-in 0.4s ease 0.32s both;
 }
 
-@keyframes cb-bar-expand {
-    from { transform: scaleX(0.25); }
-    to   { transform: scaleX(1); }
-}
+@keyframes cb-bar-expand { from { transform: scaleX(0.25); } to { transform: scaleX(1); } }
+@keyframes cb-text-in   { from { opacity: 0; }            to { opacity: 1; } }
 
-@keyframes cb-text-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-}
-
-/* whose turn it is */
+/* whose turn it is (hidden in single-player via inline style) */
 .cb-turn {
     font-family: "Lao Sangam MN", sans-serif;
     font-size: 40px;
     line-height: 52px;
     color: var(--text);
     text-align: center;
+    margin: 0;
     transition: opacity 0.18s ease, transform 0.18s var(--ease-snap);
 }
 
 .cb-turn.is-swapping { opacity: 0; transform: translateY(8px); }
 
-/* the carousel of candidate movies */
+/* ------- The coverflow carousel (Bootstrap carousel shell + 3D depth) ------- */
 .cb-stage {
-    width: 100%;
+    width: 100vw;               /* full-bleed: break out of the content padding so the
+                                   far posters barely peek at the screen edges */
     flex: 1;
     display: flex;
     align-items: center;
@@ -434,32 +487,56 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-.cb-carousel {
-    display: flex;
-    align-items: flex-start;
-    gap: 40px;
+.cb-coverflow {
+    position: relative;
     width: 100%;
-    max-width: 1642px;
-    padding: 8px 4px 28px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-behavior: smooth;
-    scrollbar-width: thin;
+    max-width: none;            /* span the full viewport width */
+    margin: 0 auto;
 }
 
-.cb-carousel::-webkit-scrollbar { height: 10px; }
-.cb-carousel::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.08); border-radius: 10px; }
-.cb-carousel::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
+/* the viewport: clips the cards that fan out to the edges */
+.cb-coverflow .carousel-inner {
+    position: relative;
+    height: 560px;
+    overflow: hidden;
+}
 
+/* every card is absolutely centred; JS drives a transform per card, and these
+   transitions animate both the rotation and the graveyard re-sort (FLIP-style). */
 .cb-card {
-    flex: 0 0 auto;
-    width: 266px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 262px;
+    margin: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* FLIP slide is applied inline; this is the resting transition */
-    transition: transform 0.5s var(--ease-snap);
+    transform-origin: center center;
+    transform: translate(-50%, -50%) scale(0.6);   /* base; render() lays them out */
+    opacity: 0;
+    cursor: default;
+    will-change: transform, opacity;
+    transition:
+        transform 0.55s var(--ease-snap),
+        opacity 0.45s ease;
 }
+
+/* title ABOVE the poster */
+.cb-card-title {
+    margin: 0 0 12px;
+    max-width: 262px;
+    min-height: 36px;
+    font-size: 28px;
+    line-height: 36px;
+    color: var(--text-soft);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cb-card.in-window .cb-card-title { color: var(--text); }
 
 .cb-poster {
     width: 262px;
@@ -468,13 +545,11 @@
     box-shadow: -6px 8px 7px 0 rgba(0, 0, 0, 0.25);
     overflow: hidden;
     background: rgba(0, 0, 0, 0.4);
-    opacity: 0.95;
-    transition: opacity var(--t-slow) ease, transform var(--t-base) var(--ease-pop);
+    transition: transform var(--t-base) var(--ease-pop);
 }
 
 .cb-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-.cb-card:not(.eliminated):hover .cb-poster { transform: translateY(-4px); }
+.cb-card.in-window:hover .cb-poster { transform: translateY(-4px); }
 
 .cb-eliminate {
     width: 266px;
@@ -490,28 +565,71 @@
     line-height: 36px;
     letter-spacing: 1px;
     cursor: pointer;
+    pointer-events: none;          /* only the five in-window posters are pressable */
     transition: filter var(--t-base) ease, transform var(--t-fast) var(--ease-snap), opacity var(--t-slow) ease;
 }
 
-.cb-eliminate:hover { filter: brightness(1.15); transform: scale(1.03); }
-.cb-eliminate:active { transform: scale(0.97); }
+.cb-card.in-window .cb-eliminate { pointer-events: auto; }
+.cb-card:not(.in-window) .cb-eliminate { opacity: 0.55; }
+.cb-card.in-window .cb-eliminate:hover { filter: brightness(1.18); transform: scale(1.03); }
+.cb-card.in-window .cb-eliminate:active { transform: scale(0.97); }
 
-.cb-card-title {
-    margin-top: 14px;
-    max-width: 262px;
-    font-size: 28px;
-    line-height: 36px;
-    color: var(--text-soft);
-    text-align: center;
+/* eliminated cards (the graveyard) */
+.cb-card.eliminated { cursor: default; }
+.cb-card.eliminated .cb-poster { filter: grayscale(0.45); }
+.cb-card.eliminated .cb-eliminate { opacity: 0.5; cursor: default; filter: none; transform: none; pointer-events: none; }
+
+/* Minimal soft-triangle arrows: no background, and only the small triangle area
+   is clickable (Bootstrap's control spans the full height by default — we shrink
+   it to a snug box centred vertically). */
+.cb-coverflow .carousel-control-prev,
+.cb-coverflow .carousel-control-next {
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 48px;
+    z-index: 200;            /* above the posters (which reach z-index 100) */
+    opacity: 0.7;
+    transition: opacity var(--t-base) ease, transform var(--t-base) var(--ease-pop);
+}
+.cb-coverflow .carousel-control-prev { left: 12px; }
+.cb-coverflow .carousel-control-next { right: 12px; }
+
+.cb-coverflow .carousel-control-prev:hover,
+.cb-coverflow .carousel-control-next:hover { opacity: 1; }
+.cb-coverflow .carousel-control-prev:hover { transform: translateY(-50%) translateX(-3px); }
+.cb-coverflow .carousel-control-next:hover { transform: translateY(-50%) translateX(3px); }
+.cb-coverflow .carousel-control-prev:active { transform: translateY(-50%) scale(0.88); }
+.cb-coverflow .carousel-control-next:active { transform: translateY(-50%) scale(0.88); }
+
+/* the triangle itself (replaces Bootstrap's icon image — no background) */
+.cb-coverflow .carousel-control-prev-icon,
+.cb-coverflow .carousel-control-next-icon {
+    width: 0;
+    height: 0;
+    background: none;
+    border-style: solid;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.8));   /* readable on any poster */
+}
+.cb-coverflow .carousel-control-prev-icon {
+    border-width: 13px 17px 13px 0;
+    border-color: transparent rgba(255, 255, 255, 0.9) transparent transparent;
+}
+.cb-coverflow .carousel-control-next-icon {
+    border-width: 13px 0 13px 17px;
+    border-color: transparent transparent transparent rgba(255, 255, 255, 0.9);
 }
 
-/* eliminated state: dim the poster + button, lock the card */
-.cb-card.eliminated .cb-poster { opacity: 0.3; }
-.cb-card.eliminated .cb-eliminate { opacity: 0.5; cursor: default; filter: none; transform: none; }
-.cb-card.eliminated .cb-card-title { opacity: 0.45; }
+/* hidden at the scroll bounds — nothing more to reveal that way */
+.cb-coverflow .carousel-control-prev.cb-nav-off,
+.cb-coverflow .carousel-control-next.cb-nav-off {
+    opacity: 0;
+    pointer-events: none;
+}
 
 /* ==========================================================================
-   PART C — WINNER OVERLAY + CONFETTI  (game screen)
+   PART C — WINNER OVERLAY + CONFETTI  (matches Spin the Wheel exactly)
    ========================================================================== */
 .confetti-canvas {
     position: fixed;
@@ -537,9 +655,12 @@
 
 .winner-overlay.show { opacity: 1; visibility: visible; }
 
+/* 468×364, radius 50, #D7D7D7 @ 20% — identical to wheel.css */
 .winner-box {
+    pointer-events: auto;
     position: relative;
-    width: 480px;
+    width: 468px;
+    height: 364px;
     max-width: 92vw;
     border-radius: 50px;
     background-color: rgba(215, 215, 215, 0.2);
@@ -559,35 +680,28 @@
 .winner-header {
     width: 100%;
     text-align: center;
-    font-family: "Impact", sans-serif;
-    letter-spacing: 2px;
-    font-size: 34px;
+    font-size: 40px;
     color: var(--text);
-    background-color: #591e26;
-    padding: 18px 0;
-}
-
-.winner-poster {
-    width: 200px;
-    height: 290px;
-    object-fit: cover;
-    margin: 26px 0 16px;
-    border-radius: 8px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    background-color: #596d73;
+    padding: 20px 0;
 }
 
 .winner-title {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     padding: 0 24px;
-    font-size: 28px;
+    font-size: 40px;
     color: var(--text);
 }
 
 .winner-remove {
     width: 328px;
     max-width: 80%;
-    height: 72px;
-    margin: 22px 0 26px;
+    height: 80px;
+    margin-bottom: 26px;
     border: none;
     border-radius: 50px;
     background-color: rgb(var(--maroon-light));
@@ -635,7 +749,7 @@
         align-items: center;
         gap: 40px;
         margin-top: 24px;
-        margin-bottom: 140px;   /* clear the fixed START button */
+        margin-bottom: 150px;   /* clear the fixed action bar */
     }
 
     .cb-col-left, .cb-col-right { align-items: center; }
@@ -643,37 +757,41 @@
 
     .cb-add-row { flex-wrap: wrap; justify-content: center; }
     .cb-input-pill { width: min(410px, 78vw); }
-    .cb-players { padding-left: 0; align-items: center; }
+    .cb-players { padding-left: 0; align-items: center; max-height: 200px; }
 
     .cb-stat-row { gap: 20px; }
     .cb-stat-row .cb-label { width: auto; text-align: right; }
 
-    /* game header logo shrinks like the other feature pages */
     .cb-page-header .wheel-main-logo { height: 120px; }
-    .feature-tabs p { font-size: 22px; }
-
+    .cb-game .feature-tabs p { font-size: 22px; }
     .cb-turn { font-size: 30px; }
 
-    .cb-stage { align-items: flex-start; }
-    .cb-carousel { justify-content: flex-start; }
+    .cb-coverflow .carousel-inner { height: 500px; }
+    .cb-card { width: 220px; }
+    .cb-poster { width: 220px; height: 318px; }
+    .cb-eliminate { width: 224px; height: 54px; font-size: 24px; }
 }
 
 @media (max-width: 600px) {
     .cb-label { font-size: 20px; }
 
-    /* stack each stat row so the 328px slider + label never overflow the screen */
-    .cb-stat-row {
-        flex-direction: column;
-        gap: 12px;
-        min-height: 0;
-    }
+    /* stack each stat row so the 328px slider + label never overflow */
+    .cb-stat-row { flex-direction: column; gap: 12px; min-height: 0; }
     .cb-stat-row .cb-label { text-align: center; }
     .cb-slider { width: min(328px, 80vw); }
-    .cb-page-header .wheel-main-logo { height: 88px; }
-    .feature-tabs p { font-size: 18px; }
 
-    .cb-card { width: 200px; }
-    .cb-poster { width: 196px; height: 284px; }
-    .cb-eliminate { width: 200px; height: 52px; font-size: 22px; }
-    .cb-card-title { font-size: 20px; max-width: 196px; }
+    .cb-players { max-height: 160px; }
+
+    .cb-page-header .wheel-main-logo { height: 88px; }
+    .cb-game .feature-tabs p { font-size: 18px; }
+
+    .cb-coverflow .carousel-inner { height: 430px; }
+    .cb-card { width: 186px; }
+    .cb-card-title { font-size: 20px; line-height: 26px; min-height: 26px; max-width: 186px; }
+    .cb-poster { width: 186px; height: 268px; }
+    .cb-eliminate { width: 190px; height: 48px; font-size: 20px; }
+
+    .winner-box { height: auto; padding-bottom: 8px; }
+    .winner-header { font-size: 30px; }
+    .winner-title { font-size: 30px; padding: 28px 18px; }
 }
