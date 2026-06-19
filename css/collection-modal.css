@@ -1,0 +1,489 @@
+/* collection-modal.css — reusable "Add to Collection" modal.
+   Built/owned by js/collection-modal.js. Every measurement is taken straight
+   from the Figma frame "Add to Collection - from movie page" (211:905), whose
+   panel is 1468x829. The panel is a container, and all of its inner geometry is
+   expressed in `--u` units where 1u == 1 Figma px, so the whole modal scales
+   proportionally (pixel-exact at full size, fluid below it). */
+
+.cm-no-scroll {
+  overflow: hidden;
+}
+
+/* ---- Overlay ----
+   The Figma frame blurs the page behind the modal (LAYER_BLUR 60) rather than
+   blacking it out, so the dim is light and the work is done by backdrop-filter. */
+.cm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  /* Figma only blurs the page behind the modal — no dark dim — so keep this
+     barely-there and let backdrop-filter do the work. */
+  background: rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--t-base) ease,
+    visibility var(--t-base) ease;
+}
+.cm-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ---- Panel ----
+   Figma "Subtract" fill: an opaque linear gradient running from #666 at the
+   top-left to #000 at the bottom-right (handles 0.81,1.0 -> 0.19,0.0 ≈ 328deg).
+   No stroke. */
+.cm-panel {
+  --u: 0.0681198cqw; /* 100/1468 cqw — one Figma px of the 1468-wide panel */
+  --line: #afafaf; /* #afafaf divider rules + checkbox outline */
+  container-type: inline-size;
+  width: min(1468px, calc(100vw - 48px));
+  aspect-ratio: 1468 / 829;
+  display: flex;
+  flex-direction: column;
+  /* Frosted translucent tint — the overlay blurs the page behind, and the panel
+     lets that blurred page (the bright poster on the left) bleed through, tinted
+     by this grey gradient. Opacity baked into each stop. */
+  background: linear-gradient(
+    347deg,
+    rgba(0, 0, 0, 0.62) 0%,
+    rgba(10, 10, 10, 0.62) 20%,
+    rgba(34, 34, 34, 0.62) 42%,
+    rgba(60, 60, 60, 0.62) 62%,
+    rgba(88, 88, 88, 0.62) 80%,
+    rgba(116, 116, 116, 0.62) 92%,
+    rgba(132, 132, 132, 0.62) 100%
+  );
+  border-radius: 16px;
+  overflow: hidden;
+  color: #f0f0f0;
+  transform: translateY(16px) scale(0.985);
+  transition: transform var(--t-base) var(--ease-pop);
+}
+.cm-overlay.is-open .cm-panel {
+  transform: none;
+}
+
+/* ---- Header ---- */
+.cm-header {
+  position: relative;
+  flex: 0 0 calc(127 * var(--u)); /* Line 18 sits 127px down */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: calc(2 * var(--u)) solid var(--line);
+}
+.cm-title {
+  margin: 0;
+  font-weight: 400; /* Lao Sangam MN 400, 55px (inherited family) */
+  font-size: calc(55 * var(--u));
+  line-height: 1;
+  color: #f0f0f0;
+  /* nudge to the Figma baseline — the font centres a touch high in its line box */
+  transform: translateY(calc(6 * var(--u)));
+}
+/* "X" — a 23x23 icon, 2.5px #f3f3f3 strokes, 46px from the right / 37px down. */
+.cm-close {
+  position: absolute;
+  top: calc(37 * var(--u));
+  right: calc(46 * var(--u));
+  width: calc(23 * var(--u));
+  height: calc(23 * var(--u));
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.92;
+  transition: opacity var(--t-base) ease;
+}
+.cm-close:hover {
+  opacity: 1;
+}
+.cm-close::before,
+.cm-close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(32 * var(--u)); /* arm length so the X fills the 23px box */
+  height: calc(2.5 * var(--u));
+  background: #f3f3f3;
+  border-radius: 2px;
+}
+.cm-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.cm-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+/* ---- Collection list ----
+   Two collections per row. Left column is 776px wide (the centre rule, Line 16,
+   sits at x=776 — not dead centre). Rows are 182px tall. The centre vertical
+   rule and the inset horizontal rules between rows are drawn here; the full-width
+   rules above the first row / below the last are the header & footer borders. */
+.cm-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: calc(776 * var(--u)) 1fr;
+  grid-auto-rows: calc(182 * var(--u));
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: #ff88b3 rgba(175, 175, 175, 0.25);
+}
+/* Custom scrollbar (Line 14 track + Line 15 pink thumb). */
+.cm-list::-webkit-scrollbar {
+  width: 14px;
+}
+.cm-list::-webkit-scrollbar-track {
+  background: rgba(175, 175, 175, 0.25);
+  border-radius: 10px;
+  margin: 6px 0;
+}
+.cm-list::-webkit-scrollbar-thumb {
+  background: #ff88b3;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* The whole cell is one toggle (square checkbox + name + 2x2 collage). */
+.cm-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(32 * var(--u));
+  min-width: 0;
+  padding: 0 calc(6 * var(--u)) 0 calc(59 * var(--u));
+  border: none;
+  background: transparent;
+  color: #f0f0f0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--t-base) ease;
+}
+.cm-item:nth-child(odd) {
+  border-right: calc(2 * var(--u)) solid var(--line); /* centre vertical rule */
+}
+.cm-item:nth-child(even) {
+  gap: calc(33 * var(--u));
+  padding-left: calc(40 * var(--u));
+  padding-right: calc(34 * var(--u));
+}
+.cm-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+/* Inset horizontal rule between rows (Line 11 / Line 12 — 17px inset on the
+   outer edge, meeting the centre rule). The last row drops it: the footer's
+   full-width top border draws the rule above the footer instead. */
+.cm-item::after {
+  content: "";
+  position: absolute;
+  bottom: calc(-1 * var(--u));
+  height: calc(2 * var(--u));
+  background: var(--line);
+  pointer-events: none;
+}
+.cm-item:nth-child(odd)::after {
+  left: calc(17 * var(--u));
+  right: 0;
+}
+.cm-item:nth-child(even)::after {
+  left: 0;
+  right: calc(17 * var(--u));
+}
+.cm-item:nth-last-child(1)::after,
+.cm-item:nth-last-child(2)::after {
+  display: none;
+}
+
+/* Quick confirm pulse fired when the user presses "+". */
+@keyframes cm-confirm {
+  0% {
+    background: rgba(255, 136, 179, 0);
+  }
+  40% {
+    background: rgba(255, 136, 179, 0.28);
+  }
+  100% {
+    background: rgba(255, 136, 179, 0);
+  }
+}
+.cm-item.is-confirmed {
+  animation: cm-confirm 0.28s var(--ease-pop);
+}
+
+/* Square checkbox — 40x40, #afafaf 3px outline. Empty = transparent; checked =
+   white fill with a grey (#afafaf) tick. */
+.cm-check {
+  flex: 0 0 auto;
+  width: calc(40 * var(--u));
+  height: calc(40 * var(--u));
+  border-radius: calc(5 * var(--u));
+  border: calc(3 * var(--u)) solid var(--line);
+  background: transparent;
+  position: relative;
+  transition:
+    background-color var(--t-fast) ease,
+    border-color var(--t-fast) ease;
+}
+.cm-item.is-selected .cm-check {
+  background: #ffffff;
+}
+.cm-item.is-selected .cm-check::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: calc(12 * var(--u));
+  height: calc(22 * var(--u));
+  border: solid #afafaf;
+  border-width: 0 calc(4 * var(--u)) calc(4 * var(--u)) 0;
+  transform: translate(-50%, -58%) rotate(45deg);
+}
+.cm-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: calc(40 * var(--u)); /* Lao Sangam MN 40px */
+  line-height: 1.05;
+  color: #f0f0f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 2x2 poster collage, right-aligned in the cell (Figma: 136x170 flush tiles,
+   right edge at x=770 left col / x=1434 right col). */
+.cm-collage {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  width: calc(136 * var(--u));
+  height: calc(170 * var(--u));
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.3);
+}
+.cm-poster {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---- Footer: new collection ----
+   156px tall, full-width top rule (Line 17). Pieces are placed at their exact
+   Figma x: label at 146, input field 463 (700x70), "+" circle at 1188 (48x48). */
+.cm-footer {
+  position: relative;
+  flex: 0 0 calc(156 * var(--u));
+  border-top: calc(2 * var(--u)) solid var(--line);
+}
+.cm-newlabel {
+  position: absolute;
+  left: calc(146 * var(--u));
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: calc(40 * var(--u));
+  color: #f0f0f0;
+  white-space: nowrap;
+}
+.cm-newfield {
+  position: absolute;
+  left: calc(463 * var(--u));
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(700 * var(--u));
+  height: calc(70 * var(--u));
+}
+/* Input — a dark reddish/purple field: pink (#ff88b3) at 18% over the near-black
+   bottom-right of the panel gradient. No border, lightly rounded. */
+.cm-input {
+  width: 100%;
+  height: 100%;
+  padding: 0 calc(28 * var(--u));
+  border: none;
+  border-radius: calc(16 * var(--u));
+  background: rgba(255, 136, 179, 0.18);
+  color: #f0f0f0;
+  font-family: inherit;
+  font-size: calc(30 * var(--u));
+  outline: none;
+  transition: background var(--t-base) ease;
+}
+.cm-input::placeholder {
+  color: rgba(240, 240, 240, 0.5);
+}
+.cm-input:focus {
+  background: rgba(255, 136, 179, 0.26);
+}
+/* "+" — a 48px circle outlined in #f3f3f3 with a #f3f3f3 plus inside. */
+.cm-add {
+  position: absolute;
+  left: calc(1188 * var(--u));
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(48 * var(--u));
+  height: calc(48 * var(--u));
+  padding: 0;
+  border-radius: 50%;
+  border: calc(2 * var(--u)) solid #f3f3f3;
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+.cm-add:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.cm-add:active {
+  transform: translateY(-50%) scale(0.92);
+}
+.cm-add::before,
+.cm-add::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: #f3f3f3;
+  border-radius: 2px;
+}
+.cm-add::before {
+  width: calc(22 * var(--u));
+  height: calc(2.5 * var(--u));
+  transform: translate(-50%, -50%);
+}
+.cm-add::after {
+  width: calc(2.5 * var(--u));
+  height: calc(22 * var(--u));
+  transform: translate(-50%, -50%);
+}
+
+/* ---- Phone: drop the fixed Figma geometry for a readable stacked layout ---- */
+@media (max-width: 760px) {
+  .cm-panel {
+    container-type: normal;
+    width: 100%;
+    aspect-ratio: auto;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    border-radius: 14px;
+  }
+  .cm-header {
+    flex: 0 0 auto;
+    padding: 16px;
+  }
+  .cm-title {
+    font-size: clamp(22px, 6vw, 30px);
+  }
+  .cm-close {
+    width: 24px;
+    height: 24px;
+    top: 14px;
+    right: 16px;
+  }
+  .cm-close::before,
+  .cm-close::after {
+    width: 26px;
+    height: 2.5px;
+  }
+  .cm-list {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
+  .cm-item {
+    gap: 14px !important;
+    padding: 14px 16px !important;
+    border-right: none !important;
+  }
+  .cm-item::after {
+    left: 0 !important;
+    right: 0 !important;
+    height: 1px;
+  }
+  .cm-check {
+    width: 26px;
+    height: 26px;
+    border-width: 2px;
+  }
+  .cm-item.is-selected .cm-check::after {
+    width: 8px;
+    height: 15px;
+    border-width: 0 3px 3px 0;
+  }
+  .cm-name {
+    font-size: clamp(16px, 4.5vw, 20px);
+  }
+  .cm-collage {
+    width: 84px;
+    height: 105px;
+  }
+  .cm-footer {
+    position: static;
+    flex: 0 0 auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+  }
+  .cm-newlabel,
+  .cm-newfield {
+    position: static;
+    transform: none;
+  }
+  /* keep relative so the "+" pseudo-elements stay anchored to the button */
+  .cm-add {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+  }
+  .cm-newlabel {
+    font-size: 18px;
+  }
+  .cm-newfield {
+    flex: 1 1 160px;
+    width: auto;
+    height: 48px;
+  }
+  .cm-input {
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+  .cm-add {
+    width: 44px;
+    height: 44px;
+  }
+  .cm-add:active {
+    transform: scale(0.92);
+  }
+  .cm-add::before {
+    width: 18px;
+    height: 2.5px;
+  }
+  .cm-add::after {
+    width: 2.5px;
+    height: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-overlay,
+  .cm-panel {
+    transition: none;
+  }
+}

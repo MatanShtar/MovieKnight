@@ -320,10 +320,23 @@
   transform: translateY(0);
 }
 
-/* Apply button - bottom-right of the filter panel; closes the panel (selections persist) */
-.filter-apply-btn {
-  align-self: flex-end;
+/* Apply button - statically anchored to the bottom-right of the filter panel at
+   all times; closes the panel (selections persist). "Clear Filters" (shown only
+   when a filter is active) is pushed to the far left via margin-right:auto, so
+   Apply never shifts position whether or not Clear is present. */
+.filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
   margin-top: 4px;
+}
+
+/* Clear + Apply share the same button styling; Clear is just pushed to the far
+   left (margin-right:auto) so Apply stays anchored bottom-right. */
+.filter-clear-btn,
+.filter-apply-btn {
+  margin-top: 0;
   padding: 9px 28px;
   background: rgba(var(--maroon), 0.6);
   color: var(--text);
@@ -331,14 +344,20 @@
   border-radius: 10px;
   font-family: inherit;
   font-size: 15px;
+  text-decoration: none;
   cursor: pointer;
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap);
 }
+.filter-clear-btn {
+  margin-right: auto; /* keeps Apply pinned right regardless of Clear's presence */
+}
+.filter-clear-btn:hover,
 .filter-apply-btn:hover {
   background: rgba(var(--maroon), 0.9);
 }
+.filter-clear-btn:active,
 .filter-apply-btn:active {
   transform: scale(0.96);
 }
@@ -462,9 +481,11 @@
 .pill-list {
   display: flex;
   flex-direction: row;
+  flex-wrap: nowrap; /* pills stay side-by-side on one row */
   align-items: center;
   gap: 8px;
-  height: 100%;
+  flex: 1 1 auto;
+  min-width: 0; /* allow the list to shrink so the +/Clear stay in the box */
 }
 
 .pill-list:empty {
@@ -483,6 +504,8 @@
   align-items: center;
   position: relative;
   white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0; /* let pills shrink (and names truncate) to stay on one row */
   animation: pillPop 0.25s var(--ease-pop) both;
 }
 
@@ -497,27 +520,37 @@
   }
 }
 
+/* Long names (e.g. actors) truncate with an ellipsis; the full name shows in a
+   hover tooltip (see .pill-tooltip). Keeps both pills on one row. */
+.pill-name {
+  display: inline-block;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: default; /* no text/I-beam cursor over the name */
+}
+
 .pill-item .pill-remove {
   font-size: 15px;
   line-height: 1;
   width: 17px;
   height: 17px;
-  border-radius: 50%;
   cursor: pointer;
   opacity: 0.75;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition:
-    opacity var(--t-fast) ease,
-    background-color var(--t-fast) ease,
-    color var(--t-fast) ease;
+  flex: 0 0 auto; /* fixed size — never shrinks or shifts */
+  transition: opacity var(--t-fast) ease;
 }
 
+/* Brighten on hover only — no scaling, so the × stays put. */
 .pill-item .pill-remove:hover {
   opacity: 1;
-  background-color: rgba(var(--danger), 0.25);
-  color: rgb(var(--danger));
 }
 
 .pill-overflow {
@@ -541,22 +574,23 @@
   bottom: 120%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(var(--maroon), 0.95);
+  background-color: rgba(20, 20, 20, 0.95); /* black, matching the wheel tooltip */
   color: white;
   text-shadow: none;
   line-height: 1;
-  padding: 6px 10px;
+  padding: 6px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: 8px;
   white-space: nowrap;
   font-size: 13px;
   z-index: 1000;
   pointer-events: none;
 }
 
-.pill-overflow:hover .pill-tooltip {
+.pill-overflow:hover .pill-tooltip,
+.pill-item:hover .pill-tooltip {
   visibility: visible;
   opacity: 1;
 }
@@ -566,6 +600,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0; /* the +/Clear buttons are never squeezed out of the row */
 }
 
 .pill-add-btn {
@@ -598,6 +633,35 @@
 .pill-add-btn:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
+}
+
+/* Disabled "+" (Actor / Director — no backend people-search yet): greyed out,
+   not-allowed, and inert to hover/active so it clearly reads as unavailable. */
+.pill-add-btn--soon {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+.pill-add-btn--soon:hover,
+.pill-add-btn--soon:active {
+  background-color: rgba(255, 255, 255, 0.12);
+  transform: none;
+}
+
+/* Small "Coming Soon" badge sitting next to a not-yet-wired filter label. */
+.coming-soon-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  color: rgb(var(--pink));
+  background: rgba(var(--pink), 0.14);
+  border: 1px solid rgba(var(--pink), 0.4);
+  cursor: default;
 }
 
 /* 6. The Dropdown Menu */
@@ -654,20 +718,25 @@
   width: 90px;
 }
 
+/* Pinned to the top of the (scrolling) dropdown so it stays visible while the
+   list scrolls underneath. The solid background hides names passing behind it. */
 .dropdown-search {
-  width: 90%;
-  margin: 10px 5%;
-  padding: 8px 12px;
-  background-color: rgba(var(--pink), 0.1);
-  border: 1px solid rgba(var(--pink), 0.3);
-  border-radius: 6px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 10px 14px;
+  background-color: rgb(var(--maroon-light));
+  border: none;
+  border-bottom: 1px solid rgba(var(--pink), 0.3);
+  border-radius: 8px 8px 0 0;
   color: white;
   font-size: 14px;
   outline: none;
   font-family: inherit;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .dropdown-search::placeholder {
@@ -675,8 +744,15 @@
 }
 
 .dropdown-search:focus {
-  border-color: rgba(var(--pink), 0.8);
-  box-shadow: 0 0 0 3px rgba(var(--pink), 0.15);
+  border-bottom-color: rgba(var(--pink), 0.8);
+}
+
+/* Non-interactive "No people found" row in the actor/director dropdowns */
+.pill-option--empty,
+.pill-option--empty:hover {
+  color: rgba(255, 255, 255, 0.6);
+  background-color: transparent;
+  cursor: default;
 }
 
 /* ==========================================
@@ -817,12 +893,33 @@
   padding: 8px;
 }
 
+/* Friendly empty / error state shown in place of the cards */
+.grid-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 22px;
+  color: var(--text-muted);
+}
+
+/* Infinite-scroll sentinel: a 1px full-row marker the IntersectionObserver
+   watches. `overflow-anchor: none` keeps the browser from ever choosing it as
+   the scroll-anchor element, so appending cards above it can't yank the view. */
+#infinite-scroll-sentinel {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 1px;
+  pointer-events: none;
+  overflow-anchor: none;
+}
+
 .movie-card {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+  cursor: pointer; /* the whole card opens the movie details page */
   aspect-ratio: 2 / 3; /* card fills its grid track; height follows from the 2:3 ratio */
   border: 3px solid rgb(var(--rose));
   transition:
@@ -881,11 +978,23 @@
 .poster-img {
   width: 100%;
   height: 100%;
+  aspect-ratio: 2 / 3; /* fixed ratio so the box is reserved before the asset loads */
   object-fit: cover;
+  display: block;
+  /* Skeleton fill shown until the image decodes — no flash of empty space and,
+     with the fixed ratio above, no reflow when the poster paints in. */
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .movie-card--skeleton {
   cursor: default;
+  /* Reserve the exact same box a real card occupies so the grid never
+     collapses while a page is in flight. width fills the grid track and the
+     inherited aspect-ratio: 2/3 fixes the height off that width — keeping the
+     skeleton identical in size to the card that replaces it (no reflow jump). */
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  flex: 0 0 auto;
   border-color: rgba(var(--rose), 0.35);
   background: linear-gradient(
     90deg,

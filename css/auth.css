@@ -103,6 +103,7 @@
 .input-group input:-webkit-autofill:focus,
 .input-group input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
+  /* !important: overrides the browser's user-agent autofill text color. */
   -webkit-text-fill-color: white !important;
   caret-color: white;
 }
@@ -136,6 +137,37 @@
   transform: scale(0.96);
 }
 
+/* Loading state: greyed out + unclickable, with no hover lift or press scale. */
+.submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submit-btn:disabled:hover {
+  background-color: rgba(var(--rose), 0.5);
+  box-shadow: none;
+}
+
+.submit-btn:disabled:active {
+  transform: none;
+}
+
+/* Status line shown BENEATH the submit button while a request is in flight. */
+.form-loading {
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  margin: -2px 0 8px;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.form-loading.show {
+  visibility: visible;
+  opacity: 1;
+}
+
 /* Bottom Links */
 .form-links p {
   color: var(--text);
@@ -156,6 +188,9 @@
 /* ==========================================
    4. FORM VALIDATION ERRORS
    ========================================== */
+/* !important: `.input-error` (0,1,0) is applied to the input element, but
+   `.input-group input` (0,1,1) sets these same three properties at higher
+   specificity, so the error styling needs !important to win. */
 .input-error {
   border: 1px solid rgb(var(--danger-input)) !important;
   box-shadow: 0 0 10px rgba(var(--danger-input), 0.3) !important;

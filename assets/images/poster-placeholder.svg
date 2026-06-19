@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="750" viewBox="0 0 500 750" fill="none" role="img" aria-label="Poster unavailable">
+  <defs>
+    <linearGradient id="mk-ph-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#591e26"/>
+      <stop offset="55%" stop-color="#3a1820"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="500" height="750" fill="url(#mk-ph-bg)"/>
+  <g fill="none" stroke="#bc6676" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" opacity="0.85">
+    <!-- film clapper-board glyph, centred -->
+    <rect x="160" y="330" width="180" height="120" rx="10"/>
+    <path d="M160 360 H340"/>
+    <path d="M185 330 L205 360 M225 330 L245 360 M265 330 L285 360 M305 330 L325 360"/>
+  </g>
+  <text x="250" y="510" text-anchor="middle" font-family="'Lao Sangam MN', 'Segoe UI', sans-serif" font-size="30" fill="#ff88b3" opacity="0.9">MovieKnight</text>
+  <text x="250" y="548" text-anchor="middle" font-family="'Lao Sangam MN', 'Segoe UI', sans-serif" font-size="20" fill="#e2e2e2" opacity="0.6">Poster unavailable</text>
+</svg>

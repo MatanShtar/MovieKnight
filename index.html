@@ -7,10 +7,13 @@
     <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
     <link rel="stylesheet" href="css/common.css" />
     <link rel="stylesheet" href="css/home.css" />
+    <link rel="stylesheet" href="css/collection-modal.css" />
     <link rel="stylesheet" href="vendor/toastify/toastify.min.css" />
     <script src="vendor/toastify/toastify.min.js" defer></script>
     <script src="js/toast.js" defer></script>
     <script src="js/common.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/collection-modal.js" defer></script>
     <script src="js/home.js" defer></script>
   </head>
 
@@ -115,9 +118,8 @@
           </div>
 
           <a
-            href="#"
+            href="about.html"
             class="nav-link about-link"
-            data-toast="soon:Coming Soon!"
           >
             <img
               src="assets/images/icons/about-icon.svg"
@@ -349,9 +351,14 @@
                   </div>
                 </div>
 
-                <button class="filter-apply-btn" id="filterApplyBtn">
-                  Apply
-                </button>
+                <div class="filter-actions">
+                  <button class="filter-clear-btn" id="filterClearBtn">
+                    Clear
+                  </button>
+                  <button class="filter-apply-btn" id="filterApplyBtn">
+                    Apply
+                  </button>
+                </div>
               </div>
             </div>
             <div class="sort-dropdown" id="sortDropdownContainer">
@@ -367,7 +374,11 @@
         </div>
 
         <section class="movie-grid" id="movieGrid">
-          <!-- movie cards are injected by js/home.js from data/movies.json -->
+          <!-- movie cards are injected by js/home.js via js/api.js (live backend) -->
+          <!-- Infinite-scroll sentinel: kept as the last grid child; the
+               IntersectionObserver in home.js watches it and new cards are
+               inserted before it. -->
+          <div id="infinite-scroll-sentinel" aria-hidden="true"></div>
         </section>
       </main>
 
