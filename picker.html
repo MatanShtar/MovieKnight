@@ -9,11 +9,13 @@
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="vendor/toastify/toastify.min.css">
     <link rel="stylesheet" href="css/picker.css">
+    <link rel="stylesheet" href="css/chopping.css">
     <script src="vendor/toastify/toastify.min.js" defer></script>
     <script src="js/toast.js" defer></script>
     <script src="js/common.js" defer></script>
     <script src="js/api.js" defer></script>
     <script src="js/picker.js" defer></script>
+    <script src="js/chopping.js" defer></script>
 </head>
 
 <body class="app-body feature-page">
@@ -101,12 +103,52 @@
                     <button class="generate-wheel-btn" id="generateBtn">GENERATE WHEEL</button>
                 </div>
 
-                <!-- THE CHOPPING BLOCK: not built yet -->
+                <!-- THE CHOPPING BLOCK: player + game setup -->
                 <div class="picker-panel" data-panel="chopping">
-                    <div class="coming-soon">
-                        <h2>The Chopping Block</h2>
-                        <p>Coming Soon</p>
+                    <div class="cb-setup" id="cbSetup">
+                        <div class="cb-config">
+                            <div class="cb-col-left">
+                                <div class="cb-add-row">
+                                    <label class="cb-label" for="cbPlayerInput">Add Player :</label>
+                                    <input type="text" class="cb-input-pill" id="cbPlayerInput"
+                                           maxlength="20" placeholder="Type a name, then +"
+                                           aria-label="Add a player">
+                                    <button class="cb-add-btn" id="cbAddPlayerBtn" type="button" aria-label="Add player">
+                                        <img src="assets/images/icons/plus-icon.svg" alt="">
+                                    </button>
+                                </div>
+                                <div class="cb-players" id="cbPlayerTags"></div>
+                            </div>
+
+                            <div class="cb-col-right">
+                                <div class="cb-stat-row">
+                                    <span class="cb-label">Eliminations Per Player :</span>
+                                    <div class="cb-slider" id="cbSlider"></div>
+                                </div>
+                                <div class="cb-stat-row">
+                                    <span class="cb-label">Total Number of Players :</span>
+                                    <span class="cb-pill" id="cbTotalPlayers">2</span>
+                                </div>
+                                <div class="cb-stat-row">
+                                    <span class="cb-label">Random Order :</span>
+                                    <label class="cb-toggle">
+                                        <input type="checkbox" id="cbRandomOrder" checked>
+                                        <span class="cb-toggle-track"></span>
+                                        <span class="cb-toggle-handle"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cb-random">
+                            <span class="cb-label">Random Movies Selected :</span>
+                            <span class="cb-pill" id="cbTotalMovies">5</span>
+                        </div>
+
+                        <p class="cb-error" id="cbError">Not enough movies in the collection</p>
                     </div>
+
+                    <button class="generate-wheel-btn cb-start" id="cbStartBtn">START</button>
                 </div>
 
                 <!-- LET AI CHOOSE: placeholder setup (no LLM wired up yet) -->

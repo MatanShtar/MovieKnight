@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Chopping Block - MovieKnight</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css">
+    <link rel="stylesheet" href="css/chopping.css">
+
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/toast.js" defer></script>
+    <script src="js/common.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/chopping.js" defer></script>
+</head>
+
+<body class="app-body feature-page">
+    <div class="app-container">
+        <header class="mobile-topbar">
+            <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Open menu" aria-expanded="false">
+                <img src="assets/images/icons/hamburger-menu-icon.svg" alt="">
+            </button>
+            <a class="mobile-brand" href="index.html">
+                <img class="mobile-brand-knight" src="assets/images/knight-minimal-logo.svg" alt="">
+                <img class="mobile-brand-text" src="assets/images/movie-knight-wordmark.svg" alt="MovieKnight">
+            </a>
+        </header>
+
+        <aside class="sidebar">
+            <a class="sidebar-logo" href="index.html">
+                <img src="assets/images/movie-knight-logo-sidebar.svg" alt="MovieKnight" class="nav-logo">
+            </a>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link">
+                    <img src="assets/images/icons/home-icon.svg" alt="Home Icon" class="nav-logo"> Home
+                </a>
+                <a href="#" class="nav-link" data-toast="soon:Coming Soon!">
+                    <img src="assets/images/icons/explore-icon.svg" alt="Explore Icon" class="nav-logo"> Explore
+                </a>
+                <a href="profile.html" class="nav-link">
+                    <img src="assets/images/icons/profile-icon.svg" alt="Profile Icon" class="nav-logo"> Profile
+                </a>
+                <div class="settings-container" id="sidebarSettings" style="display: none">
+                    <a href="#" class="nav-link" id="settingsToggleBtn">
+                        <img src="assets/images/icons/settings-icon.svg" alt="Settings" class="nav-logo"> Settings
+                        <span class="settings-arrow"></span>
+                    </a>
+                    <div class="settings-submenu" id="settingsSubmenu">
+                        <a href="#" data-toast="soon:Coming Soon!"><img src="assets/images/icons/preferences-icon.svg" alt="Pref"> Preferences</a>
+                        <a href="#" data-toast="soon:Coming Soon!"><img src="assets/images/icons/account-icon.svg" alt="Account"> Account Settings</a>
+                    </div>
+                </div>
+                <a href="about.html" class="nav-link about-link">
+                    <img src="assets/images/icons/about-icon.svg" alt="About Icon" class="nav-logo">
+                    <span>About</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content cb-game" id="cbGame">
+            <div class="cb-page-header">
+                <a href="picker.html" class="back-btn" data-back="picker.html">Back</a>
+                <img src="assets/images/login-logo-text.svg" alt="MovieKnight" class="wheel-main-logo">
+            </div>
+
+            <div class="feature-tabs" id="choppingHeaderBar">
+                <p>THE CHOPPING BLOCK</p>
+            </div>
+
+            <h2 class="cb-turn" id="cbTurn">Niv&rsquo;s Turn</h2>
+
+            <section class="cb-stage">
+                <div class="cb-carousel" id="cbCarousel"></div>
+            </section>
+        </main>
+
+        <aside class="user-rail">
+            <div class="header-login-container" id="headerAuthContainer">
+                <button class="header-login-btn" id="loginBtn" onclick="window.location.href = 'login.html'">
+                    <p>Login</p>
+                </button>
+                <div class="user-profile-display" id="userProfileDisplay" style="display: none">
+                    <div class="user-welcome">
+                        <span class="welcome-text">Good to see you,</span>
+                        <span class="username-text" id="displayUsername">User</span>
+                    </div>
+                    <button id="headerProfileBtn" class="header-profile-btn">
+                        <img src="assets/images/icons/account-icon.svg" alt="Profile" class="profile-pic">
+                    </button>
+                    <div class="header-dropdown" id="headerDropdown">
+                        <a href="profile.html">Profile</a>
+                        <a href="#" data-toast="soon:Coming Soon!">Settings</a>
+                        <a href="index.html" id="signOutBtn" class="danger-text">Sign Out</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="nav-backdrop" id="navBackdrop" hidden></div>
+    </div>
+
+    <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+    <div class="winner-overlay" id="winnerOverlay">
+        <div class="winner-box">
+            <button class="winner-close" id="winnerClose" aria-label="Close">&#10005;</button>
+            <div class="winner-header">WE HAVE A WINNER!</div>
+            <img class="winner-poster" id="winnerPoster" src="assets/images/poster-placeholder.svg" alt="">
+            <div class="winner-title" id="winnerTitle"></div>
+            <button class="winner-remove" id="cbPlayAgain">Play Again</button>
+        </div>
+    </div>
+</body>
+
+</html>

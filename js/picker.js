@@ -209,16 +209,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const pickerTabs = document.getElementById('pickerTabs');
     const panels = document.querySelectorAll('.picker-panel');
 
+    function activatePanel(name) {
+        const tab = pickerTabs?.querySelector(`.tab-btn[data-panel="${name}"]`);
+        if (!tab) return;
+        pickerTabs.querySelectorAll('.tab-btn')
+            .forEach(t => t.classList.toggle('active', t === tab));
+        panels.forEach(p =>
+            p.classList.toggle('active', p.dataset.panel === name));
+    }
+
     if (pickerTabs) {
         pickerTabs.addEventListener('click', (e) => {
             const tab = e.target.closest('.tab-btn');
             if (!tab) return;
-
-            pickerTabs.querySelectorAll('.tab-btn')
-                .forEach(t => t.classList.toggle('active', t === tab));
-            panels.forEach(p =>
-                p.classList.toggle('active', p.dataset.panel === tab.dataset.panel));
+            activatePanel(tab.dataset.panel);
         });
+
+        // Deep-link to a specific game option, e.g. picker.html?panel=chopping
+        const wanted = new URLSearchParams(location.search).get('panel');
+        if (wanted) activatePanel(wanted);
     }
 
     // --- D. Generate Wheel: validate, then collapse the other two options so
