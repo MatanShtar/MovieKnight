@@ -106,7 +106,7 @@ function paintDetails(d) {
   // Cast / genres with a non-bold label, matching the Figma.
   const cast = el("mdCast");
   if (d.cast && d.cast.length) {
-    cast.innerHTML = `<strong>Cast:</strong> ${d.cast.join(", ")}`;
+    cast.innerHTML = `<strong>Cast:</strong> ${d.cast.map(escapeHtml).join(", ")}`;
     cast.style.display = "";
   } else {
     cast.style.display = "none";
@@ -114,7 +114,7 @@ function paintDetails(d) {
 
   const genres = el("mdGenres");
   if (d.genres && d.genres.length) {
-    genres.innerHTML = `<strong>Genres:</strong> ${d.genres.join(", ")}`;
+    genres.innerHTML = `<strong>Genres:</strong> ${d.genres.map(escapeHtml).join(", ")}`;
     genres.style.display = "";
   } else {
     genres.style.display = "none";

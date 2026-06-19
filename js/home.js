@@ -349,9 +349,14 @@ function movieSkeletonMarkup(n) {
 }
 
 function buildMovieCard(m) {
+  // Escape TMDB-supplied strings before they go into attributes / markup —
+  // a title containing a double-quote would otherwise break data-title / alt
+  // (and that corrupted value then flows into sessionStorage -> the movie page).
+  const title = escapeHtml(m.title);
+  const poster = escapeHtml(m.posterPath);
   return `
-    <article class="movie-card" data-id="${m.id ?? ""}" data-title="${m.title}" data-rating="${m.rating}" data-year="${m.releaseYear}" data-popularity="${m.popularity}" data-poster="${m.posterPath}">
-      <img src="${m.posterPath}" alt="${m.title}" class="poster-img" loading="lazy" decoding="async">
+    <article class="movie-card" data-id="${m.id ?? ""}" data-title="${title}" data-rating="${m.rating}" data-year="${m.releaseYear}" data-popularity="${m.popularity}" data-poster="${poster}">
+      <img src="${poster}" alt="${title}" class="poster-img" loading="lazy" decoding="async">
       <div class="rating-badge">
         ${Number(m.rating).toFixed(1)}
         <img src="assets/images/icons/ratings-star.svg" alt="Rating" class="ratings-star-img">
@@ -366,7 +371,7 @@ function buildMovieCard(m) {
         <button class="icon-btn">
           <img src="assets/images/icons/plus-icon.svg" alt="Add to collection" class="ratings-star-img">
         </button>
-        <div class="movie-title-pill">${m.title} (${m.releaseYear})</div>
+        <div class="movie-title-pill">${title} (${m.releaseYear})</div>
       </div>
     </article>`;
 }
