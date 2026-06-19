@@ -1,4 +1,4 @@
-// wheel.js — Drawing, physics, movie search/add, and the winner popup.
+// wheel.js — Drawing, physics, add/remove/rename items, and the winner popup.
 
 // ==========================================
 // 1. STATE
@@ -73,7 +73,7 @@ function renderMovieList(titles) {
 }
 
 // ==========================================
-// 3. SEARCH + ADD / REMOVE INTERACTIONS
+// 3. ADD / REMOVE INTERACTIONS
 // ==========================================
 function setupListInteractions() {
     const listContainer = document.getElementById('wheelMovieList');
