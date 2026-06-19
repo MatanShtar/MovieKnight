@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MovieKnight | Add to Collection (preview)</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+    <link rel="stylesheet" href="css/common.css" />
+    <link rel="stylesheet" href="css/collection-modal.css" />
+    <script src="js/collection-modal.js" defer></script>
+    <script>
+      // Verification-only harness: open the modal on load over the brand
+      // gradient backdrop (the same background the Figma frame blurs behind it).
+      window.addEventListener("DOMContentLoaded", () => {
+        CollectionModal.open("This movie");
+      });
+    </script>
+    <style>
+      /* Verification-only: use the exact Figma backdrop (the blurred page behind
+         the modal in frame 211:905) so the diff isolates the modal itself. */
+      body.cm-preview {
+        margin: 0;
+        min-height: 100vh;
+        background: url("assets/images/_figma-backdrop-preview.png") center / cover
+          no-repeat fixed;
+      }
+      /* The backdrop image is the un-blurred Figma movie page (91:948); the
+         modal's own backdrop-filter blurs it, reproducing the frame's blurred
+         page behind the panel. */
+    </style>
+  </head>
+  <body class="cm-preview"></body>
+</html>

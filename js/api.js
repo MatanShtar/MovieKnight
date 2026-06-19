@@ -15,7 +15,7 @@
 window.MovieAPI = (function () {
     // The TMDB proxy backend. Change this ONE constant to point at a deployed
     // URL (e.g. a Render instance) later — nothing else needs to change.
-    const API_BASE = "http://localhost:3000";
+    const API_BASE = "https://movieknight-server.onrender.com";
 
     // All endpoints live under the /api prefix per the API contract
     // (e.g. /api/movies/search, /api/movies/random).

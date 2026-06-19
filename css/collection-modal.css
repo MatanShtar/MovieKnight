@@ -1,11 +1,17 @@
 /* collection-modal.css — reusable "Add to Collection" modal.
-   Built/owned by js/collection-modal.js; styling follows the Figma
-   "Add to Collection - from movie page" frame (dark panel, pink accents). */
+   Built/owned by js/collection-modal.js. Every measurement is taken straight
+   from the Figma frame "Add to Collection - from movie page" (211:905), whose
+   panel is 1468x829. The panel is a container, and all of its inner geometry is
+   expressed in `--u` units where 1u == 1 Figma px, so the whole modal scales
+   proportionally (pixel-exact at full size, fluid below it). */
 
 .cm-no-scroll {
   overflow: hidden;
 }
 
+/* ---- Overlay ----
+   The Figma frame blurs the page behind the modal (LAYER_BLUR 60) rather than
+   blacking it out, so the dim is light and the work is done by backdrop-filter. */
 .cm-overlay {
   position: fixed;
   inset: 0;
@@ -14,11 +20,11 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  /* Lighter dim so the 80%-opacity box visibly shows the blurred page through it
-     (the Figma frame blurs the backdrop rather than blacking it out). */
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  /* Figma only blurs the page behind the modal — no dark dim — so keep this
+     barely-there and let backdrop-filter do the work. */
+  background: rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
   opacity: 0;
   visibility: hidden;
   transition:
@@ -30,36 +36,35 @@
   visibility: visible;
 }
 
+/* ---- Panel ----
+   Figma "Subtract" fill: an opaque linear gradient running from #666 at the
+   top-left to #000 at the bottom-right (handles 0.81,1.0 -> 0.19,0.0 ≈ 328deg).
+   No stroke. */
 .cm-panel {
-  /* Figma "Add to Collection: from movie page" frame: 1468 x 828.81 cap. */
-  width: min(1468px, 100%);
-  max-width: 1468px;
-  max-height: min(828.81px, calc(100vh - 48px));
-  overflow-y: auto;
-  /* Figma linear gradient: stops at 0/25/64/80/100% running from the bottom-right
-     toward the top-left. The handle sits 278px in from each corner on a 1468x829
-     box, which works out to ~312deg in CSS terms. The whole fill is at 80%
-     opacity (alpha baked into each stop) so the blurred page shows through. */
+  --u: 0.0681198cqw; /* 100/1468 cqw — one Figma px of the 1468-wide panel */
+  --line: #afafaf; /* #afafaf divider rules + checkbox outline */
+  container-type: inline-size;
+  width: min(1468px, calc(100vw - 48px));
+  aspect-ratio: 1468 / 829;
+  display: flex;
+  flex-direction: column;
+  /* Frosted translucent tint — the overlay blurs the page behind, and the panel
+     lets that blurred page (the bright poster on the left) bleed through, tinted
+     by this grey gradient. Opacity baked into each stop. */
   background: linear-gradient(
-    312deg,
-    rgba(0, 0, 0, 0.8) 0%,
-    rgba(25, 25, 25, 0.8) 25%,
-    rgba(65, 65, 65, 0.8) 64%,
-    rgba(82, 82, 82, 0.8) 80%,
-    rgba(102, 102, 102, 0.8) 100%
+    347deg,
+    rgba(0, 0, 0, 0.62) 0%,
+    rgba(10, 10, 10, 0.62) 20%,
+    rgba(34, 34, 34, 0.62) 42%,
+    rgba(60, 60, 60, 0.62) 62%,
+    rgba(88, 88, 88, 0.62) 80%,
+    rgba(116, 116, 116, 0.62) 92%,
+    rgba(132, 132, 132, 0.62) 100%
   );
-  /* Frost the 20% transparency so the box reads as a translucent panel (matches
-     the Figma blur) rather than a flat dark card. */
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 18px;
-  border: 1px solid rgba(var(--pink), 0.45);
-  box-shadow:
-    0 24px 70px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  padding: 26px 34px 30px;
+  border-radius: 16px;
+  overflow: hidden;
   color: #f0f0f0;
-  transform: translateY(16px) scale(0.97);
+  transform: translateY(16px) scale(0.985);
   transition: transform var(--t-base) var(--ease-pop);
 }
 .cm-overlay.is-open .cm-panel {
@@ -69,71 +74,97 @@
 /* ---- Header ---- */
 .cm-header {
   position: relative;
+  flex: 0 0 calc(127 * var(--u)); /* Line 18 sits 127px down */
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 18px;
-  margin-bottom: 0;
-  /* The full-width rule under the title (also the top edge of the grid). */
-  border-bottom: 2px solid rgba(175, 175, 175, 0.75);
+  border-bottom: calc(2 * var(--u)) solid var(--line);
 }
 .cm-title {
   margin: 0;
-  /* Figma: Lao Sangam MN 400, 55px, centred. Scales down on narrow panels. */
-  font-size: clamp(32px, 4vw, 55px);
-  font-weight: 400;
-  line-height: 1.1;
-  text-align: center;
+  font-weight: 400; /* Lao Sangam MN 400, 55px (inherited family) */
+  font-size: calc(55 * var(--u));
+  line-height: 1;
   color: #f0f0f0;
+  /* nudge to the Figma baseline — the font centres a touch high in its line box */
+  transform: translateY(calc(6 * var(--u)));
 }
+/* "X" — a 23x23 icon, 2.5px #f3f3f3 strokes, 46px from the right / 37px down. */
 .cm-close {
   position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  width: 36px;
-  height: 36px;
+  top: calc(37 * var(--u));
+  right: calc(46 * var(--u));
+  width: calc(23 * var(--u));
+  height: calc(23 * var(--u));
+  padding: 0;
   border: none;
   background: transparent;
-  color: #f0f0f0;
-  font-size: 30px;
-  line-height: 1;
   cursor: pointer;
-  opacity: 0.8;
+  opacity: 0.92;
   transition: opacity var(--t-base) ease;
 }
 .cm-close:hover {
   opacity: 1;
 }
-
-/* ---- Collection list ----
-   A table-style grid: two collections per row, separated by thin #afafaf rules
-   (a centre vertical line + horizontal row lines), exactly like the Figma. The
-   cells are transparent so the box gradient shows through; only the divider
-   lines and the box edges are drawn. */
-.cm-list {
-  --cm-line: rgba(175, 175, 175, 0.75); /* #afafaf divider rules */
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  margin-bottom: 26px;
-  /* Full-width rule along the bottom of the grid (above the footer). With an odd
-     count the last cell sits alone, so the list draws this line rather than the
-     cell — keeping it the full width. */
-  border-bottom: 2px solid var(--cm-line);
+.cm-close::before,
+.cm-close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(32 * var(--u)); /* arm length so the X fills the 23px box */
+  height: calc(2.5 * var(--u));
+  background: #f3f3f3;
+  border-radius: 2px;
+}
+.cm-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.cm-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-/* The whole cell is one toggle button (square checkbox + name + 2x2 collage). */
+/* ---- Collection list ----
+   Two collections per row. Left column is 776px wide (the centre rule, Line 16,
+   sits at x=776 — not dead centre). Rows are 182px tall. The centre vertical
+   rule and the inset horizontal rules between rows are drawn here; the full-width
+   rules above the first row / below the last are the header & footer borders. */
+.cm-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: calc(776 * var(--u)) 1fr;
+  grid-auto-rows: calc(182 * var(--u));
+  align-content: start;
+  scrollbar-width: thin;
+  scrollbar-color: #ff88b3 rgba(175, 175, 175, 0.25);
+}
+/* Custom scrollbar (Line 14 track + Line 15 pink thumb). */
+.cm-list::-webkit-scrollbar {
+  width: 14px;
+}
+.cm-list::-webkit-scrollbar-track {
+  background: rgba(175, 175, 175, 0.25);
+  border-radius: 10px;
+  margin: 6px 0;
+}
+.cm-list::-webkit-scrollbar-thumb {
+  background: #ff88b3;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* The whole cell is one toggle (square checkbox + name + 2x2 collage). */
 .cm-item {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 18px;
-  width: 100%;
+  gap: calc(32 * var(--u));
   min-width: 0;
-  min-height: 150px;
-  padding: 12px 22px;
+  padding: 0 calc(6 * var(--u)) 0 calc(59 * var(--u));
   border: none;
-  border-right: 2px solid var(--cm-line); /* centre vertical rule */
-  border-bottom: 2px solid var(--cm-line); /* row rules (incl. above the footer) */
   background: transparent;
   color: #f0f0f0;
   font: inherit;
@@ -141,17 +172,39 @@
   cursor: pointer;
   transition: background-color var(--t-base) ease;
 }
-.cm-item:nth-child(2n) {
-  border-right: none; /* no rule on the outer right edge */
+.cm-item:nth-child(odd) {
+  border-right: calc(2 * var(--u)) solid var(--line); /* centre vertical rule */
 }
-/* A lone last cell (odd count) drops its own rules — the centre line would
-   dangle into an empty cell and the bottom line is drawn by the list instead. */
-.cm-item:last-child {
-  border-right: none;
-  border-bottom: none;
+.cm-item:nth-child(even) {
+  gap: calc(33 * var(--u));
+  padding-left: calc(40 * var(--u));
+  padding-right: calc(34 * var(--u));
 }
 .cm-item:hover {
   background: rgba(255, 255, 255, 0.04);
+}
+/* Inset horizontal rule between rows (Line 11 / Line 12 — 17px inset on the
+   outer edge, meeting the centre rule). The last row drops it: the footer's
+   full-width top border draws the rule above the footer instead. */
+.cm-item::after {
+  content: "";
+  position: absolute;
+  bottom: calc(-1 * var(--u));
+  height: calc(2 * var(--u));
+  background: var(--line);
+  pointer-events: none;
+}
+.cm-item:nth-child(odd)::after {
+  left: calc(17 * var(--u));
+  right: 0;
+}
+.cm-item:nth-child(even)::after {
+  left: 0;
+  right: calc(17 * var(--u));
+}
+.cm-item:nth-last-child(1)::after,
+.cm-item:nth-last-child(2)::after {
+  display: none;
 }
 
 /* Quick confirm pulse fired when the user presses "+". */
@@ -170,13 +223,14 @@
   animation: cm-confirm 0.28s var(--ease-pop);
 }
 
-/* Square checkbox — grey outline when empty, light fill + grey tick when set. */
+/* Square checkbox — 40x40, #afafaf 3px outline. Empty = transparent; checked =
+   white fill with a grey (#afafaf) tick. */
 .cm-check {
   flex: 0 0 auto;
-  width: 40px;
-  height: 40px;
-  border-radius: 6px;
-  border: 3px solid #afafaf;
+  width: calc(40 * var(--u));
+  height: calc(40 * var(--u));
+  border-radius: calc(5 * var(--u));
+  border: calc(3 * var(--u)) solid var(--line);
   background: transparent;
   position: relative;
   transition:
@@ -184,39 +238,40 @@
     border-color var(--t-fast) ease;
 }
 .cm-item.is-selected .cm-check {
-  background: #d9d9d9;
-  border-color: #afafaf;
+  background: #ffffff;
 }
 .cm-item.is-selected .cm-check::after {
   content: "";
   position: absolute;
-  top: 44%;
   left: 50%;
-  width: 11px;
-  height: 20px;
-  border: solid #9a9a9a;
-  border-width: 0 4px 4px 0;
-  transform: translate(-50%, -55%) rotate(45deg);
+  top: 46%;
+  width: calc(12 * var(--u));
+  height: calc(22 * var(--u));
+  border: solid #afafaf;
+  border-width: 0 calc(4 * var(--u)) calc(4 * var(--u)) 0;
+  transform: translate(-50%, -58%) rotate(45deg);
 }
 .cm-name {
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
-  /* Figma names are ~40px Lao Sangam MN. */
-  font-size: clamp(20px, 2.1vw, 40px);
+  font-size: calc(40 * var(--u)); /* Lao Sangam MN 40px */
+  line-height: 1.05;
   color: #f0f0f0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* 2x2 poster collage on the right of each cell (Figma: ~136x170, flush tiles). */
+/* 2x2 poster collage, right-aligned in the cell (Figma: 136x170 flush tiles,
+   right edge at x=770 left col / x=1434 right col). */
 .cm-collage {
   flex: 0 0 auto;
+  margin-left: auto;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  width: 132px;
-  height: 164px;
+  width: calc(136 * var(--u));
+  height: calc(170 * var(--u));
   overflow: hidden;
   background: rgba(0, 0, 0, 0.3);
 }
@@ -227,62 +282,64 @@
   display: block;
 }
 
-/* ---- Footer: new collection ---- */
+/* ---- Footer: new collection ----
+   156px tall, full-width top rule (Line 17). Pieces are placed at their exact
+   Figma x: label at 146, input field 463 (700x70), "+" circle at 1188 (48x48). */
 .cm-footer {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  position: relative;
+  flex: 0 0 calc(156 * var(--u));
+  border-top: calc(2 * var(--u)) solid var(--line);
 }
 .cm-newlabel {
-  /* Figma: "New Collection:" — Lao Sangam MN 400, 40px, #f0f0f0. */
-  font-size: clamp(20px, 2.6vw, 40px);
+  position: absolute;
+  left: calc(146 * var(--u));
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: calc(40 * var(--u));
   color: #f0f0f0;
   white-space: nowrap;
 }
 .cm-newfield {
-  flex: 1;
-  min-width: 0;
+  position: absolute;
+  left: calc(463 * var(--u));
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(700 * var(--u));
+  height: calc(70 * var(--u));
 }
-/* Input — neutral translucent field (NOT pink) with a soft #afafaf border, and
-   only lightly rounded corners (the Figma field is a soft rectangle, not a
-   pill). */
+/* Input — a dark reddish/purple field: pink (#ff88b3) at 18% over the near-black
+   bottom-right of the panel gradient. No border, lightly rounded. */
 .cm-input {
   width: 100%;
-  height: 64px;
-  padding: 0 20px;
-  border-radius: 14px;
-  border: 2px solid rgba(175, 175, 175, 0.55); /* #afafaf, matches dividers */
-  background: rgba(0, 0, 0, 0.28);
+  height: 100%;
+  padding: 0 calc(28 * var(--u));
+  border: none;
+  border-radius: calc(16 * var(--u));
+  background: rgba(255, 136, 179, 0.18);
   color: #f0f0f0;
   font-family: inherit;
-  font-size: clamp(18px, 1.8vw, 28px);
+  font-size: calc(30 * var(--u));
   outline: none;
-  transition:
-    border-color var(--t-base) ease,
-    background var(--t-base) ease;
+  transition: background var(--t-base) ease;
 }
 .cm-input::placeholder {
   color: rgba(240, 240, 240, 0.5);
 }
 .cm-input:focus {
-  border-color: rgba(175, 175, 175, 0.95); /* neutral focus — no pink */
-  background: rgba(0, 0, 0, 0.38);
+  background: rgba(255, 136, 179, 0.26);
 }
-/* "+" — an outlined neutral circle (Figma is a white-stroke icon), not a solid
-   pink button. */
+/* "+" — a 48px circle outlined in #f3f3f3 with a #f3f3f3 plus inside. */
 .cm-add {
-  flex: 0 0 auto;
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: absolute;
+  left: calc(1188 * var(--u));
+  top: 50%;
+  transform: translateY(-50%);
+  width: calc(48 * var(--u));
+  height: calc(48 * var(--u));
+  padding: 0;
   border-radius: 50%;
-  border: 2px solid #f3f3f3;
+  border: calc(2 * var(--u)) solid #f3f3f3;
   background: transparent;
-  color: #f3f3f3;
-  font-size: 34px;
-  line-height: 1;
   cursor: pointer;
   transition:
     background-color var(--t-base) ease,
@@ -292,35 +349,135 @@
   background: rgba(255, 255, 255, 0.12);
 }
 .cm-add:active {
-  transform: scale(0.92);
+  transform: translateY(-50%) scale(0.92);
+}
+.cm-add::before,
+.cm-add::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: #f3f3f3;
+  border-radius: 2px;
+}
+.cm-add::before {
+  width: calc(22 * var(--u));
+  height: calc(2.5 * var(--u));
+  transform: translate(-50%, -50%);
+}
+.cm-add::after {
+  width: calc(2.5 * var(--u));
+  height: calc(22 * var(--u));
+  transform: translate(-50%, -50%);
 }
 
-/* ---- Responsive ---- */
-@media (max-width: 700px) {
+/* ---- Phone: drop the fixed Figma geometry for a readable stacked layout ---- */
+@media (max-width: 760px) {
+  .cm-panel {
+    container-type: normal;
+    width: 100%;
+    aspect-ratio: auto;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+    border-radius: 14px;
+  }
+  .cm-header {
+    flex: 0 0 auto;
+    padding: 16px;
+  }
+  .cm-title {
+    font-size: clamp(22px, 6vw, 30px);
+  }
+  .cm-close {
+    width: 24px;
+    height: 24px;
+    top: 14px;
+    right: 16px;
+  }
+  .cm-close::before,
+  .cm-close::after {
+    width: 26px;
+    height: 2.5px;
+  }
   .cm-list {
-    grid-template-columns: 1fr; /* stack to one collection per row on phones */
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
   }
   .cm-item {
-    border-right: none; /* no centre rule in a single column */
-    min-height: 120px;
+    gap: 14px !important;
+    padding: 14px 16px !important;
+    border-right: none !important;
   }
-  .cm-collage {
-    width: 104px;
-    height: 130px;
+  .cm-item::after {
+    left: 0 !important;
+    right: 0 !important;
+    height: 1px;
   }
-}
-@media (max-width: 560px) {
-  .cm-title {
-    font-size: 30px;
+  .cm-check {
+    width: 26px;
+    height: 26px;
+    border-width: 2px;
+  }
+  .cm-item.is-selected .cm-check::after {
+    width: 8px;
+    height: 15px;
+    border-width: 0 3px 3px 0;
   }
   .cm-name {
-    font-size: 20px;
+    font-size: clamp(16px, 4.5vw, 20px);
   }
-  .cm-newlabel {
-    font-size: 20px;
+  .cm-collage {
+    width: 84px;
+    height: 105px;
   }
   .cm-footer {
+    position: static;
+    flex: 0 0 auto;
+    display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 16px;
+  }
+  .cm-newlabel,
+  .cm-newfield {
+    position: static;
+    transform: none;
+  }
+  /* keep relative so the "+" pseudo-elements stay anchored to the button */
+  .cm-add {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+  }
+  .cm-newlabel {
+    font-size: 18px;
+  }
+  .cm-newfield {
+    flex: 1 1 160px;
+    width: auto;
+    height: 48px;
+  }
+  .cm-input {
+    padding: 0 14px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+  .cm-add {
+    width: 44px;
+    height: 44px;
+  }
+  .cm-add:active {
+    transform: scale(0.92);
+  }
+  .cm-add::before {
+    width: 18px;
+    height: 2.5px;
+  }
+  .cm-add::after {
+    width: 2.5px;
+    height: 18px;
   }
 }
 

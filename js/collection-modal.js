@@ -11,12 +11,13 @@
 // success toast: "<Movie> added to <Collection>".
 
 window.CollectionModal = (function () {
-  // Mock collections shown in the grid — the three default collections, each
-  // with a 2x2 poster collage. (No backend yet; the checked state is purely the
-  // UI prep for the eventual handoff.)
+  // Mock collections shown in the grid — two per row, each with a 2x2 poster
+  // collage, matching the Figma frame (Watchlist + Chick Flicks pre-checked).
+  // The list scrolls (custom pink scrollbar) when there are more than fit. No
+  // backend yet; the checked state is UI prep for the eventual handoff.
   const P = "assets/images/posters/";
   const COLLECTIONS = [
-    { name: "Watchlist", checked: false, posters: [
+    { name: "Watchlist", checked: true, posters: [
       P + "bugonia-movie-poster.webp", P + "one-battle-after-another-poster.webp",
       P + "ten-things-i-hate-about-you-poster.webp", P + "marty-supreme-poster.webp" ] },
     { name: "Favorites", checked: false, posters: [
@@ -25,7 +26,30 @@ window.CollectionModal = (function () {
     { name: "Already Watched", checked: false, posters: [
       P + "interstellar-poster.webp", P + "everything-everywhere-all-at-once-poster.webp",
       P + "whiplash-poster.webp", P + "spider-man-into-the-spider-verse-poster.webp" ] },
+    { name: "Chick Flicks", checked: true, posters: [
+      P + "la-la-land-poster.webp", P + "ten-things-i-hate-about-you-poster.webp",
+      P + "the-substance-poster.webp", P + "housemaid-poster.webp" ] },
+    { name: "Wheel 1", checked: false, posters: [
+      P + "dune-part-two-poster.webp", P + "kill-bill-poster.webp",
+      P + "frankenstein-poster.webp", P + "spider-man-into-the-spider-verse-poster.webp" ] },
+    { name: "Wheel 2", checked: false, posters: [
+      P + "oppenheimer-poster.webp", P + "parasite-poster.webp",
+      P + "interstellar-poster.webp", P + "whiplash-poster.webp" ] },
+    { name: "Horror Night", checked: false, posters: [
+      P + "frankenstein-poster.webp", P + "the-substance-poster.webp",
+      P + "housemaid-poster.webp", P + "actual-horror-films-collection.webp" ] },
+    { name: "Date Night", checked: false, posters: [
+      P + "la-la-land-poster.webp", P + "ten-things-i-hate-about-you-poster.webp",
+      P + "pulp-fiction-poster.webp", P + "marty-supreme-poster.webp" ] },
+    { name: "Sci-Fi Picks", checked: false, posters: [
+      P + "dune-part-two-poster.webp", P + "interstellar-poster.webp",
+      P + "spider-man-into-the-spider-verse-poster.webp", P + "oppenheimer-poster.webp" ] },
+    { name: "Comedies", checked: false, posters: [
+      P + "la-la-land-poster.webp", P + "everything-everywhere-all-at-once-poster.webp",
+      P + "kill-bill-poster.webp", P + "bugonia-movie-poster.webp" ] },
   ];
+  // Remember each row's default checked state so resetChecks() can restore it.
+  COLLECTIONS.forEach((c) => (c.def = c.checked));
 
   let overlay = null; // built lazily on first open
   let nameInput = null;
@@ -92,14 +116,16 @@ window.CollectionModal = (function () {
     });
   }
 
-  // Uncheck every collection row and sync the toggle UI. Run on each open so a
-  // stale selection from a previous movie doesn't carry over.
+  // Restore each row to its default checked state and sync the toggle UI. Run on
+  // each open so a stale selection from a previous movie doesn't carry over.
   function resetChecks() {
-    COLLECTIONS.forEach((c) => (c.checked = false));
+    COLLECTIONS.forEach((c) => (c.checked = c.def));
     if (!listEl) return;
-    listEl.querySelectorAll(".cm-item").forEach((item) => {
-      item.classList.remove("is-selected", "is-confirmed");
-      item.setAttribute("aria-checked", "false");
+    listEl.querySelectorAll(".cm-item").forEach((item, i) => {
+      const on = COLLECTIONS[i] && COLLECTIONS[i].checked;
+      item.classList.toggle("is-selected", !!on);
+      item.classList.remove("is-confirmed");
+      item.setAttribute("aria-checked", String(!!on));
     });
   }
 
