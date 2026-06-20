@@ -215,7 +215,7 @@ function setupActions() {
       if (window.requireAuth && !window.requireAuth()) return; // guests blocked
       const active = btn.classList.toggle("is-active");
       const [on, off] = messages[id];
-      if (window.toast) toast[active ? "success" : "info"](active ? on : off);
+      if (window.toast) active ? toast.success(on) : toast.warn(off);
     });
   });
 

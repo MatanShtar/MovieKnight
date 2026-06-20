@@ -52,6 +52,42 @@ function escapeHtml(value) {
 window.escapeHtml = escapeHtml;
 
 // ==========================================
+// 0c. COLLECTION COVER COLLAGE (GLOBAL)
+// ==========================================
+// Build a collection's cover from its first ≤4 movie posters — the SAME rules
+// the profile grid uses, shared so the Add-to-Collection modal matches it:
+// 0 → checkerboard "+" placeholder, 1 → single full poster, 2-3 → two side by
+// side, 4+ → 2×2. A custom uploaded cover (c.posterUrl) wins. (Styles live in
+// common.css under ".collection-cover".)
+function buildCollectionCover(c) {
+  const TILE_ERR =
+    "this.replaceWith(Object.assign(document.createElement('span'),{className:'cover-tile cover-tile--empty'}))";
+  const tileImg = (src) =>
+    `<img class="cover-tile" src="${escapeHtml(src)}" alt="" loading="lazy" onerror="${TILE_ERR}">`;
+  if (c && c.posterUrl) {
+    return `<div class="collection-cover cover-1">${tileImg(c.posterUrl)}</div>`;
+  }
+  const posters = (c && c.posters) || [];
+  const n = posters.length;
+  if (n === 0) {
+    return `<div class="collection-cover cover-empty" role="img" aria-label="No movies yet"><span class="cover-empty__plus" aria-hidden="true"></span></div>`;
+  }
+  let layout, tiles;
+  if (n === 1) {
+    layout = "cover-1";
+    tiles = posters.slice(0, 1);
+  } else if (n <= 3) {
+    layout = "cover-2";
+    tiles = posters.slice(0, 2);
+  } else {
+    layout = "cover-4";
+    tiles = posters.slice(0, 4);
+  }
+  return `<div class="collection-cover ${layout}">${tiles.map(tileImg).join("")}</div>`;
+}
+window.buildCollectionCover = buildCollectionCover;
+
+// ==========================================
 // 1. IMAGE PRELOADING HELPER
 // ==========================================
 function preloadImages(urls, timeoutMs = 2500) {

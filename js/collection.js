@@ -97,9 +97,9 @@
     wrap.hidden = false;
 
     if (isOwner) {
-      // Text-only pill — navigate to the full Add-to-Collection page.
+      // Text-only pill — opens the in-page Add-to-Collection modal.
       const add = actionPill("Add to Collection");
-      add.addEventListener("click", goToAddMovie);
+      add.addEventListener("click", openAddModal);
 
       const pub = actionPill(c.isPublic ? "Unpublish" : "Publish");
       pub.setAttribute(
@@ -130,16 +130,39 @@
     }
   }
 
-  // Navigate to the full-page Add-to-Collection flow (replaces the old overlay
-  // modal). In demo mode there is no real collection id, so there's nothing to
-  // add to — tell the user it's coming.
-  function goToAddMovie() {
-    if (!state.id) {
-      if (window.toast) toast.soon("Add to Collection — Coming Soon!");
-      return;
-    }
-    window.location.href =
-      "add-movie.html?collection=" + encodeURIComponent(state.id);
+  // ---- Add-to-Collection modal (owner) ----------------------------------------
+  // Opens the shared modal (js/add-to-collection-modal.js) overlaid on this
+  // page. The modal owns search + add/remove against the API; we just hand it
+  // this collection's id/name and current movie ids, and refresh on change.
+  function openAddModal() {
+    if (!window.AddToCollectionModal) return;
+    AddToCollectionModal.open(
+      state.id,
+      (state.collection && state.collection.name) || "Collection",
+      {
+        isDemo: state.isDemo,
+        initialMovieIds: state.movies.map((m) => m.id),
+        onChange: (action, movie, updated) => {
+          if (updated) {
+            state.collection = updated;
+            state.movies = sortMovies(updated.movies, state.sort);
+          } else {
+            // demo mode (no API) — add/remove locally
+            if (action === "add") {
+              if (!state.movies.some((x) => x.id === movie.id)) {
+                state.movies.push({ ...movie, addedAt: new Date().toISOString() });
+              }
+            } else {
+              state.movies = state.movies.filter((x) => x.id !== movie.id);
+            }
+            state.collection.movieCount = state.movies.length;
+            state.movies = sortMovies(state.movies, state.sort);
+          }
+          $("colMeta").textContent = metaLine(state.collection, state.isOwner);
+          renderGrid();
+        },
+      }
+    );
   }
 
   // ---- grid -------------------------------------------------------------------
@@ -231,7 +254,7 @@
         cta.type = "button";
         cta.className = "action-pill collection-empty-cta";
         cta.textContent = "Add to Collection";
-        cta.addEventListener("click", goToAddMovie);
+        cta.addEventListener("click", openAddModal);
         empty.appendChild(cta);
       } else {
         empty.innerHTML = `
@@ -383,7 +406,7 @@
 
     if (state.isDemo) {
       removeFromState(m.id);
-      if (window.toast) toast.info(`Removed “${m.title}”.`);
+      if (window.toast) toast.warn(`Removed “${m.title}”.`);
       return;
     }
     try {
@@ -392,7 +415,7 @@
       state.movies = sortMovies(updated.movies, state.sort);
       $("colMeta").textContent = metaLine(updated, state.isOwner);
       renderGrid();
-      if (window.toast) toast.info(`Removed “${m.title}”.`);
+      if (window.toast) toast.warn(`Removed “${m.title}”.`);
     } catch (err) {
       if (window.toast) toast.error(err.message || "Couldn't remove the movie.");
     }
@@ -671,7 +694,7 @@
 
     // Mobile topbar add button → same full-page Add-to-Collection flow (owner only).
     const mobileAdd = $("colMobileAddBtn");
-    if (mobileAdd) mobileAdd.addEventListener("click", goToAddMovie);
+    if (mobileAdd) mobileAdd.addEventListener("click", openAddModal);
 
     $("colPickerBtn").addEventListener("click", () => {
       const q = state.id ? `?collection=${encodeURIComponent(state.id)}` : "";

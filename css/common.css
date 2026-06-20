@@ -834,3 +834,106 @@ body {
     height: 40px;
   }
 }
+
+/* ==========================================
+   COLLECTION COVER COLLAGE (shared: profile grid + Add-to-Collection modal)
+   Built by window.buildCollectionCover() in common.js.
+   ========================================== */
+/* ---- Auto-collage cover (first ≤4 movie posters) ----
+   The COVER is a fixed-aspect box (2:3) so EVERY card cover is the same height
+   regardless of poster count. Tiles fill that box; they never drive the height. */
+.collection-cover {
+  display: grid;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  height: auto;
+  gap: 1px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  border-radius: 1px;
+  transition: transform var(--t-base) var(--ease-snap);
+}
+.collection-card:hover .collection-cover {
+  transform: scale(1.05);
+}
+.collection-cover .cover-tile {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  display: block;
+  background: #4f454b; /* fallback so a missing/broken poster is never a blank cell */
+}
+/* missing-poster placeholder tile */
+.cover-tile--empty {
+  background: #4f454b;
+}
+/* layouts: rows are explicit so tiles stretch to fill the fixed-height box */
+.cover-1 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.cover-2 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+.cover-4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+/* ---- Empty (0-movie) cover ----
+   The Figma placeholder: a light gray/white CHECKERBOARD with a centered circled
+   "+" (clicking it jumps to the add-movies page). Works with the new .cover-empty
+   markup AND the legacy 4-span .cover-0 markup. */
+.cover-empty,
+.cover-0 {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* light gray/white checkerboard (~22px squares) */
+  background: repeating-conic-gradient(#e9e9e9 0% 25%, #ffffff 0% 50%) 0 0 / 44px 44px;
+  cursor: pointer; /* the empty cover / "+" is a shortcut to add movies */
+}
+.cover-0 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.cover-0 .cover-tile--empty {
+  display: none; /* collapse the four legacy placeholder squares into one fill */
+}
+/* circled "+" — medium gray so it reads on the light checkerboard */
+.cover-empty__plus,
+.cover-0::after {
+  content: "";
+  width: 56px;
+  height: 56px;
+  /* ONE colour drives both the ring (border) and the "+" (the two gradient bars)
+     via currentColor, so on hover they darken TOGETHER. Previously only
+     border-color changed and the "+" stayed pale — which read as "blurry". */
+  color: rgba(0, 0, 0, 0.42);
+  border: 4px solid currentColor;
+  border-radius: 50%;
+  background:
+    linear-gradient(currentColor, currentColor) center / 26px 4px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 4px 26px no-repeat;
+  transition: color var(--t-base) ease;
+}
+.cover-0::after {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+}
+.collection-card:hover .cover-empty__plus,
+.collection-card:hover .cover-0::after {
+  color: rgba(0, 0, 0, 0.62);
+}
+
+/* The empty cover paints a crisp CSS "+"; the card no longer scales (lift only,
+   above), and here we also cancel the empty cover's OWN zoom so the "+" gets
+   zero scale on hover and stays sharp. Poster covers still zoom. */
+.collection-card:hover .collection-cover.cover-empty,
+.collection-card:hover .collection-cover.cover-0,
+.collection-card:hover .cover-0 {
+  transform: none;
+}

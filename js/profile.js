@@ -64,40 +64,11 @@
     return card.repeat(n);
   }
 
-  // ---- cover collage (poster-count → layout) ----
-  // A missing/broken poster swaps to a gray placeholder tile (never a blank cell).
-  const TILE_ERR =
-    "this.replaceWith(Object.assign(document.createElement('span'),{className:'cover-tile cover-tile--empty'}))";
-  const tileImg = (src) =>
-    `<img class="cover-tile" src="${escapeHtml(src)}" alt="" loading="lazy" onerror="${TILE_ERR}">`;
-
-  function buildCover(c) {
-    // A custom uploaded cover wins over the auto-collage. It fills the fixed
-    // cover box (object-fit:cover in CSS) so the card height stays uniform.
-    if (c.posterUrl) {
-      return `<div class="collection-cover cover-1">${tileImg(c.posterUrl)}</div>`;
-    }
-    const posters = c.posters || [];
-    const n = posters.length;
-    // 0 movies → a single solid placeholder with a centered circled "+"
-    // (Figma empty cover), NOT four gray squares.
-    if (n === 0) {
-      return `<div class="collection-cover cover-empty" role="img" aria-label="No movies yet"><span class="cover-empty__plus" aria-hidden="true"></span></div>`;
-    }
-    let layout, tiles;
-    if (n === 1) {
-      layout = "cover-1";
-      tiles = posters.slice(0, 1);
-    } else if (n <= 3) {
-      layout = "cover-2"; // first two, side by side (full-height halves)
-      tiles = posters.slice(0, 2);
-    } else {
-      layout = "cover-4"; // 2×2 (1×4 on phones, via CSS)
-      tiles = posters.slice(0, 4);
-    }
-    const cells = tiles.map(tileImg).join("");
-    return `<div class="collection-cover ${layout}">${cells}</div>`;
-  }
+  // ---- cover collage ----
+  // Shared with the Add-to-Collection modal via common.js (buildCollectionCover)
+  // so the layout rules (0 → placeholder, 1 → single, 2-3 → two, 4+ → 2×2) live
+  // in exactly one place.
+  const buildCover = (c) => window.buildCollectionCover(c);
 
   // Abbreviate large counts (e.g. 1240 → "1.2k") so 4–5 digit values don't
   // crowd/overflow the stats row on a narrow card.
@@ -203,7 +174,10 @@
     // ONLY the "+" itself jumps to the add-movies page; clicking anywhere else on
     // the (empty) cover opens the collection page like a normal card.
     if (e.target.closest(".cover-empty__plus")) {
-      if (card && card.dataset.id) window.location.href = addMovieUrl(card.dataset.id);
+      if (card && card.dataset.id) {
+        const nameEl = card.querySelector(".collection-name");
+        openAddFor(card.dataset.id, nameEl && nameEl.textContent);
+      }
       return;
     }
     openCard(card);
@@ -224,8 +198,8 @@
   let activeBtn = null;
 
   const MENU_ITEMS = [
-    // Always first, for every collection (incl. defaults) — navigates to the
-    // full add-movie page for this collection.
+    // Always first, for every collection (incl. defaults) — opens the
+    // Add-to-Collection modal overlaid on the profile.
     { action: "add", icon: "plus", label: "Add to Collection" },
     { action: "rename", icon: "rename", label: "Rename", defaultHidden: true },
     { toggle: true },
@@ -239,7 +213,23 @@
     },
   ];
 
-  const addMovieUrl = (id) => `add-movie.html?collection=${encodeURIComponent(id)}`;
+  // Open the shared Add-to-Collection modal overlaid on the profile, then refresh
+  // the affected card (count + cover) when a movie is added/removed.
+  function openAddFor(id, name) {
+    if (!window.AddToCollectionModal) {
+      if (window.toast) toast.soon("Add to Collection — Coming Soon!");
+      return;
+    }
+    AddToCollectionModal.open(id, name || "Collection", { onChange: refreshCollections });
+  }
+  async function refreshCollections() {
+    try {
+      collections = await MovieAPI.listCollections();
+      renderCards();
+    } catch (_) {
+      /* keep the current grid on a refresh hiccup */
+    }
+  }
 
   function buildItem(item, isPublic) {
     let { action, icon, label } = item;
@@ -321,7 +311,7 @@
       closeMenu();
       const c = byId(id);
       if (!c) return;
-      if (action === "add") window.location.href = addMovieUrl(c.id);
+      if (action === "add") openAddFor(c.id, c.name);
       else if (action === "publish" || action === "unpublish") togglePublish(c);
       else if (action === "copy-link") copyLink(c);
       else if (action === "rename") startRename(c);
@@ -446,7 +436,7 @@
         if (card) card.remove();
         setCount(collections.length);
       }
-      if (window.toast) toast.info(`Deleted “${c.name}”.`);
+      if (window.toast) toast.warn(`Deleted “${c.name}”.`);
     } catch (err) {
       if (window.toast) toast.error(err.message || "Couldn't delete collection.");
     }

@@ -1279,7 +1279,7 @@ if (movieGridEl) {
       Like: ["Added to Favorites", "Removed from Favorites"],
     };
     const [onMsg, offMsg] = messages[label] || ["Coming Soon!", "Coming Soon!"];
-    toast[nowActive ? "success" : "info"](nowActive ? onMsg : offMsg);
+    nowActive ? toast.success(onMsg) : toast.warn(offMsg);
   });
 }
 
