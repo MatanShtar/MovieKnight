@@ -7,27 +7,14 @@
 //                     carousel shell + custom depth), turn order, elimination
 //                     with a "ping-pong graveyard", and the winner overlay.
 //
-// The backend collections aren't wired up yet, so everything runs off the local
-// `mockCollection` below. The setup screen passes its result to the game screen
-// through sessionStorage.
-
-// ==========================================
-// 0. MOCK DATA  (stand-in for a real collection)
-// ==========================================
-const mockCollection = [
-    { id: 1,  title: "Everything Everywhere All At Once", poster_path: "assets/images/posters/everything-everywhere-all-at-once-poster.webp" },
-    { id: 2,  title: "Interstellar",                      poster_path: "assets/images/posters/interstellar-poster.webp" },
-    { id: 3,  title: "Parasite",                          poster_path: "assets/images/posters/parasite-poster.webp" },
-    { id: 4,  title: "The Dark Knight",                   poster_path: "assets/images/posters/the-dark-knight-poster.webp" },
-    { id: 5,  title: "Pulp Fiction",                      poster_path: "assets/images/posters/pulp-fiction-poster.webp" },
-    { id: 6,  title: "Whiplash",                          poster_path: "assets/images/posters/whiplash-poster.webp" },
-    { id: 7,  title: "Dune: Part Two",                    poster_path: "assets/images/posters/dune-part-two-poster.webp" },
-    { id: 8,  title: "Oppenheimer",                       poster_path: "assets/images/posters/oppenheimer-poster.webp" },
-    { id: 9,  title: "La La Land",                        poster_path: "assets/images/posters/la-la-land-poster.webp" },
-    { id: 10, title: "Kill Bill",                         poster_path: "assets/images/posters/kill-bill-poster.webp" },
-];
+// Collections are now live: the setup screen (picker.html) lets the user choose
+// one of their real collections and passes the chosen collectionId to the game
+// screen (chopping.html) through sessionStorage. The game screen fetches the
+// collection's movies from GET /api/collections/:id on load.
 
 const CHOPPING_CONFIG_KEY = "choppingBlockConfig";
+// A game needs at least this many movies to be meaningful (one winner + ≥1 chop).
+const MIN_COLLECTION_SIZE = 2;
 const POSTER_FALLBACK = "assets/images/poster-placeholder.svg";
 
 // ==========================================
@@ -65,6 +52,7 @@ function initSetup() {
     // --- state ---
     const players = ["Matan", "Niv"]; // two seeded players, like the Figma
     let eliminations = 2;             // 1 | 2 | 3
+    let selectedCollection = null;    // the real collection chosen to play from
 
     // --- elements ---
     const input = document.getElementById("cbPlayerInput");
@@ -89,6 +77,28 @@ function initSetup() {
                 </filter>
             </defs></svg>`);
     }
+
+    // --- the collection to play from (no dropdown): comes from the collection
+    //     page via picker.html?collection=<id>, loaded once and shared. ---
+    let collectionError = "";
+    if (window.ActiveCollection) {
+        ActiveCollection.load()
+            .then((collection) => {
+                if (collection) selectedCollection = collection;
+                else collectionError = "Open a collection to play.";
+                refresh();
+            })
+            .catch((err) => {
+                collectionError = err.message || "Couldn't load the collection.";
+                refresh();
+            });
+    }
+
+    // How many movies the chosen collection holds (0 until one is picked).
+    const collectionSize = () =>
+        selectedCollection && Array.isArray(selectedCollection.movies)
+            ? selectedCollection.movies.length
+            : 0;
 
     // (Players * Eliminations) + 1
     const totalMovies = () => players.length * eliminations + 1;
@@ -210,13 +220,18 @@ function initSetup() {
         const movies = totalMovies();
         bump(totalMoviesEl, movies);
 
+        const noCollection = !selectedCollection;
+        const collSize = collectionSize();
+        const tooSmall = !noCollection && collSize < MIN_COLLECTION_SIZE;
         const noPlayers = players.length < 1;                 // single player is allowed
-        const notEnoughMovies = movies > mockCollection.length;
-        const invalid = noPlayers || notEnoughMovies;
+        const notEnoughMovies = !noCollection && !tooSmall && movies > collSize;
+        const invalid = noCollection || tooSmall || noPlayers || notEnoughMovies;
 
         let msg = "";
-        if (noPlayers) msg = "Add at least one player to start.";
-        else if (notEnoughMovies) msg = "Not enough movies in the collection.";
+        if (noCollection) msg = collectionError; // "Open a collection…" / load error (empty while loading)
+        else if (tooSmall) msg = `This collection has only ${collSize} movie${collSize === 1 ? "" : "s"} — add more to play.`;
+        else if (noPlayers) msg = "Add at least one player to start.";
+        else if (notEnoughMovies) msg = `Not enough movies — this collection has ${collSize}.`;
         errorEl.textContent = msg;
         errorEl.classList.toggle("show", !!msg);
 
@@ -254,6 +269,8 @@ function initSetup() {
             eliminations,
             totalMovies: totalMovies(),
             randomOrder: !!(randomOrderEl && randomOrderEl.checked),
+            collectionId: selectedCollection.id,
+            collectionName: selectedCollection.name,
         }));
 
         // Same tab-collapse hand-off the "Generate Wheel" button uses.
@@ -272,23 +289,98 @@ function initSetup() {
 // 3. GAME SCREEN  (chopping.html) — coverflow + ping-pong graveyard
 // ==========================================
 function initGame() {
-    // Read the setup; fall back to a sensible default so the page also works on
-    // its own (direct visit / design diff).
+    // Read the setup handed over from the picker.
     let config;
     try { config = JSON.parse(sessionStorage.getItem(CHOPPING_CONFIG_KEY)); }
     catch { config = null; }
-    if (!config || !Array.isArray(config.players) || config.players.length < 1) {
-        config = { players: ["Niv", "Matan"], eliminations: 2, totalMovies: 5, randomOrder: true };
+
+    // No collection means there's nothing to play (e.g. a direct visit) — guide
+    // the user back to the picker rather than showing an empty board.
+    if (!config || !config.collectionId) {
+        showGameMessage("No game in progress",
+            "Start a game from the picker to play The Chopping Block.", true);
+        return;
+    }
+    if (!Array.isArray(config.players) || config.players.length < 1) {
+        config.players = ["Niv", "Matan"];
     }
 
+    // Fetch the real collection + its movies (login-gated). Spinner while we wait,
+    // then either start the game or show a clear error.
+    showGameLoading();
+    MovieAPI.getCollection(config.collectionId)
+        .then((collection) => {
+            clearGameStatus();
+            const list = (collection && collection.movies) || [];
+            if (list.length < MIN_COLLECTION_SIZE) {
+                showGameMessage("This collection is too small",
+                    `It needs at least ${MIN_COLLECTION_SIZE} movies to play. Add a few more, then try again.`,
+                    true);
+                return;
+            }
+            runGame(config, list);
+        })
+        .catch((err) => {
+            clearGameStatus();
+            // No/expired token → login (gracefully, like the rest of the app).
+            if (err.status === 401) { window.location.replace("login.html"); return; }
+            if (err.status === 404) {
+                showGameMessage("Collection not found",
+                    "It may have been deleted or made private.", true);
+                return;
+            }
+            showGameMessage("Couldn't load the collection",
+                err.message || "Please try again in a moment.", true);
+            if (window.toast) toast.error(err.message || "Couldn't reach the server.");
+        });
+}
+
+// --- game-stage status overlays (loading spinner / empty / error) ---
+function gameStage() { return document.querySelector(".cb-stage"); }
+
+function clearGameStatus() {
+    const s = document.getElementById("cbStatus");
+    if (s) s.remove();
+}
+
+function showGameLoading() {
+    clearGameStatus();
+    const stage = gameStage();
+    if (!stage) return;
+    const el = document.createElement("div");
+    el.id = "cbStatus";
+    el.className = "cb-status";
+    el.innerHTML = `
+        <div class="cb-spinner" aria-hidden="true"></div>
+        <p class="cb-status-text">Loading your collection…</p>`;
+    stage.appendChild(el);
+}
+
+function showGameMessage(title, detail, showBack) {
+    clearGameStatus();
+    const stage = gameStage();
+    if (!stage) return;
+    const el = document.createElement("div");
+    el.id = "cbStatus";
+    el.className = "cb-status cb-status-error";
+    el.innerHTML = `
+        <h2 class="cb-status-title">${escapeHtml(title)}</h2>
+        <p class="cb-status-text">${escapeHtml(detail)}</p>
+        ${showBack ? `<a class="cb-status-back" href="picker.html?panel=chopping">Back to setup</a>` : ""}`;
+    stage.appendChild(el);
+}
+
+// Build + run the game from the real, fetched collection movies (each in the
+// app's normalised shape: { id, title, posterPath, … }).
+function runGame(config, collectionMovies) {
     const players = config.players;
     const totalMovies = Math.min(
         config.totalMovies || (players.length * config.eliminations + 1),
-        mockCollection.length
+        collectionMovies.length
     );
 
     // Random Order ON → shuffle the pool; OFF → take the collection in order.
-    const pool = config.randomOrder ? shuffle(mockCollection) : mockCollection.slice();
+    const pool = config.randomOrder ? shuffle(collectionMovies) : collectionMovies.slice();
     const movies = pool.slice(0, totalMovies);
 
     const turnEl = document.getElementById("cbTurn");
@@ -306,7 +398,7 @@ function initGame() {
         el.innerHTML = `
             <p class="cb-card-title" title="${escapeHtml(m.title)}">${escapeHtml(m.title)}</p>
             <div class="cb-poster">
-                <img src="${escapeHtml(m.poster_path)}" alt="${escapeHtml(m.title)}"
+                <img src="${escapeHtml(m.posterPath)}" alt="${escapeHtml(m.title)}"
                      onerror="this.onerror=null;this.src='${POSTER_FALLBACK}'">
             </div>
             <button class="cb-eliminate" type="button">ELIMINATE</button>`;
@@ -489,8 +581,14 @@ function initGame() {
         document.getElementById("winnerOverlay")?.classList.remove("show");
         Confetti.stop();
     });
-    // "Play Again" goes back to the Chopping Block tab in the picker.
-    if (playAgain) playAgain.addEventListener("click", () => window.location.href = "picker.html?panel=chopping");
+    // "Play Again" goes back to the Chopping Block tab in the picker, carrying the
+    // collection so the same one is re-played.
+    if (playAgain) playAgain.addEventListener("click", () => {
+        const c = config.collectionId != null
+            ? `&collection=${encodeURIComponent(config.collectionId)}`
+            : "";
+        window.location.href = `picker.html?panel=chopping${c}`;
+    });
 
     // --- go ---
     window.addEventListener("resize", render);   // keep the spread matched to the viewport

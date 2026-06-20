@@ -715,6 +715,59 @@
 .winner-remove:hover { filter: brightness(1.12); transform: scale(1.04); }
 .winner-remove:active { transform: scale(0.96); }
 
+/* ==========================================================================
+   GAME-STAGE STATUS (loading spinner / empty / error)
+   ========================================================================== */
+.cb-status {
+    width: 100%;
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 16px;
+    padding: 40px 20px;
+    color: var(--text-soft);
+}
+
+.cb-spinner {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 5px solid rgba(255, 255, 255, 0.15);
+    border-top-color: rgb(var(--maroon-flare));
+    animation: cb-spin 0.8s linear infinite;
+}
+
+@keyframes cb-spin { to { transform: rotate(360deg); } }
+
+.cb-status-title {
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--text);
+    margin: 0;
+}
+
+.cb-status-text {
+    font-size: 18px;
+    color: var(--text-muted);
+    margin: 0;
+    max-width: 460px;
+}
+
+.cb-status-back {
+    margin-top: 6px;
+    padding: 12px 28px;
+    border-radius: 50px;
+    background-color: rgb(var(--maroon-light));
+    color: var(--text);
+    font-size: 18px;
+    text-decoration: none;
+    transition: transform var(--t-base) var(--ease-pop), filter var(--t-base) ease;
+}
+.cb-status-back:hover { filter: brightness(1.12); transform: scale(1.04); }
+
 .winner-close {
     position: absolute;
     top: 16px;

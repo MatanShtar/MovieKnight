@@ -159,6 +159,44 @@ window.MovieAPI = (function () {
             releaseYear = Number(String(m.release_date).slice(0, 4));
         }
 
+        // Genres — kept so the client can filter a fixed movie pool by genre (e.g.
+        // the Spin-the-Wheel picker). These arrive in different shapes depending on
+        // the source: TMDB list payloads use numeric `genre_ids`; the TMDB details
+        // shape uses `genres: [{ id, name }]`; and OUR backend's movie cache stores
+        // `genres: ["Action", "Drama"]` (plain name strings). Capture whichever of
+        // ids / names we can so a filter can match on either vocabulary.
+        const genreIds = [];
+        const genres = []; // names (lower-cased downstream as needed)
+        const rawGenres = Array.isArray(m.genre_ids)
+            ? m.genre_ids
+            : Array.isArray(m.genreIds)
+            ? m.genreIds
+            : Array.isArray(m.genres)
+            ? m.genres
+            : [];
+        rawGenres.forEach((g) => {
+            if (g == null) return;
+            if (typeof g === "object") {
+                if (g.id != null) genreIds.push(Number(g.id));
+                if (g.name) genres.push(String(g.name));
+            } else if (typeof g === "number") {
+                genreIds.push(g);
+            } else {
+                // A string: either a numeric id as text, or a genre name.
+                const n = Number(g);
+                if (Number.isFinite(n) && String(g).trim() === String(n)) genreIds.push(n);
+                else genres.push(String(g));
+            }
+        });
+
+        // Provider ids — absent on a movie object in this backend (watch providers
+        // aren't stored per movie), so this is normally []. Carried through when
+        // present so a provider filter can use it without us re-shaping later.
+        let providerIds = [];
+        if (Array.isArray(m.provider_ids)) providerIds = m.provider_ids;
+        else if (Array.isArray(m.providerIds)) providerIds = m.providerIds;
+        providerIds = providerIds.filter((x) => x != null).map(Number);
+
         return {
             // id is kept so a movie card can link to its details page.
             id: m.id ?? null,
@@ -167,6 +205,9 @@ window.MovieAPI = (function () {
             popularity: m.popularity ?? 0,
             releaseYear: releaseYear || "",
             posterPath: posterPath || "",
+            genreIds,
+            genres,
+            providerIds,
         };
     }
 
