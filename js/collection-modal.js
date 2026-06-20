@@ -12,7 +12,6 @@
 // we open we have a logged-in session whose token MovieAPI attaches automatically.
 
 window.CollectionModal = (function () {
-  const P = "assets/images/poster-placeholder.svg";
 
   // Self-contained fallback so the standalone demo page (no common.js) still
   // escapes interpolated strings. Prefers the shared global when present.

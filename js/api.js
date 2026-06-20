@@ -529,6 +529,33 @@ window.MovieAPI = (function () {
         return normalizeCollectionFull(data);
     }
 
+    // ---- Library (default lists) for the heart / eye buttons --------------------
+    // The user's Favorites / Already Watched / Watchlist with their member tmdb-id
+    // Sets, fetched ONCE (?isDefault=true) and cached. The Sets are live — toggling
+    // a movie mutates them in place so every card stays in sync without a refetch.
+    let _library = null;
+    async function getLibrary({ refresh = false } = {}) {
+        if (refresh) _library = null;
+        if (!_library) {
+            _library = (async () => {
+                const cards = await request("/collections", { params: { isDefault: "true" } });
+                const byName = {};
+                (cards || []).forEach((c) => { byName[c.name] = c; });
+                const mk = (c) =>
+                    c ? { id: c.id, ids: new Set((c.movieIds || []).map(Number)) } : null;
+                return {
+                    favorites: mk(byName["Favorites"]),
+                    watched: mk(byName["Already Watched"]),
+                    watchlist: mk(byName["Watchlist"]),
+                };
+            })().catch((e) => {
+                _library = null; // let the next call retry
+                throw e;
+            });
+        }
+        return _library;
+    }
+
     return {
         API_BASE,
         searchMovies,
@@ -556,6 +583,7 @@ window.MovieAPI = (function () {
         deleteCollection,
         addMovieToCollection,
         removeMovieFromCollection,
+        getLibrary,
         toPosterUrl,
     };
 })();

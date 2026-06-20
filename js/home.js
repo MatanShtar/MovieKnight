@@ -341,6 +341,40 @@ function collectQuery() {
   return query;
 }
 
+// ==========================================
+// DEFAULT-LIST MEMBERSHIP (heart = Favorites, eye = Already Watched)
+// ==========================================
+// Shared add/remove + toast logic lives in js/library-buttons.js. Here we keep
+// only the home-feed glue: a synchronously-readable copy of the loaded library
+// (so buildMovieCard can paint cards at build time) and the per-card painters.
+let library = null;
+
+function libBtn(card, which) {
+  const alt = which === "favorites" ? "Like" : "Mark watched";
+  const img = card.querySelector(`.icon-btn img[alt="${alt}"]`);
+  return img ? img.closest(".icon-btn") : null;
+}
+function paintLibBtn(btn, which, on) {
+  if (!btn) return;
+  btn.classList.toggle("active", !!on);
+  btn.title = LibraryButtons.title(which, on);
+}
+// Mark every card's heart/eye from the loaded library (for cards built before it).
+function markLibraryButtons(root = document) {
+  if (!library) return;
+  root.querySelectorAll(".movie-card").forEach((card) => {
+    const id = Number(card.dataset.id);
+    if (library.favorites) paintLibBtn(libBtn(card, "favorites"), "favorites", library.favorites.ids.has(id));
+    if (library.watched) paintLibBtn(libBtn(card, "watched"), "watched", library.watched.ids.has(id));
+  });
+}
+// Load the library once (logged-in only), then paint any cards already on screen.
+LibraryButtons.load().then((lib) => {
+  if (!lib) return;
+  library = lib;
+  markLibraryButtons();
+});
+
 // Generate skeleton placeholders
 function movieSkeletonMarkup(n) {
   return `<article class="movie-card movie-card--skeleton" aria-hidden="true"></article>`.repeat(
@@ -354,6 +388,10 @@ function buildMovieCard(m) {
   // (and that corrupted value then flows into sessionStorage -> the movie page).
   const title = escapeHtml(m.title);
   const poster = escapeHtml(m.posterPath);
+  // Heart = Favorites, eye = Already Watched — pressed if the movie is in them.
+  const mid = Number(m.id);
+  const favOn = !!(library && library.favorites && library.favorites.ids.has(mid));
+  const watchedOn = !!(library && library.watched && library.watched.ids.has(mid));
   return `
     <article class="movie-card" data-id="${m.id ?? ""}" data-title="${title}" data-rating="${m.rating}" data-year="${m.releaseYear}" data-popularity="${m.popularity}" data-poster="${poster}">
       <img src="${poster}" alt="${title}" class="poster-img" loading="lazy" decoding="async">
@@ -362,10 +400,10 @@ function buildMovieCard(m) {
         <img src="assets/images/icons/ratings-star.svg" alt="Rating" class="ratings-star-img">
       </div>
       <div class="card-overlay">
-        <button class="icon-btn">
+        <button class="icon-btn${watchedOn ? " active" : ""}" title="${escapeHtml(LibraryButtons.title("watched", watchedOn))}">
           <img src="assets/images/icons/eye-icon.svg" alt="Mark watched" class="ratings-star-img">
         </button>
-        <button class="icon-btn">
+        <button class="icon-btn${favOn ? " active" : ""}" title="${escapeHtml(LibraryButtons.title("favorites", favOn))}">
           <img src="assets/images/icons/heart-icon.svg" alt="Like" class="ratings-star-img">
         </button>
         <button class="icon-btn">
@@ -1270,16 +1308,15 @@ if (movieGridEl) {
       return;
     }
 
-    const nowActive = btn.classList.toggle("active");
-    const messages = {
-      "Mark watched": [
-        "Added to Already Watched",
-        "Removed from Already Watched",
-      ],
-      Like: ["Added to Favorites", "Removed from Favorites"],
-    };
-    const [onMsg, offMsg] = messages[label] || ["Coming Soon!", "Coming Soon!"];
-    nowActive ? toast.success(onMsg) : toast.warn(offMsg);
+    // Like → Favorites, Mark watched → Already Watched: real add/remove.
+    const which =
+      label === "Like" ? "favorites" : label === "Mark watched" ? "watched" : null;
+    if (which) {
+      const card = btn.closest(".movie-card");
+      LibraryButtons.toggle(which, Number(card && card.dataset.id), (on) =>
+        paintLibBtn(btn, which, on),
+      );
+    }
   });
 }
 
