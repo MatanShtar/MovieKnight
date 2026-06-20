@@ -189,9 +189,10 @@ window.MovieAPI = (function () {
             }
         });
 
-        // Provider ids — absent on a movie object in this backend (watch providers
-        // aren't stored per movie), so this is normally []. Carried through when
-        // present so a provider filter can use it without us re-shaping later.
+        // Provider ids — US flatrate (streaming) watch-provider ids. The backend
+        // embeds these (and genre_ids) on each collection item, hydrated from TMDB
+        // at add-time, so the wheel/chopping picker can filter a collection by
+        // streaming service. Items added before that change read as [] until re-added.
         let providerIds = [];
         if (Array.isArray(m.provider_ids)) providerIds = m.provider_ids;
         else if (Array.isArray(m.providerIds)) providerIds = m.providerIds;
