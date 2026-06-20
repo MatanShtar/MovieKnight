@@ -383,22 +383,130 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- E. AI suggestion-count stepper (placeholder control). ---
-    const stepper = document.getElementById('suggestionStepper');
-    if (stepper) {
-        stepper.addEventListener('click', (e) => {
-            const step = e.target.closest('.step');
-            if (!step) return;
-            stepper.querySelectorAll('.step')
-                .forEach(s => s.classList.toggle('active', s === step));
+    // --- E. AI suggestion-count slider — the SAME liquid 1/2/3 control the
+    //        Chopping Block uses for "Eliminations Per Player", so the two read
+    //        identically. It reuses chopping.css's .cb-slider styles and the
+    //        #cb-goo gooey filter that chopping.js injects on this page (the
+    //        Chopping setup panel lives here too). Mirrors chopping.js's
+    //        renderSlider / positionSlider. ---
+    const aiCountSlider = document.getElementById('aiCountSlider');
+    let suggestionCount = 3; // default — matches the seeded "3"
+
+    // Tapering chain of red blobs: a lead circle + trailing drops that lag slightly
+    // so a value change stretches into a comet the goo filter fuses into one stream.
+    const AI_BLOB_SIZES = [21, 19, 17, 15, 13, 11];
+
+    function renderCountSlider() {
+        if (!aiCountSlider) return;
+        const blobs = AI_BLOB_SIZES.map((s, i) =>
+            `<span class="cb-slider-blob" style="width:${s}px;height:${s}px;top:${(25 - s) / 2}px;transition-delay:${i * 0.018}s"></span>`
+        ).join('');
+        aiCountSlider.innerHTML = `
+            <div class="cb-slider-track"></div>
+            <div class="cb-slider-liquid">${blobs}</div>
+            ${[1, 2, 3].map(v => `
+                <button class="cb-slider-dot" data-value="${v}" aria-label="${v} suggestion${v === 1 ? '' : 's'}">
+                    <span class="cb-slider-num">${v}</span>
+                </button>
+            `).join('')}
+        `;
+        positionCountSlider();
+    }
+
+    function positionCountSlider() {
+        if (!aiCountSlider) return;
+        const frac = (suggestionCount - 1) / 2;   // 0 | 0.5 | 1
+        aiCountSlider.querySelectorAll('.cb-slider-dot').forEach(dot =>
+            dot.classList.toggle('active', Number(dot.dataset.value) === suggestionCount));
+        aiCountSlider.querySelectorAll('.cb-slider-blob').forEach(blob => {
+            const s = parseFloat(blob.style.width); // keep every blob centred on the dot
+            blob.style.left = `calc((100% - 25px) * ${frac} + ${(25 - s) / 2}px)`;
         });
     }
 
-    // --- F. AI "Send": no LLM yet, so just acknowledge it's coming. ---
+    if (aiCountSlider) {
+        renderCountSlider();
+        aiCountSlider.addEventListener('click', (e) => {
+            const dot = e.target.closest('.cb-slider-dot');
+            if (!dot) return;
+            suggestionCount = Number(dot.dataset.value);
+            positionCountSlider();
+        });
+    }
+
+    // The suggestion count currently chosen on the slider (1–3, default 3).
+    function selectedSuggestionCount() {
+        return suggestionCount;
+    }
+
+    // --- F. AI "Send": hand the chosen collection + prompt + count to the
+    //        AI Suggestions results page, collapsing the tabs first so the lone
+    //        "LET AI CHOOSE" bar fills the width — the exact same "load" motion
+    //        Generate Wheel uses before navigating to wheel.html. ---
     const aiSendBtn = document.getElementById('aiSendBtn');
+    const aiPrompt = document.getElementById('aiPrompt');
     if (aiSendBtn) {
         aiSendBtn.addEventListener('click', () => {
-            if (window.toast) toast.soon('AI picks — Coming Soon!');
+            // The AI picker runs over the collection the user came here with —
+            // same source as the wheel. Without one there's nothing to pick from.
+            if (!selectedCollection) {
+                if (window.toast) toast.error(collectionError || "Open a collection to let AI choose from it.");
+                return;
+            }
+
+            // A prompt is required — don't navigate / "send" on an empty box.
+            const promptText = aiPrompt ? aiPrompt.value.trim() : "";
+            if (!promptText) {
+                if (window.toast) toast.error("You must enter a prompt.");
+                if (aiPrompt) aiPrompt.focus();
+                return;
+            }
+
+            sessionStorage.setItem('mk:aiGame', JSON.stringify({
+                collectionId: selectedCollection.id,
+                collectionName: selectedCollection.name || "",
+                prompt: promptText,
+                count: selectedSuggestionCount(),
+                // A fresh token per SEND: the results page generates new picks for a
+                // new SEND, but reuses them when you navigate back (e.g. after Info).
+                token: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            }));
+
+            // Rewrite THIS picker entry to the AI tab before pushing the results
+            // page. That way a later Back from the results (history.back) returns
+            // here to the AI tab — not the default Wheel — without anyone having to
+            // PUSH a fresh picker entry (which is what created the Back loop between
+            // the picker and the results page).
+            try {
+                history.replaceState(history.state, '',
+                    `picker.html?panel=ai&collection=${encodeURIComponent(selectedCollection.id)}`);
+            } catch (_) { /* non-critical */ }
+
+            if (pickerTabs) pickerTabs.classList.add('collapsing');
+
+            let navigated = false;
+            const go = () => {
+                if (navigated) return;
+                navigated = true;
+                window.location.href = 'ai-suggestions.html';
+            };
+            if (pickerTabs) {
+                pickerTabs.addEventListener('transitionend', (e) => {
+                    if (e.propertyName === 'flex-grow' || e.propertyName === 'flex-basis') go();
+                });
+            }
+            setTimeout(go, 650);
+        });
+    }
+
+    // Enter in the prompt sends, just like clicking SEND (Shift+Enter still adds a
+    // newline for a multi-line prompt).
+    if (aiPrompt && aiSendBtn) {
+        aiPrompt.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                aiSendBtn.click();
+            }
         });
     }
 });

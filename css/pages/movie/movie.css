@@ -33,6 +33,17 @@
   opacity: 0.75;
 }
 
+/* When reached from a feature flow (AI Info / winner → View Details), match the
+   feature pages' shared .back-btn EXACTLY — size, weight and position — so the
+   Back control doesn't shift when navigating between those pages and this one.
+   (Feature pages put .back-btn at the main-content padding origin: 40px / 12px.) */
+.md-back--feature {
+  top: 12px;
+  left: 40px;
+  font-size: 24px;
+  font-weight: 100;
+}
+
 /* ---- Two-column layout ---- */
 .md-layout {
   position: relative;
@@ -418,6 +429,13 @@
     top: 16px;
     left: 16px;
     font-size: 17px;
+  }
+  /* Feature-flow Back keeps the feature pages' 16px/24px on mobile too (their
+     Back sits below the mobile topbar, which this page doesn't have, so we leave
+     it near the top — left + size match, which is what reads as "aligned"). */
+  .md-back--feature {
+    left: 16px;
+    font-size: 24px;
   }
   .md-action {
     width: 60px;
