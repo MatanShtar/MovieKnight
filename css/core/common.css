@@ -15,7 +15,7 @@
 
 @font-face {
   font-family: "Lao Sangam MN";
-  src: url("../assets/fonts/Lao Sangam MN.ttf") format("truetype");
+  src: url("../../assets/fonts/Lao Sangam MN.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
 }
@@ -85,7 +85,7 @@ body {
    4. APP SHELL LAYOUT
    ========================================== */
 .app-body {
-  background-image: url("../assets/images/movie-knight-gradient-bg.svg");
+  background-image: url("../../assets/images/movie-knight-gradient-bg.svg");
   background-size: cover;
   background-attachment: fixed;
   color: var(--text);
