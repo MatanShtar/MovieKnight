@@ -25,6 +25,36 @@ const DEMO_MOVIE = {
 
 const el = (id) => document.getElementById(id);
 
+// A page that links here can pin where "Back" returns to via a ?back=<relative-url>
+// param (e.g. the AI flow wants Back to land on the picker's AI tab, not the
+// in-between suggestions page). When present and same-site, we point the Back
+// control straight at it and drop data-back so it navigates there instead of using
+// the history-based smartBack. Only relative URLs are honoured (no open redirect).
+(function applyBackContext() {
+  const params = new URLSearchParams(location.search);
+  const raw = params.get("back");
+  const back = document.getElementById("mdBack");
+  if (!back) return;
+
+  // A same-site ?back= pins where Back goes (winner → picker AI tab), bypassing the
+  // history-based smartBack. We navigate with location.replace (not a push) so this
+  // page is swapped out of history — otherwise the picker's own Back would come
+  // straight back here, ping-ponging in a loop.
+  if (raw && !/^(?:[a-z]+:)?\/\//i.test(raw)) {
+    back.setAttribute("href", raw);
+    back.removeAttribute("data-back");
+    back.addEventListener("click", (e) => {
+      e.preventDefault();
+      location.replace(raw);
+    });
+  }
+  // Reached from the AI flow (Info's from=ai, or the winner's back=): render Back in
+  // the feature pages' .back-btn style + position so it doesn't shift between pages.
+  if (raw || params.get("from") === "ai") {
+    back.classList.add("md-back--feature");
+  }
+})();
+
 // The title of the movie currently shown — passed to the collection modal.
 let currentTitle = "";
 

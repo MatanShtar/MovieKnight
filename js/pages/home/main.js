@@ -66,17 +66,92 @@ const aiModeBtn = document.querySelector(".ai-mode-btn");
 const searchContainer = document.querySelector(".search-container");
 const searchInput = document.getElementById("movieSearch");
 
+function aiModeOn() {
+  return !!(aiModeBtn && aiModeBtn.classList.contains("pressed"));
+}
+
 if (aiModeBtn && searchContainer && searchInput) {
   aiModeBtn.addEventListener("click", () => {
     aiModeBtn.classList.toggle("pressed");
     searchContainer.classList.toggle("ai-glow");
-    if (aiModeBtn.classList.contains("pressed")) {
-      searchInput.placeholder = "Search movies with AI...";
-      toast.soon("AI Mode - Coming Soon!");
+    if (aiModeOn()) {
+      // AI mode is deliberate, not live: typing won't fire a (slow, costly) AI
+      // call — the user submits with Enter. The hint reflects that.
+      searchInput.placeholder = "Describe a movie, then press Enter…";
     } else {
+      // Back to the normal catalog: restore the live feed for whatever's typed.
       searchInput.placeholder = "Search movies...";
+      runSearch();
     }
   });
+}
+
+// ==========================================
+// 14b. AI NATURAL-LANGUAGE SEARCH  (POST /api/ai/search)
+// ==========================================
+// Unlike the live catalog search, this is a single deliberate request (6–9s and
+// a real API call), so it fires on Enter only. It takes over the feed: clear,
+// show skeletons, then render the AI's picks with the SAME card builder. Setting
+// feedDone stops infinite scroll from appending the popular feed underneath.
+async function runAiSearch(query) {
+  // Snapshot the current feed so a FAILED search can leave it on screen — a
+  // rate-limit / error should just toast, not dump a wall of error text.
+  const prev = feedMovies.slice();
+  feedMovies = [];
+  feedPage = 0;
+  feedDone = true; // AI results are a fixed set — no paging beneath them
+  feedLoading = false;
+  const token = ++feedToken; // invalidate any in-flight catalog page load
+  const grid = document.getElementById("movieGrid");
+  if (grid) {
+    clearGridCards();
+    insertBeforeSentinel(fragmentFromHTML(movieSkeletonMarkup(10)));
+  }
+
+  try {
+    const results = await MovieAPI.aiSearch(query);
+    if (token !== feedToken) return; // a newer search superseded this one
+    clearGridCards();
+    if (!results.length) {
+      if (prev.length) {
+        feedMovies = prev;
+        insertBeforeSentinel(fragmentFromHTML(prev.map(buildMovieCard).join("")));
+        if (window.toast) toast.info("No matches — keeping your previous results.");
+      } else {
+        showGridMessage("The AI couldn’t find a match — try rephrasing.");
+      }
+      return;
+    }
+    feedMovies = results;
+    insertBeforeSentinel(fragmentFromHTML(results.map(buildMovieCard).join("")));
+  } catch (err) {
+    if (token !== feedToken) return;
+    // Only a short, friendly toast — never the raw upstream error. Keep the feed
+    // as it was: restore the previous cards if we had any.
+    if (window.toast) toast.error(aiSearchErrorMessage(err));
+    clearGridCards();
+    if (prev.length) {
+      feedMovies = prev;
+      insertBeforeSentinel(fragmentFromHTML(prev.map(buildMovieCard).join("")));
+    } else {
+      showGridMessage("Couldn’t run AI search right now. Please try again.");
+    }
+  }
+}
+
+// A SHORT, friendly message for a failed AI search — never the raw upstream error
+// (Gemini's free-tier rate-limit replies are a huge wall of text).
+function aiSearchErrorMessage(err) {
+  switch (err && err.status) {
+    case 400: return (err.message && err.message.length <= 100)
+      ? err.message : "That search didn’t look right — try rephrasing it.";
+    case 401: return "Please sign in to use AI search.";
+    case 429:
+    case 503: return "The AI is busy right now (free-tier rate limit). Give it a moment, then try again.";
+    case 502: return "The AI had trouble responding. Try again.";
+    case 504: return "The AI took too long to answer. Try again in a moment.";
+    default:  return "Couldn’t run AI search right now. Please try again.";
+  }
 }
 
 // ==========================================
@@ -88,11 +163,28 @@ if (aiModeBtn && searchContainer && searchInput) {
 if (searchInput) {
   let searchDebounce;
   searchInput.addEventListener("input", () => {
+    // In AI mode typing is NOT live — the user submits with Enter (handled below),
+    // so don't fire the debounced catalog search.
+    if (aiModeOn()) return;
     // If the user scrolled down the feed and starts typing again, glide back to
     // the top so the fresh results aren't hidden below the fold.
     window.scrollTo({ top: 0, behavior: "smooth" });
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(runSearch, 300);
+  });
+
+  // Enter submits an AI search when AI mode is on. (In normal mode the live
+  // input handler already covers it, so Enter is a harmless no-op there.)
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || !aiModeOn()) return;
+    e.preventDefault();
+    const q = searchInput.value.trim();
+    if (!q) {
+      if (window.toast) toast.info("Describe what you’re after, then press Enter.");
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    runAiSearch(q);
   });
 }
 

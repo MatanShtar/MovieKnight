@@ -195,59 +195,11 @@
     margin-top: 28px;
 }
 
-/* Stepped "amount of suggestions" control: three dots on a track */
-.suggestion-stepper {
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-    width: 260px;
-    margin: 22px 0 4px;
-}
-
-.suggestion-stepper::before {
-    content: "";
-    position: absolute;
-    top: 11px;             /* line through the dot centres */
-    left: 11px;
-    right: 11px;
-    height: 3px;
-    background: rgba(255, 255, 255, 0.25);
-    z-index: 0;
-}
-
-.suggestion-stepper .step {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    cursor: pointer;
-}
-
-.suggestion-stepper .dot {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #d7d7d7;
-    transition: transform var(--t-base) var(--ease-pop),
-                background-color var(--t-base) ease,
-                box-shadow var(--t-base) ease;
-}
-
-.suggestion-stepper .step:hover .dot {
-    transform: scale(1.12);
-}
-
-.suggestion-stepper .step.active .dot {
-    background: rgb(var(--maroon-bright));
-    transform: scale(1.12);
-    box-shadow: 0 0 0 4px rgba(var(--maroon-bright), 0.25);
-}
-
-.suggestion-stepper .num {
-    color: var(--text-soft);
-    font-size: 20px;
+/* "Amount of Suggestions" reuses the Chopping Block's liquid 1/2/3 control
+   (.cb-slider, styled in chopping.css). Its numbers hang BELOW the dots, so we
+   reserve room here before the "Prompt" heading. */
+#aiCountSlider {
+    margin: 26px 0 30px;
 }
 
 .ai-prompt {
@@ -357,6 +309,10 @@
     color: var(--text);
     border: none;
     position:fixed;
+    /* Above the config content (the cb-slider dots create a z-index:2 stacking
+       context, so without this their numbers paint OVER the fixed button as they
+       scroll past it) but below the mobile nav drawer (z-index 1000+). */
+    z-index: 10;
     width: 100%;
     max-width: 847px;
     height: 94px;
@@ -675,6 +631,13 @@
         align-items: center;
         gap: 28px;
         margin-bottom: 130px; /* clear the fixed Generate button */
+    }
+
+    /* The AI panel's content needs the same clearance below the fixed SEND button,
+       so the full prompt box (plus the slider numbers above it) can be scrolled
+       into view instead of hiding behind / crowding the button. */
+    .ai-config {
+        margin-bottom: 150px;
     }
 
     .config-column {
