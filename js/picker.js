@@ -101,11 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
             mgIds.some((id) => genreIds.includes(id)) ||
             mgNames.some((n) => genreNames.includes(n));
 
-        // No provider data is stored per movie in this backend, so a provider
-        // filter only ever narrows when that data is actually present.
+        // STRICT provider filter: with nothing selected, every movie passes; once
+        // a provider is picked, a movie must list that provider to stay. Movies with
+        // no provider data (not on a US streaming service, or added before the
+        // backend began hydrating facets) are intentionally excluded — no safety net.
         const mp = m.providerIds || [];
         const okProvider =
-            !providerIds.length || !mp.length || mp.some((id) => providerIds.includes(id));
+            !providerIds.length || mp.some((id) => providerIds.includes(id));
         return okGenre && okProvider;
     }
 
@@ -269,11 +271,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderProviders(providers) {
+        // Preserve any providers the user has already ticked across a re-render.
+        // The fallback list paints first, then the live list from the backend
+        // replaces it — without this, that late swap rebuilds the checkboxes from
+        // scratch and silently wipes the current selection (the summary "…" then
+        // drops back to "Any"). Re-check by name after rebuilding.
+        const checkedNames = new Set(
+            [...providerList.querySelectorAll('.provider-checkbox:checked')]
+                .map((cb) => cb.closest('.provider-item')?.querySelector('.provider-name')?.textContent)
+                .filter(Boolean)
+        );
         providerList.innerHTML = providers.map((p, index) => `
             <label class="provider-item">
                 <img src="${p.logo}" alt="${p.name}" class="provider-logo" onerror="this.style.display='none'">
                 <span class="provider-name">${p.name}</span>
-                <input type="checkbox" class="provider-checkbox" id="prov_${index}"${p.id ? ` data-provider-id="${p.id}"` : ""}>
+                <input type="checkbox" class="provider-checkbox" id="prov_${index}"${p.id ? ` data-provider-id="${p.id}"` : ""}${checkedNames.has(p.name) ? " checked" : ""}>
                 <div class="custom-check"></div>
             </label>
         `).join("");

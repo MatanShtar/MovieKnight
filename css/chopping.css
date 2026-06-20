@@ -18,8 +18,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 36px;
-    padding-bottom: 24px;   /* breathing room above the fixed action bar */
+    gap: 16px;
+    /* Reserve the height of the fixed action bar (count + error + START) so the
+       config never slides underneath it on shorter screens. */
+    padding-bottom: 185px;
 }
 
 /* Two columns: [Add Player + tags]   [eliminations / totals / random order].
@@ -27,12 +29,12 @@
    everything else) instead of shoving the centred "Random Movies" block down. */
 .cb-config {
     width: 100%;
-    height: 326px;
+    height: 260px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     gap: 120px;
-    margin-top: 91px;    /* Figma leaves a wide gap below the tab bar */
+    margin-top: 24px;    /* tightened so the default form fits without scrolling */
 }
 
 .cb-col-left,
@@ -196,8 +198,9 @@
     transform: translateX(-50%) translateY(0);
 }
 
-/* --- Right column: three stat rows, uniform 129px centre-to-centre pitch --- */
-.cb-col-right { gap: 86px; }
+/* --- Right column: three stat rows. Pitch tightened to keep the setup on one
+   screen while still leaving room for the slider's numbers below row 1. --- */
+.cb-col-right { gap: 64px; }
 
 .cb-stat-row {
     display: flex;
@@ -336,12 +339,15 @@
 
 .cb-toggle input:checked ~ .cb-toggle-handle { left: calc(100% - 28px); }
 
-/* --- Random Movies Selected (centred block) --- */
+/* --- Random Movies Selected — now lives in the bottom action bar, so it sits
+   right above the START button. Compact horizontal row (label : pill). --- */
 .cb-random {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 22px;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 14px;   /* breathing room above the error / START button */
 }
 
 .cb-random .cb-label { text-align: center; }
