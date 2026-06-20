@@ -103,6 +103,7 @@
 .input-group input:-webkit-autofill:focus,
 .input-group input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
+  /* !important: overrides the browser's user-agent autofill text color. */
   -webkit-text-fill-color: white !important;
   caret-color: white;
 }
@@ -187,6 +188,9 @@
 /* ==========================================
    4. FORM VALIDATION ERRORS
    ========================================== */
+/* !important: `.input-error` (0,1,0) is applied to the input element, but
+   `.input-group input` (0,1,1) sets these same three properties at higher
+   specificity, so the error styling needs !important to win. */
 .input-error {
   border: 1px solid rgb(var(--danger-input)) !important;
   box-shadow: 0 0 10px rgba(var(--danger-input), 0.3) !important;

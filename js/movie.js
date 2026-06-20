@@ -28,26 +28,28 @@ const el = (id) => document.getElementById(id);
 // The title of the movie currently shown — passed to the collection modal.
 let currentTitle = "";
 
+// Read the movie basics the home card stashed before navigating here.
+// Returns the parsed object, or null if absent/unparseable.
+function readLastMovie() {
+  try {
+    return JSON.parse(sessionStorage.getItem("mk:lastMovie"));
+  } catch (_) {
+    return null;
+  }
+}
+
 function getMovieId() {
   const fromQuery = new URLSearchParams(location.search).get("id");
   if (fromQuery) return fromQuery;
   // Fall back to whatever the home card stashed (if any).
-  try {
-    const cached = JSON.parse(sessionStorage.getItem("mk:lastMovie"));
-    if (cached && cached.id) return cached.id;
-  } catch (_) {
-    /* ignore */
-  }
+  const cached = readLastMovie();
+  if (cached && cached.id) return cached.id;
   return null; // nothing selected -> show the demo record
 }
 
 function getCachedBasics(id) {
-  try {
-    const cached = JSON.parse(sessionStorage.getItem("mk:lastMovie"));
-    if (cached && String(cached.id) === String(id)) return cached;
-  } catch (_) {
-    /* ignore */
-  }
+  const cached = readLastMovie();
+  if (cached && String(cached.id) === String(id)) return cached;
   return null;
 }
 
@@ -106,7 +108,7 @@ function paintDetails(d) {
   // Cast / genres with a non-bold label, matching the Figma.
   const cast = el("mdCast");
   if (d.cast && d.cast.length) {
-    cast.innerHTML = `<strong>Cast:</strong> ${d.cast.join(", ")}`;
+    cast.innerHTML = `<strong>Cast:</strong> ${d.cast.map(escapeHtml).join(", ")}`;
     cast.style.display = "";
   } else {
     cast.style.display = "none";
@@ -114,7 +116,7 @@ function paintDetails(d) {
 
   const genres = el("mdGenres");
   if (d.genres && d.genres.length) {
-    genres.innerHTML = `<strong>Genres:</strong> ${d.genres.join(", ")}`;
+    genres.innerHTML = `<strong>Genres:</strong> ${d.genres.map(escapeHtml).join(", ")}`;
     genres.style.display = "";
   } else {
     genres.style.display = "none";
@@ -222,7 +224,7 @@ function setupActions() {
     add.addEventListener("click", () => {
       if (window.requireAuth && !window.requireAuth()) return; // guests blocked
       if (window.CollectionModal) {
-        CollectionModal.open(currentTitle || "This movie");
+        CollectionModal.open(getMovieId(), currentTitle || "This movie");
       } else if (window.toast) {
         toast.soon("Add to Collection — Coming Soon!");
       }

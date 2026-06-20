@@ -1,4 +1,5 @@
-// common.js - sidebar + auth logic shared by every page (index.html, profile.html)
+// common.js - shared shell loaded on every page: sidebar/nav, auth UI,
+// sign-out modal, profile dropdown, mobile nav drawer, and global guards.
 
 // ==========================================
 // 0. BROKEN POSTER IMAGE FALLBACK (GLOBAL)
@@ -34,6 +35,23 @@ document.addEventListener(
 );
 
 // ==========================================
+// 0b. HTML ESCAPING (GLOBAL)
+// ==========================================
+// Escape a value for safe interpolation into HTML text or a double-quoted
+// attribute. Used wherever we build markup from TMDB / user data via template
+// strings (movie titles, cast, genres, collection names) so a stray quote or
+// angle bracket can't break the attribute or inject markup.
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+window.escapeHtml = escapeHtml;
+
+// ==========================================
 // 1. IMAGE PRELOADING HELPER
 // ==========================================
 function preloadImages(urls, timeoutMs = 2500) {
@@ -60,7 +78,15 @@ const displayUsername = document.getElementById("displayUsername");
 const sidebarSettings = document.getElementById("sidebarSettings");
 const settingsToggleBtn = document.getElementById("settingsToggleBtn");
 const settingsSubmenu = document.getElementById("settingsSubmenu");
-const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+// Guard the parse: a corrupt "currentUser" value would otherwise throw here at
+// load time and abort the rest of common.js (nav, auth toggle, sign-out modal,
+// requireAuth/isGuest) on EVERY page. Fall back to logged-out on bad JSON.
+let currentUser = null;
+try {
+  currentUser = JSON.parse(localStorage.getItem("currentUser"));
+} catch (_) {
+  currentUser = null;
+}
 
 if (currentUser) {
   if (loginBtn) loginBtn.style.display = "none";
