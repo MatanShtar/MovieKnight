@@ -559,8 +559,44 @@ window.MovieAPI = (function () {
         return _library;
     }
 
+    // ==========================================
+    // 7. AI (Gemini-backed picker + search)
+    // ==========================================
+    // Both go through the standard envelope: request() returns the inner `data`
+    // on success and throws an Error (with err.status set) on { ok:false } / a
+    // non-2xx, so callers can branch on 400/404/502/504 for tailored toasts.
+
+    // POST /api/ai/picker — "Let AI Choose". Body { collectionId, prompt, count }.
+    // `data` is [{ id, title, poster_path, reason... }]: TMDB-shaped movies with an
+    // extra AI `reason`. Normalise to the app's movie shape but preserve `reason`.
+    async function aiPicker({ collectionId, prompt, count } = {}) {
+        const data = await request("/ai/picker", {
+            method: "POST",
+            body: { collectionId, prompt, count },
+        });
+        return extractList(data, "movies")
+            .map((m) => {
+                const n = normalizeMovie(m);
+                return n ? { ...n, reason: m.reason || "" } : null;
+            })
+            .filter(Boolean);
+    }
+
+    // POST /api/ai/search — natural-language search. Body { query }. `data` is an
+    // array of standard TMDB movie objects → normalise to the app's movie shape so
+    // the existing card UI can render them unchanged.
+    async function aiSearch(query) {
+        const data = await request("/ai/search", {
+            method: "POST",
+            body: { query },
+        });
+        return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
+    }
+
     return {
         API_BASE,
+        aiPicker,
+        aiSearch,
         searchMovies,
         getMovieDetails,
         searchPeople,
