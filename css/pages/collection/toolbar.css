@@ -1,49 +1,91 @@
 /* collection/toolbar.css — Collection Page owner bottom toolbar + error heading.
-   The sticky Movie Picker + Enhance button pair (with masked star/chevron decos)
-   and the danger-tinted error-state heading. Load after grid.css. */
+   The Movie Picker + Enhance pair is a FIXED bar pinned to the viewport floor.
+   Each button is a full pill whose lower half is sunk below the floor, so only a
+   rounded top "peeks" up: it can't be scrolled past, a hover lift reveals more
+   button (never a gap), and because the bar is fixed it adds no page scroll. A
+   full-width upward fade behind it (feathered at the sides so it never meets the
+   rails in a hard line) reads as one continuous shadow. Load after grid.css. */
 
 /* ==========================================
    4. BOTTOM TOOLBAR (owner): Movie Picker + Enhance
    ========================================== */
 .collection-toolbar {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
   z-index: 40;
   display: flex;
-  justify-content: center; /* Figma: two ~600px buttons centered as a pair */
-  gap: 40px;
-  width: 100%;
-  max-width: var(--content-width);
-  padding: 18px 0 26px;
-  /* fade the grid out behind the buttons as it scrolls under them */
-  background: linear-gradient(to top, rgba(20, 10, 16, 0.85) 20%, rgba(20, 10, 16, 0));
+  align-items: flex-end;
+  justify-content: center; /* centre the pair over the content column */
+  gap: clamp(10px, 3vw, 40px);
+  /* pad by the rail width so the buttons sit over the content column (the side
+     rails are equal width, so this keeps the pair centred on screen too) */
+  padding: clamp(60px, 8vw, 130px) var(--rail-width) 0;
+  pointer-events: none; /* only the buttons take clicks; posters show through the fade */
+}
+/* the fade lives on a pseudo-element so it can span the FULL width yet feather its
+   left/right edges to nothing — that kills the hard vertical seam at the rails. */
+.collection-toolbar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    to top,
+    rgba(18, 9, 14, 0.92) 0%,
+    rgba(18, 9, 14, 0.72) 45%,
+    rgba(18, 9, 14, 0) 100%
+  );
+  -webkit-mask: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
+  mask: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
 }
 .toolbar-btn {
+  /* a full pill; its lower (--sink) is parked below the floor so only --peek shows.
+     padding-bottom = --sink re-centres the label inside the visible peek. */
+  --btn-h: clamp(108px, 12vw, 168px);
+  --peek: clamp(52px, 6.4vw, 100px);
+  --sink: calc(var(--btn-h) - var(--peek));
+  /* the two buttons are ALWAYS identical in size (flex:1 + min-width:0); the label
+     and icons scale to the button width (container units) so they shrink to fit
+     instead of one button growing wider than the other. */
+  container-type: inline-size;
+  position: relative; /* anchor for the edge-pinned icons */
   flex: 1 1 0;
+  min-width: 0;
   max-width: 600px;
+  pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 18px;
-  height: clamp(64px, 8vw, 155px); /* Figma Rectangle 56/57 = 600x155 */
+  justify-content: center; /* label centres on its own — icons are positioned out of flow */
+  height: var(--btn-h);
+  padding-bottom: var(--sink);
   border: 0;
-  border-radius: 50px;
+  /* rounded top, but NOT a full pill — a full-pill corner curves in so far it
+     clips the edge icons; 0.32×height keeps the corner clear of them */
+  border-radius: calc(var(--btn-h) * 0.32);
   font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", sans-serif;
-  font-size: clamp(18px, 1.9vw, 35px);
-  letter-spacing: 3.5px;
-  white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 -5px 4px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, 0.45);
+  transform: translateY(var(--sink));
   transition:
     transform var(--t-fast) var(--ease-snap),
     filter var(--t-base) ease;
 }
+/* label scales with the button width so the longest one ("ENHANCE MY COLLECTION")
+   always fits the equal-width button — text just gets smaller on narrow screens */
+.toolbar-label {
+  font-size: clamp(8px, 5cqi, 33px);
+  letter-spacing: clamp(0.3px, 0.7cqi, 3px);
+  white-space: nowrap;
+}
 .toolbar-btn:hover {
-  transform: translateY(-2px);
+  /* rise 4px → 4px MORE of the (same-coloured) button shows, never a dark gap */
+  transform: translateY(calc(var(--sink) - 4px));
   filter: brightness(1.08);
 }
 .toolbar-btn:active {
-  transform: translateY(0) scale(0.99);
+  transform: translateY(var(--sink)) scale(0.99);
 }
 .toolbar-btn--picker {
   background: linear-gradient(90deg, #591e26 0%, #7d2a35 35%, #9b3442 65%, #bf4052 100%);
@@ -53,26 +95,35 @@
   background: linear-gradient(90deg, #ffd700 0%, #fffacd 45%, #d4af37 65%, #b8860b 100%);
   color: #000;
 }
-/* sparkle glyphs flanking ENHANCE MY COLLECTION — masked so the shape is
-   identical across platforms (matches the .toolbar-deco technique) */
+
+/* flanking glyphs — real SVG assets so the shapes match Figma exactly.
+   Picker: white-stroked clapperboard (reads on maroon). Enhance: black 4-point
+   sparkle (reads on gold). They're pinned to the button edges and vertically
+   centred inside the visible peek, so the label can never knock them off-centre. */
+.toolbar-clap,
 .toolbar-star {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  background-color: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 L14.4 9.6 L24 12 L14.4 14.4 L12 24 L9.6 14.4 L0 12 L9.6 9.6 Z' fill='black'/%3E%3C/svg%3E") no-repeat center / contain;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 L14.4 9.6 L24 12 L14.4 14.4 L12 24 L9.6 14.4 L0 12 L9.6 9.6 Z' fill='black'/%3E%3C/svg%3E") no-repeat center / contain;
+  position: absolute;
+  top: 0;
+  bottom: var(--sink); /* box spans the visible peek; margin auto centres within it */
+  margin-block: auto;
+  object-fit: contain;
+}
+.toolbar-btn > :first-child {
+  left: clamp(12px, 6.5cqi, 44px);
+}
+.toolbar-btn > :last-child {
+  right: clamp(12px, 6.5cqi, 44px);
+}
+.toolbar-clap {
+  width: clamp(15px, 8.5cqi, 46px);
+  height: clamp(15px, 8.5cqi, 46px);
+}
+.toolbar-star {
+  width: clamp(15px, 8.5cqi, 46px);
+  height: clamp(15px, 8.5cqi, 46px);
 }
 
 /* error state heading is danger-tinted to distinguish it from the benign empty state */
 .collection-error h2 {
   color: rgb(var(--danger));
-}
-/* "fast-forward" style chevrons flanking MOVIE PICKER */
-.toolbar-deco {
-  width: 26px;
-  height: 18px;
-  background-color: currentColor;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='18' viewBox='0 0 26 18'%3E%3Cpath d='M2 2l9 7-9 7M14 2l9 7-9 7' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='18' viewBox='0 0 26 18'%3E%3Cpath d='M2 2l9 7-9 7M14 2l9 7-9 7' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
 }

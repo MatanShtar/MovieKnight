@@ -25,17 +25,21 @@
     return span;
   }
 
-  // actionPill(label) → text-only pill (owner pills, per Figma).
+  // actionPill(label) → text-only pill.
   // actionPill(label, iconName) → label THEN icon (visitor Like/Save, icon after
-  // the text per Figma 92:66). Owner pills are text-only and pass no icon.
-  function actionPill(label, iconName, extraClass) {
+  //   the text per Figma 92:66).
+  // actionPill(label, iconName, extraClass, "before") → icon BEFORE the label
+  //   (the owner's "+ Add to Collection").
+  function actionPill(label, iconName, extraClass, iconPos) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "action-pill" + (extraClass ? " " + extraClass : "");
     const text = document.createElement("span");
+    text.className = "pill-label";
     text.textContent = label;
+    if (iconName && iconPos === "before") btn.appendChild(pillIcon(iconName));
     btn.appendChild(text);
-    if (iconName) btn.appendChild(pillIcon(iconName)); // icon AFTER the label
+    if (iconName && iconPos !== "before") btn.appendChild(pillIcon(iconName));
     return btn;
   }
 
@@ -45,11 +49,16 @@
     wrap.hidden = false;
 
     if (isOwner) {
-      // Text-only pill — opens the in-page Add-to-Collection modal.
-      const add = actionPill("Add to Collection");
+      // "+ Add to Collection" — opens the in-page Add-to-Collection modal.
+      // A shorter "Add Movies" label swaps in on phones (CSS) so it fits.
+      const add = actionPill("Add to Collection", "plus", "action-pill--add", "before");
+      const shortLabel = document.createElement("span");
+      shortLabel.className = "pill-label-short";
+      shortLabel.textContent = "Add Movies";
+      add.appendChild(shortLabel);
       add.addEventListener("click", CP.openAddModal);
 
-      const pub = actionPill(c.isPublic ? "Unpublish" : "Publish");
+      const pub = actionPill(c.isPublic ? "Unpublish" : "Publish", null, "action-pill--publish");
       pub.setAttribute(
         "aria-label",
         c.isPublic ? "Unpublish collection" : "Publish collection"

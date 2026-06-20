@@ -14,14 +14,24 @@
   const state = CP.state;
   const SORTS = CP.SORTS;
 
-  CP.applySort = function applySort(key, label) {
-    state.sort = key;
-    $("colSortText").textContent = label;
+  // Reflect a sort key in the UI (closed-pill short label + menu selection) and
+  // state, WITHOUT re-sorting/persisting. Used on load to show the remembered sort.
+  CP.setSort = function setSort(key) {
+    const opt = SORTS.find((o) => o.key === key) || SORTS[0];
+    state.sort = opt.key;
+    $("colSortText").textContent = opt.short; // compact label in the closed pill
+    CP.buildSortMenu();
+    return opt;
+  };
+
+  CP.applySort = function applySort(key, { persist = true } = {}) {
+    const opt = CP.setSort(key);
     state.movies = CP.sortMovies(state.movies, state.sort);
     CP.closeSortMenu();
-    CP.buildSortMenu();
     CP.renderGrid();
     $("colSortBtn").focus();
+    // remember the choice for next visit (owner-only, real collections)
+    if (persist && CP.persistSort) CP.persistSort(opt.key);
   };
 
   CP.buildSortMenu = function buildSortMenu() {
@@ -35,8 +45,8 @@
       item.setAttribute("role", "option");
       item.setAttribute("aria-selected", selected ? "true" : "false");
       item.dataset.key = opt.key;
-      item.textContent = opt.label;
-      item.addEventListener("click", () => CP.applySort(opt.key, opt.label));
+      item.textContent = opt.label; // full label inside the open menu
+      item.addEventListener("click", () => CP.applySort(opt.key));
       menu.appendChild(item);
     });
   };
@@ -65,7 +75,7 @@
       menu.querySelector(".sort-option.is-selected");
     if (!active) return;
     const opt = SORTS.find((o) => o.key === active.dataset.key);
-    if (opt) CP.applySort(opt.key, opt.label);
+    if (opt) CP.applySort(opt.key);
   }
 
   CP.onSortKeydown = function onSortKeydown(e) {

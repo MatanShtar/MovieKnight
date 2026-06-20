@@ -352,7 +352,7 @@
 /* ==========================================================================
    RESPONSIVE — reflow to a single column; never overflow.
    ========================================================================== */
-@media (max-width: 1280px) {
+@media (max-width: 1180px) {
   .md-layout {
     gap: 56px;
     padding: 96px 56px 56px;

@@ -4,20 +4,29 @@
 // ==========================================
 // 0. BROKEN POSTER IMAGE FALLBACK (GLOBAL)
 // ==========================================
-// TMDB images occasionally 404 / fail to load. Rather than wiring an onerror
-// onto every single <img> we build, we listen for image error events globally
-// in the capture phase (the `error` event doesn't bubble, but it IS observable
-// while capturing). Any poster image that fails is swapped once for a local
-// placeholder that already matches the 2:3 poster aspect ratio.
+// TMDB images occasionally 404 / fail to load, and a stored avatarUrl can point
+// at a file that no longer exists. Rather than wiring an onerror onto every
+// single <img> we build, we listen for image error events globally in the
+// capture phase (the `error` event doesn't bubble, but it IS observable while
+// capturing). A failed image is swapped once for the right local fallback:
+// posters → the 2:3 poster placeholder, avatars → the default avatar (so a dead
+// profile-pic URL shows the silhouette, not a broken-image icon).
 const POSTER_PLACEHOLDER = "assets/images/poster-placeholder.svg";
+const DEFAULT_AVATAR = "assets/images/default-avatar.svg";
 
 function isPosterImg(el) {
   return (
     el &&
     el.tagName === "IMG" &&
-    (el.classList.contains("poster-img") ||
-      el.classList.contains("collection-poster") ||
-      el.classList.contains("avatar-pic"))
+    (el.classList.contains("poster-img") || el.classList.contains("collection-poster"))
+  );
+}
+
+function isAvatarImg(el) {
+  return (
+    el &&
+    el.tagName === "IMG" &&
+    (el.classList.contains("avatar-pic") || el.classList.contains("profile-pic"))
   );
 }
 
@@ -25,11 +34,16 @@ document.addEventListener(
   "error",
   (e) => {
     const img = e.target;
-    if (!isPosterImg(img)) return;
-    // Guard against an infinite loop if the placeholder itself can't load.
+    const fallback = isAvatarImg(img)
+      ? DEFAULT_AVATAR
+      : isPosterImg(img)
+        ? POSTER_PLACEHOLDER
+        : null;
+    if (!fallback) return;
+    // Guard against an infinite loop if the fallback itself can't load.
     if (img.dataset.fallbackApplied === "true") return;
     img.dataset.fallbackApplied = "true";
-    img.src = POSTER_PLACEHOLDER;
+    img.src = fallback;
   },
   true, // capture: required because `error` does not bubble
 );

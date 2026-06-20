@@ -13,8 +13,12 @@
 
 .collection-title-row {
   display: flex;
-  align-items: center;
-  gap: 18px;
+  align-items: center; /* pencil vertically centred with the title */
+  gap: 30px; /* a bit of breathing room between the title and the edit button */
+  /* shrink-wrap to the title (+ edit button) so the hover dashed box hugs them
+     instead of stretching the full content width */
+  width: fit-content;
+  max-width: 100%;
 }
 
 .collection-title {
@@ -34,27 +38,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* Figma 92:50: bare 40px outline glyph, no fill box. Hit area padded to >=44px. */
-  width: 44px;
-  height: 44px;
+  /* filled box, like the profile bio's edit button */
+  width: 40px;
+  height: 40px;
   padding: 0;
   border: 0;
   border-radius: 10px;
-  background: transparent;
+  background: rgba(var(--pink), 0.2);
   cursor: pointer;
-  opacity: 0.7;
+  /* base (touch + fallback): always visible. Desktop hides it until hover below. */
+  opacity: 1;
   transition:
-    background var(--t-base) ease,
     opacity var(--t-base) ease,
+    background var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap);
 }
 .collection-rename-btn img {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
 }
 .collection-rename-btn:hover {
-  background: rgba(var(--pink), 0.26);
-  opacity: 1;
+  background: rgba(var(--pink), 0.32);
 }
 .collection-rename-btn:focus-visible {
   outline: 2px solid rgba(var(--pink), 0.9);
@@ -63,6 +67,28 @@
 .collection-rename-btn:active {
   transform: scale(0.92);
 }
+/* the whole title is clickable to rename (owner's non-default lists only) */
+.collection-title-row.is-editable .collection-title {
+  cursor: pointer;
+}
+
+/* desktop + real mouse: mirror the profile bio's edit affordance — the pencil
+   (a filled box) stays hidden, keeping its slot so nothing shifts, until you
+   hover the row, which then gets a dashed outline AROUND the title + button. */
+@media (hover: hover) and (min-width: 1025px) {
+  .collection-title-row.is-editable .collection-rename-btn {
+    opacity: 0;
+  }
+  .collection-title-row.is-editable:hover .collection-rename-btn,
+  .collection-rename-btn:focus-visible {
+    opacity: 1;
+  }
+  .collection-title-row.is-editable:hover {
+    outline: 1px dashed rgba(var(--pink), 0.65);
+    outline-offset: 6px;
+    border-radius: 8px;
+  }
+}
 
 .collection-meta {
   margin-top: 6px;
@@ -70,13 +96,14 @@
   color: #afafaf;
 }
 
-/* inline rename editor (swaps in for the <h1> text) */
+/* inline rename editor (swaps in for the <h1> text). main.js pins its width AND
+   height to the title's measured box (border-box) so the title stays put and the
+   pencil never shifts; the font is a touch smaller than the title so the editor
+   doesn't feel oversized. */
 .collection-title-input {
-  width: min(640px, 70vw);
   max-width: 100%;
   font-family: inherit;
-  /* Mirror .collection-title exactly so the text doesn't jump on open. */
-  font-size: clamp(34px, 4.3vw, 80px);
+  font-size: clamp(24px, 3vw, 50px);
   font-weight: 400;
   line-height: 1.1;
   color: var(--text);
@@ -95,6 +122,20 @@
 .pill-count {
   font-variant-numeric: tabular-nums;
   opacity: 0.9;
+}
+
+/* the "Add to Collection" pill shows a shorter "Add Movies" label while the
+   compact layout is active (up to 1180px) */
+.pill-label-short {
+  display: none;
+}
+@media (max-width: 1180px) {
+  .action-pill--add .pill-label {
+    display: none;
+  }
+  .action-pill--add .pill-label-short {
+    display: inline;
+  }
 }
 
 /* body scroll-lock while the add-movie modal is open */
@@ -171,35 +212,3 @@
   transform: none;
 }
 
-/* Mobile topbar add button (owner-only; opens the Add-to-Collection modal) */
-.mobile-add-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: rgba(var(--pink), 0.13);
-  color: var(--text);
-  cursor: pointer;
-  transition:
-    background var(--t-base) ease,
-    transform var(--t-fast) var(--ease-snap);
-}
-.mobile-add-btn:hover {
-  background: rgba(var(--pink), 0.24);
-}
-.mobile-add-btn:active {
-  transform: scale(0.94);
-}
-.mobile-add-btn:focus-visible {
-  outline: 2px solid rgb(var(--pink));
-  outline-offset: 2px;
-}
-.mobile-add-btn img,
-.mobile-add-btn .pill-icon {
-  width: 22px;
-  height: 22px;
-}
