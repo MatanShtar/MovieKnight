@@ -39,6 +39,86 @@ document.addEventListener('DOMContentLoaded', () => {
     // Resolved up-front: refreshGenerateState() runs while genres render (below),
     // which is before section D — so this must exist before then (no TDZ).
     const generateBtn = document.getElementById('generateBtn');
+    const wheelError = document.getElementById('wheelError');
+
+    // The collection this picker plays from — chosen on the collection page, which
+    // links here as picker.html?collection=<id>. Null until it loads (or if the
+    // page was opened without one), which keeps "Generate Wheel" disabled.
+    let selectedCollection = null;
+    let collectionError = "";   // why there's no collection (missing / load failed)
+
+    // --- load the collection the user came here to play (no dropdown) ---
+    if (window.ActiveCollection) {
+        ActiveCollection.load()
+            .then((collection) => {
+                if (collection) selectedCollection = collection;
+                else collectionError = "Open a collection to spin its wheel.";
+                refreshGenerateState();
+            })
+            .catch((err) => {
+                collectionError = err.message || "Couldn't load the collection.";
+                if (window.toast) toast.error(collectionError);
+                refreshGenerateState();
+            });
+    }
+
+    // The genre ids currently switched ON (a non-dashed genre button).
+    function activeGenreIds() {
+        return activeGenreButtons()
+            .map((b) => Number(b.dataset.genreId))
+            .filter(Boolean);
+    }
+
+    // The genre NAMES currently switched ON (lower-cased). Our backend stores a
+    // movie's genres as names, so name-matching is what actually filters.
+    function activeGenreNames() {
+        return activeGenreButtons()
+            .map((b) => (b.dataset.genreName || "").toLowerCase())
+            .filter(Boolean);
+    }
+
+    // The provider ids currently ticked. Read live from the DOM (the providerList
+    // const is assigned later in section B, so we can't close over it here).
+    function selectedProviderIds() {
+        const list = document.getElementById('providerList');
+        if (!list) return [];
+        return [...list.querySelectorAll('.provider-checkbox:checked')]
+            .map((cb) => Number(cb.dataset.providerId))
+            .filter(Boolean);
+    }
+
+    // A movie passes the filters when at least one of its genres is still ON
+    // (matched by id OR name, since a movie may carry either), and — if any
+    // providers are ticked — it offers one of them. A movie that carries no
+    // genre data at all is never excluded, so the wheel can't empty by accident.
+    function movieMatchesFilters(m, genreIds, genreNames, providerIds) {
+        const mgIds = m.genreIds || [];
+        const mgNames = (m.genres || []).map((n) => String(n).toLowerCase());
+        const hasGenreData = mgIds.length || mgNames.length;
+        const okGenre =
+            !hasGenreData ||
+            (!genreIds.length && !genreNames.length) ||
+            mgIds.some((id) => genreIds.includes(id)) ||
+            mgNames.some((n) => genreNames.includes(n));
+
+        // No provider data is stored per movie in this backend, so a provider
+        // filter only ever narrows when that data is actually present.
+        const mp = m.providerIds || [];
+        const okProvider =
+            !providerIds.length || !mp.length || mp.some((id) => providerIds.includes(id));
+        return okGenre && okProvider;
+    }
+
+    // The chosen collection's movies that survive the current genre/provider filter.
+    function filteredWheelMovies() {
+        if (!selectedCollection || !Array.isArray(selectedCollection.movies)) return [];
+        const gids = activeGenreIds();
+        const gnames = activeGenreNames();
+        const pids = selectedProviderIds();
+        return selectedCollection.movies.filter((m) =>
+            movieMatchesFilters(m, gids, gnames, pids),
+        );
+    }
 
     // --- A. Render Genres ---
     // A genre is "selected" when its button is NOT dashed. We need at least one
@@ -145,6 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
             providerList.querySelectorAll('.provider-item')
                 .forEach((item) => { item.style.display = "flex"; });
             refreshProviderSelectionLabel();
+            refreshGenerateState();
         });
     }
 
@@ -157,10 +238,12 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(err => console.error("Could not load providers:", err));
 
-        // Keep the "Any" / selected label in sync as providers are toggled.
+        // Keep the "Any" / selected label in sync as providers are toggled, and
+        // re-validate the wheel (a provider filter can empty the chosen pool).
         providerList.addEventListener('change', (e) => {
             if (e.target.classList.contains('provider-checkbox')) {
                 refreshProviderSelectionLabel();
+                refreshGenerateState();
             }
         });
 
@@ -225,21 +308,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- D. Generate Wheel: validate, then collapse the other two options so
     //        "Spin the Wheel" stretches to fill the bar, then go to wheel.html. ---
 
-    // Edge-case safeguard: a wheel needs at least one genre to draw from. If the
-    // selection can't produce a usable wheel, the button is greyed out + inert.
+    // Validate the wheel can actually be built and reflect why it can't in the
+    // inline error above the button (and by dimming it). In order of precedence:
+    // no collection chosen → no genres selected → nothing left after filtering.
     function refreshGenerateState() {
         if (!generateBtn) return;
-        const tooFew = activeGenreButtons().length < 1;
-        generateBtn.disabled = tooFew;
-        generateBtn.classList.toggle('generate-wheel-btn--disabled', tooFew);
+        let invalid = false;
+        let msg = "";
+
+        if (!selectedCollection) {
+            invalid = true;
+            msg = collectionError; // "Open a collection…" / load error (empty while loading)
+        } else if (activeGenreButtons().length < 1) {
+            invalid = true;
+            msg = "Select at least one genre.";
+        } else if (filteredWheelMovies().length === 0) {
+            invalid = true;
+            msg = "No movies in this collection match your filters.";
+        }
+
+        if (wheelError) {
+            wheelError.textContent = msg;
+            wheelError.classList.toggle("show", !!msg);
+        }
+        generateBtn.disabled = invalid;
+        generateBtn.classList.toggle('generate-wheel-btn--disabled', invalid);
     }
 
     if (generateBtn) {
         generateBtn.addEventListener('click', () => {
-            if (generateBtn.disabled || activeGenreButtons().length < 1) {
-                if (window.toast) toast.error("Pick at least one genre to build a wheel.");
+            if (generateBtn.disabled) {
+                if (window.toast) toast.error("Pick a collection and at least one genre to build a wheel.");
                 return;
             }
+            const wheelMovies = filteredWheelMovies();
+            if (!selectedCollection || !wheelMovies.length) {
+                if (window.toast) toast.error("No movies match — adjust your filters.");
+                return;
+            }
+
+            // Hand the already-filtered movie titles to wheel.html (matching the
+            // sessionStorage hand-off the games use).
+            sessionStorage.setItem('mk:wheelGame', JSON.stringify({
+                movies: wheelMovies.map((m) => m.title),
+            }));
 
             if (pickerTabs) pickerTabs.classList.add('collapsing');
 

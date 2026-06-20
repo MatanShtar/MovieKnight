@@ -17,6 +17,7 @@
     <script src="js/toast.js" defer></script>
     <script src="js/common.js" defer></script>
     <script src="js/api.js" defer></script>
+    <script src="js/active-collection.js" defer></script>
     <script src="js/picker.js" defer></script>
     <script src="js/chopping.js" defer></script>
 </head>
@@ -103,7 +104,12 @@
                         </div>
                     </div>
 
-                    <button class="generate-wheel-btn" id="generateBtn">GENERATE WHEEL</button>
+                    <!-- Error + GENERATE pinned together so the message is always
+                         visible above the button (mirrors the Chopping Block bar). -->
+                    <div class="cb-actionbar">
+                        <p class="cb-error" id="wheelError"></p>
+                        <button class="generate-wheel-btn cb-start" id="generateBtn">GENERATE WHEEL</button>
+                    </div>
                 </div>
 
                 <!-- THE CHOPPING BLOCK: player + game setup -->
