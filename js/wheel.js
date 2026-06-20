@@ -9,6 +9,8 @@ const MAX_TITLE_LEN = 20;
 
 // On initial load the wheel shows two editable placeholder items. (Saved wheels
 // are restored explicitly via the "Load Latest Wheel" button, not automatically.)
+// When the user arrives from the picker, these are replaced by their chosen
+// collection's movie titles (see seedFromCollection).
 let movies = ["Movie 1", "Movie 2"];
 
 let currentWinnerIdx = -1; // index in `movies` of the movie shown in the popup
@@ -23,6 +25,7 @@ const PLUS_SVG = `
     </svg>`;
 
 document.addEventListener('DOMContentLoaded', () => {
+    seedFromCollection();   // replace placeholders with the chosen collection
     rerender();
     setupSpinPhysics();
     setupListInteractions();
@@ -30,6 +33,23 @@ document.addEventListener('DOMContentLoaded', () => {
     setupWheelHover();
     setupSaveLoad();
 });
+
+// ==========================================
+// 1b. SEED FROM THE CHOSEN COLLECTION
+// ==========================================
+// The picker stores the already genre/provider-filtered movie titles under
+// "mk:wheelGame". If that's present, seed the wheel with those real titles;
+// otherwise leave the editable placeholders so a direct visit to wheel.html
+// still works. The hand-off is consumed once so a manual reload doesn't wipe
+// edits the user has since made.
+function seedFromCollection() {
+    let game;
+    try { game = JSON.parse(sessionStorage.getItem('mk:wheelGame')); }
+    catch { game = null; }
+    if (!game || !Array.isArray(game.movies) || !game.movies.length) return;
+    sessionStorage.removeItem('mk:wheelGame');
+    movies = game.movies.filter(Boolean);
+}
 
 function rerender() {
     renderMovieList(movies);
