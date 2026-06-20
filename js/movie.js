@@ -200,22 +200,39 @@ function setupReadMore() {
   }
 }
 
-// Quick-action buttons: toggle + toast (no persistence wired up yet).
-// Like / Watched / Add to Collection all require an account — guests are blocked
-// with a toast via the shared requireAuth() guard before anything happens.
+// Quick-action buttons. Heart → Favorites, eye → Already Watched: real add/remove
+// (shared logic in js/library-buttons.js). Add to Collection opens the modal. All
+// require an account (requireAuth guard).
+const LIB_WHICH = { mdLike: "favorites", mdWatched: "watched" };
+
+// Paint a movie-page action button for its membership state.
+function paintActionBtn(id, on) {
+  const btn = el(id);
+  if (!btn) return;
+  btn.classList.toggle("is-active", on);
+  btn.dataset.tip = LibraryButtons.title(LIB_WHICH[id], on);
+}
+
+// Load the library and reflect whether THIS movie is in Favorites / Already Watched.
+async function markMovieLibrary() {
+  const movieId = Number(getMovieId());
+  const library = await LibraryButtons.load();
+  if (!library || !movieId) return;
+  ["mdLike", "mdWatched"].forEach((id) => {
+    const lib = library[LIB_WHICH[id]];
+    if (lib) paintActionBtn(id, lib.ids.has(movieId));
+  });
+}
+
 function setupActions() {
-  const messages = {
-    mdWatched: ["Added to Already Watched", "Removed from Already Watched"],
-    mdLike: ["Added to Favorites", "Removed from Favorites"],
-  };
   ["mdWatched", "mdLike"].forEach((id) => {
     const btn = el(id);
     if (!btn) return;
     btn.addEventListener("click", () => {
       if (window.requireAuth && !window.requireAuth()) return; // guests blocked
-      const active = btn.classList.toggle("is-active");
-      const [on, off] = messages[id];
-      if (window.toast) active ? toast.success(on) : toast.warn(off);
+      LibraryButtons.toggle(LIB_WHICH[id], Number(getMovieId()), (on) =>
+        paintActionBtn(id, on),
+      );
     });
   });
 
@@ -234,6 +251,7 @@ function setupActions() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   setupActions();
+  markMovieLibrary(); // reflect Favorites / Already Watched membership for this movie
 
   const id = getMovieId();
 

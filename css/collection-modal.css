@@ -220,30 +220,19 @@
   left: 0;
   right: calc(17 * var(--u));
 }
-/* Drop the bottom divider only for items in the LAST row: the last item always,
-   and the second-to-last ONLY when the count is even (both share the last row).
-   With an odd count the last item spans its own row, so the second-to-last needs
-   its divider back. */
-.cm-item:nth-last-child(1)::after,
-.cm-item:nth-last-child(2):nth-child(odd)::after {
+/* The last item never has a bottom divider — the footer's top border draws that
+   line. In the TWO-COLUMN layout the second-to-last shares the last row when the
+   count is EVEN, so drop its divider then too. The single-column phone layout
+   keeps every divider except the very last one. */
+.cm-item:nth-last-child(1)::after {
   display: none;
 }
+@media (min-width: 761px) {
+  .cm-item:nth-last-child(2):nth-child(odd)::after {
+    display: none;
+  }
+}
 
-/* Quick confirm pulse fired when the user presses "+". */
-@keyframes cm-confirm {
-  0% {
-    background: rgba(255, 136, 179, 0);
-  }
-  40% {
-    background: rgba(255, 136, 179, 0.28);
-  }
-  100% {
-    background: rgba(255, 136, 179, 0);
-  }
-}
-.cm-item.is-confirmed {
-  animation: cm-confirm 0.28s var(--ease-pop);
-}
 
 /* Square checkbox — 40x40, #afafaf 3px outline. Empty = transparent; checked =
    white fill with a grey (#afafaf) tick. */

@@ -436,7 +436,7 @@
         if (card) card.remove();
         setCount(collections.length);
       }
-      if (window.toast) toast.warn(`Deleted “${c.name}”.`);
+      if (window.toast) toast.warn(`Deleted “${c.name}”`);
     } catch (err) {
       if (window.toast) toast.error(err.message || "Couldn't delete collection.");
     }
