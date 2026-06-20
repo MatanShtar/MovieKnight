@@ -30,34 +30,48 @@
 
     const titleEl = $("colTitle");
     titleEl.textContent = c.name || "Untitled";
-    // Keep the full name discoverable on hover/AT when the h1 ellipsis-truncates.
-    titleEl.title = c.name || "";
     document.title = `MovieKnight | ${c.name || "Collection"}`;
     $("colMeta").textContent = CP.metaLine(c, state.isOwner);
 
-    // rename pencil: owner + not a default collection
-    const renameBtn = $("colRenameBtn");
-    renameBtn.hidden = !(state.isOwner && !c.isDefault);
+    // rename pencil: owner + not a default collection. The hover-reveal + dashed
+    // outline (CSS) keys off `is-editable` on the title row.
+    const editable = state.isOwner && !c.isDefault;
+    $("colRenameBtn").hidden = !editable;
+    const titleRow = titleEl.closest(".collection-title-row");
+    if (titleRow) titleRow.classList.toggle("is-editable", editable);
 
     CP.renderActions(c, state.isOwner);
 
     // owner-only bottom toolbar (Movie Picker + Enhance)
     $("colToolbar").hidden = !state.isOwner;
 
-    // mobile topbar add button — owners only, same navigation as the action pill
-    const mobileAdd = $("colMobileAddBtn");
-    if (mobileAdd) mobileAdd.hidden = !state.isOwner;
-
     CP.renderGrid();
   }
 
   // ---- actions ----------------------------------------------------------------
+  // Remember the chosen "Sort by" server-side so it persists across visits.
+  // Owners only, real (non-demo) collections; fire-and-forget — a failed save
+  // just means the next load falls back to the previous sort, no user-facing error.
+  CP.persistSort = function persistSort(key) {
+    if (!state.isOwner || state.isDemo || !state.id) return;
+    // Already the stored sort? Skip the round-trip entirely (the server also
+    // no-ops an unchanged PATCH, but there's no point making the request).
+    if (state.collection && state.collection.sort === key) return;
+    MovieAPI.updateCollection(state.id, { sort: key })
+      .then(() => {
+        if (state.collection) state.collection.sort = key; // keep local in sync
+      })
+      .catch((err) => {
+        console.warn("Couldn't save sort preference:", (err && err.message) || err);
+      });
+  };
+
   CP.togglePublish = async function togglePublish(btn) {
     const c = state.collection;
     const next = !c.isPublic;
     if (state.isDemo) {
       c.isPublic = next;
-      if (window.toast) toast.success(next ? "Collection published." : "Collection unpublished.");
+      if (window.toast) toast.success(next ? "Collection published" : "Collection unpublished");
       render();
       return;
     }
@@ -66,11 +80,11 @@
       const updated = await MovieAPI.updateCollection(state.id, { isPublic: next });
       c.isPublic = updated.isPublic;
       if (window.toast) {
-        toast.success(c.isPublic ? "Collection published." : "Collection unpublished.");
+        toast.success(c.isPublic ? "Collection published" : "Collection unpublished");
       }
       render();
     } catch (err) {
-      if (window.toast) toast.error(err.message || "Couldn't update visibility.");
+      if (window.toast) toast.error(err.message || "Couldn't update visibility");
     } finally {
       btn.disabled = false;
     }
@@ -83,12 +97,22 @@
     if (h1.querySelector("input")) return;
 
     const prev = c.name || "";
+    // While the editor is open, drop the hover affordance (dashed outline + pencil)
+    // so it doesn't frame the input; restored in finish().
+    const titleRow = h1.closest(".collection-title-row");
+    const renameBtn = $("colRenameBtn");
+    if (titleRow) titleRow.classList.remove("is-editable");
+    renameBtn.style.display = "none";
+    // Lock the editor to the title's current box so swapping text→input doesn't
+    // resize the row (which would otherwise slide the pencil and bump the meta line).
+    const box = h1.getBoundingClientRect();
     const input = document.createElement("input");
     input.type = "text";
     input.className = "collection-title-input";
     input.maxLength = 60;
     input.value = prev;
-    h1.title = "";
+    input.style.width = `${box.width}px`;
+    input.style.height = `${box.height}px`;
     h1.textContent = "";
     h1.appendChild(input);
     input.focus();
@@ -100,10 +124,12 @@
     const finish = async (save) => {
       if (settled) return;
       settled = true;
+      // restore the hover affordance (the list is still an owner's non-default one)
+      renameBtn.style.display = "";
+      if (titleRow) titleRow.classList.add("is-editable");
       const next = input.value.trim().slice(0, 60);
       const shown = save && next ? next : prev;
       h1.textContent = shown;
-      h1.title = shown;
 
       if (!save || !next || next === prev) return;
 
@@ -116,12 +142,10 @@
         const updated = await MovieAPI.updateCollection(state.id, { name: next });
         c.name = updated.name;
         h1.textContent = c.name;
-        h1.title = c.name || "";
         document.title = `MovieKnight | ${c.name}`;
         if (window.toast) toast.success("Collection renamed.");
       } catch (err) {
         h1.textContent = prev;
-        h1.title = prev;
         if (window.toast) toast.error(err.message || "Couldn't rename collection.");
       }
     };
@@ -207,6 +231,7 @@
       const c = await MovieAPI.getCollection(id);
       state.collection = c;
       state.isOwner = !!c.isOwner;
+      CP.setSort(c.sort || "added_desc"); // show the remembered "Sort by"
       state.movies = CP.sortMovies(c.movies, state.sort);
       render();
     } catch (err) {
@@ -240,7 +265,7 @@
 
   // ---- wire static controls ---------------------------------------------------
   function init() {
-    $("colSortText").textContent = SORTS[0].label;
+    $("colSortText").textContent = SORTS[0].short;
     CP.buildSortMenu();
 
     $("colRenameBtn").addEventListener("click", startRename);
@@ -259,10 +284,6 @@
       if (!$("colSortSelect").contains(e.target)) CP.closeSortMenu();
     });
     window.addEventListener("scroll", () => { if (!$("colSortMenu").hidden) CP.closeSortMenu(); }, true);
-
-    // Mobile topbar add button → opens the Add-to-Collection modal (owner only).
-    const mobileAdd = $("colMobileAddBtn");
-    if (mobileAdd) mobileAdd.addEventListener("click", CP.openAddModal);
 
     $("colPickerBtn").addEventListener("click", () => {
       const q = state.id ? `?collection=${encodeURIComponent(state.id)}` : "";

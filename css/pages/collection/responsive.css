@@ -31,42 +31,187 @@
     gap: 10px 8px;
     padding-bottom: 140px;
   }
+  /* no side rails on tablet/phone — seat the bar against the 16px page padding */
   .collection-toolbar {
-    gap: 12px;
-    padding: 12px 0 18px;
-  }
-  .toolbar-btn {
-    letter-spacing: 1.5px;
+    padding: clamp(44px, 8vw, 110px) 16px 0;
   }
 }
 
-@media (max-width: 560px) {
+/* The phone Figma layout (clean header, one-row controls, small trash, short
+   bottom buttons) applies all the way up to 1180px — the wide desktop chrome only
+   kicks in past that, where the sidebar + rail leave enough room for it. This
+   avoids the cramped "in-between" zone (≈1025–1200) that the wide chrome produced.
+   Grid column count still steps per width below. */
+@media (max-width: 1180px) {
   .sort-pill {
     min-width: 0;
     flex: 1;
   }
-  .collection-controls {
-    margin: 18px 0 16px;
+
+  /* ---- Header (Figma mobile 367:2814 @402px) ----
+     30px title with a SMALL outline pencil beside it — no fill box. */
+  .collection-main {
+    position: relative; /* anchor for the floated Publish/Unpublish */
+    padding: 16px 16px 0; /* keep the compact padding through the whole clean range */
   }
+  .collection-title {
+    font-size: clamp(24px, 7.5vw, 32px);
+  }
+  .collection-title-row {
+    align-items: center;
+    gap: 8px;
+  }
+  .collection-rename-btn,
+  .collection-rename-btn:hover {
+    width: auto;
+    height: auto;
+    margin-top: 0;
+    background: transparent; /* no fill box on phone/tablet, even on hover */
+  }
+  .collection-rename-btn img {
+    width: 18px;
+    height: 18px;
+  }
+  /* small meta so the long "By … | … | …" line stays on one row */
+  .collection-meta {
+    font-size: clamp(10px, 2.7vw, 12px);
+  }
+
+  /* ---- Controls = ONE row: [+ Add Movies]  Sort by  [pill] ----
+     Publish/Unpublish floats to the top-right by the meta line (as in Figma). */
+  .collection-controls {
+    margin: 12px 0 12px;
+    flex-wrap: nowrap;
+    /* Add pill hugs the left; Sort by + pill hug the right so the pill's right
+       edge lines up with the Publish/Unpublish pill floated above it. */
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .collection-actions {
+    order: -1; /* the add pill goes first, left of Sort */
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .action-pill {
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 12px;
+    gap: 7px;
+  }
+  .action-pill .pill-icon {
+    width: 15px;
+    height: 15px;
+  }
+  .action-pill--publish {
+    position: absolute;
+    top: 50px;
+    right: 16px;
+    margin: 0;
+  }
+  .sort-area {
+    gap: 8px;
+    min-width: 0;
+    width: auto; /* shrink to content so space-between pushes it to the right edge */
+    flex: 0 0 auto;
+    justify-content: flex-end;
+  }
+  .sort-label {
+    font-size: 13px;
+  }
+  .sort-pill {
+    min-width: 0;
+    min-height: 40px;
+    padding: 9px 14px;
+  }
+  /* the pill is right-aligned now, so open the dropdown leftward (right-anchored)
+     instead of left-anchored — otherwise it shoots off the right edge and creates
+     horizontal scroll. */
+  .sort-menu {
+    left: auto;
+    right: 0;
+  }
+
+  /* ---- Cards: small trash + rating like Figma (not the 44px touch blob) ---- */
+  .card-remove {
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    min-width: 0;
+    min-height: 0;
+    border-radius: 4px;
+    background: rgba(91, 91, 91, 0.6);
+    opacity: 1;
+    transform: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .card-remove img {
+    width: 11px;
+    height: 11px;
+  }
+  /* rating to the top-left so it doesn't collide with the trash */
+  .card-rating {
+    top: 4px;
+    left: 4px;
+    right: auto;
+    padding: 2px 5px;
+    font-size: 9px;
+    gap: 3px;
+  }
+  .card-rating img {
+    width: 9px;
+    height: 9px;
+  }
+  /* Bottom toolbar — exact Figma mobile (frame 367:2814 @402px): two 195×66
+     rounded-rect (radius 20) buttons nearly edge-to-edge, ~39px peeking above the
+     floor, 12px Impact labels, ~15px icons. Values are tuned to hit Figma at
+     402px and scale gently across phone widths. Still equal width, side by side. */
+  .collection-toolbar {
+    gap: clamp(4px, 1.2vw, 8px);
+    padding-left: clamp(4px, 1.5vw, 12px);
+    padding-right: clamp(4px, 1.5vw, 12px);
+  }
+  .toolbar-btn {
+    --btn-h: clamp(56px, 16.4vw, 74px); /* 66 @402 */
+    --peek: clamp(34px, 9.7vw, 44px); /* 39 @402 */
+    border-radius: 20px; /* Figma: fixed 20, not a full pill */
+  }
+  .toolbar-label {
+    font-size: clamp(9px, 3vw, 13px); /* 12 @402 */
+    letter-spacing: 0.8px;
+  }
+  .toolbar-clap {
+    width: clamp(13px, 4.2vw, 18px);
+    height: clamp(13px, 4.2vw, 18px);
+  }
+  .toolbar-star {
+    width: clamp(12px, 3.7vw, 16px); /* 15 @402 */
+    height: clamp(12px, 3.7vw, 16px);
+  }
+  .toolbar-btn > :first-child {
+    left: clamp(5px, 2vw, 10px); /* ~8 @402 */
+  }
+  .toolbar-btn > :last-child {
+    right: clamp(5px, 2vw, 10px);
+  }
+}
+
+/* In the clean range BUT with the sidebar showing (1025–1280), seat the bottom
+   bar over the content column — pad by the rail width like the wide desktop does,
+   instead of the ~12px the phone uses. */
+@media (min-width: 1025px) and (max-width: 1180px) {
+  .collection-toolbar {
+    padding-left: var(--rail-width);
+    padding-right: var(--rail-width);
+  }
+}
+
+/* Phones: 3 poster columns (Figma mobile); tablets keep the auto-fill grid above. */
+@media (max-width: 560px) {
   .collection-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 12px 10px;
-  }
-  /* stack the two pills so each gets full width and the label never wraps */
-  .collection-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .toolbar-btn {
-    height: 52px;
-    max-width: none;
-    font-size: clamp(10px, 3vw, 13px);
-    gap: 8px;
-    letter-spacing: 0.5px;
-  }
-  .toolbar-deco {
-    width: 16px;
-    height: 12px;
   }
 }
 

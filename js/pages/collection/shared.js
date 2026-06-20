@@ -20,14 +20,16 @@
   CP.esc = (s) => (window.escapeHtml ? window.escapeHtml(s) : String(s ?? ""));
 
   // The 6 sort options shown in the dropdown (Figma owner view). Each maps to a
-  // client-side comparator over the collection's movies.
+  // client-side comparator over the collection's movies. `short` is the compact
+  // label shown in the closed pill; `label` is the full text shown in the open
+  // menu (mirrors the home feed's short/long sort pattern).
   CP.SORTS = [
-    { key: "added_desc", label: "Date Added (Latest → Earliest)" },
-    { key: "added_asc", label: "Date Added (Earliest → Latest)" },
-    { key: "title_asc", label: "Alphabetical (A → Z)" },
-    { key: "title_desc", label: "Alphabetical (Z → A)" },
-    { key: "year_desc", label: "Release Date (Latest → Earliest)" },
-    { key: "year_asc", label: "Release Date (Earliest → Latest)" },
+    { key: "added_desc", short: "Latest Added", label: "Date Added (Latest → Earliest)" },
+    { key: "added_asc", short: "Earliest Added", label: "Date Added (Earliest → Latest)" },
+    { key: "title_asc", short: "A → Z", label: "Alphabetical (A → Z)" },
+    { key: "title_desc", short: "Z → A", label: "Alphabetical (Z → A)" },
+    { key: "year_desc", short: "Newest", label: "Release Date (Latest → Earliest)" },
+    { key: "year_asc", short: "Oldest", label: "Release Date (Earliest → Latest)" },
   ];
 
   CP.state = {

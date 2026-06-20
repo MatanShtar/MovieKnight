@@ -8,15 +8,18 @@
    10. RESPONSIVE DESIGN (MEDIA QUERIES)
    ========================================== */
 @media (max-width: 1024px) {
-  /* Search row: hamburger + search bar (Surprise Me moves to the controls row). */
+  /* Hamburger now lives in the top bar (like every other page), so the search bar
+     takes the entire row on its own and Surprise Me wraps to the line below. */
   .header-left-group {
-    gap: 12px;
+    gap: 10px;
     align-items: center;
+    flex-wrap: wrap;
   }
   .search-container {
     height: 52px;
     border-width: 3px;
     padding: 4px 12px;
+    flex: 1 1 100%;
   }
   .search-container input {
     font-size: 16px;

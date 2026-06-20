@@ -32,8 +32,10 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  min-width: 280px;
-  min-height: 52px; /* Figma Rectangle 67 = 298x52 */
+  /* compact now that the pill shows the SHORT label; the menu still widens to the
+     full option text when opened */
+  min-width: 180px;
+  min-height: 52px;
   padding: 14px 20px;
   border: 0;
   border-radius: 15px;
