@@ -141,7 +141,7 @@
   row.addEventListener("click", (e) => {
     if (e.target.closest(".collection-menu-button")) return; // menu handled below
     const card = e.target.closest(".collection-card");
-    // ONLY the "+" itself jumps to the add-movies page; clicking anywhere else on
+    // ONLY the "+" itself opens the Add-to-Collection modal; clicking anywhere else on
     // the (empty) cover opens the collection page like a normal card.
     if (e.target.closest(".cover-empty__plus")) {
       if (card && card.dataset.id) {

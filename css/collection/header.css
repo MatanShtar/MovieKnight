@@ -171,7 +171,7 @@
   transform: none;
 }
 
-/* Mobile topbar add button (owner-only; navigates to add-movie.html) */
+/* Mobile topbar add button (owner-only; opens the Add-to-Collection modal) */
 .mobile-add-btn {
   display: inline-flex;
   align-items: center;

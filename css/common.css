@@ -884,7 +884,7 @@ body {
 
 /* ---- Empty (0-movie) cover ----
    The Figma placeholder: a light gray/white CHECKERBOARD with a centered circled
-   "+" (clicking it jumps to the add-movies page). Works with the new .cover-empty
+   "+" (clicking it opens the Add-to-Collection modal). Works with the new .cover-empty
    markup AND the legacy 4-span .cover-0 markup. */
 .cover-empty,
 .cover-0 {
