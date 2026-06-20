@@ -1,0 +1,442 @@
+/* home/pills.css — the pill-based filter UI (genre/actor/director/platform pills,
+   dropdowns, tooltips, add/clear buttons), the star-rating control, and the
+   Sort By menu. Split out of the former monolithic css/home.css
+   (sections 6–8, verbatim). Loaded after home/controls.css to preserve the
+   original cascade order. */
+
+/* ==========================================
+   6. PILL UI (GENRES, ACTORS, ETC)
+   ========================================== */
+.pill-selector-row {
+  width: 100%;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 15px;
+  min-height: 35px;
+}
+
+.filter-label {
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+  font-size: 18px;
+  color: var(--text);
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.pill-option {
+  cursor: pointer;
+  padding: 12px 18px;
+  text-align: left;
+  color: white;
+  transition: background-color 0.2s ease;
+}
+
+.pill-option:hover {
+  background-color: rgba(150, 50, 65, 0.9);
+}
+
+.pill-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap; /* pills stay side-by-side on one row */
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0; /* allow the list to shrink so the +/Clear stay in the box */
+}
+
+.pill-list:empty {
+  display: none;
+}
+
+.pill-item {
+  background-color: rgba(var(--maroon), 0.7);
+  color: white;
+  padding: 0 5px 0 12px;
+  gap: 5px;
+  height: 25px;
+  font-size: 14px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+  white-space: nowrap;
+  flex: 0 1 auto;
+  min-width: 0; /* let pills shrink (and names truncate) to stay on one row */
+  animation: pillPop 0.25s var(--ease-pop) both;
+}
+
+@keyframes pillPop {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Long names (e.g. actors) truncate with an ellipsis; the full name shows in a
+   hover tooltip (see .pill-tooltip). Keeps both pills on one row. */
+.pill-name {
+  display: inline-block;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: default; /* no text/I-beam cursor over the name */
+}
+
+.pill-item .pill-remove {
+  font-size: 15px;
+  line-height: 1;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  opacity: 0.75;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto; /* fixed size — never shrinks or shifts */
+  transition: opacity var(--t-fast) ease;
+}
+
+/* Brighten on hover only — no scaling, so the × stays put. */
+.pill-item .pill-remove:hover {
+  opacity: 1;
+}
+
+.pill-overflow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: white;
+  padding: 0 5px;
+  cursor: default;
+  height: 25px;
+  line-height: 1;
+}
+
+.pill-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(20, 20, 20, 0.95); /* black, matching the wheel tooltip */
+  color: white;
+  text-shadow: none;
+  line-height: 1;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  white-space: nowrap;
+  font-size: 13px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.pill-overflow:hover .pill-tooltip,
+.pill-item:hover .pill-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.pill-add-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0; /* the +/Clear buttons are never squeezed out of the row */
+}
+
+.pill-add-btn {
+  background-color: rgba(var(--maroon), 0.7);
+  color: white;
+  border: none;
+  width: 25px;
+  height: 25px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition:
+    background-color var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-pop);
+}
+
+.pill-add-btn:hover {
+  background-color: rgba(var(--maroon), 0.95);
+  transform: scale(1.1);
+}
+
+.pill-add-btn:active {
+  transform: scale(0.9);
+}
+
+.pill-add-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
+}
+
+/* Disabled "+" (Actor / Director — no backend people-search yet): greyed out,
+   not-allowed, and inert to hover/active so it clearly reads as unavailable. */
+.pill-add-btn--soon {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.4);
+  cursor: not-allowed;
+}
+.pill-add-btn--soon:hover,
+.pill-add-btn--soon:active {
+  background-color: rgba(255, 255, 255, 0.12);
+  transform: none;
+}
+
+/* Small "Coming Soon" badge sitting next to a not-yet-wired filter label. */
+.coming-soon-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+  color: rgb(var(--pink));
+  background: rgba(var(--pink), 0.14);
+  border: 1px solid rgba(var(--pink), 0.4);
+  cursor: default;
+}
+
+/* 6. The Dropdown Menu */
+.pill-dropdown {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s var(--ease-snap),
+    visibility 0.3s;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: rgba(var(--maroon), 0.95);
+  border-radius: 8px;
+  z-index: 999;
+  width: max-content;
+  min-width: 40px;
+  text-align: center;
+  white-space: nowrap;
+  margin-top: 5px;
+  max-height: 250px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.pill-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.pill-clear-btn {
+  background: transparent;
+  color: white;
+  text-decoration: underline;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+  display: none;
+}
+
+.pill-clear-btn:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+#ageRatingBtn {
+  width: 90px;
+}
+
+/* Pinned to the top of the (scrolling) dropdown so it stays visible while the
+   list scrolls underneath. The solid background hides names passing behind it. */
+.dropdown-search {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 10px 14px;
+  background-color: rgb(var(--maroon-light));
+  border: none;
+  border-bottom: 1px solid rgba(var(--pink), 0.3);
+  border-radius: 8px 8px 0 0;
+  color: white;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.dropdown-search::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.dropdown-search:focus {
+  border-bottom-color: rgba(var(--pink), 0.8);
+}
+
+/* Non-interactive "No people found" row in the actor/director dropdowns */
+.pill-option--empty,
+.pill-option--empty:hover {
+  color: rgba(255, 255, 255, 0.6);
+  background-color: transparent;
+  cursor: default;
+}
+
+/* ==========================================
+   7. STAR RATING SYSTEM
+   ========================================== */
+.star-rating {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.star {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.star:hover {
+  transform: scale(1.25) rotate(-6deg);
+}
+
+/* ==========================================
+   8. SORT BY MENU
+   ========================================== */
+/* Container Layout */
+.sort-dropdown {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.sort-label {
+  font-size: 16px;
+  margin: 0;
+  color: var(--text-soft);
+}
+
+/* Wrapper for the custom dropdown */
+.sort-custom-wrapper {
+  position: relative;
+}
+
+.sort-custom-btn {
+  width: 97.83px;
+  height: 45.3px;
+  background-color: rgba(var(--pink), 0.13);
+  color: var(--text-soft);
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding-left: 10px;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+
+.sort-custom-btn:hover {
+  background-color: rgba(var(--pink), 0.22);
+}
+
+.sort-custom-btn:active {
+  transform: scale(0.97);
+}
+
+.sort-custom-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
+}
+
+.sort-custom-menu {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s var(--ease-snap),
+    visibility 0.3s;
+  position: absolute;
+  top: 105%;
+  right: 0;
+  width: max-content;
+  min-width: 250px;
+  background-color: rgba(var(--maroon-light), 0.95);
+  border-radius: 12px;
+  z-index: 1000;
+  box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
+  padding: 10px 0;
+}
+
+.sort-custom-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.sort-option {
+  padding: 12px 20px;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  transition:
+    background-color 0.2s,
+    padding-left var(--t-fast) ease;
+  text-align: left;
+  opacity: 0.7;
+}
+
+.sort-option:hover {
+  background-color: rgba(var(--maroon), 0.95);
+  opacity: 1;
+  padding-left: 26px;
+}
+
+.sort-option.selected {
+  opacity: 1;
+  font-weight: bold;
+}

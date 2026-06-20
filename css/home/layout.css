@@ -1,0 +1,250 @@
+/* home/layout.css — page layout/header, search bar + AI mode, and the
+   "Surprise Me" button. Split out of the former monolithic css/home.css
+   (sections 1–3, verbatim). Loaded FIRST of the home/* stylesheets so the
+   cascade order matches the original single file. */
+
+/* ==========================================
+   1. LAYOUT & HEADER
+   ========================================== */
+
+.header-left-group {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+  min-width: 0;
+  gap: 30px;
+}
+
+.content-head {
+  width: 100%;
+  max-width: var(--content-width);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 1025px) {
+  .main-content {
+    padding-top: 0;
+  }
+  .content-head {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding-top: 24px;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    background-image: url("../../assets/images/movie-knight-gradient-bg.svg");
+    background-size: cover;
+    background-attachment: fixed;
+    background-position: top left;
+  }
+  .content-head .top-header {
+    margin-top: 0;
+  }
+}
+
+/* ==========================================
+   2. SEARCH BAR & AI MODE
+   ========================================== */
+.search-container {
+  display: flex;
+  align-items: center;
+  background-color: rgba(var(--pink), 0.13);
+  border-radius: 10px;
+  padding: 5px 15px;
+  height: 66.59px;
+  flex-grow: 1;
+  max-width: 100%;
+  transition:
+    background-color var(--t-base) ease,
+    border-color var(--t-base) ease,
+    box-shadow var(--t-base) ease;
+  border: 5px solid transparent;
+}
+
+.search-container input {
+  background: transparent;
+  font-size: 20px;
+  border: none;
+  color: white;
+  width: 100%;
+  padding: 10px;
+  outline: none;
+}
+
+.search-container > .nav-search-icon {
+  width: 22px;
+  height: auto;
+}
+
+.search-container:focus-within {
+  box-shadow:
+    0 0 0 2px rgba(var(--pink), 0.5),
+    0 0 24px rgba(var(--pink), 0.18);
+}
+
+.search-container.ai-glow {
+  background-color: rgba(var(--pink-alt), 0.25);
+  border-color: rgba(var(--pink), 0.6);
+  box-shadow: 0 0 50px rgba(var(--pink), 0.4);
+}
+
+.ai-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px;
+  appearance: none;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background-color: rgba(var(--pink-alt), 0.12);
+  min-width: 10%;
+  height: 42.69px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--text-soft);
+  transition:
+    background-color var(--t-base) ease,
+    border-color var(--t-slow) ease,
+    box-shadow var(--t-slow) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+
+.ai-mode-btn img {
+  width: 18px;
+  height: auto;
+}
+
+.ai-mode-btn:hover {
+  background-color: rgba(var(--pink-alt), 0.3);
+  cursor: pointer;
+}
+
+.ai-mode-btn:active {
+  transform: scale(0.96);
+}
+
+.ai-mode-btn.pressed {
+  border: 1px solid rgba(var(--pink), 1);
+  box-shadow: 0 0 12px rgba(var(--pink), 0.8);
+  background: rgba(var(--pink-alt), 0.3);
+}
+
+/* ==========================================
+   3. SURPRISE ME BUTTON
+   ========================================== */
+.surprise-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: auto;
+  min-width: 92px;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.surprise-btn {
+  appearance: none;
+  border: 0px;
+  border-radius: 12px;
+  min-width: 92px;
+  min-height: 66.59px;
+  justify-content: center;
+  background-color: rgba(var(--pink-alt), 0.13);
+  transition:
+    background-color var(--t-slow),
+    transform var(--t-fast) var(--ease-snap);
+}
+
+.dice-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.dice-icon {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+#diceTwo {
+  margin-top: -10px;
+  scale: 1.2;
+}
+#diceOne {
+  margin-top: 20px;
+}
+
+.surprise-btn:hover .dice-icon {
+  opacity: 1;
+}
+
+.surprise-btn:hover {
+  background-color: rgba(var(--pink-alt), 0.3);
+  cursor: pointer;
+}
+
+.surprise-btn:active {
+  background: rgba(var(--pink-alt), 0.7);
+  transform: scale(0.94);
+}
+
+.surprise-container p {
+  padding-top: 3px;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+
+@keyframes tossLeft {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  30% {
+    transform: translate(-8px, -12px) rotate(-180deg);
+  }
+  70% {
+    transform: translate(-4px, 4px) rotate(-360deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(-360deg);
+  }
+}
+
+@keyframes tossRight {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  30% {
+    transform: translate(8px, -10px) rotate(180deg);
+  }
+  70% {
+    transform: translate(4px, 4px) rotate(360deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(360deg);
+  }
+}
+
+.roll-left {
+  animation: tossLeft 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  transform-origin: center center;
+}
+
+.roll-right {
+  animation: tossRight 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+  transform-origin: center center;
+}
+
+#diceIcon {
+  display: inline-block;
+}

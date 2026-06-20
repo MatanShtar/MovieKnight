@@ -1,0 +1,205 @@
+/* collection/header.css — Collection Page header (title + meta + action pills).
+   The h1 + rename pencil + meta line, the inline rename editor, and the action
+   pills (Add to Collection / Publish / Like / Save) plus the mobile add button.
+   Load after base.css. */
+
+/* ==========================================
+   1. HEADER (title + meta + actions)
+   ========================================== */
+.collection-head {
+  width: 100%;
+  max-width: var(--content-width);
+}
+
+.collection-title-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.collection-title {
+  font-weight: 400;
+  /* Figma: 80px Lao Sangam MN. Fluid down so it never overflows the rail. */
+  font-size: clamp(34px, 4.3vw, 80px);
+  line-height: 1.1;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.collection-rename-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Figma 92:50: bare 40px outline glyph, no fill box. Hit area padded to >=44px. */
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.7;
+  transition:
+    background var(--t-base) ease,
+    opacity var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+.collection-rename-btn img {
+  width: 22px;
+  height: 22px;
+}
+.collection-rename-btn:hover {
+  background: rgba(var(--pink), 0.26);
+  opacity: 1;
+}
+.collection-rename-btn:focus-visible {
+  outline: 2px solid rgba(var(--pink), 0.9);
+  outline-offset: 2px;
+}
+.collection-rename-btn:active {
+  transform: scale(0.92);
+}
+
+.collection-meta {
+  margin-top: 6px;
+  font-size: clamp(15px, 1.4vw, 26px);
+  color: #afafaf;
+}
+
+/* inline rename editor (swaps in for the <h1> text) */
+.collection-title-input {
+  width: min(640px, 70vw);
+  max-width: 100%;
+  font-family: inherit;
+  /* Mirror .collection-title exactly so the text doesn't jump on open. */
+  font-size: clamp(34px, 4.3vw, 80px);
+  font-weight: 400;
+  line-height: 1.1;
+  color: var(--text);
+  background: rgba(var(--pink), 0.1);
+  border: 1px solid rgba(var(--pink), 0.6);
+  border-radius: 10px;
+  padding: 2px 12px;
+  outline: none;
+}
+.collection-title-input:focus {
+  border-color: rgb(var(--pink));
+  background: rgba(var(--pink), 0.16);
+}
+
+/* small count chip inside the Like / Save pills (visitor view) */
+.pill-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}
+
+/* body scroll-lock while the add-movie modal is open */
+.cm-no-scroll {
+  overflow: hidden;
+}
+
+/* ---- Action pills (Add to Collection / Publish / Like / Save) ---- */
+.collection-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.action-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 26px;
+  border: 0;
+  border-radius: 15px;
+  background: rgba(var(--pink), 0.16);
+  color: var(--text);
+  font-family: inherit;
+  font-size: clamp(15px, 1.15vw, 22px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap),
+    box-shadow var(--t-base) ease;
+}
+.action-pill:hover {
+  background: rgba(var(--pink), 0.3);
+  transform: translateY(-2px);
+}
+.action-pill:active {
+  transform: translateY(0) scale(0.97);
+}
+/* icon rendered as a mask so it can take the pill's text color */
+.action-pill .pill-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+/* Like/Save use the rose accent (matches the Figma heart fill #bc6676). */
+.action-pill--like .pill-icon,
+.action-pill--save .pill-icon {
+  background-color: rgb(var(--rose));
+}
+.action-pill--like.is-active {
+  background: rgba(var(--rose), 0.32);
+}
+.action-pill:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+/* in-flight / disabled (e.g. Publish toggle during async PATCH) */
+.action-pill:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+.action-pill:disabled:hover {
+  background: rgba(var(--pink), 0.16);
+  transform: none;
+}
+
+/* Mobile topbar add button (owner-only; navigates to add-movie.html) */
+.mobile-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(var(--pink), 0.13);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+.mobile-add-btn:hover {
+  background: rgba(var(--pink), 0.24);
+}
+.mobile-add-btn:active {
+  transform: scale(0.94);
+}
+.mobile-add-btn:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+.mobile-add-btn img,
+.mobile-add-btn .pill-icon {
+  width: 22px;
+  height: 22px;
+}

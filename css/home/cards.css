@@ -1,0 +1,255 @@
+/* home/cards.css — the movie grid, poster cards, skeleton loaders, the
+   infinite-scroll sentinel, hover overlay (action buttons), title pill, and
+   rating badge. Split out of the former monolithic css/home.css (section 9,
+   verbatim). Loaded after home/pills.css to preserve the original cascade order. */
+
+/* ==========================================
+   9. MOVIE GRID & POSTERS
+   ========================================== */
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  row-gap: 20px;
+  column-gap: 40px;
+  width: 100%;
+  max-width: var(--content-width);
+  padding: 8px;
+}
+
+/* Friendly empty / error state shown in place of the cards */
+.grid-message {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 22px;
+  color: var(--text-muted);
+}
+
+/* Infinite-scroll sentinel: a 1px full-row marker the IntersectionObserver
+   watches. `overflow-anchor: none` keeps the browser from ever choosing it as
+   the scroll-anchor element, so appending cards above it can't yank the view. */
+#infinite-scroll-sentinel {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 1px;
+  pointer-events: none;
+  overflow-anchor: none;
+}
+
+.movie-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer; /* the whole card opens the movie details page */
+  aspect-ratio: 2 / 3; /* card fills its grid track; height follows from the 2:3 ratio */
+  border: 3px solid rgb(var(--rose));
+  transition:
+    transform var(--t-base) var(--ease-snap),
+    box-shadow var(--t-base) var(--ease-snap),
+    border-color var(--t-base) ease;
+  animation: cardEnter 0.5s var(--ease-snap) backwards;
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.movie-card:nth-child(1) {
+  animation-delay: 0s;
+}
+.movie-card:nth-child(2) {
+  animation-delay: 0.05s;
+}
+.movie-card:nth-child(3) {
+  animation-delay: 0.1s;
+}
+.movie-card:nth-child(4) {
+  animation-delay: 0.15s;
+}
+.movie-card:nth-child(5) {
+  animation-delay: 0.2s;
+}
+.movie-card:nth-child(6) {
+  animation-delay: 0.25s;
+}
+.movie-card:nth-child(7) {
+  animation-delay: 0.3s;
+}
+.movie-card:nth-child(8) {
+  animation-delay: 0.35s;
+}
+.movie-card:nth-child(n + 9) {
+  animation-delay: 0.4s;
+}
+
+.movie-card:hover {
+  transform: translateY(-2px) scale(1.01);
+  border-color: rgb(var(--pink));
+  box-shadow: 0 14px 26px rgba(0, 0, 0, 0.4);
+  z-index: 2;
+}
+
+.poster-img {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 2 / 3; /* fixed ratio so the box is reserved before the asset loads */
+  object-fit: cover;
+  display: block;
+  /* Skeleton fill shown until the image decodes — no flash of empty space and,
+     with the fixed ratio above, no reflow when the poster paints in. */
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.movie-card--skeleton {
+  cursor: default;
+  /* Reserve the exact same box a real card occupies so the grid never
+     collapses while a page is in flight. width fills the grid track and the
+     inherited aspect-ratio: 2/3 fixes the height off that width — keeping the
+     skeleton identical in size to the card that replaces it (no reflow jump). */
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  flex: 0 0 auto;
+  border-color: rgba(var(--rose), 0.35);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.card-overlay {
+  opacity: 0;
+  height: 100%;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 30px;
+  position: absolute;
+  transition: opacity var(--t-base) ease;
+}
+
+.movie-card:hover .card-overlay {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.card-overlay button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: rgb(var(--wine));
+  border-radius: 100px;
+  border: none;
+  width: 60px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 1;
+  transform: scale(0.6);
+  opacity: 0;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-base) var(--ease-pop),
+    opacity var(--t-base) ease;
+}
+
+.card-overlay button img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.card-overlay button:nth-child(1) img {
+  width: 27px;
+  height: auto;
+}
+
+.movie-card:hover .card-overlay button {
+  transform: scale(1);
+  opacity: 1;
+}
+.movie-card:hover .card-overlay button:nth-child(1) {
+  transition-delay: 0.04s;
+}
+.movie-card:hover .card-overlay button:nth-child(2) {
+  transition-delay: 0.09s;
+}
+.movie-card:hover .card-overlay button:nth-child(3) {
+  transition-delay: 0.14s;
+}
+
+.card-overlay button:hover {
+  background-color: rgba(var(--rose), 0.8);
+  cursor: pointer;
+}
+
+.card-overlay button:hover {
+  transform: scale(1.05);
+}
+.movie-card:hover .card-overlay button:active {
+  transform: scale(0.95);
+}
+
+.card-overlay button:active {
+  background-color: rgb(var(--rose));
+}
+
+.card-overlay button.active {
+  background-color: rgb(var(--rose));
+}
+
+.movie-title-pill {
+  font-size: 12px;
+  line-height: 1.25;
+  display: flex;
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 30px;
+  width: calc(100% - 20px);
+  min-height: 24.21px;
+  padding: 4px 12px;
+  background-color: rgba(var(--pink), 0.2);
+  text-transform: uppercase;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.rating-badge {
+  min-width: 55px;
+  min-height: 29px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: absolute;
+  padding-right: 7px;
+  padding-left: 7px;
+  padding-top: 3px;
+  top: -3px;
+  right: -3px;
+  background-color: rgba(91, 91, 91, 0.55);
+  border-radius: 10px;
+}
+
+.rating-badge img {
+  min-width: 15px;
+  min-height: 14px;
+  padding-bottom: 2px;
+}
