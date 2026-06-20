@@ -32,9 +32,9 @@ window.toast = (function () {
       console.warn("[toast] Toastify not loaded - message was:", message);
       return;
     }
-    const t = TYPES[type] || TYPES.info;
+    const typeStyle = TYPES[type] || TYPES.info;
     Toastify({
-      text: `${t.icon}  ${message}`,
+      text: `${typeStyle.icon}  ${message}`,
       duration: options.duration ?? 3000,
       gravity: options.gravity ?? (isPhone() ? "top" : "bottom"), // phone: top, desktop: bottom
       position: options.position ?? (isPhone() ? "center" : "right"), // phone: center, desktop: right
@@ -42,7 +42,7 @@ window.toast = (function () {
       stopOnFocus: true, // pause the auto-dismiss while hovered
       className: "mk-toast",
       style: {
-        background: t.background,
+        background: typeStyle.background,
         color: "#fff",
         borderRadius: "12px",
         boxShadow: "0 10px 30px rgba(0, 0, 0, 0.35)",
@@ -62,8 +62,9 @@ window.toast = (function () {
     if (el.tagName === "A" && el.getAttribute("href") === "#")
       e.preventDefault();
     const raw = el.getAttribute("data-toast") || "";
-    const m = raw.match(/^(success|info|error|soon)\s*:\s*([\s\S]+)$/);
-    if (m) show(m[2], m[1]);
+    // optional "type: message" prefix, e.g. data-toast="error: Saving failed"
+    const typedMatch = raw.match(/^(success|info|error|soon)\s*:\s*([\s\S]+)$/);
+    if (typedMatch) show(typedMatch[2], typedMatch[1]);
     else show(raw, "info");
   });
 

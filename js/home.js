@@ -349,9 +349,14 @@ function movieSkeletonMarkup(n) {
 }
 
 function buildMovieCard(m) {
+  // Escape TMDB-supplied strings before they go into attributes / markup —
+  // a title containing a double-quote would otherwise break data-title / alt
+  // (and that corrupted value then flows into sessionStorage -> the movie page).
+  const title = escapeHtml(m.title);
+  const poster = escapeHtml(m.posterPath);
   return `
-    <article class="movie-card" data-id="${m.id ?? ""}" data-title="${m.title}" data-rating="${m.rating}" data-year="${m.releaseYear}" data-popularity="${m.popularity}" data-poster="${m.posterPath}">
-      <img src="${m.posterPath}" alt="${m.title}" class="poster-img" loading="lazy" decoding="async">
+    <article class="movie-card" data-id="${m.id ?? ""}" data-title="${title}" data-rating="${m.rating}" data-year="${m.releaseYear}" data-popularity="${m.popularity}" data-poster="${poster}">
+      <img src="${poster}" alt="${title}" class="poster-img" loading="lazy" decoding="async">
       <div class="rating-badge">
         ${Number(m.rating).toFixed(1)}
         <img src="assets/images/icons/ratings-star.svg" alt="Rating" class="ratings-star-img">
@@ -366,7 +371,7 @@ function buildMovieCard(m) {
         <button class="icon-btn">
           <img src="assets/images/icons/plus-icon.svg" alt="Add to collection" class="ratings-star-img">
         </button>
-        <div class="movie-title-pill">${m.title} (${m.releaseYear})</div>
+        <div class="movie-title-pill">${title} (${m.releaseYear})</div>
       </div>
     </article>`;
 }
@@ -397,8 +402,6 @@ const filterMenu = document.getElementById("filterMenu");
 const sortCustomBtn = document.getElementById("sortCustomBtn");
 const sortCustomMenu = document.getElementById("sortCustomMenu");
 let allGenres = [],
-  allActors = [],
-  allDirectors = [],
   allAgeRatings = [],
   allPlatforms = [];
 // Name -> TMDB id, so the filters can send ids while the UI shows names.
@@ -407,15 +410,14 @@ let genreNameToId = {},
 
 // Load the filter options once, then build the dropdowns that depend on them.
 // Genres + providers come from the live backend (with ids for filtering);
-// actors / directors / age-ratings still come from the static file because
-// the backend has no endpoints for them yet.
+// age-ratings still come from the static file because the backend has no
+// endpoint for them yet. (Actors/directors don't read this file — they use the
+// popular-people endpoint and DIRECTOR_DEFAULTS respectively.)
 (async () => {
   try {
     const res = await fetch("data/filterData.json");
     if (res.ok) {
       const data = await res.json();
-      allActors = data.actors || [];
-      allDirectors = data.directors || [];
       allAgeRatings = data.ageRating || [];
       allGenres = data.genres || []; // fallback until the backend call returns
       allPlatforms = data.watchProviders || [];
@@ -1060,7 +1062,7 @@ directorFilter = setupPersonFilter({
 });
 
 // ==========================================
-// 11. FILTER: AGE RATINGS
+// 10. FILTER: AGE RATINGS
 // ==========================================
 const ageRatingBtn = document.getElementById("ageRatingBtn");
 const ageRatingMenu = document.getElementById("ageRatingMenu");
@@ -1089,7 +1091,7 @@ function buildAgeRatings() {
 }
 
 // ==========================================
-// 12. FILTER: PLATFORMS
+// 11. FILTER: PLATFORMS
 // ==========================================
 let activePlatforms = [];
 
@@ -1170,7 +1172,7 @@ if (clearPlatformBtn) {
   };
 }
 // ==========================================
-// 13. SORTING (server-side)
+// 12. SORTING (server-side)
 // ==========================================
 // The backend sorts natively; we just pass the chosen option as a `sort` query
 // param and re-run the query. No client-side re-ordering of the grid.
@@ -1227,7 +1229,7 @@ if (filterBtn) {
 }
 
 // ==========================================
-// 14. CARD INTERACTIONS (LIKE / WATCHED)
+// 13. CARD INTERACTIONS (LIKE / WATCHED)
 // ==========================================
 const movieGridEl = document.getElementById("movieGrid");
 if (movieGridEl) {
@@ -1262,7 +1264,8 @@ if (movieGridEl) {
     if (label === "Add to collection") {
       const card = btn.closest(".movie-card");
       const title = (card && card.dataset.title) || "This movie";
-      if (window.CollectionModal) CollectionModal.open(title);
+      const id = card && card.dataset.id ? card.dataset.id : null;
+      if (window.CollectionModal) CollectionModal.open(id, title);
       else toast.soon("Coming Soon!");
       return;
     }
@@ -1281,7 +1284,7 @@ if (movieGridEl) {
 }
 
 // ==========================================
-// 15. AI MODE TOGGLE
+// 14. AI MODE TOGGLE
 // ==========================================
 const aiModeBtn = document.querySelector(".ai-mode-btn");
 const searchContainer = document.querySelector(".search-container");
@@ -1301,7 +1304,7 @@ if (aiModeBtn && searchContainer && searchInput) {
 }
 
 // ==========================================
-// 16. LIVE TEXT SEARCH (debounced -> runSearch)
+// 15. LIVE TEXT SEARCH (debounced -> runSearch)
 // ==========================================
 // Typing just re-runs the consolidated query (text + filters + sort). An empty
 // box is a valid query too — it returns the default feed. Out-of-order responses
@@ -1318,7 +1321,7 @@ if (searchInput) {
 }
 
 // ==========================================
-// 17. SURPRISE ME RANDOMIZER
+// 16. SURPRISE ME RANDOMIZER
 // ==========================================
 // Picks a random movie to take over the screen with one result. Rather than the
 // generic /movies/random endpoint (which surfaced obscure / foreign titles), it
