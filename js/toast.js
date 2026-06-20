@@ -19,6 +19,12 @@ window.toast = (function () {
       icon: "✕",
       background: "linear-gradient(135deg, #c0392b, #e7503f)",
     },
+    // "removed / undone" — an orange→red so a removal reads differently from a
+    // green "added" success.
+    warn: {
+      icon: "✓",
+      background: "linear-gradient(135deg, #e8743b, #e7503f)",
+    },
   };
 
   // phones get top-center toasts; wider screens get bottom-right
@@ -74,5 +80,6 @@ window.toast = (function () {
     info: (m, o) => show(m, "info", o),
     soon: (m = "Coming Soon!", o) => show(m, "soon", o), // toast.soon() defaults to "Coming Soon!"
     error: (m, o) => show(m, "error", o),
+    warn: (m, o) => show(m, "warn", o), // removals / undone actions (orange→red)
   };
 })();

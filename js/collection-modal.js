@@ -130,21 +130,12 @@ window.CollectionModal = (function () {
     item.dataset.id = c.id;
     item.setAttribute("role", "checkbox");
 
-    // Pad to a full 2×2 collage using the poster placeholder so collections with
-    // 0–3 posters don't show dark empty cells (Figma always shows 4 fills).
-    const srcs = (c.posters || []).slice(0, 4);
-    while (srcs.length < 4) srcs.push(P);
-    const posters = srcs
-      .map(
-        (src) =>
-          `<img class="cm-poster" src="${escapeHtml(src)}" alt="" loading="lazy" onerror="this.onerror=null;this.src='${escapeHtml(P)}'">`,
-      )
-      .join("");
-
+    // Cover built EXACTLY like the profile grid (shared helper in common.js):
+    // 0 → placeholder, 1 → single full poster, 2-3 → two, 4+ → 2×2.
     item.innerHTML = `
       <span class="cm-check" aria-hidden="true"></span>
       <span class="cm-name"></span>
-      <span class="cm-collage" aria-hidden="true">${posters}</span>`;
+      ${window.buildCollectionCover(c)}`;
     const nameEl = item.querySelector(".cm-name");
     nameEl.textContent = c.name;
     // Surface the full name on hover when it ellipsis-truncates.
@@ -159,12 +150,41 @@ window.CollectionModal = (function () {
     }
     item.setAttribute("aria-checked", String(startsChecked));
 
-    item.addEventListener("click", () => {
+    // Ticking ADDS/REMOVES the movie immediately (optimistic) and toasts in the
+    // matching colour — green for added, orange/red for removed.
+    item.addEventListener("click", async () => {
+      if (currentMovieId == null) return;
       const on = !selected.has(c.id);
-      if (on) selected.add(c.id);
-      else selected.delete(c.id);
+      // optimistic flip
+      if (on) {
+        selected.add(c.id);
+        initiallyIn.add(c.id);
+      } else {
+        selected.delete(c.id);
+        initiallyIn.delete(c.id);
+      }
       item.classList.toggle("is-selected", on);
       item.setAttribute("aria-checked", String(on));
+      try {
+        if (on) await MovieAPI.addMovieToCollection(c.id, currentMovieId);
+        else await MovieAPI.removeMovieFromCollection(c.id, currentMovieId);
+        if (window.toast) {
+          if (on) toast.success(`${currentMovie} added to ${c.name}`);
+          else toast.warn(`${currentMovie} removed from ${c.name}`);
+        }
+      } catch (err) {
+        // revert the optimistic flip on failure
+        if (on) {
+          selected.delete(c.id);
+          initiallyIn.delete(c.id);
+        } else {
+          selected.add(c.id);
+          initiallyIn.add(c.id);
+        }
+        item.classList.toggle("is-selected", !on);
+        item.setAttribute("aria-checked", String(!on));
+        if (window.toast) toast.error(err.message || "Something went wrong.");
+      }
     });
 
     return item;
@@ -182,18 +202,12 @@ window.CollectionModal = (function () {
     collections.forEach((c) => listEl.appendChild(buildItem(c)));
   }
 
-  // The "+" / Enter submits: add the movie to every newly-ticked collection,
-  // remove it from any that were pre-checked and un-ticked, and create + add a
-  // new one if a name was typed. With no changes and no name, it nudges the name
-  // field instead of doing nothing silently.
+  // The "+" / Enter now ONLY creates a new collection and adds the movie to it
+  // (ticking handles existing lists immediately, above). The new list then shows
+  // in place, checked.
   async function submitAdd() {
     const name = (nameInput.value || "").trim();
-    const ids = [...selected];
-    // Diff against the lists the movie started in so un-checking removes it.
-    const toAdd = ids.filter((id) => !initiallyIn.has(id));
-    const toRemove = [...initiallyIn].filter((id) => !selected.has(id));
-
-    if (!toAdd.length && !toRemove.length && !name) {
+    if (!name) {
       nameInput.focus();
       return;
     }
@@ -204,47 +218,19 @@ window.CollectionModal = (function () {
 
     const addBtn = overlay.querySelector(".cm-add");
     addBtn.disabled = true;
-
-    // Fire the confirm pulse on the lists that are ticked at submit time.
-    if (listEl) {
-      ids.forEach((id) => {
-        const row = listEl.querySelector(`.cm-item[data-id="${CSS.escape(String(id))}"]`);
-        if (row) row.classList.add("is-confirmed");
-      });
-    }
-
-    const names = [];
     try {
-      // add to each newly-ticked existing collection
-      for (const id of toAdd) {
-        await MovieAPI.addMovieToCollection(id, currentMovieId);
-        const c = collections.find((x) => x.id === id);
-        names.push(c ? c.name : "collection");
-      }
-      // remove from any pre-checked list the user un-ticked
-      for (const id of toRemove) {
-        await MovieAPI.removeMovieFromCollection(id, currentMovieId);
-      }
-      // create a new list (if named) and add to it too
-      if (name) {
-        const created = await MovieAPI.createCollection(name);
-        await MovieAPI.addMovieToCollection(created.id, currentMovieId);
-        names.push(created.name);
-      }
+      const created = await MovieAPI.createCollection(name);
+      await MovieAPI.addMovieToCollection(created.id, currentMovieId);
+      nameInput.value = "";
+      initiallyIn.add(created.id);
+      selected.add(created.id);
+      collections = await MovieAPI.listCollections(); // refresh covers + counts
+      renderRows();
+      if (window.toast) toast.success(`${currentMovie} added to ${created.name}`);
     } catch (err) {
+      if (window.toast) toast.error(err.message || "Couldn't create the collection.");
+    } finally {
       addBtn.disabled = false;
-      if (window.toast) toast.error(err.message || "Couldn't add to collection.");
-      return;
-    }
-
-    // Let the pulse play briefly before the overlay hides.
-    setTimeout(close, 200);
-    if (window.toast && names.length) {
-      const where =
-        names.length === 1
-          ? names[0]
-          : names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
-      toast.success(`${currentMovie} added to ${where}`);
     }
   }
 
