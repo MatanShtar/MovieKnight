@@ -1,0 +1,78 @@
+/* collection/toolbar.css — Collection Page owner bottom toolbar + error heading.
+   The sticky Movie Picker + Enhance button pair (with masked star/chevron decos)
+   and the danger-tinted error-state heading. Load after grid.css. */
+
+/* ==========================================
+   4. BOTTOM TOOLBAR (owner): Movie Picker + Enhance
+   ========================================== */
+.collection-toolbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center; /* Figma: two ~600px buttons centered as a pair */
+  gap: 40px;
+  width: 100%;
+  max-width: var(--content-width);
+  padding: 18px 0 26px;
+  /* fade the grid out behind the buttons as it scrolls under them */
+  background: linear-gradient(to top, rgba(20, 10, 16, 0.85) 20%, rgba(20, 10, 16, 0));
+}
+.toolbar-btn {
+  flex: 1 1 0;
+  max-width: 600px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  height: clamp(64px, 8vw, 155px); /* Figma Rectangle 56/57 = 600x155 */
+  border: 0;
+  border-radius: 50px;
+  font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", sans-serif;
+  font-size: clamp(18px, 1.9vw, 35px);
+  letter-spacing: 3.5px;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 -5px 4px rgba(0, 0, 0, 0.25);
+  transition:
+    transform var(--t-fast) var(--ease-snap),
+    filter var(--t-base) ease;
+}
+.toolbar-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+.toolbar-btn:active {
+  transform: translateY(0) scale(0.99);
+}
+.toolbar-btn--picker {
+  background: linear-gradient(90deg, #591e26 0%, #7d2a35 35%, #9b3442 65%, #bf4052 100%);
+  color: #fff;
+}
+.toolbar-btn--enhance {
+  background: linear-gradient(90deg, #ffd700 0%, #fffacd 45%, #d4af37 65%, #b8860b 100%);
+  color: #000;
+}
+/* sparkle glyphs flanking ENHANCE MY COLLECTION — masked so the shape is
+   identical across platforms (matches the .toolbar-deco technique) */
+.toolbar-star {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 L14.4 9.6 L24 12 L14.4 14.4 L12 24 L9.6 14.4 L0 12 L9.6 9.6 Z' fill='black'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Cpath d='M12 0 L14.4 9.6 L24 12 L14.4 14.4 L12 24 L9.6 14.4 L0 12 L9.6 9.6 Z' fill='black'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+
+/* error state heading is danger-tinted to distinguish it from the benign empty state */
+.collection-error h2 {
+  color: rgb(var(--danger));
+}
+/* "fast-forward" style chevrons flanking MOVIE PICKER */
+.toolbar-deco {
+  width: 26px;
+  height: 18px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='18' viewBox='0 0 26 18'%3E%3Cpath d='M2 2l9 7-9 7M14 2l9 7-9 7' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='18' viewBox='0 0 26 18'%3E%3Cpath d='M2 2l9 7-9 7M14 2l9 7-9 7' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
+}

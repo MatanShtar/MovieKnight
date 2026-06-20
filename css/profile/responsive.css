@@ -1,0 +1,182 @@
+/* profile/responsive.css - the profile page's media queries (header stacking,
+   tablet/phone tweaks, phone-banner collection covers). MUST load LAST in the
+   profile cascade so these overrides win. Loaded by profile.html. */
+
+/* ==========================================
+   8. RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================== */
+/* Below 1440 the header stacks — and when it stacks EVERYTHING centers (avatar,
+   name, bio, badges, collections meta) so it never reads half-right/half-centre.
+   `display: contents` flattens the info wrappers so the children can be reordered
+   into one centred column: avatar -> name -> bio -> badges -> collections meta. */
+@media (max-width: 1440px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    /* explicit margins per block below — `gap` mis-spaces here because `order` +
+       display:contents make the visually-adjacent badges/meta non-DOM-adjacent */
+    gap: 0;
+  }
+
+  .profile-info,
+  .profile-info-left-col,
+  .profile-info-right-col,
+  .bio-edit {
+    display: contents;
+  }
+
+  /* These carry desktop flex-grow (1/2/3/5). In the stacked column that growth
+     made them expand vertically and collide — reset to content height. */
+  .profile-avatar-container,
+  .profile-username,
+  .bio-edit,
+  .profile-meta,
+  .profile-badges {
+    flex: 0 0 auto;
+  }
+
+  .profile-avatar-container {
+    order: 0;
+    justify-content: center;
+  }
+  .profile-avatar {
+    width: 180px;
+  }
+
+  .profile-username {
+    order: 1;
+    justify-content: center;
+    text-align: center;
+    margin-top: 28px;
+  }
+
+  .profile-bio {
+    order: 2;
+    padding-top: 0;
+    max-width: 600px;
+    margin-top: 14px;
+  }
+
+  .profile-badges {
+    order: 3;
+    width: 100%;
+    min-height: 0;
+    margin-top: 44px;
+  }
+
+  .profile-meta {
+    order: 4;
+    align-items: center;
+    min-height: 0;
+    gap: 18px; /* keep the count clear of the New Collection button */
+    margin-top: 44px; /* clear of the badges block above */
+  }
+  .profile-meta > p {
+    text-align: center;
+    margin: 0;
+  }
+
+  .view-badges-container {
+    margin-top: 0; /* stacked: rely on the badges-block gap, not the bottom-push */
+  }
+}
+
+@media (max-width: 1024px) {
+  .profile-main {
+    padding: 16px 16px 64px;
+  }
+
+  .badge-tooltip {
+    display: none;
+  }
+
+  .collections-row {
+    column-gap: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-header {
+    gap: 18px;
+  }
+
+  .profile-avatar {
+    width: 128px;
+  }
+
+  .profile-username {
+    font-size: 30px;
+  }
+
+  .prog-badges-header {
+    font-size: 28px;
+  }
+
+  /* bigger breathing room between the header, the shields and View All Badges */
+  .profile-badges {
+    gap: 30px;
+  }
+
+  .badges-display {
+    gap: 22px;
+  }
+
+  .new-collection-btn,
+  .view-badges-btn {
+    max-width: 340px;
+  }
+
+  .collection-name {
+    font-size: 16px;
+  }
+
+  .collection-stats {
+    font-size: 15px;
+    padding: 8px 4px;
+  }
+
+  .collection-stats .stat-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .collections-stats-left {
+    gap: 18px;
+  }
+
+  .collections-stats-left > * {
+    gap: 5px;
+  }
+}
+
+/* Phone: ONE full-width card per row, but with a HORIZONTAL cover (the first ≤4
+   posters in a wide banner) so a single card never absorbs the whole screen.
+   Every width ABOVE this keeps ≥2 columns via the min() track on .collections-row. */
+@media (max-width: 600px) {
+  .collections-row {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+    padding-top: 8px;
+  }
+
+  .collection-card {
+    margin-bottom: 0;
+  }
+
+  .collection-cover {
+    aspect-ratio: 5 / 2; /* wide banner, not a screen-tall 2:3 portrait */
+  }
+  .cover-1 {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+  }
+  .cover-2 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+  }
+  .cover-4 {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr;
+  }
+}

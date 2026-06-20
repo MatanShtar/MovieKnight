@@ -1,0 +1,411 @@
+/* profile/collections.css - the collections grid: cards, covers, the 3-dots
+   context menu, the empty state, and loading skeletons. Loaded by profile.html
+   after badges.css. */
+
+/* ==========================================
+   5. COLLECTIONS CARDS
+   ========================================== */
+.collections-row {
+  padding-top: 24px;
+  display: grid;
+  /* Cards target 253px (Figma) but the track is capped at ~half the row so there
+     are ALWAYS at least 2 columns — a single 253px portrait card can never take a
+     whole row at any width above the phone breakpoint (where it goes 1-up + wide). */
+  grid-template-columns: repeat(auto-fill, minmax(min(253px, calc(50% - 31px)), 1fr));
+  column-gap: 61px;
+  row-gap: 20px;
+  width: 100%;
+  max-width: var(--content-width);
+}
+
+.collection-card {
+  margin-bottom: 28px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--t-base) var(--ease-snap);
+}
+
+.collection-card:hover {
+  /* lift only — a hover SCALE rasterises the empty cover's CSS-painted "+" and
+     blurs it; poster covers still get their own zoom via the rules below */
+  transform: translateY(-3px);
+}
+
+.collection-name {
+  text-align: center;
+  margin-bottom: 8px;
+  /* single-line ellipsis so a long name never wraps and de-aligns the row */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  transition: color var(--t-base) ease;
+}
+
+/* on hover, tint the name with the card's accent (--card-accent is set per card in profile.js) */
+.collection-card:hover .collection-name {
+  color: var(--card-accent, rgb(var(--pink)));
+}
+
+.collection-poster-container {
+  position: relative;
+  overflow: hidden;
+  /* accent frame (gold for default / rose for custom) — --card-accent is set
+     inline on the .collection-card and inherits down to here */
+  border: 2px solid var(--card-accent, rgb(var(--rose)));
+  border-radius: 2px; /* near-square corners (Figma), not a rounded card */
+  transition: box-shadow var(--t-base) var(--ease-snap);
+}
+
+.collection-card:hover .collection-poster-container {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+}
+
+/* keyboard focus ring on the navigable card */
+.collection-card:focus-visible {
+  outline: 2px solid var(--card-accent, rgb(var(--pink)));
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+.collection-card:focus-visible .collection-poster-container {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+}
+
+.collection-poster {
+  width: 100%;
+  display: block;
+  transition: transform var(--t-base) var(--ease-snap);
+}
+
+.collection-card:hover .collection-poster {
+  transform: scale(1.05);
+}
+
+
+/* inline rename editor on a card's name */
+.collection-name-input {
+  width: 100%;
+  text-align: center;
+  font: inherit;
+  color: var(--text);
+  background: rgba(var(--pink), 0.12);
+  border: 1px solid rgba(var(--pink), 0.6);
+  border-radius: 8px;
+  padding: 2px 8px;
+  outline: none;
+}
+.collection-name-input:focus {
+  border-color: rgb(var(--pink));
+  background: rgba(var(--pink), 0.18);
+}
+
+.collection-menu-button {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--surface-chip);
+  width: 22px;
+  height: 22px;
+  opacity: 90%;
+  border-radius: 4px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    transform var(--t-fast) var(--ease-pop),
+    opacity var(--t-fast) ease;
+}
+
+/* keep the 18px visual chip but extend the clickable region to >=44px (Fitts/WCAG 2.5.5) */
+.collection-menu-button::before {
+  content: "";
+  position: absolute;
+  inset: -13px;
+}
+
+.collection-menu-button:hover {
+  transform: scale(1.18);
+  opacity: 1;
+}
+
+.collection-menu-button:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+
+.collection-stats .stat-icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  background-color: currentColor;
+  /* the paint = inherited color */
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.collection-stats {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px;
+  margin-top: auto; /* pin the stats row to the card bottom for cross-card alignment */
+  min-height: 24px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.collections-stats-left {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+  gap: 12px;
+}
+
+.collections-stats-left > * {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ==========================================
+   6. COLLECTION CONTEXT MENU
+   ========================================== */
+.collection-menu-button--active {
+  opacity: 1;
+}
+
+.collection-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 243px;
+  padding: 8px 0;
+  background-color: #212121;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-10px);
+  transition:
+    opacity var(--t-base) ease,
+    transform var(--t-base) var(--ease-snap);
+}
+
+.collection-menu:not([hidden]) {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.collection-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: none;
+  border: 0;
+  text-align: left;
+  padding: 11px 20px;
+  font-size: 18px;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+/* 1px hairline divider between every item (Figma #6a6a6a) */
+.collection-menu-item + .collection-menu-item {
+  border-top: 1px solid #6a6a6a;
+}
+
+.collection-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.07);
+}
+
+.collection-menu-item:focus-visible {
+  background-color: rgba(255, 255, 255, 0.07);
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: -2px;
+}
+
+.collection-menu-item--danger {
+  color: #9c3442;
+}
+
+.menu-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* footnote shown only for default collections (built in renderMenu), explaining
+   why Rename + Delete are missing - an italic system note under a divider */
+.collection-menu-note {
+  margin-top: 4px;
+  padding: 8px 20px 2px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 12px;
+  font-style: italic;
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+/* ==========================================
+   6b. EMPTY STATE (0 collections)
+   ========================================== */
+/* First-run empty state injected into .collections-row when the user has no
+   collections — spans the full grid so it isn't a lone column, and replaces the
+   old reserved dead band (the row no longer has a min-height). */
+.collections-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 48px 24px;
+  opacity: 0.7;
+}
+
+.collections-empty__icon {
+  width: 64px;
+  height: 64px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  opacity: 0.7;
+  background:
+    linear-gradient(#fff, #fff) center / 30px 4px no-repeat,
+    linear-gradient(#fff, #fff) center / 4px 30px no-repeat;
+}
+
+.collections-empty__title {
+  font-size: 24px;
+  font-weight: 400;
+}
+
+.collections-empty__text {
+  font-size: 16px;
+  opacity: 0.85;
+  max-width: 420px;
+}
+
+.collections-empty__cta {
+  margin-top: 8px;
+  border: 0;
+  background-color: rgba(var(--pink), 0.18);
+  border-radius: 12px;
+  padding: 14px 24px;
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+
+.collections-empty__cta:hover {
+  background: rgba(var(--pink), 0.3);
+}
+
+.collections-empty__cta:active {
+  transform: scale(0.98);
+}
+
+.collections-empty__cta:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+
+/* ==========================================
+   7. LOADING SKELETONS & ANIMATIONS
+   ========================================== */
+@keyframes collectionEnter {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.collection-card:not(.collection-card--skeleton) {
+  animation: collectionEnter 0.45s var(--ease-snap) backwards;
+}
+
+.collection-card:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.collection-card:nth-child(2) {
+  animation-delay: 0.07s;
+}
+
+.collection-card:nth-child(3) {
+  animation-delay: 0.14s;
+}
+
+.collection-card:nth-child(4) {
+  animation-delay: 0.21s;
+}
+
+.collection-card:nth-child(5) {
+  animation-delay: 0.28s;
+}
+
+.collection-card:nth-child(n + 6) {
+  animation-delay: 0.35s;
+}
+
+/* skeleton placeholders shown while collections load */
+.collection-card--skeleton {
+  cursor: default;
+  pointer-events: none;
+}
+
+/* @keyframes shimmer lives in common.css (shared with the home movie grid) */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.12) 37%,
+    rgba(255, 255, 255, 0.04) 63%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.skeleton-name {
+  height: 16px;
+  width: 60%;
+  margin: 0 auto 8px;
+}
+
+.skeleton-poster {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+}
+
+.skeleton-stats {
+  height: 16px;
+  width: 100%;
+  margin-top: 8px;
+}

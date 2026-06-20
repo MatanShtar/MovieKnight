@@ -1,0 +1,231 @@
+/* collection/grid.css — Collection Page movie grid (cards, badges, remove,
+   skeletons, empty state). The poster mosaic and everything inside a card.
+   Load after sort.css. */
+
+/* ==========================================
+   3. MOVIE GRID
+   ========================================== */
+.collection-grid {
+  display: grid;
+  /* Figma: 7 columns of ~200px posters with a near-flush 4px column gap and
+     ~11px row gap (a dense poster mosaic), not an airy grid. */
+  grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 13vw, 200px), 1fr));
+  gap: 11px 4px;
+  width: 100%;
+  max-width: var(--content-width);
+  /* room so the last row clears the sticky toolbar */
+  padding-bottom: 150px;
+  align-content: start;
+  flex: 1;
+}
+/* when the grid holds only the empty-state block, centre it vertically */
+.collection-grid:has(.collection-empty) {
+  align-content: center;
+}
+
+.collection-card {
+  position: relative;
+  aspect-ratio: 200 / 289;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid rgb(var(--rose)); /* #bc6676 */
+  background: rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition:
+    transform var(--t-base) var(--ease-snap),
+    box-shadow var(--t-base) ease;
+  animation: collectionCardIn 0.4s var(--ease-snap) backwards;
+}
+.collection-card:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+.collection-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.5);
+}
+.collection-card .poster-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--t-base) var(--ease-snap);
+}
+.collection-card:hover .poster-img {
+  transform: scale(1.05);
+}
+
+/* dim overlay on hover so the title + remove button read clearly */
+.collection-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity var(--t-base) ease;
+  pointer-events: none;
+}
+.collection-card:hover::after {
+  opacity: 1;
+}
+
+/* rating badge — top-left dark pill (Figma: #5b5b5b @55%, gold star) */
+.card-rating {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 7px;
+  border-radius: 10px;
+  background: rgba(91, 91, 91, 0.55);
+  color: #fff;
+  font-size: 12px;
+  line-height: 1;
+}
+.card-rating img {
+  width: 11px;
+  height: 11px;
+}
+/* Desktop owner/visitor frames show no rating badge; the mobile frame does.
+   So hide it at desktop widths, keep it on phones/tablets. */
+@media (min-width: 1024px) {
+  .card-rating {
+    display: none;
+  }
+}
+
+/* always-visible title bar at the bottom of the poster */
+.card-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 18px 8px 7px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.55) 60%, transparent 100%);
+  color: #fff;
+  font-size: clamp(11px, 0.8vw, 12px);
+  line-height: 1.2;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+/* owner-only remove (trash) — top-right, appears on hover */
+.card-remove {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.85);
+  transition:
+    opacity var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-pop),
+    background var(--t-fast) ease;
+}
+.card-remove img {
+  width: 16px;
+  height: 16px;
+}
+.collection-card:hover .card-remove {
+  opacity: 1;
+  transform: scale(1);
+}
+.card-remove:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+.card-remove:hover {
+  background: rgba(var(--danger), 0.85);
+}
+/* Touch devices have no hover — keep the remove control visible and >=44px. */
+@media (hover: none) {
+  .card-remove {
+    opacity: 1;
+    transform: none;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@keyframes collectionCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* skeleton + empty state */
+.collection-card--skeleton {
+  cursor: default;
+  pointer-events: none;
+  border-color: rgba(var(--rose), 0.3);
+  animation: colSkeleton 1.2s ease-in-out infinite;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.1) 37%, rgba(255, 255, 255, 0.04) 63%);
+  background-size: 200% 100%;
+}
+@keyframes colSkeleton {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.collection-card--skeleton::after {
+  display: none;
+}
+.collection-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  /* sit in the optical centre of the free space, not hugging the top */
+  min-height: 48vh;
+  margin: auto 0;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--text);
+}
+.collection-empty h2 {
+  font-weight: 400;
+  font-size: clamp(20px, 2vw, 28px);
+  color: var(--text);
+}
+.collection-empty p {
+  max-width: 42ch;
+  font-size: clamp(14px, 1.05vw, 18px);
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+/* keep the primary action breathing room inside the empty state */
+.collection-empty .action-pill {
+  margin-top: 8px;
+}

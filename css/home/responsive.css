@@ -1,0 +1,207 @@
+/* home/responsive.css — all the home-page media queries (≤1024px tablet/mobile
+   chrome + filter panel, ≤768px grid/card tuning, ≤389px icon-only controls).
+   Split out of the former monolithic css/home.css (section 10, verbatim).
+   Loaded LAST of the home/* stylesheets so these overrides win, exactly as in
+   the original single file. */
+
+/* ==========================================
+   10. RESPONSIVE DESIGN (MEDIA QUERIES)
+   ========================================== */
+@media (max-width: 1024px) {
+  /* Search row: hamburger + search bar (Surprise Me moves to the controls row). */
+  .header-left-group {
+    gap: 12px;
+    align-items: center;
+  }
+  .search-container {
+    height: 52px;
+    border-width: 3px;
+    padding: 4px 12px;
+  }
+  .search-container input {
+    font-size: 16px;
+    padding: 8px;
+  }
+  .search-container > .nav-search-icon {
+    width: 20px;
+  }
+  .ai-mode-btn {
+    font-size: 14px;
+    height: 36px;
+    padding: 10px;
+    gap: 6px;
+  }
+  .ai-mode-btn img {
+    width: 16px;
+  }
+
+  .controls-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: space-between;
+  }
+  .filter-btn {
+    width: auto;
+    height: 38px;
+    padding: 0 10px;
+    gap: 5px;
+    font-size: 13px;
+  }
+  .filter-btn img {
+    width: 15px;
+    height: auto;
+  }
+  .sort-dropdown {
+    gap: 5px;
+  }
+  .sort-label {
+    font-size: 13px;
+  }
+  .sort-custom-btn {
+    width: auto;
+    min-width: 66px;
+    height: 38px;
+    font-size: 13px;
+    padding-left: 9px;
+    padding-right: 24px;
+  }
+
+  .surprise-container {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+    gap: 5px;
+    height: 38px;
+    padding: 0 10px;
+    background: rgba(var(--pink), 0.13);
+    border-radius: 12px;
+    transition: background-color var(--t-base) ease;
+  }
+  .surprise-container:hover {
+    background: rgba(var(--pink), 0.25);
+  }
+  .surprise-btn {
+    background: transparent;
+    min-width: 0;
+    min-height: 0;
+    width: auto;
+    height: auto;
+    padding: 0;
+  }
+  .surprise-btn:hover,
+  .surprise-btn:active {
+    background: transparent;
+    transform: none;
+  }
+  .surprise-container p {
+    padding: 0;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  .dice-wrapper {
+    gap: 2px;
+  }
+  .dice-icon {
+    width: 15px;
+    height: 15px;
+  }
+  #diceOne,
+  #diceTwo {
+    margin-top: 0;
+    scale: 1;
+  }
+
+  .filter-dropdown {
+    width: min(92vw, 500px);
+    padding: 18px;
+  }
+
+  .pill-selector-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter-label {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+  .year-filter {
+    flex-wrap: wrap;
+  }
+  .till-label {
+    margin-left: 0;
+  }
+  .pill-dropdown {
+    max-width: min(70vw, 240px);
+    white-space: normal;
+  }
+  .pill-option {
+    white-space: normal;
+  }
+  .star-rating {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .star {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .movie-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 12px;
+    row-gap: 16px;
+  }
+  .rating-badge {
+    font-size: 13px;
+    min-width: 0;
+    min-height: 0;
+    padding: 2px 5px;
+  }
+  .card-overlay {
+    gap: 8px;
+    padding: 8px;
+  }
+  .card-overlay button {
+    width: 34px;
+    height: auto;
+  }
+  .card-overlay button img {
+    width: 13px;
+    height: 13px;
+  }
+  .card-overlay button:nth-child(1) img {
+    width: 22px;
+    height: auto;
+  }
+  .movie-title-pill {
+    width: calc(100% - 12px);
+    font-size: 10px;
+    height: auto;
+    padding: 3px 4px;
+  }
+}
+
+/* Tiny screens: collapse Filters + Surprise to just their icons so the controls
+   row always stays on a single line. */
+@media (max-width: 389px) {
+  .filter-btn {
+    width: 40px;
+    padding: 0;
+    gap: 0;
+    font-size: 0;
+    justify-content: center;
+  }
+  .filter-btn img {
+    width: 18px;
+    height: 18px;
+  }
+  .surprise-container {
+    padding: 0 11px;
+  }
+  .surprise-container p {
+    display: none;
+  }
+}

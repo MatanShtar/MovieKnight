@@ -1,0 +1,169 @@
+/* profile/header-layout.css - profile grid/header layout + avatar & metadata.
+   First in the profile cascade. Loaded by profile.html. */
+
+/* ==========================================
+   1. PROFILE GRID & HEADER LAYOUT
+   ========================================== */
+.profile-main {
+  padding: 72px 50px 100px 50px;
+}
+
+.profile-header {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  max-width: var(--content-width);
+}
+
+.profile-info {
+  flex: 3;
+  min-height: 320px;
+  display: flex;
+}
+
+.profile-info-left-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================
+   2. AVATAR & PROFILE METADATA
+   ========================================== */
+.profile-avatar-container {
+  flex: 2;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+}
+
+.profile-avatar {
+  position: relative;
+  width: 228px;
+  max-width: 100%;
+  aspect-ratio: 1;
+}
+
+.avatar-pic {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 9px solid var(--text);
+  box-sizing: border-box;
+  transition: box-shadow var(--t-base) ease;
+}
+
+.profile-avatar:hover .avatar-pic {
+  box-shadow: 0 0 0 6px rgba(var(--pink), 0.35);
+}
+
+.upload-new-pic {
+  position: absolute;
+  top: -6%;
+  right: -15%;
+  cursor: pointer;
+  transition: transform var(--t-fast) var(--ease-pop);
+}
+
+.upload-new-pic:hover {
+  transform: scale(1.15);
+}
+
+.profile-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  gap: 14px;
+}
+
+.profile-meta > p {
+  font-size: 22px;
+  opacity: 70%;
+}
+
+.new-collection-btn {
+  border: 0px;
+  background-color: rgba(var(--pink), 0.18);
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text);
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 253px;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap),
+    opacity var(--t-base) ease;
+}
+
+.new-collection-btn img {
+  flex-shrink: 0;
+  transition: transform var(--t-base) var(--ease-pop);
+}
+
+.new-collection-btn span {
+  flex: 1;
+  text-align: center;
+}
+
+.new-collection-btn:hover {
+  cursor: pointer;
+  background: rgba(var(--pink), 0.3);
+  opacity: 1;
+}
+
+.new-collection-btn:hover img {
+  transform: scale(1.2);
+}
+
+.new-collection-btn:active {
+  transform: scale(0.98);
+}
+
+.new-collection-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.new-collection-btn:focus-visible,
+.view-badges-btn:focus-visible {
+  outline: 2px solid rgb(var(--pink));
+  outline-offset: 2px;
+}
+
+.profile-info-right-col {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  padding-left: 26px;
+}
+
+.profile-username {
+  flex: 1;
+  display: block;
+  font-size: 40px;
+  letter-spacing: 3%;
+  font-weight: 300;
+  /* keep the line box reserved before JS hydrates the name */
+  min-height: 56px;
+  /* never overflow the viewport / collide with the badges column */
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* on laptop/desktop, bound the name to its column with a single-line ellipsis
+   so a long username can't bleed into the Progression Badges region */
+@media (min-width: 1441px) {
+  .profile-username {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
