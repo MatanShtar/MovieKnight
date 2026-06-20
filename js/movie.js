@@ -18,8 +18,8 @@ const DEMO_MOVIE = {
     "older sister Kate, a mean feminist, to date someone.",
   cast: ["Heath Ledger", "Julia Stiles", "Joseph Gordon - Levitt", "David Krumholtz"],
   genres: ["Comedy", "Drama", "Romance"],
-  posterPath: "assets/images/movie-details-demo-poster.png",
-  backdropPath: "assets/images/movie-details-demo-poster.png",
+  posterPath: "assets/images/posters/ten-things-i-hate-about-you-poster.webp",
+  backdropPath: "assets/images/posters/ten-things-i-hate-about-you-poster.webp",
   trailerKey: "GbWQ_VXek6A",
 };
 
@@ -261,12 +261,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
+  // A malformed id (e.g. ?id=100s) is no movie at all — go straight to the 404 page.
+  if (!/^\d+$/.test(String(id))) {
+    window.location.replace("404.html");
+    return;
+  }
+
   paintBasics(getCachedBasics(id));
 
   try {
     const details = await MovieAPI.getMovieDetails(id);
     paintDetails(details);
   } catch (err) {
+    // Invalid id (400) or no such movie (404) → the 404 page, not a broken card.
+    if (err.status === 400 || err.status === 404) {
+      window.location.replace("404.html");
+      return;
+    }
     console.error("Could not load movie details:", err);
     if (window.toast) toast.error(err.message);
     if (!el("mdTitle").textContent.trim()) {

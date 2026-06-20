@@ -260,7 +260,7 @@
     });
     window.addEventListener("scroll", () => { if (!$("colSortMenu").hidden) CP.closeSortMenu(); }, true);
 
-    // Mobile topbar add button → same full-page Add-to-Collection flow (owner only).
+    // Mobile topbar add button → opens the Add-to-Collection modal (owner only).
     const mobileAdd = $("colMobileAddBtn");
     if (mobileAdd) mobileAdd.addEventListener("click", CP.openAddModal);
 
