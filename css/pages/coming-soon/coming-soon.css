@@ -24,9 +24,18 @@
 .cs-curtain {
     position: absolute;
     top: 0;
-    bottom: 0;
-    width: 54vw;
+    /* Overgrown well past the viewport bottom (clipped by .cs-stage). Pivoting from
+       the top, the rotate/skew of the open animation lifts the hem — a 100vh panel
+       would expose the dark stage under its bottom edge mid-swing. The extra length
+       keeps the floor covered through the whole rotation. */
+    height: 145vh;
+    /* Wider than half the screen, with the OUTER edge pushed off-screen (see the
+       --left/--right offsets). The inner edge still meets at the centre, so the
+       closed seam + the final parted gap are unchanged — but the rotate/skew can
+       no longer swing a side edge into view and expose the dark stage beside it. */
+    width: 76vw;
     z-index: 3;
+    overflow: hidden;          /* clip the travelling sheen highlight (::before) */
     /* Pivot from the top: the panels rotate around their top edge so the BOTTOM
        hem swings aside first (heavy-fabric drag) before the whole panel clears. */
     transform-origin: top center;
@@ -44,8 +53,51 @@
     will-change: transform;
 }
 
+/* A soft diagonal stage-light gleam that sweeps across the closed velvet during
+   the hold — keeps the fabric feeling lit and alive instead of a flat red panel.
+   Its own transform is independent of the panel's open animation. */
+.cs-curtain::before {
+    content: "";
+    position: absolute;
+    top: -10%;
+    bottom: -10%;
+    left: -40%;
+    width: 60%;
+    pointer-events: none;
+    background: linear-gradient(105deg,
+        transparent 40%,
+        rgba(255, 235, 210, 0.16) 50%,
+        transparent 60%);
+    opacity: 0;
+    animation: cs-sheen 2.4s ease-in-out 0.35s 1 forwards;
+}
+
+@keyframes cs-sheen {
+    0%   { opacity: 0;    transform: translateX(0); }
+    25%  { opacity: 0.9; }
+    100% { opacity: 0;    transform: translateX(240%); }
+}
+
+/* Mirror the gleam on the right panel so the light reads as spilling outward from
+   the centre seam rather than both panels sweeping the same way. */
+.cs-curtain--right::before {
+    left: auto;
+    right: -40%;
+    background: linear-gradient(255deg,
+        transparent 40%,
+        rgba(255, 235, 210, 0.16) 50%,
+        transparent 60%);
+    animation-name: cs-sheen-right;
+}
+
+@keyframes cs-sheen-right {
+    0%   { opacity: 0;    transform: translateX(0); }
+    25%  { opacity: 0.9; }
+    100% { opacity: 0;    transform: translateX(-240%); }
+}
+
 .cs-curtain--left {
-    left: 0;
+    left: -22vw;               /* outer edge off-screen; inner edge still at centre */
     /* darker, shadowed leading (inner) edge for depth */
     box-shadow: inset -34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
     /* a weightier ease so the fabric feels like it's being dragged, not snapped */
@@ -53,26 +105,33 @@
 }
 
 .cs-curtain--right {
-    right: 0;
+    right: -22vw;              /* outer edge off-screen; inner edge still at centre */
     box-shadow: inset 34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
     animation: cs-curtain-right 3.2s cubic-bezier(0.62, 0.02, 0.2, 1) forwards;
 }
 
-/* Start CLOSED (curtains meet at the centre), hold the beat, then DRAG open. With
-   transform-origin at the top, the mid-keyframe rotation swings the bottom hem
-   aside first — the two panels splay to roughly a 45° spread at the base before
-   settling back upright, fully cleared off each side. The slight skew adds drape. */
+/* Start CLOSED (curtains meet at the centre), hold the beat, then DRAG open in a
+   weighted, multi-phase swing. With transform-origin at the top the bottom hem
+   leads (the panel rotates open from its base), the body sweeps aside, then it
+   settles with a small pendulum overshoot + counter-skew so heavy velvet "lands"
+   instead of snapping to a stop. The skew adds a bit of fabric drape mid-swing. */
 @keyframes cs-curtain-left {
-    0%   { transform: translateX(0) rotate(0deg) skewX(0deg); }   /* closed: meets the centre */
-    18%  { transform: translateX(0) rotate(0deg) skewX(0deg); }   /* hold — the dramatic beat */
-    60%  { transform: translateX(-12vw) rotate(-22deg) skewX(3deg); } /* bottom drags open first */
-    100% { transform: translateX(-30vw) rotate(0deg) skewX(0deg); }   /* settle upright, cleared */
+    0%   { transform: translateX(0) rotate(0deg) skewX(0deg); }          /* closed */
+    16%  { transform: translateX(0) rotate(0deg) skewX(0deg); }          /* hold — the beat */
+    34%  { transform: translateX(-3vw) rotate(-11deg) skewX(3deg); }     /* bottom hem leads */
+    62%  { transform: translateX(-24vw) rotate(-5deg) skewX(1.5deg); }   /* sweeping aside */
+    84%  { transform: translateX(-32vw) rotate(2.5deg) skewX(-1.5deg); } /* overshoot + sway back */
+    93%  { transform: translateX(-29vw) rotate(-1deg) skewX(0.6deg); }   /* settle bounce */
+    100% { transform: translateX(-30vw) rotate(0deg) skewX(0deg); }      /* rest, cleared */
 }
 
 @keyframes cs-curtain-right {
     0%   { transform: translateX(0) rotate(0deg) skewX(0deg); }
-    18%  { transform: translateX(0) rotate(0deg) skewX(0deg); }
-    60%  { transform: translateX(12vw) rotate(22deg) skewX(-3deg); }
+    16%  { transform: translateX(0) rotate(0deg) skewX(0deg); }
+    34%  { transform: translateX(3vw) rotate(11deg) skewX(-3deg); }
+    62%  { transform: translateX(24vw) rotate(5deg) skewX(-1.5deg); }
+    84%  { transform: translateX(32vw) rotate(-2.5deg) skewX(1.5deg); }
+    93%  { transform: translateX(29vw) rotate(1deg) skewX(-0.6deg); }
     100% { transform: translateX(30vw) rotate(0deg) skewX(0deg); }
 }
 
@@ -162,22 +221,46 @@
 .cs-back:hover .cs-back-arrow { transform: translateX(-4px); }
 
 @media (max-width: 600px) {
-    .cs-curtain { width: 62vw; }
+    /* Wider again on phones (outer edge still off-screen via the -22vw offset), so
+       the inner edge keeps meeting near the centre while the sides stay covered. */
+    .cs-curtain { width: 84vw; }
 
     /* On phones the parted gap is narrower, so the copy was ending up tucked
        BEHIND the curtain edges. Lift it clearly in front (above the curtains and
        valance) — it only fades in after the panels have begun opening anyway. */
     .cs-content { z-index: 6; }
 
-    /* start closed, drag the bottom open first, then settle to a wider framed gap */
+    /* Scale the copy down so it sits comfortably inside the narrow parted gap. */
+    .cs-eyebrow { font-size: 12px; letter-spacing: 3px; margin-bottom: 8px; }
+    .cs-title   { font-size: clamp(30px, 11vw, 46px); }
+    .cs-copy    { font-size: clamp(14px, 4.1vw, 17px); margin: 14px auto 26px; line-height: 1.5; }
+    .cs-back    { font-size: 16px; padding: 11px 26px; }
+    .cs-back-arrow { font-size: 18px; }
+
+    /* Same weighted, multi-phase open as desktop, but a wider final gap for phones. */
     @keyframes cs-curtain-left {
-        0%, 18% { transform: translateX(0) rotate(0deg) skewX(0deg); }
-        60%     { transform: translateX(-14vw) rotate(-22deg) skewX(3deg); }
+        0%, 16% { transform: translateX(0) rotate(0deg) skewX(0deg); }
+        34%     { transform: translateX(-4vw) rotate(-11deg) skewX(3deg); }
+        62%     { transform: translateX(-30vw) rotate(-5deg) skewX(1.5deg); }
+        84%     { transform: translateX(-38vw) rotate(2.5deg) skewX(-1.5deg); }
+        93%     { transform: translateX(-35vw) rotate(-1deg) skewX(0.6deg); }
         100%    { transform: translateX(-36vw) rotate(0deg) skewX(0deg); }
     }
     @keyframes cs-curtain-right {
-        0%, 18% { transform: translateX(0) rotate(0deg) skewX(0deg); }
-        60%     { transform: translateX(14vw) rotate(22deg) skewX(-3deg); }
+        0%, 16% { transform: translateX(0) rotate(0deg) skewX(0deg); }
+        34%     { transform: translateX(4vw) rotate(11deg) skewX(-3deg); }
+        62%     { transform: translateX(30vw) rotate(5deg) skewX(-1.5deg); }
+        84%     { transform: translateX(38vw) rotate(-2.5deg) skewX(1.5deg); }
+        93%     { transform: translateX(35vw) rotate(1deg) skewX(-0.6deg); }
         100%    { transform: translateX(36vw) rotate(0deg) skewX(0deg); }
     }
+}
+
+/* Respect reduced-motion: skip the sweep + gleam and land on the final, fully
+   revealed state (curtains parted, copy visible). */
+@media (prefers-reduced-motion: reduce) {
+    .cs-curtain--left  { animation: none; transform: translateX(-30vw); }
+    .cs-curtain--right { animation: none; transform: translateX(30vw); }
+    .cs-curtain::before { animation: none; opacity: 0; }
+    .cs-content { animation: none; opacity: 1; }
 }
