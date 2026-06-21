@@ -373,12 +373,20 @@
 
 .cb-actionbar > * { pointer-events: auto; }
 
-/* reserved slot — keeps START from shifting as the message toggles */
+/* Validation message. Sits in a fixed bar over the scrolling setup content, so
+   when shown it gets a SOLID red pill background (+ shadow + z-index) to cleanly
+   cover whatever is underneath rather than clashing with the text behind it. The
+   constant padding/min-height is a reserved slot so START never shifts on toggle. */
 .cb-error {
-    min-height: 24px;
-    margin-bottom: 6px;
-    padding: 0 16px;
-    color: #f10024;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: min(680px, 92vw);
+    min-height: 28px;
+    margin-bottom: 8px;
+    padding: 4px 18px;
+    border-radius: 999px;
+    color: #fff;
     font-size: 16px;
     line-height: 21px;
     text-align: center;
@@ -386,7 +394,12 @@
     transition: opacity var(--t-base) ease;
 }
 
-.cb-error.show { opacity: 1; }
+.cb-error.show {
+    opacity: 1;
+    z-index: 41;                 /* above the action bar's other content + the page */
+    background: #c0202f;          /* solid red pill — covers anything behind it */
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
 
 /* START reuses .generate-wheel-btn but lives INSIDE the action bar now */
 .cb-start.generate-wheel-btn {
@@ -401,7 +414,7 @@
     min-height: 100vh;
     padding-top: 12px;
     padding-bottom: 0;
-    gap: 16px;
+    gap: 12px;                   /* tightened so the game is vertically static on PC */
     overflow-x: clip;            /* the full-bleed carousel must not add scroll */
 }
 
@@ -428,7 +441,9 @@
 }
 
 .cb-page-header .back-btn:hover { opacity: 0.75; }
-.cb-page-header .wheel-main-logo { height: 228px; object-fit: contain; }
+/* Scaled down from 228px so the game's posters + Eliminate buttons sit above the
+   fold on desktop (no vertical scroll — only the horizontal card scroll). */
+.cb-page-header .wheel-main-logo { height: 132px; object-fit: contain; }
 
 /* single-bar header that "expands" on entry, echoing the wheel hand-off.
    Scoped to .cb-game so these never touch the picker's 3-tab bar (chopping.css
@@ -452,12 +467,12 @@
     align-items: center;
     justify-content: center;
     margin: 0;
-    padding: 12px 20px;
+    padding: 10px 20px;
     background-color: rgb(var(--maroon));
     color: var(--text);
     border-radius: 50px;
     font-family: "Impact", sans-serif;
-    font-size: 30px;
+    font-size: 26px;
     font-weight: 100;
     letter-spacing: 3px;
     text-transform: uppercase;
@@ -470,8 +485,8 @@
 /* whose turn it is (hidden in single-player via inline style) */
 .cb-turn {
     font-family: "Lao Sangam MN", sans-serif;
-    font-size: 40px;
-    line-height: 52px;
+    font-size: 32px;
+    line-height: 42px;
     color: var(--text);
     text-align: center;
     margin: 0;
@@ -506,7 +521,7 @@
 /* the viewport: clips the cards that fan out to the edges */
 .cb-coverflow .carousel-inner {
     position: relative;
-    height: 560px;
+    height: 510px;              /* trimmed so the cards + buttons clear the fold on PC */
     overflow: hidden;
 }
 
@@ -516,7 +531,7 @@
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 262px;
+    width: 236px;
     margin: 0;
     display: flex;
     flex-direction: column;
@@ -534,11 +549,11 @@
 /* title ABOVE the poster — wraps to at most 2 lines and is kept narrower than the
    poster so neighbouring titles never collide in the coverflow. */
 .cb-card-title {
-    margin: 0 0 12px;
-    max-width: 230px;
-    min-height: 52px;
-    font-size: 21px;
-    line-height: 26px;
+    margin: 0 0 10px;
+    max-width: 220px;
+    min-height: 46px;
+    font-size: 20px;
+    line-height: 23px;
     color: var(--text-soft);
     text-align: center;
     display: -webkit-box;
@@ -551,8 +566,8 @@
 .cb-card.in-window .cb-card-title { color: var(--text); }
 
 .cb-poster {
-    width: 262px;
-    height: 379px;
+    width: 236px;
+    height: 342px;
     border: 1px solid #000000;
     box-shadow: -6px 8px 7px 0 rgba(0, 0, 0, 0.25);
     overflow: hidden;
@@ -564,9 +579,9 @@
 .cb-card.in-window:hover .cb-poster { transform: translateY(-4px); }
 
 .cb-eliminate {
-    width: 266px;
-    height: 60px;
-    margin-top: 18px;
+    width: 240px;
+    height: 54px;
+    margin-top: 14px;
     border: none;
     border-radius: 50px;
     background-color: #591e26;
@@ -586,16 +601,13 @@
 .cb-card.in-window .cb-eliminate:hover { filter: brightness(1.18); transform: scale(1.03); }
 .cb-card.in-window .cb-eliminate:active { transform: scale(0.97); }
 
-/* eliminated cards (the graveyard) — fully desaturated + dimmed for a strong,
-   unambiguous "chopped" cue (grayscale alongside the reduced opacity render() sets). */
+/* Grayscale is reserved for ELIMINATED cards ONLY — a strong, unambiguous
+   "chopped" cue (full desaturation on top of the reduced opacity render() sets).
+   Valid/peeking posters stay in full colour; their smaller scale + lower opacity
+   (set by render()) is enough to read them as "up next" without making an active,
+   not-yet-eliminated movie look chopped. */
 .cb-card.eliminated { cursor: default; }
 .cb-card.eliminated .cb-poster { filter: grayscale(100%); }
-
-/* Coverflow peeking posters (the smaller ones fanning off each edge) read as
-   "up next": desaturated to set the five active posters apart. On the touch strip
-   every active card is in-window, so this only greys the eliminated ones there —
-   the peeking strip cards are handled by .cb-peek in the responsive block. */
-.cb-card:not(.in-window) .cb-poster { filter: grayscale(100%); }
 .cb-card.eliminated .cb-eliminate { opacity: 0.5; cursor: default; filter: none; transform: none; pointer-events: none; }
 
 /* Minimal soft-triangle arrows: no background, and only the small triangle area
@@ -716,19 +728,43 @@
     color: var(--text);
 }
 
+/* Two buttons side by side (Play Again + Back to Collection) at the foot of the
+   winner card. Wraps to a stack only if the box gets very narrow. */
+.winner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 0 24px 26px;
+}
+
 .winner-remove {
-    width: 328px;
-    max-width: 80%;
-    height: 80px;
-    margin-bottom: 26px;
+    flex: 1 1 0;
+    min-width: 150px;
+    max-width: 220px;
+    height: 70px;
     border: none;
     border-radius: 50px;
     background-color: rgb(var(--maroon-light));
     color: var(--text);
     font-family: inherit;
-    font-size: 24px;
+    font-size: 22px;
     cursor: pointer;
+    /* an <a> + a <button> sit on this class — keep both centred + un-underlined */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+    padding: 0 12px;
     transition: transform var(--t-base) var(--ease-pop), filter var(--t-base) ease;
+}
+
+/* Back to Collection — a distinct secondary tone so it doesn't read as the
+   primary action. */
+.winner-secondary {
+    background-color: #596d73;
 }
 
 .winner-remove:hover { filter: brightness(1.12); transform: scale(1.04); }
@@ -818,6 +854,11 @@
     /* page bottom-padding is smaller here, so reserve a bit more for the fixed bar */
     .cb-setup { padding-bottom: 80px; }
 
+    /* Keep the "Random Movies Selected" count in normal flow BELOW the fixed
+       action bar's stacking layer (z-index 40), so on mobile it scrolls under the
+       START bar instead of floating statically over it / other elements. */
+    .cb-random { position: relative; z-index: 0; }
+
     .cb-config {
         height: auto;
         flex-direction: column;
@@ -832,7 +873,31 @@
 
     .cb-add-row { flex-wrap: wrap; justify-content: center; }
     .cb-input-pill { width: min(410px, 78vw); }
-    .cb-players { padding-left: 0; align-items: center; max-height: 200px; }
+
+    /* Wrap the player pills as centred ROWS that stay inside the viewport, instead
+       of the desktop's fixed-height column fill (which spilled into extra columns
+       and pushed the page wider than the screen). Shrink the pills a touch too. */
+    .cb-players {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-content: flex-start;
+        align-items: center;
+        max-height: none;
+        max-width: 100%;
+        gap: 12px;
+        padding-left: 0;
+    }
+
+    .cb-tag {
+        width: auto;
+        min-width: 86px;
+        max-width: 44vw;
+        height: 46px;
+        padding: 0 18px;
+    }
+
+    .cb-tag-name { font-size: 16px; }
 
     .cb-stat-row { gap: 20px; }
     .cb-stat-row .cb-label { width: auto; text-align: right; }
@@ -855,7 +920,8 @@
     .cb-stat-row .cb-label { text-align: center; }
     .cb-slider { width: min(328px, 80vw); }
 
-    .cb-players { max-height: 160px; }
+    .cb-tag { min-width: 78px; height: 44px; padding: 0 14px; }
+    .cb-tag-name { font-size: 15px; }
 
     .cb-page-header .wheel-main-logo { height: 88px; }
     .cb-game .feature-tabs p { font-size: 18px; }
@@ -933,12 +999,12 @@
         transition: filter var(--t-base) ease, transform var(--t-base) ease;
     }
 
-    /* Peeking (partially visible) cards are greyed out, dimmed AND shrunk a touch;
-       chopping.js adds .cb-peek to any card that isn't fully inside the scroll
-       viewport, so only the two centred posters stay full-size and in colour. */
+    /* Peeking (partially visible) cards stay in FULL COLOUR — only dimmed and
+       shrunk a touch so the two centred posters stand out without an active movie
+       ever looking "chopped" (grayscale is reserved for eliminated cards). chopping.js
+       adds .cb-peek to any card that isn't fully inside the scroll viewport. */
     .cb-card.cb-peek { opacity: 0.55; }
     .cb-card.cb-peek .cb-poster {
-        filter: grayscale(100%);
         transform: scale(0.9);
     }
 

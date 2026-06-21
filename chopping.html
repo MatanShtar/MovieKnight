@@ -56,7 +56,7 @@
                     </a>
                     <div class="settings-submenu" id="settingsSubmenu">
                         <a href="coming-soon.html?feature=Preferences"><img src="assets/images/icons/preferences-icon.svg" alt="Pref"> Preferences</a>
-                        <a href="coming-soon.html?feature=Account%20Settings"><img src="assets/images/icons/account-icon.svg" alt="Account"> Account Settings</a>
+                        <a href="coming-soon.html?feature=Settings"><img src="assets/images/icons/account-icon.svg" alt="Account"> Settings</a>
                     </div>
                 </div>
                 <a href="about.html" class="nav-link about-link">
@@ -126,7 +126,10 @@
             <button class="winner-close" id="winnerClose" aria-label="Close">&#10005;</button>
             <div class="winner-header">WE HAVE A WINNER!</div>
             <div class="winner-title" id="winnerTitle"></div>
-            <button class="winner-remove" id="cbPlayAgain">Play Again</button>
+            <div class="winner-actions">
+                <button class="winner-remove" id="cbPlayAgain">Play Again</button>
+                <a class="winner-remove winner-secondary" id="cbBackToCollection" href="collection.html">Back to Collection</a>
+            </div>
         </div>
     </div>
 </body>
