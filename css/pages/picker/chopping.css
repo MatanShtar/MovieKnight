@@ -11,17 +11,19 @@
 .picker-panel[data-panel="chopping"].active {
     width: 100%;
     max-width: 1540px;
+    flex: 1;   /* fill the state container so .cb-setup can push its count to the bottom */
 }
 
 .cb-setup {
     width: 100%;
+    flex: 1;                 /* fill the panel so the count can bottom-anchor */
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    /* Reserve the height of the fixed action bar (count + error + START) so the
-       config never slides underneath it on shorter screens. */
-    padding-bottom: 185px;
+    /* Reserve the height of the fixed action bar (error + START) so the bottom-
+       anchored movie count sits just ABOVE it instead of under it. */
+    padding-bottom: 48px;
 }
 
 /* Two columns: [Add Player + tags]   [eliminations / totals / random order].
@@ -339,15 +341,16 @@
 
 .cb-toggle input:checked ~ .cb-toggle-handle { left: calc(100% - 28px); }
 
-/* --- Random Movies Selected — now lives in the bottom action bar, so it sits
-   right above the START button. Compact horizontal row (label : pill). --- */
+/* --- Random Movies Selected — sits in the normal page flow at the bottom of the
+   setup content (NOT in the fixed bar), so it scrolls with the page instead of
+   staying stuck to the floating START button. Compact horizontal row. --- */
 .cb-random {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     gap: 16px;
-    margin-bottom: 14px;   /* breathing room above the error / START button */
+    margin-top: auto;   /* push to the bottom of .cb-setup, just above the fixed START bar */
 }
 
 .cb-random .cb-label { text-align: center; }
@@ -528,18 +531,21 @@
         opacity 0.45s ease;
 }
 
-/* title ABOVE the poster */
+/* title ABOVE the poster — wraps to at most 2 lines and is kept narrower than the
+   poster so neighbouring titles never collide in the coverflow. */
 .cb-card-title {
     margin: 0 0 12px;
-    max-width: 262px;
-    min-height: 36px;
-    font-size: 28px;
-    line-height: 36px;
+    max-width: 230px;
+    min-height: 52px;
+    font-size: 21px;
+    line-height: 26px;
     color: var(--text-soft);
     text-align: center;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
 }
 
 .cb-card.in-window .cb-card-title { color: var(--text); }
@@ -580,9 +586,16 @@
 .cb-card.in-window .cb-eliminate:hover { filter: brightness(1.18); transform: scale(1.03); }
 .cb-card.in-window .cb-eliminate:active { transform: scale(0.97); }
 
-/* eliminated cards (the graveyard) */
+/* eliminated cards (the graveyard) — fully desaturated + dimmed for a strong,
+   unambiguous "chopped" cue (grayscale alongside the reduced opacity render() sets). */
 .cb-card.eliminated { cursor: default; }
-.cb-card.eliminated .cb-poster { filter: grayscale(0.45); }
+.cb-card.eliminated .cb-poster { filter: grayscale(100%); }
+
+/* Coverflow peeking posters (the smaller ones fanning off each edge) read as
+   "up next": desaturated to set the five active posters apart. On the touch strip
+   every active card is in-window, so this only greys the eliminated ones there —
+   the peeking strip cards are handled by .cb-peek in the responsive block. */
+.cb-card:not(.in-window) .cb-poster { filter: grayscale(100%); }
 .cb-card.eliminated .cb-eliminate { opacity: 0.5; cursor: default; filter: none; transform: none; pointer-events: none; }
 
 /* Minimal soft-triangle arrows: no background, and only the small triangle area
@@ -802,13 +815,16 @@
 @media (max-width: 1024px) {
     .picker-panel[data-panel="chopping"].active { max-width: 100%; }
 
+    /* page bottom-padding is smaller here, so reserve a bit more for the fixed bar */
+    .cb-setup { padding-bottom: 80px; }
+
     .cb-config {
         height: auto;
         flex-direction: column;
         align-items: center;
         gap: 40px;
         margin-top: 24px;
-        margin-bottom: 150px;   /* clear the fixed action bar */
+        margin-bottom: 24px;   /* count + .cb-setup padding now clear the fixed bar */
     }
 
     .cb-col-left, .cb-col-right { align-items: center; }
@@ -853,4 +869,108 @@
     .winner-box { height: auto; padding-bottom: 8px; }
     .winner-header { font-size: 30px; }
     .winner-title { font-size: 30px; padding: 28px 18px; }
+}
+
+/* ---- Touch carousel (≤1024px): a native CSS scroll-snap strip ---------------
+   The desktop coverflow is a JS-driven 3D filmstrip steered by mouse-wheel /
+   touchpad + arrow buttons — none of which works on a touchscreen (the arrows
+   are awkward and a finger-swipe can't move it). At/below 1024px (the app-wide
+   "mobile" cutoff) chopping.js stops applying its per-card transform layout (it
+   just keeps the cards in DOM order) and this block lays them out as a horizontal
+   scroll-snap row: two full posters fit, with the next one peeking in to advertise
+   the swipe. This block sits last so it overrides the fixed card/poster sizes. */
+@media (max-width: 1024px) {
+    /* Keep the stage INSIDE the padded content (the desktop full-bleed 100vw broke
+       out of .cb-game and got clipped, which is why the strip couldn't scroll). */
+    .cb-stage {
+        width: 100%;
+        position: relative;
+        z-index: 1;
+        display: block;
+    }
+    .cb-coverflow { width: 100%; }
+
+    /* The strip itself is the horizontal scroller. The 15vw side padding (matched by
+       scroll-padding-left) is what reveals a peeking poster on BOTH sides: each snap
+       lands a card 15vw in from the edge, so the previous card shows in that gutter
+       and the next one peeks past the far edge — two full posters framed by two
+       greyed peeks, exactly like a coverflow but driven by a native swipe. */
+    .cb-coverflow .carousel-inner {
+        height: auto;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        scroll-padding-left: 15vw;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-x: contain;  /* don't chain the swipe to page back-nav */
+        padding: 8px 15vw 20px;
+        scrollbar-width: none;          /* Firefox */
+    }
+    .cb-coverflow .carousel-inner::-webkit-scrollbar { display: none; }
+
+    /* Cancel the absolute 3D layout: cards flow in a row and snap to start. 33vw →
+       two full posters sit centred (~66vw) with the 15vw gutters peeking either side. */
+    .cb-card {
+        position: static;
+        top: auto;
+        left: auto;
+        flex: 0 0 33vw;
+        width: auto;
+        transform: none;
+        opacity: 1;                     /* base .cb-card is opacity:0 for the desktop entrance */
+        scroll-snap-align: start;
+        transition: opacity var(--t-base) ease, filter var(--t-base) ease;
+    }
+
+    .cb-poster {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 262 / 379;
+        transform-origin: center;
+        transition: filter var(--t-base) ease, transform var(--t-base) ease;
+    }
+
+    /* Peeking (partially visible) cards are greyed out, dimmed AND shrunk a touch;
+       chopping.js adds .cb-peek to any card that isn't fully inside the scroll
+       viewport, so only the two centred posters stay full-size and in colour. */
+    .cb-card.cb-peek { opacity: 0.55; }
+    .cb-card.cb-peek .cb-poster {
+        filter: grayscale(100%);
+        transform: scale(0.9);
+    }
+
+    /* Eliminated cards: greyscale AND the strongest dim, so a chopped movie reads
+       as clearly "out" even while it sits in the strip. */
+    .cb-card.eliminated { opacity: 0.3; }
+    .cb-card.eliminated .cb-poster { filter: grayscale(100%); }
+
+    .cb-card-title {
+        max-width: 100%;
+        font-size: 15px;
+        line-height: 19px;
+        min-height: 38px;          /* room for up to two wrapped lines */
+    }
+
+    .cb-eliminate {
+        width: 100%;
+        height: 44px;
+        margin-top: 10px;
+        font-size: 18px;
+    }
+
+    /* native scrolling replaces the arrow controls entirely */
+    .cb-coverflow .carousel-control-prev,
+    .cb-coverflow .carousel-control-next { display: none; }
+
+    /* Keep the turn / title header in its own stacking layer ABOVE the strip so it
+       never collides with a card as the row scrolls. */
+    .cb-page-header,
+    .cb-game .feature-tabs,
+    .cb-turn {
+        position: relative;
+        z-index: 5;
+    }
 }

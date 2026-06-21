@@ -26,6 +26,12 @@ function escapeHtml(str) {
     ));
 }
 
+// At/below this width the game screen uses a native CSS scroll-snap strip instead
+// of the JS-driven 3D coverflow (must match the @media breakpoint in chopping.css).
+// 1024px is the app-wide "mobile" cutoff, so tablets get the swipe strip too.
+const cbMobileMq = window.matchMedia("(max-width: 1024px)");
+const cbIsMobile = () => cbMobileMq.matches;
+
 // Fisher–Yates shuffle (returns a new array).
 function shuffle(list) {
     const pool = list.slice();
@@ -442,6 +448,7 @@ function runGame(config, collectionMovies) {
     //     as they slide on (and shrink + fade out as they slide off). ---
     let firstPaint = true;
     function render() {
+        if (cbIsMobile()) { renderMobile(); return; }
         const step = stepPx();
         order.forEach((card, i) => {
             const slot = i - center;            // signed distance from centre, in cards
@@ -468,6 +475,45 @@ function runGame(config, collectionMovies) {
         }
         updateArrows();
     }
+
+    // Mobile: drop the absolute 3D transforms and let the CSS scroll-snap strip
+    // (chopping.css ≤768px) lay the cards out. We only (a) reflow the DOM so its
+    // order matches the `order` array — keeping eliminated cards at the strip's
+    // ends like the desktop graveyard — and (b) clear the inline styles desktop
+    // render() leaves behind so they don't fight the stylesheet. Every active
+    // card is pressable here (there's no five-poster "window" on a swipe strip).
+    function renderMobile() {
+        order.forEach((card) => {
+            track.appendChild(card.el);          // move into place (no-op if already last)
+            card.el.style.transform = "";
+            card.el.style.opacity = "";
+            card.el.style.zIndex = "";
+            card.el.style.pointerEvents = "";
+            card.el.style.transitionDelay = "";
+            card.el.classList.toggle("in-window", !card.eliminated);
+        });
+        updateMobilePeek();
+    }
+
+    // Grey out the cards that are only peeking at the strip edges, so just the two
+    // fully-visible posters stay in colour. A card is "peeking" when any part of it
+    // sits outside the scroll viewport. Cheap geometry, throttled to one rAF/scroll.
+    function updateMobilePeek() {
+        if (!cbIsMobile()) return;
+        const sl = track.scrollLeft;
+        const vw = track.clientWidth;
+        order.forEach((card) => {
+            const left = card.el.offsetLeft;            // relative to the position:relative track
+            const right = left + card.el.offsetWidth;
+            const fullyVisible = left >= sl - 2 && right <= sl + vw + 2;
+            card.el.classList.toggle("cb-peek", !fullyVisible);
+        });
+    }
+    let peekRaf = null;
+    track.addEventListener("scroll", () => {
+        if (peekRaf) return;
+        peekRaf = requestAnimationFrame(() => { peekRaf = null; updateMobilePeek(); });
+    }, { passive: true });
 
     function activeIndices() {
         return order.reduce((acc, c, i) => (c.eliminated ? acc : (acc.push(i), acc)), []);
@@ -536,12 +582,16 @@ function runGame(config, collectionMovies) {
     if (prevBtn) prevBtn.addEventListener("click", () => stepCenter(-1));
     if (nextBtn) nextBtn.addEventListener("click", () => stepCenter(1));
     document.addEventListener("keydown", (e) => {
+        if (cbIsMobile()) return;                 // the touch strip scrolls natively
         if (e.key === "ArrowLeft") { e.preventDefault(); stepCenter(-1); }
         else if (e.key === "ArrowRight") { e.preventDefault(); stepCenter(1); }
     });
 
     let wheelAccum = 0, wheelLock = false;
     coverflow.addEventListener("wheel", (e) => {
+        // On the touch strip (≤1024) the browser scrolls the row natively — don't
+        // intercept the trackpad's horizontal wheel here, or we'd block that scroll.
+        if (cbIsMobile()) return;
         if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;   // vertical → let the page scroll
         e.preventDefault();
         wheelAccum += e.deltaX;
@@ -592,6 +642,7 @@ function runGame(config, collectionMovies) {
 
     // --- go ---
     window.addEventListener("resize", render);   // keep the spread matched to the viewport
+    cbMobileMq.addEventListener("change", render); // swap between coverflow ⇄ scroll-snap strip
     recenter();                        // clamp the starting centre into bounds
     updateTurn();
     requestAnimationFrame(render);     // first paint with transforms in place

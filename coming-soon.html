@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coming Soon - MovieKnight</title>
+    <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg">
+
+    <link rel="stylesheet" href="css/core/common.css">
+    <link rel="stylesheet" href="vendor/toastify/toastify.min.css">
+    <link rel="stylesheet" href="css/pages/coming-soon/coming-soon.css">
+
+    <script src="vendor/toastify/toastify.min.js" defer></script>
+    <script src="js/core/toast.js" defer></script>
+    <script src="js/core/common.js" defer></script>
+</head>
+
+<body class="app-body">
+    <main class="cs-stage">
+        <div class="cs-curtain cs-curtain--left"></div>
+        <div class="cs-curtain cs-curtain--right"></div>
+        <div class="cs-valance"></div>
+
+        <div class="cs-content">
+            <p class="cs-eyebrow" id="csEyebrow" hidden></p>
+            <h1 class="cs-title">Coming&nbsp;Soon</h1>
+            <p class="cs-copy">We&rsquo;re currently filming this scene. &#127916;<br>
+                Give the crew a little time to wrap up!</p>
+            <!-- data-back is handled by common.js's smartBack(): history.back() when
+                 there's same-origin history, else a safe fallback to index.html. -->
+            <a class="cs-back" data-back="index.html" href="index.html">
+                <span class="cs-back-arrow" aria-hidden="true">&larr;</span> Go Back
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // Optional contextual eyebrow from ?feature=Explore / ?feature=Account Settings.
+        (function () {
+            try {
+                const feature = new URLSearchParams(location.search).get("feature");
+                if (!feature) return;
+                const clean = feature.trim().slice(0, 40);
+                if (!clean) return;
+                const eyebrow = document.getElementById("csEyebrow");
+                eyebrow.textContent = clean;
+                eyebrow.hidden = false;
+                document.title = clean + " - Coming Soon - MovieKnight";
+            } catch (_) { /* no-op: the default heading is fine */ }
+        })();
+    </script>
+</body>
+
+</html>

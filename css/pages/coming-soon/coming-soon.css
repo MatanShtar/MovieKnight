@@ -1,0 +1,167 @@
+/* coming-soon.css — the cinematic "Coming Soon" placeholder shared by the
+   Explore and Account Settings screens. A pair of red velvet curtains sweeps
+   CLOSED, holds for a beat, then draws back OPEN to reveal the copy framed on a
+   dark stage (matching the reference still). One-shot animations (fill: forwards)
+   so prefers-reduced-motion simply lands on the final, fully-revealed state. */
+
+.cs-stage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* the dark back wall behind the curtains */
+    background:
+        radial-gradient(ellipse at 50% 42%, #3a2127 0%, #1c0f14 58%, #0a0608 100%);
+}
+
+/* ----------------------------------------------------------------------------
+   THE CURTAINS — two velvet panels with vertical pleats. They start off-stage
+   (open), sweep in to meet at the centre (closed), pause, then settle back to a
+   framed-open position that leaves the copy in the central gap.
+   ---------------------------------------------------------------------------- */
+.cs-curtain {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 54vw;
+    z-index: 3;
+    background-color: #7d1820;
+    /* sheen pleats over a left→right velvet body */
+    background-image:
+        repeating-linear-gradient(90deg,
+            rgba(0, 0, 0, 0.5) 0px,
+            rgba(0, 0, 0, 0.08) 16px,
+            rgba(255, 255, 255, 0.10) 31px,
+            rgba(0, 0, 0, 0.08) 46px,
+            rgba(0, 0, 0, 0.5) 62px),
+        linear-gradient(90deg, #450b11, #8e1c24 50%, #450b11);
+    box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.55);
+    will-change: transform;
+}
+
+.cs-curtain--left {
+    left: 0;
+    /* darker, shadowed leading (inner) edge for depth */
+    box-shadow: inset -34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
+    animation: cs-curtain-left 3.2s var(--ease-snap) forwards;
+}
+
+.cs-curtain--right {
+    right: 0;
+    box-shadow: inset 34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
+    animation: cs-curtain-right 3.2s var(--ease-snap) forwards;
+}
+
+/* Start CLOSED (curtains meet at the centre), hold the beat, then draw smoothly
+   open to a framed position that leaves the copy in the central gap. */
+@keyframes cs-curtain-left {
+    0%   { transform: translateX(0); }       /* closed: meets the centre */
+    18%  { transform: translateX(0); }       /* hold — the dramatic beat */
+    100% { transform: translateX(-28vw); }   /* draw open: framed */
+}
+
+@keyframes cs-curtain-right {
+    0%   { transform: translateX(0); }
+    18%  { transform: translateX(0); }
+    100% { transform: translateX(28vw); }
+}
+
+/* ----------------------------------------------------------------------------
+   THE VALANCE — a draped, scalloped swag pinned across the top. Drawn as an SVG
+   so the festoon edge is crisp; it sits above the curtains and never moves.
+   ---------------------------------------------------------------------------- */
+.cs-valance {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: clamp(96px, 19vh, 200px);
+    z-index: 4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 200' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='v' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23a51f29'/%3E%3Cstop offset='1' stop-color='%234d0c12'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0,0 H1000 V95 Q900,185 800,95 Q700,185 600,95 Q500,185 400,95 Q300,185 200,95 Q100,185 0,95 Z' fill='url(%23v)'/%3E%3Cpath d='M1000,95 Q900,185 800,95 Q700,185 600,95 Q500,185 400,95 Q300,185 200,95 Q100,185 0,95' fill='none' stroke='%23d9b15a' stroke-width='3' opacity='0.55'/%3E%3C/svg%3E");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+    pointer-events: none;
+}
+
+/* ----------------------------------------------------------------------------
+   THE COPY — revealed in the central gap as the curtains part.
+   ---------------------------------------------------------------------------- */
+.cs-content {
+    position: relative;
+    z-index: 2;            /* behind the curtains, so it's hidden while closed */
+    max-width: min(560px, 86vw);
+    padding: 0 24px;
+    text-align: center;
+    opacity: 0;
+    animation: cs-reveal 1.1s ease 1.6s forwards;
+}
+
+@keyframes cs-reveal {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.cs-eyebrow {
+    margin: 0 0 10px;
+    font-size: 16px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: rgba(var(--pink-alt), 0.85);
+}
+
+.cs-title {
+    margin: 0;
+    font-size: clamp(44px, 9vw, 84px);
+    line-height: 1.05;
+    font-weight: 400;
+    color: var(--text);
+    text-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+}
+
+.cs-copy {
+    margin: 20px auto 34px;
+    font-size: clamp(18px, 2.4vw, 22px);
+    line-height: 1.6;
+    color: var(--text-soft);
+}
+
+.cs-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 34px;
+    border-radius: 50px;
+    background-color: rgb(var(--pink-alt));
+    color: #2a0f17;
+    font-size: 20px;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(var(--pink-alt), 0.35);
+    transition: transform var(--t-base) var(--ease-pop), filter var(--t-base) ease;
+}
+
+.cs-back:hover { transform: scale(1.05); filter: brightness(1.06); }
+.cs-back:active { transform: scale(0.97); }
+
+.cs-back-arrow {
+    font-size: 22px;
+    line-height: 1;
+    transition: transform var(--t-base) var(--ease-snap);
+}
+
+.cs-back:hover .cs-back-arrow { transform: translateX(-4px); }
+
+@media (max-width: 600px) {
+    .cs-curtain { width: 62vw; }
+    /* start closed, then open to a wider framed gap on phones */
+    @keyframes cs-curtain-left {
+        0%, 18% { transform: translateX(0); }
+        100% { transform: translateX(-34vw); }
+    }
+    @keyframes cs-curtain-right {
+        0%, 18% { transform: translateX(0); }
+        100% { transform: translateX(34vw); }
+    }
+}
