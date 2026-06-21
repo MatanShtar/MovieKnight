@@ -593,10 +593,51 @@ window.MovieAPI = (function () {
         return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
     }
 
+    // ==========================================
+    // 8. SPIN-THE-WHEEL PERSISTENCE (per collection, server-backed)
+    // ==========================================
+    // The wheel for a collection is stored on the server as an ordered array of
+    // strings (movie titles / free-form entries). Both calls require auth (the
+    // Bearer token request() already attaches). request() unwraps the { ok, data }
+    // envelope and throws an Error with .status set, so callers branch on 401/404/5xx.
+
+    // Pull the array of strings out of whichever key the server used (GET returns
+    // `wheelConfig`; PUT returns the normalised list as `wheelConfig`/`saved`).
+    function extractWheel(data) {
+        const list = data && (data.wheelConfig || data.saved);
+        return Array.isArray(list) ? list.filter((s) => typeof s === "string") : [];
+    }
+
+    // GET /api/collections/:id/wheel — the saved wheel (or [] if never saved).
+    // Owner sees theirs; a PUBLIC collection's wheel is readable by any logged-in
+    // user; a PRIVATE collection you don't own throws err.status === 404.
+    async function getWheel(collectionId) {
+        const data = await request(`/collections/${encodeURIComponent(collectionId)}/wheel`);
+        return extractWheel(data);
+    }
+
+    // PUT /api/collections/:id/wheel — save/overwrite the wheel (owner only; a
+    // non-owner gets 404). Sends a cleaned list (trim, drop blanks, cap at 100) to
+    // match the server's own coercion, and returns the server's normalised array.
+    async function saveWheel(collectionId, wheelConfig) {
+        const clean = (Array.isArray(wheelConfig) ? wheelConfig : [])
+            .map((s) => String(s).trim())
+            .filter(Boolean)
+            .slice(0, 100);
+        const data = await request(`/collections/${encodeURIComponent(collectionId)}/wheel`, {
+            method: "PUT",
+            body: { wheelConfig: clean },
+        });
+        const saved = extractWheel(data);
+        return saved.length || clean.length === 0 ? saved : clean;
+    }
+
     return {
         API_BASE,
         aiPicker,
         aiSearch,
+        getWheel,
+        saveWheel,
         searchMovies,
         getMovieDetails,
         searchPeople,

@@ -3,15 +3,31 @@
 // ==========================================
 // 1. STATE
 // ==========================================
-// localStorage key + the free-form title cap shared by "add" and "rename".
-const WHEEL_STORAGE_KEY = "movieKnightWheel";
+// The free-form title cap shared by "add" and "rename".
 const MAX_TITLE_LEN = 20;
 
-// On initial load the wheel shows two editable placeholder items. (Saved wheels
-// are restored explicitly via the "Load Latest Wheel" button, not automatically.)
-// When the user arrives from the picker, these are replaced by their chosen
-// collection's movie titles (see seedFromCollection).
+// Legacy key for the old localStorage-only wheel — read ONCE for a best-effort
+// migration into the server (see initWheelData), never written to anymore.
+const LEGACY_WHEEL_KEY = "movieKnightWheel";
+
+// On initial load the wheel shows two editable placeholder items. When the user
+// arrives from the picker these are replaced by their chosen collection's filtered
+// titles (the "mk:wheelGame" hand-off); otherwise the saved wheel is loaded from
+// the server (GET /api/collections/:id/wheel — see initWheelData).
 let movies = ["Movie 1", "Movie 2"];
+
+// --- server-backed persistence state (per collection) ---
+// The collection whose wheel we load/save, resolved from ?collection=<id> (or the
+// last one the picker remembered). null → a standalone wheel with no server wheel.
+let wheelCollectionId = null;
+// Whether the signed-in user OWNS that collection (from GET /api/collections/:id).
+// Only owners may PUT; a visitor on a public collection gets a read-only wheel.
+let wheelIsOwner = false;
+// The last array we know the server holds, used to gate the Save button and avoid
+// redundant PUTs. null until the first successful load/save.
+let serverWheel = null;
+let savingWheel = false;       // guards overlapping PUTs
+let saveDebounce = null;       // debounce handle for auto-save on edits
 
 let currentWinnerIdx = -1; // index in `movies` of the movie shown in the popup
 
@@ -29,14 +45,16 @@ const PLUS_SVG = `
     </svg>`;
 
 document.addEventListener('DOMContentLoaded', () => {
-    seedFromCollection();   // replace placeholders with the chosen collection
-    rerender();
+    // Wire the (static) UI immediately, paint placeholders, then hydrate the real
+    // wheel from the server in the background.
     setupSpinPhysics();
     setupListInteractions();
     setupWinnerControls();
     setupWheelHover();
     setupSaveLoad();
     setupSearch();
+    rerender();
+    initWheelData();
 });
 
 // ==========================================
@@ -55,20 +73,121 @@ function setupSearch() {
 }
 
 // ==========================================
-// 1b. SEED FROM THE CHOSEN COLLECTION
+// 1b. LOAD / HYDRATE THE WHEEL (server-backed, per collection)
 // ==========================================
-// The picker stores the already genre/provider-filtered movie titles under
-// "mk:wheelGame". If that's present, seed the wheel with those real titles;
-// otherwise leave the editable placeholders so a direct visit to wheel.html
-// still works. The hand-off is consumed once so a manual reload doesn't wipe
-// edits the user has since made.
-function seedFromCollection() {
+// The picker hands off the freshly genre/provider-filtered titles under
+// "mk:wheelGame" (consumed once). Read it here so a fresh "Generate Wheel" shows
+// those movies; null if the page was opened directly / on a refresh.
+function readWheelHandoff() {
     let game;
     try { game = JSON.parse(sessionStorage.getItem('mk:wheelGame')); }
     catch { game = null; }
-    if (!game || !Array.isArray(game.movies) || !game.movies.length) return;
+    if (!game || !Array.isArray(game.movies) || !game.movies.length) return null;
     sessionStorage.removeItem('mk:wheelGame');
-    movies = game.movies.filter(Boolean);
+    return game.movies.filter(Boolean);
+}
+
+// The collection whose wheel we read/write: the ?collection=<id> URL param wins,
+// else the last one the picker remembered (ActiveCollection's "mk:activeCollection").
+function resolveWheelCollectionId() {
+    const fromUrl = new URLSearchParams(location.search).get('collection');
+    if (fromUrl) return fromUrl;
+    try {
+        return sessionStorage.getItem('mk:activeCollection')
+            || localStorage.getItem('mk:activeCollection');
+    } catch (_) { return null; }
+}
+
+// Read (and clear) the legacy localStorage-only wheel for a one-time migration.
+function readLegacyWheel() {
+    try {
+        const parsed = JSON.parse(localStorage.getItem(LEGACY_WHEEL_KEY));
+        return Array.isArray(parsed) ? parsed.filter(Boolean) : null;
+    } catch { return null; }
+}
+
+// Resolve ownership + the saved wheel from the server, then hydrate. Order of
+// precedence for what to SHOW: a fresh picker hand-off (the user just chose
+// filters) → the server's saved wheel → a legacy localStorage wheel → placeholders.
+// Owners persist whatever they land on so a refresh restores it from the server.
+async function initWheelData() {
+    const handoff = readWheelHandoff();
+    wheelCollectionId = resolveWheelCollectionId();
+
+    // No collection in context: a standalone wheel. Use the hand-off if present;
+    // otherwise keep placeholders. Nothing to load/save server-side.
+    if (!wheelCollectionId) {
+        if (handoff) { movies = handoff; rerender(); }
+        updateSaveButtonState();
+        return;
+    }
+
+    // Ownership + existence/visibility. A 404 here means private-and-not-yours.
+    try {
+        const collection = await MovieAPI.getCollection(wheelCollectionId);
+        wheelIsOwner = !!(collection && collection.isOwner);
+    } catch (err) {
+        handleWheelLoadError(err);
+        return;
+    }
+
+    if (handoff) {
+        // Fresh wheel from the picker: show it now, and (owner only) save it so a
+        // refresh / another device restores the same set from the server.
+        movies = handoff;
+        rerender();
+        if (wheelIsOwner) persistWheel({ silent: true });
+        else updateSaveButtonState();
+        return;
+    }
+
+    // Otherwise load the saved wheel from the server.
+    try {
+        const wc = await MovieAPI.getWheel(wheelCollectionId);
+        serverWheel = wc.slice();
+        if (wc.length) {
+            movies = wc;
+            currentRotation = 0;
+        } else if (wheelIsOwner) {
+            // One-time migration: lift a legacy localStorage wheel up to the server,
+            // then clear it so it can't re-attach to another collection later.
+            const legacy = readLegacyWheel();
+            if (legacy && legacy.length) {
+                movies = legacy;
+                currentRotation = 0;
+                try { localStorage.removeItem(LEGACY_WHEEL_KEY); } catch (_) {}
+                persistWheel({ silent: true });
+            }
+        }
+        rerender();
+    } catch (err) {
+        handleWheelLoadError(err);
+    }
+}
+
+// 401 → re-auth; 404 → no-access state; anything else → keep the current wheel and
+// surface a transient toast (the editable placeholders still work in-memory).
+function handleWheelLoadError(err) {
+    if (err && err.status === 401) { window.location.replace('login.html'); return; }
+    if (err && err.status === 404) {
+        showWheelMessage("Wheel unavailable",
+            "This collection is private or doesn’t exist, so its wheel can’t be loaded.");
+        return;
+    }
+    if (window.toast) toast.error("Couldn’t load the saved wheel. You can still spin this one.");
+    updateSaveButtonState();
+}
+
+// Replace the wheel stage with a simple message (no-access / error states).
+function showWheelMessage(title, detail) {
+    const stage = document.querySelector('.wheel-stage');
+    if (!stage) return;
+    stage.innerHTML = `
+        <div class="wheel-message">
+            <h2>${escapeHtml(title)}</h2>
+            <p>${escapeHtml(detail)}</p>
+            <a class="save-btn" href="picker.html">Back to picker</a>
+        </div>`;
 }
 
 function rerender() {
@@ -162,6 +281,7 @@ function addMovie(title) {
     movies.push(title);
     renderMovieList(movies);
     updateSaveButtonState();
+    scheduleSave();
 
     // Wheel: the new slice emerges from between its two neighbouring slots.
     animateSlice(movies.length - 1, 'add');
@@ -200,6 +320,7 @@ function removeMovie(index) {
         renderMovieList(movies);
         drawWheel(movies);
         updateSaveButtonState();
+        scheduleSave();
     });
 }
 
@@ -238,6 +359,7 @@ function startRename(index) {
                 if (window.toast) toast.info(`"${next}" is already on the wheel.`);
             } else {
                 movies[index] = next;
+                scheduleSave();
             }
         }
         rerender(); // restores the title span (and refreshes the wheel + save state)
@@ -257,30 +379,67 @@ function startRename(index) {
 }
 
 // ==========================================
-// 3c. SAVE / LOAD (localStorage: "movieKnightWheel")
+// 3c. SAVE / LOAD (server: GET/PUT /api/collections/:id/wheel)
 // ==========================================
-function getSavedWheel() {
-    try {
-        const parsed = JSON.parse(localStorage.getItem(WHEEL_STORAGE_KEY));
-        return Array.isArray(parsed) ? parsed : null;
-    } catch {
-        return null;
-    }
-}
-
-// The current wheel exactly equals what's saved (same titles, same order)?
+// The current wheel exactly equals what the server holds (same titles, order)?
 function wheelMatchesSaved() {
-    const saved = getSavedWheel();
-    return saved !== null && JSON.stringify(saved) === JSON.stringify(movies);
+    return serverWheel !== null && JSON.stringify(serverWheel) === JSON.stringify(movies);
 }
 
-// Save is pointless when there's nothing new to save — grey it out then.
+// Save is only meaningful when there's a collection, the user OWNS it, and there
+// are unsaved changes — otherwise grey the button out (a visitor's wheel is
+// read-only; a standalone wheel has nowhere to save).
 function updateSaveButtonState() {
     const saveBtn = document.querySelector('.save-current-btn');
     if (!saveBtn) return;
-    const matches = wheelMatchesSaved();
-    saveBtn.disabled = matches;
-    saveBtn.classList.toggle('save-btn--disabled', matches);
+    const canSave = !!wheelCollectionId && wheelIsOwner;
+    const disabled = !canSave || wheelMatchesSaved();
+    saveBtn.disabled = disabled;
+    saveBtn.classList.toggle('save-btn--disabled', disabled);
+}
+
+// Debounced auto-save so an owner's edits persist without needing the Save button.
+function scheduleSave() {
+    if (!wheelCollectionId || !wheelIsOwner) return;
+    clearTimeout(saveDebounce);
+    saveDebounce = setTimeout(() => persistWheel({ silent: true }), 700);
+}
+
+// PUT the current wheel for the active collection. Owner-only; the server returns
+// the normalised (trimmed/capped) list, which becomes our source of truth.
+async function persistWheel({ silent = false } = {}) {
+    if (!wheelCollectionId || !wheelIsOwner) {
+        if (!silent && window.toast) toast.info('Open a collection to save its wheel.');
+        return;
+    }
+    if (savingWheel) { scheduleSave(); return; }   // coalesce overlapping saves
+    clearTimeout(saveDebounce);
+    savingWheel = true;
+    try {
+        const saved = await MovieAPI.saveWheel(wheelCollectionId, movies);
+        serverWheel = saved.slice();
+        // Adopt the server's normalised list (it may have trimmed/capped entries),
+        // but never yank the board out from under an in-progress spin.
+        if (!isSpinning && JSON.stringify(saved) !== JSON.stringify(movies)) {
+            movies = saved.slice();
+            rerender();
+        } else {
+            updateSaveButtonState();
+        }
+        if (!silent && window.toast) toast.success('Wheel saved.');
+    } catch (err) {
+        if (err && err.status === 401) { window.location.replace('login.html'); return; }
+        // 404 here means we don't actually own it (or it's gone) — stop offering save.
+        if (err && err.status === 404) {
+            wheelIsOwner = false;
+            updateSaveButtonState();
+            if (!silent && window.toast) toast.error("You can’t save this collection’s wheel.");
+            return;
+        }
+        if (window.toast) toast.error("Couldn’t save the wheel. Please try again.");
+    } finally {
+        savingWheel = false;
+    }
 }
 
 function setupSaveLoad() {
@@ -290,23 +449,32 @@ function setupSaveLoad() {
     if (saveBtn) {
         saveBtn.addEventListener('click', () => {
             if (saveBtn.disabled) return;
-            localStorage.setItem(WHEEL_STORAGE_KEY, JSON.stringify(movies));
-            updateSaveButtonState();
-            if (window.toast) toast.success('Wheel saved.');
+            persistWheel({ silent: false });
         });
     }
 
     if (loadBtn) {
-        loadBtn.addEventListener('click', () => {
-            const saved = getSavedWheel();
-            if (!saved || !saved.length) {
-                if (window.toast) toast.info('No saved wheel to load yet.');
+        loadBtn.addEventListener('click', async () => {
+            if (!wheelCollectionId) {
+                if (window.toast) toast.info('Open a collection to load its wheel.');
                 return;
             }
-            movies = saved.slice();
-            currentRotation = 0; // reset the spin orientation for the loaded set
-            rerender();
-            if (window.toast) toast.success('Loaded your latest wheel.');
+            try {
+                const saved = await MovieAPI.getWheel(wheelCollectionId);
+                serverWheel = saved.slice();
+                if (!saved.length) {
+                    if (window.toast) toast.info('No saved wheel to load yet.');
+                    updateSaveButtonState();
+                    return;
+                }
+                movies = saved.slice();
+                currentRotation = 0; // reset the spin orientation for the loaded set
+                rerender();
+                if (window.toast) toast.success('Loaded the saved wheel.');
+            } catch (err) {
+                if (err && err.status === 401) { window.location.replace('login.html'); return; }
+                if (window.toast) toast.error("Couldn’t load the saved wheel. Please try again.");
+            }
         });
     }
 
