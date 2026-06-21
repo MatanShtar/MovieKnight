@@ -95,6 +95,42 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* No-access / error state shown in place of the wheel (e.g. a private collection
+   you don't own, or a failed load). */
+.wheel-message {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+    padding: 40px 24px;
+    color: var(--text-soft);
+}
+
+.wheel-message h2 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--text);
+}
+
+.wheel-message p {
+    margin: 0;
+    max-width: 460px;
+    font-size: 18px;
+    color: var(--text-muted);
+}
+
+.wheel-message .save-btn {
+    margin-top: 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .wheel-zone {
     flex: 1;
     display: flex;

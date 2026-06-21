@@ -381,11 +381,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (pickerTabs) pickerTabs.classList.add('collapsing');
 
+            // Carry the collection id so the wheel page can load/save its
+            // server-backed wheel (GET/PUT /api/collections/:id/wheel).
+            const wheelUrl = selectedCollection && selectedCollection.id != null
+                ? `wheel.html?collection=${encodeURIComponent(selectedCollection.id)}`
+                : 'wheel.html';
+
             let navigated = false;
             const go = () => {
                 if (navigated) return;
                 navigated = true;
-                window.location.href = 'wheel.html';
+                window.location.href = wheelUrl;
             };
             // Navigate once the tabs finish collapsing (with a safety fallback).
             if (pickerTabs) {
