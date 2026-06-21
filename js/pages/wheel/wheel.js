@@ -113,6 +113,7 @@ function readLegacyWheel() {
 async function initWheelData() {
     const handoff = readWheelHandoff();
     wheelCollectionId = resolveWheelCollectionId();
+    wireWheelBack(); // point Back's fallback at the hub for THIS collection
 
     // No collection in context: a standalone wheel. Use the hand-off if present;
     // otherwise keep placeholders. Nothing to load/save server-side.
@@ -194,6 +195,20 @@ function rerender() {
     renderMovieList(movies);
     drawWheel(movies);
     updateSaveButtonState(); // keep "Save" enabled only when there are unsaved changes
+}
+
+// Back returns to the hub (picker). smartBack uses history.back() when there's
+// in-app history — which lands on the hub with the user's filter selections intact
+// (bfcache) — and only falls back to this href on a direct visit. Carry the
+// collection id so even that fallback re-opens the hub for the right collection.
+function wireWheelBack() {
+    const back = document.querySelector('.back-btn');
+    if (!back) return;
+    const url = wheelCollectionId
+        ? `picker.html?collection=${encodeURIComponent(wheelCollectionId)}`
+        : 'picker.html';
+    back.setAttribute('href', url);
+    back.setAttribute('data-back', url);
 }
 
 // ==========================================

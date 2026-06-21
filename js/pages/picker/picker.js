@@ -2,6 +2,24 @@
 // 2. GENERIC UI BUILDERS (GENRES & PROVIDERS)
 // ==========================================
 
+// A wheel needs at least two slices to be worth spinning, so the picker won't build
+// one from fewer than this many movies (after filtering).
+const MIN_WHEEL_MOVIES = 2;
+
+// Point the hub's "Back" at the collection it plays from (collection.html?id=<id>),
+// resolved from ?collection= or the remembered active collection. Removing data-back
+// opts this link out of smartBack's history.back(), which is what could otherwise
+// send the user back down into a game. With no collection in context we leave the
+// static href/data-back as-is.
+function wireHubBack() {
+    const back = document.querySelector('.back-btn');
+    if (!back) return;
+    const id = window.ActiveCollection && ActiveCollection.getId();
+    if (!id) return;
+    back.setAttribute('href', `collection.html?id=${encodeURIComponent(id)}`);
+    back.removeAttribute('data-back');
+}
+
 // FALLBACK DATA: used only if the backend's /genres or /providers calls fail,
 // so the picker still renders something offline. Live data comes from MovieAPI.
 const dataConfig = {
@@ -35,6 +53,15 @@ const dataConfig = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // The hub is the middle of the tree: collection → picker (hub) → game. Its Back
+    // must go UP to the collection — NOT history.back(), which is unreliable here: a
+    // game's "Play Again" pushes a fresh picker entry on top of the game, so the
+    // hub's history.back() would drop the user back INSIDE that game. Point Back
+    // straight at the collection and strip data-back so the global smartBack handler
+    // doesn't hijack it with history.back(). Falls back to the static href when there
+    // is no collection in context (a direct visit without one).
+    wireHubBack();
 
     // Resolved up-front: refreshGenerateState() runs while genres render (below),
     // which is before section D — so this must exist before then (no TDZ).
@@ -348,9 +375,19 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (activeGenreButtons().length < 1) {
             invalid = true;
             msg = "Select at least one genre.";
-        } else if (filteredWheelMovies().length === 0) {
-            invalid = true;
-            msg = "No movies in this collection match your filters.";
+        } else {
+            const matched = filteredWheelMovies().length;
+            if (matched === 0) {
+                invalid = true;
+                // A provider filter is the usual culprit: provider_ids is US-flatrate
+                // only, so movies that don't stream there are correctly excluded.
+                msg = selectedProviderIds().length
+                    ? "None of your movies stream on the selected providers."
+                    : "No movies in this collection match your filters.";
+            } else if (matched < MIN_WHEEL_MOVIES) {
+                invalid = true;
+                msg = "A wheel needs at least 2 movies — add more or loosen your filters.";
+            }
         }
 
         if (wheelError) {
@@ -367,9 +404,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.toast) toast.error("Pick a collection and at least one genre to build a wheel.");
                 return;
             }
+
+            // The wheel pool is the chosen collection filtered CLIENT-SIDE by the
+            // selected genres/providers (each movie carries genre_ids/provider_ids in
+            // the collection payload — no server endpoint). Enforce the ≥2 minimum
+            // here too, in case filters narrow the pool below what a wheel can spin.
             const wheelMovies = filteredWheelMovies();
-            if (!selectedCollection || !wheelMovies.length) {
-                if (window.toast) toast.error("No movies match — adjust your filters.");
+            if (!selectedCollection || wheelMovies.length < MIN_WHEEL_MOVIES) {
+                if (window.toast) {
+                    toast.error(wheelMovies.length === 1
+                        ? "A wheel needs at least 2 movies — add more or loosen your filters."
+                        : "No movies match — adjust your filters.");
+                }
+                refreshGenerateState();
                 return;
             }
 

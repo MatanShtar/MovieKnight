@@ -318,6 +318,16 @@ function initGame() {
         config.players = ["Niv", "Matan"];
     }
 
+    // Point the top "Back" at the hub's Chopping tab for THIS collection. smartBack
+    // still prefers history.back() (returning to the hub with setup intact); this is
+    // just the fallback target for a direct visit, kept logical with the collection.
+    const back = document.querySelector('.back-btn');
+    if (back && config.collectionId != null) {
+        const url = `picker.html?panel=chopping&collection=${encodeURIComponent(config.collectionId)}`;
+        back.setAttribute('href', url);
+        back.setAttribute('data-back', url);
+    }
+
     // Fetch the real collection + its movies (login-gated). Spinner while we wait,
     // then either start the game or show a clear error.
     showGameLoading();
