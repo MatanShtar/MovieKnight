@@ -15,6 +15,10 @@ let movies = ["Movie 1", "Movie 2"];
 
 let currentWinnerIdx = -1; // index in `movies` of the movie shown in the popup
 
+// Client-side filter applied to the editable list only (NOT the wheel itself).
+// Holds the raw trimmed query; the list is matched case-insensitively against it.
+let wheelFilter = "";
+
 // Circled-plus glyph for the empty "add a movie" rows.
 const PLUS_SVG = `
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
@@ -32,7 +36,23 @@ document.addEventListener('DOMContentLoaded', () => {
     setupWinnerControls();
     setupWheelHover();
     setupSaveLoad();
+    setupSearch();
 });
+
+// ==========================================
+// 1c. CLIENT-SIDE SEARCH (filters the editable list only)
+// ==========================================
+// Instantly narrows the displayed edit/remove list as the user types. Pure
+// client-side: re-renders only the list from the already-loaded `movies` array
+// (the wheel canvas is left untouched so what you spin still matches what's saved).
+function setupSearch() {
+    const search = document.getElementById('wheelSearch');
+    if (!search) return;
+    search.addEventListener('input', () => {
+        wheelFilter = search.value.trim();
+        renderMovieList(movies);   // list only — does NOT redraw the wheel
+    });
+}
 
 // ==========================================
 // 1b. SEED FROM THE CHOSEN COLLECTION
@@ -64,7 +84,14 @@ function renderMovieList(titles) {
     const listContainer = document.getElementById('wheelMovieList');
     if (!listContainer) return;
 
-    const rows = titles.map((title, i) => `
+    // Filter client-side, but keep each row's ORIGINAL index in data-index so the
+    // edit/delete handlers still target the right entry in `movies`.
+    const q = wheelFilter.toLowerCase();
+    const matched = titles
+        .map((title, i) => ({ title, i }))
+        .filter(({ title }) => !q || title.toLowerCase().includes(q));
+
+    const rowFor = ({ title, i }) => `
         <div class="wheel-list-item" data-index="${i}">
             <span class="movie-title" title="${escapeHtml(title)}">${escapeHtml(title)}</span>
             <div class="list-actions">
@@ -74,7 +101,11 @@ function renderMovieList(titles) {
                      alt="Delete" title="Delete" data-index="${i}">
             </div>
         </div>
-    `).join("");
+    `;
+
+    const rows = matched.length
+        ? matched.map(rowFor).join("")
+        : `<div class="wheel-list-empty">No movies match &ldquo;${escapeHtml(wheelFilter)}&rdquo;.</div>`;
 
     // A single free-text field for adding to the wheel, pinned to the top. It
     // accepts any text up to 20 chars — a movie title, or your own idea like

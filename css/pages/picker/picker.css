@@ -55,13 +55,17 @@
 .tab-btn {
     display: flex;
     flex: 1;
+    min-width: 0;                 /* let a tab shrink so its label can scale, not overflow */
     background-color: rgba(var(--maroon-light), 0.5);
     border: none;
     color: var(--text-muted);
-    padding: 12px 20px;
+    padding: 12px clamp(6px, 1.2vw, 20px);
     border-radius: 0;
-    font-size: 30px;
+    /* Scale the label with the viewport so the longest tab ("THE CHOPPING BLOCK")
+       still fits on one line at higher zoom / narrower widths. */
+    font-size: clamp(15px, 1.9vw, 30px);
     font-weight: bold;
+    white-space: nowrap;
     cursor: pointer;
     transition: background-color var(--t-base), color var(--t-base);
     align-items: center;
@@ -124,6 +128,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    flex: 1;   /* fill the main content so a panel can bottom-anchor its own controls */
 }
 
 /* Only the active game option's panel is shown; tabs switch between them. */
