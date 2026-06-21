@@ -272,6 +272,7 @@ window.MovieAPI = (function () {
         const {
             q, genres, yearFrom, yearTo, minRating, sort, page,
             with_cast, with_crew, minVotes, language,
+            providers, keyword,
         } = params;
 
         const qp = {};
@@ -285,6 +286,16 @@ window.MovieAPI = (function () {
         // Person filtering: cast for actors, crew for everyone else.
         if (with_cast) qp.with_cast = with_cast;
         if (with_crew) qp.with_crew = with_crew;
+        // Streaming-provider filter: comma-separated numeric TMDB provider ids
+        // (OR semantics, e.g. providers=8,9). Same vocabulary the wheel uses.
+        if (Array.isArray(providers) && providers.length) {
+            const pids = providers.map(Number).filter(Number.isFinite);
+            if (pids.length) qp.providers = pids.join(",");
+        }
+        // Theme/keyword search drawn from the backend's stored keywords. Results
+        // only include movies the backend has already detailed, so a theme may
+        // legitimately return few/none early on — callers handle an empty array.
+        if (keyword) qp.keyword = keyword;
         // Default-feed quality guards (vote count floor + language); only the
         // empty-query feed sets these, so a real text search stays unrestricted.
         if (minVotes) qp.minVotes = minVotes;
@@ -566,14 +577,34 @@ window.MovieAPI = (function () {
     // on success and throws an Error (with err.status set) on { ok:false } / a
     // non-2xx, so callers can branch on 400/404/502/504 for tailored toasts.
 
-    // POST /api/ai/picker — "Let AI Choose". Body { collectionId, prompt, count }.
+    // Coerce a list of TMDB ids (movies, numbers, strings) into a clean array of
+    // unique integers for the AI `exclude_ids` soft filter. Drops anything
+    // non-numeric so the backend always receives integers (not strings/objects).
+    function toExcludeIds(ids) {
+        if (!Array.isArray(ids)) return [];
+        const out = [];
+        const seen = new Set();
+        ids.forEach((x) => {
+            const n = Number(typeof x === "object" && x ? x.id : x);
+            if (Number.isFinite(n) && !seen.has(n)) {
+                seen.add(n);
+                out.push(n);
+            }
+        });
+        return out;
+    }
+
+    // POST /api/ai/picker — "Let AI Choose". Body { collectionId, prompt, count,
+    // exclude_ids? }. `exclude_ids` is a soft "don't repeat these" filter for a
+    // reroll (an array of integer TMDB ids); the backend may still reuse some if
+    // it would otherwise return fewer than 3, so callers must still dedupe.
     // `data` is [{ id, title, poster_path, reason... }]: TMDB-shaped movies with an
     // extra AI `reason`. Normalise to the app's movie shape but preserve `reason`.
-    async function aiPicker({ collectionId, prompt, count } = {}) {
-        const data = await request("/ai/picker", {
-            method: "POST",
-            body: { collectionId, prompt, count },
-        });
+    async function aiPicker({ collectionId, prompt, count, exclude_ids } = {}) {
+        const body = { collectionId, prompt, count };
+        const exclude = toExcludeIds(exclude_ids);
+        if (exclude.length) body.exclude_ids = exclude;
+        const data = await request("/ai/picker", { method: "POST", body });
         return extractList(data, "movies")
             .map((m) => {
                 const n = normalizeMovie(m);
@@ -582,15 +613,49 @@ window.MovieAPI = (function () {
             .filter(Boolean);
     }
 
-    // POST /api/ai/search — natural-language search. Body { query }. `data` is an
-    // array of standard TMDB movie objects → normalise to the app's movie shape so
-    // the existing card UI can render them unchanged.
-    async function aiSearch(query) {
-        const data = await request("/ai/search", {
-            method: "POST",
-            body: { query },
-        });
+    // POST /api/ai/search — natural-language search. Body { query, exclude_ids? }.
+    // `exclude_ids` is the same soft reroll filter as aiPicker (integer TMDB ids).
+    // `data` is an array of standard TMDB movie objects → normalise to the app's
+    // movie shape so the existing card UI can render them unchanged.
+    async function aiSearch(query, { exclude_ids } = {}) {
+        const body = { query };
+        const exclude = toExcludeIds(exclude_ids);
+        if (exclude.length) body.exclude_ids = exclude;
+        const data = await request("/ai/search", { method: "POST", body });
         return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
+    }
+
+    // ---- AI session persistence (GET/PUT /api/ai/session) -----------------------
+    // The AI suggestions page persists its current state server-side so it survives
+    // a reload / another device. Auth is required (request() attaches the Bearer
+    // token). The stored value is an opaque plain object owned by the client.
+
+    // GET /api/ai/session → data is { session: <object|null> }. Resolves the saved
+    // object, or null when nothing has been saved yet (a normal empty state).
+    async function getAiSession() {
+        const data = await request("/ai/session");
+        if (!data || typeof data !== "object") return null;
+        return "session" in data ? data.session ?? null : null;
+    }
+
+    // PUT /api/ai/session with body { session: <plain object|null> }. The server
+    // rejects arrays / strings / numbers / a missing key with 400, so guard here
+    // and fail fast with a clear message rather than a confusing server error.
+    // Pass null to clear the saved session.
+    async function saveAiSession(session) {
+        const isPlainObject =
+            session !== null &&
+            typeof session === "object" &&
+            !Array.isArray(session);
+        if (session !== null && !isPlainObject) {
+            throw new Error("AI session must be a plain object or null.");
+        }
+        const data = await request("/ai/session", {
+            method: "PUT",
+            body: { session },
+        });
+        if (!data || typeof data !== "object") return null;
+        return "session" in data ? data.session ?? null : null;
     }
 
     // ==========================================
@@ -636,6 +701,8 @@ window.MovieAPI = (function () {
         API_BASE,
         aiPicker,
         aiSearch,
+        getAiSession,
+        saveAiSession,
         getWheel,
         saveWheel,
         searchMovies,

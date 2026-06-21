@@ -70,6 +70,11 @@ function aiModeOn() {
   return !!(aiModeBtn && aiModeBtn.classList.contains("pressed"));
 }
 
+// Whether AI results currently OWN the grid. Only then does leaving AI mode need to
+// restore the catalog feed — toggling AI on and back off without ever searching
+// should be a no-op, not a needless full-feed refresh.
+let aiResultsShowing = false;
+
 if (aiModeBtn && searchContainer && searchInput) {
   aiModeBtn.addEventListener("click", () => {
     aiModeBtn.classList.toggle("pressed");
@@ -79,9 +84,13 @@ if (aiModeBtn && searchContainer && searchInput) {
       // call — the user submits with Enter. The hint reflects that.
       searchInput.placeholder = "Describe a movie, then press Enter…";
     } else {
-      // Back to the normal catalog: restore the live feed for whatever's typed.
+      // Back to the normal catalog. Only re-run the feed if AI results are actually
+      // on screen; otherwise the catalog is already showing — don't refresh it.
       searchInput.placeholder = "Search movies...";
-      runSearch();
+      if (aiResultsShowing) {
+        aiResultsShowing = false;
+        runSearch();
+      }
     }
   });
 }
@@ -93,16 +102,36 @@ if (aiModeBtn && searchContainer && searchInput) {
 // unchanged submit (Enter on a blank box, or re-submitting the identical query)
 // so it never needlessly re-renders / re-fires the costly request.
 let lastAiQuery = "";
+// Whether the user has already "rerolled" the current AI query (re-submitting the
+// same text once asks for fresh picks excluding what's shown). Reset whenever the
+// query text changes, so each new query gets its own single reroll. (#1/#2)
+let aiSearchRerolled = false;
+
+// De-dupe a movie list so each TMDB id renders once (#3): the safety net for the
+// soft `exclude_ids` reroll, where the backend may reuse an id to avoid returning
+// too few. Movies without an id are kept (they can't collide).
+function dedupeMoviesById(list) {
+  const seen = new Set();
+  return (Array.isArray(list) ? list : []).filter((m) => {
+    if (!m || m.id == null) return !!m;
+    if (seen.has(m.id)) return false;
+    seen.add(m.id);
+    return true;
+  });
+}
 
 // Unlike the live catalog search, this is a single deliberate request (6–9s and
 // a real API call), so it fires on Enter only. It takes over the feed: clear,
 // show skeletons, then render the AI's picks with the SAME card builder. Setting
 // feedDone stops infinite scroll from appending the popular feed underneath.
-async function runAiSearch(query) {
+// `reroll` re-runs the same query excluding the currently shown ids for a fresh set.
+async function runAiSearch(query, { reroll = false } = {}) {
     lastAiQuery = query;
   // Snapshot the current feed so a FAILED search can leave it on screen — a
   // rate-limit / error should just toast, not dump a wall of error text.
   const prev = feedMovies.slice();
+  // On a reroll, ask the AI not to repeat the on-screen picks (soft filter).
+  const excludeIds = reroll ? prev.map((m) => m && m.id) : [];
   feedMovies = [];
   feedPage = 0;
   feedDone = true; // AI results are a fixed set — no paging beneath them
@@ -115,12 +144,15 @@ async function runAiSearch(query) {
   }
 
   try {
-    const results = await MovieAPI.aiSearch(query);
+    const results = dedupeMoviesById(
+      await MovieAPI.aiSearch(query, { exclude_ids: excludeIds })
+    );
     if (token !== feedToken) return; // a newer search superseded this one
     clearGridCards();
     if (!results.length) {
       if (prev.length) {
         feedMovies = prev;
+        aiResultsShowing = false; // catalog restored — AI no longer owns the grid
         insertBeforeSentinel(fragmentFromHTML(prev.map(buildMovieCard).join("")));
         if (window.toast) toast.info("No matches — keeping your previous results.");
       } else {
@@ -129,12 +161,15 @@ async function runAiSearch(query) {
       return;
     }
     feedMovies = results;
+    aiResultsShowing = true; // AI results now own the grid
     insertBeforeSentinel(fragmentFromHTML(results.map(buildMovieCard).join("")));
   } catch (err) {
     if (token !== feedToken) return;
     // A failed run shouldn't lock out a retry of the same text (the early-return
     // guard treats an unchanged query as a no-op), so forget it here.
     lastAiQuery = "";
+    aiSearchRerolled = false; // a failed run doesn't consume the reroll
+    aiResultsShowing = false; // grid fell back to the catalog (or an error message)
     // Only a short, friendly toast — never the raw upstream error. Keep the feed
     // as it was: restore the previous cards if we had any.
     if (window.toast) toast.error(aiSearchErrorMessage(err));
@@ -178,6 +213,7 @@ if (searchInput) {
     // If the user scrolled down the feed and starts typing again, glide back to
     // the top so the fresh results aren't hidden below the fold.
     window.scrollTo({ top: 0, behavior: "smooth" });
+    aiResultsShowing = false; // a live catalog search replaces any AI results
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(runSearch, 300);
   });
@@ -188,9 +224,19 @@ if (searchInput) {
     if (e.key !== "Enter" || !aiModeOn()) return;
     e.preventDefault();
     const q = searchInput.value.trim();
-    // Early return: a blank box, or the exact query we just ran, should do
-    // absolutely nothing — no toast, no scroll, no re-render, no API call.
-    if (!q || q === lastAiQuery) return;
+    if (!q) return; // a blank box does nothing
+    if (q === lastAiQuery) {
+      // Re-submitting the SAME query acts as a single "reroll": fresh picks that
+      // exclude what's on screen. Allowed once per query (#2); after that it's a
+      // no-op until the text changes.
+      if (aiSearchRerolled) return;
+      aiSearchRerolled = true;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      runAiSearch(q, { reroll: true });
+      return;
+    }
+    // A brand-new query: reset the per-query reroll allowance.
+    aiSearchRerolled = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     runAiSearch(q);
   });

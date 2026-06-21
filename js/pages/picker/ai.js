@@ -15,6 +15,8 @@ const REVEAL_DELAY_MS = 500;   // posters land, THEN slide to reveal the text
 let aiConfig = null;   // { collectionId, collectionName, prompt, count }
 let movies = [];       // the suggestions currently on screen
 let loading = false;   // guards Try Again against overlapping requests
+let rerollUsed = false; // "Try Again" is allowed ONCE per result set (reset on a
+                        // brand-new run); flips true after a successful reroll.
 
 // Circle-"i" info glyph (inline so it tints with the button text colour).
 const INFO_SVG = `
@@ -79,20 +81,44 @@ const RESULTS_KEY = 'mk:aiResults';
 // Initial load: reuse THIS generation's cached picks if we have them — so coming
 // back from a movie's "Info" shows the very same set, not a freshly generated one.
 // A new SEND from the picker carries a new token, so it always generates instead.
-function loadInitial() {
+// The fast local cache (sessionStorage) wins for instant restore; if there's no
+// match we fall back to the server-persisted session before generating fresh.
+async function loadInitial() {
     const cached = readCachedResults();
     if (cached && aiConfig.token && cached.token === aiConfig.token &&
         Array.isArray(cached.movies) && cached.movies.length) {
-        movies = cached.movies;
+        movies = dedupeById(cached.movies);
+        rerollUsed = !!cached.rerollUsed;
         renderCards(movies);
+        updateTryAgainVisibility();
         return;
     }
+
+    // No local cache: show skeletons while we ask the server for a saved session
+    // (a reload / another device). loadState() never throws — on any error it
+    // resolves null so we cleanly fall through to generating a fresh set.
+    renderSkeletons(aiConfig.count);
+    const session = await loadState();
+    if (session && session.token === aiConfig.token &&
+        Array.isArray(session.movies) && session.movies.length) {
+        movies = dedupeById(session.movies);
+        rerollUsed = !!session.rerollUsed;
+        cacheResults(movies);
+        renderCards(movies);
+        updateTryAgainVisibility();
+        return;
+    }
+
     generate();
 }
 
 // Fetch a fresh set from the AI (first generation, and every "Try Again").
-async function generate() {
+// `isReroll` distinguishes a "Try Again" press from the first generation: a reroll
+// sends the on-screen TMDB ids as a soft `exclude_ids` filter and, on success, is
+// consumed (Try Again then hides — one reroll per result set).
+async function generate(isReroll = false) {
     if (loading) return;
+    if (isReroll && rerollUsed) return; // already rerolled this result set
     loading = true;
     setTryAgainBusy(true);
 
@@ -100,6 +126,10 @@ async function generate() {
     // rate-limit / error must not replace the suggestions with a wall of error
     // text — we just toast and keep the current picks (see the catch below).
     const prev = movies.slice();
+    // Reroll: ask the AI not to repeat what's already shown. This is a SOFT filter
+    // (#1) — the backend may still reuse some ids if it'd otherwise return <3, so
+    // the dedupeById() guard below still matters and a reappearing id is not an error.
+    const excludeIds = isReroll ? prev.map((m) => m && m.id) : [];
     movies = [];
     renderSkeletons(aiConfig.count);
 
@@ -108,6 +138,7 @@ async function generate() {
             collectionId: aiConfig.collectionId,
             prompt: aiConfig.prompt,
             count: aiConfig.count,
+            exclude_ids: excludeIds,
         });
 
         if (!results.length) {
@@ -120,9 +151,14 @@ async function generate() {
                 renderEmpty("The AI didn't return any suggestions. Try a different prompt.");
             }
         } else {
-            movies = results;
+            // Safety-net dedup (#3): each TMDB id appears at most once on screen,
+            // even though the backend also dedupes — the guard for the soft reroll.
+            movies = dedupeById(results);
+            if (isReroll) rerollUsed = true; // consume the one allowed reroll
             cacheResults(movies);
+            saveState(); // persist the new set server-side (best-effort)
             renderCards(movies);
+            updateTryAgainVisibility();
         }
     } catch (err) {
         // Only a short, friendly toast — never the raw upstream error. Keep the
@@ -140,6 +176,18 @@ async function generate() {
     }
 }
 
+// Keep each TMDB id at most once, preserving order. Entries with no id (null) are
+// kept as-is — they can't collide and shouldn't be silently dropped.
+function dedupeById(list) {
+    const seen = new Set();
+    return (Array.isArray(list) ? list : []).filter((m) => {
+        if (!m || m.id == null) return !!m;
+        if (seen.has(m.id)) return false;
+        seen.add(m.id);
+        return true;
+    });
+}
+
 // Per-generation result cache (sessionStorage), keyed by the SEND token so a back
 // navigation restores the same picks while a new SEND / Try Again replaces them.
 function readCachedResults() {
@@ -148,11 +196,60 @@ function readCachedResults() {
 }
 function cacheResults(list) {
     try {
-        sessionStorage.setItem(RESULTS_KEY, JSON.stringify({ token: aiConfig.token, movies: list }));
+        sessionStorage.setItem(RESULTS_KEY, JSON.stringify({
+            token: aiConfig.token, movies: list, rerollUsed,
+        }));
     } catch (_) { /* private mode / quota — just skip caching */ }
 }
 function clearCachedResults() {
     try { sessionStorage.removeItem(RESULTS_KEY); } catch (_) {}
+}
+
+// ==========================================
+// 2b. SERVER-SIDE SESSION  (GET/PUT /api/ai/session)
+// ==========================================
+// The AI session is persisted server-side so the same picks restore on a reload or
+// another device. The stored value is a plain object whose shape we own; we tag it
+// with the SEND token so a stale session for an OLD run is ignored (we generate a
+// fresh set instead). Both calls are best-effort: a failure never blocks the UI.
+
+// Build the plain-object snapshot to persist. Kept tiny (a handful of movie cards),
+// well under the server's ~100 KB cap, and an object (the server rejects arrays).
+function buildSessionState() {
+    return {
+        token: aiConfig.token,
+        collectionId: aiConfig.collectionId,
+        prompt: aiConfig.prompt,
+        count: aiConfig.count,
+        rerollUsed,
+        movies,
+    };
+}
+
+// PUT the current state. Best-effort: log a failure but never surface it — losing
+// cross-device restore is not worth a toast, and the local cache still works.
+async function saveState() {
+    if (!MovieAPI.saveAiSession) return;
+    try {
+        await MovieAPI.saveAiSession(buildSessionState());
+    } catch (err) {
+        console.error("Failed to save AI session:", err);
+    }
+}
+
+// GET the saved state. Resolves the session object, or null when there's nothing
+// saved OR on ANY error (non-2xx / parse failure) — the caller then renders the
+// default UI / generates fresh rather than leaving the page half-initialised.
+async function loadState() {
+    if (!MovieAPI.getAiSession) return null;
+    try {
+        const session = await MovieAPI.getAiSession();
+        if (!session || typeof session !== "object" || Array.isArray(session)) return null;
+        return session;
+    } catch (err) {
+        console.error("Failed to load AI session:", err);
+        return null;
+    }
 }
 
 // A SHORT, friendly message for a failed pick — never the raw upstream error
@@ -280,20 +377,29 @@ function setupTryAgain() {
     const btn = document.getElementById('aiTryAgain');
     if (!btn) return;
     btn.addEventListener('click', () => {
-        if (loading) return;
+        if (loading || rerollUsed) return; // one reroll per result set
         // Spin the arrows once on each press (CSS animation; restart it cleanly).
         btn.classList.remove('is-spinning');
         void btn.offsetWidth;        // reflow so the animation can replay
         btn.classList.add('is-spinning');
         btn.addEventListener('animationend', () => btn.classList.remove('is-spinning'),
             { once: true });
-        generate();
+        generate(true); // a Try Again is a reroll: excludes the current picks
     });
 }
 
 function setTryAgainBusy(busy) {
     const btn = document.getElementById('aiTryAgain');
-    if (btn) btn.disabled = busy;
+    if (btn) btn.disabled = busy || rerollUsed;
+}
+
+// Hide "Try Again" once the single allowed reroll has been used (#2); show it again
+// for a fresh result set. Hidden rather than just disabled so it reads as "done".
+function updateTryAgainVisibility() {
+    const btn = document.getElementById('aiTryAgain');
+    if (!btn) return;
+    btn.hidden = rerollUsed;
+    btn.disabled = rerollUsed;
 }
 
 // ==========================================
