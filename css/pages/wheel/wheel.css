@@ -36,8 +36,8 @@
 }
 
 .wheel-main-logo {
-    /* Matches the picker page logo size (picker.css) */
-    height: 228px;
+    /* Matches the picker page logo size (picker.css) — scaled down from 228px. */
+    height: 150px;
     object-fit: contain;
 }
 

@@ -1,5 +1,5 @@
 /* coming-soon.css — the cinematic "Coming Soon" placeholder shared by the
-   Explore and Account Settings screens. A pair of red velvet curtains sweeps
+   Explore and Settings screens. A pair of red velvet curtains sweeps
    CLOSED, holds for a beat, then draws back OPEN to reveal the copy framed on a
    dark stage (matching the reference still). One-shot animations (fill: forwards)
    so prefers-reduced-motion simply lands on the final, fully-revealed state. */
@@ -27,6 +27,9 @@
     bottom: 0;
     width: 54vw;
     z-index: 3;
+    /* Pivot from the top: the panels rotate around their top edge so the BOTTOM
+       hem swings aside first (heavy-fabric drag) before the whole panel clears. */
+    transform-origin: top center;
     background-color: #7d1820;
     /* sheen pleats over a left→right velvet body */
     background-image:
@@ -45,27 +48,32 @@
     left: 0;
     /* darker, shadowed leading (inner) edge for depth */
     box-shadow: inset -34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
-    animation: cs-curtain-left 3.2s var(--ease-snap) forwards;
+    /* a weightier ease so the fabric feels like it's being dragged, not snapped */
+    animation: cs-curtain-left 3.2s cubic-bezier(0.62, 0.02, 0.2, 1) forwards;
 }
 
 .cs-curtain--right {
     right: 0;
     box-shadow: inset 34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
-    animation: cs-curtain-right 3.2s var(--ease-snap) forwards;
+    animation: cs-curtain-right 3.2s cubic-bezier(0.62, 0.02, 0.2, 1) forwards;
 }
 
-/* Start CLOSED (curtains meet at the centre), hold the beat, then draw smoothly
-   open to a framed position that leaves the copy in the central gap. */
+/* Start CLOSED (curtains meet at the centre), hold the beat, then DRAG open. With
+   transform-origin at the top, the mid-keyframe rotation swings the bottom hem
+   aside first — the two panels splay to roughly a 45° spread at the base before
+   settling back upright, fully cleared off each side. The slight skew adds drape. */
 @keyframes cs-curtain-left {
-    0%   { transform: translateX(0); }       /* closed: meets the centre */
-    18%  { transform: translateX(0); }       /* hold — the dramatic beat */
-    100% { transform: translateX(-28vw); }   /* draw open: framed */
+    0%   { transform: translateX(0) rotate(0deg) skewX(0deg); }   /* closed: meets the centre */
+    18%  { transform: translateX(0) rotate(0deg) skewX(0deg); }   /* hold — the dramatic beat */
+    60%  { transform: translateX(-12vw) rotate(-22deg) skewX(3deg); } /* bottom drags open first */
+    100% { transform: translateX(-30vw) rotate(0deg) skewX(0deg); }   /* settle upright, cleared */
 }
 
 @keyframes cs-curtain-right {
-    0%   { transform: translateX(0); }
-    18%  { transform: translateX(0); }
-    100% { transform: translateX(28vw); }
+    0%   { transform: translateX(0) rotate(0deg) skewX(0deg); }
+    18%  { transform: translateX(0) rotate(0deg) skewX(0deg); }
+    60%  { transform: translateX(12vw) rotate(22deg) skewX(-3deg); }
+    100% { transform: translateX(30vw) rotate(0deg) skewX(0deg); }
 }
 
 /* ----------------------------------------------------------------------------
@@ -155,13 +163,21 @@
 
 @media (max-width: 600px) {
     .cs-curtain { width: 62vw; }
-    /* start closed, then open to a wider framed gap on phones */
+
+    /* On phones the parted gap is narrower, so the copy was ending up tucked
+       BEHIND the curtain edges. Lift it clearly in front (above the curtains and
+       valance) — it only fades in after the panels have begun opening anyway. */
+    .cs-content { z-index: 6; }
+
+    /* start closed, drag the bottom open first, then settle to a wider framed gap */
     @keyframes cs-curtain-left {
-        0%, 18% { transform: translateX(0); }
-        100% { transform: translateX(-34vw); }
+        0%, 18% { transform: translateX(0) rotate(0deg) skewX(0deg); }
+        60%     { transform: translateX(-14vw) rotate(-22deg) skewX(3deg); }
+        100%    { transform: translateX(-36vw) rotate(0deg) skewX(0deg); }
     }
     @keyframes cs-curtain-right {
-        0%, 18% { transform: translateX(0); }
-        100% { transform: translateX(34vw); }
+        0%, 18% { transform: translateX(0) rotate(0deg) skewX(0deg); }
+        60%     { transform: translateX(14vw) rotate(22deg) skewX(-3deg); }
+        100%    { transform: translateX(36vw) rotate(0deg) skewX(0deg); }
     }
 }

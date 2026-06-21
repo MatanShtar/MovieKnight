@@ -315,6 +315,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // Deep-link to a specific game option, e.g. picker.html?panel=chopping
         const wanted = new URLSearchParams(location.search).get('panel');
         if (wanted) activatePanel(wanted);
+
+        // Reset the tab bar on every (re)entry. When START / GENERATE / SEND run,
+        // they add `.collapsing` to slide the two other options shut before
+        // navigating away. Returning here — via Back or a game's "Play Again",
+        // especially from the bfcache, which restores the DOM exactly as it was
+        // left — would otherwise keep that class, leaving the bar stuck on the
+        // last-played game with the other two collapsed. Strip it so all three
+        // options are visible and clickable again, and re-assert the active panel.
+        const resetTabs = () => {
+            pickerTabs.classList.remove('collapsing');
+            const panel = new URLSearchParams(location.search).get('panel');
+            activatePanel(panel || 'wheel');
+        };
+        window.addEventListener('pageshow', resetTabs);
     }
 
     // --- D. Generate Wheel: validate, then collapse the other two options so

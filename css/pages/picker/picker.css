@@ -36,7 +36,9 @@
 }
 
 .wheel-main-logo {
-    height: 228px;
+    /* Scaled down from 228px: the oversized logo pushed the picker config + the
+       Chopping Block game's action buttons below the fold on desktop. */
+    height: 150px;
     object-fit: contain;
 }
 
@@ -665,9 +667,13 @@
         height: 88px;
     }
 
+    /* "THE CHOPPING BLOCK" is the longest label and overflowed its tab on narrow
+       phones. Scale the tab text down with the viewport (and trim the padding +
+       letter-spacing) so all three options stay on one line. */
     .tab-btn {
-        font-size: 15px;
+        font-size: clamp(10px, 3vw, 15px);
         padding: 10px 4px;
+        letter-spacing: 0;
     }
 
     .genre-grid {

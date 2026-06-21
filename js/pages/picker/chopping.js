@@ -51,9 +51,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // 2. SETUP SCREEN  (picker.html → chopping panel)
 // ==========================================
 function initSetup() {
-    // How many tags fit in the 2-column grid before we collapse the rest into a
-    // "+N …" chip (8 slots = 2 columns × 4 rows; the chip occupies the 8th).
-    const MAX_TAG_SLOTS = 8;
+    // How many player tags we show before collapsing the rest into a "+N …" chip.
+    // Desktop fits 8 (2 columns × 4 rows; the chip takes the 8th). Phones are far
+    // narrower, so a lower threshold keeps the pills from pushing the page wider
+    // than the screen (the bug: adding players forced horizontal scrolling).
+    const maxTagSlots = () => (cbIsMobile() ? 4 : 8);
 
     // --- state ---
     const players = ["Matan", "Niv"]; // two seeded players, like the Figma
@@ -121,12 +123,13 @@ function initSetup() {
     }
 
     function renderTags(enteringIndex = -1) {
+        const slots = maxTagSlots();
         let visible, hidden = [];
-        if (players.length <= MAX_TAG_SLOTS) {
+        if (players.length <= slots) {
             visible = players.map((n, i) => [n, i]);
         } else {
-            visible = players.slice(0, MAX_TAG_SLOTS - 1).map((n, i) => [n, i]);
-            hidden = players.slice(MAX_TAG_SLOTS - 1);
+            visible = players.slice(0, slots - 1).map((n, i) => [n, i]);
+            hidden = players.slice(slots - 1);
         }
 
         let html = visible.map(([n, i]) => tagHtml(n, i)).join("");
@@ -249,6 +252,10 @@ function initSetup() {
     renderTags();
     renderSlider();
     refresh();
+
+    // The "+N …" overflow threshold differs between desktop and mobile, so
+    // re-collapse/expand the tag list when the viewport crosses that breakpoint.
+    cbMobileMq.addEventListener("change", () => renderTags());
 
     addBtn.addEventListener("click", () => addPlayer(input.value));
     input.addEventListener("keydown", (e) => {
@@ -446,12 +453,27 @@ function runGame(config, collectionMovies) {
     //     size; only the two at the edges are slightly smaller ("peeking"). Cards
     //     past that start tiny + transparent, so they grow + fade in "from nowhere"
     //     as they slide on (and shrink + fade out as they slide off). ---
+    // Infinite (looping) coverflow: once a game has enough cards, the strip wraps
+    // into an endless ring — scroll past the last poster and the first re-enters
+    // from the other side. On screen at once are 5 mains + 2 peeks; the loop needs
+    // one more hidden, off-stage card on EACH side as a buffer so a wrapping card
+    // slides in from the edge instead of popping straight onto a peek — i.e. ≥9
+    // cards (5 + 2 + 2). Smaller pools keep the original clamped strip, and mobile
+    // uses the native scroll-snap row.
+    const LOOP_MIN = 9;
+    function loopEnabled() { return !cbIsMobile() && order.length >= LOOP_MIN; }
+
     let firstPaint = true;
     function render() {
         if (cbIsMobile()) { renderMobile(); return; }
         const step = stepPx();
+        const N = order.length;
+        const loop = loopEnabled();
         order.forEach((card, i) => {
-            const slot = i - center;            // signed distance from centre, in cards
+            let slot = i - center;              // signed distance from centre, in cards
+            // Map each card to its nearest copy around the centre so one leaving an
+            // edge re-enters from the opposite side (the endless ring).
+            if (loop) slot -= N * Math.round(slot / N);
             const a = Math.abs(slot);
 
             let scale, opacity;
@@ -459,6 +481,14 @@ function runGame(config, collectionMovies) {
             else if (a <= 3.5) { scale = 0.84; opacity = 0.9; }   // the 2 peeking (smaller)
             else               { scale = 0.62; opacity = 0; }     // off-stage: tiny, so it grows in
             if (card.eliminated) opacity = Math.min(opacity, a <= 3.5 ? 0.35 : 0);
+
+            // When a card crosses the loop seam its slot flips sign by ~N. It's at
+            // the off-stage (opacity 0) edge there, so snap it across with NO
+            // transition — otherwise it'd visibly fly back over the whole strip on
+            // the next step instead of sliding in from the near edge.
+            const prev = card._slot;
+            const jumped = loop && prev !== undefined && Math.abs(slot - prev) > N / 2;
+            if (jumped) card.el.style.transition = "none";
 
             // staggered grow-from-centre entrance on the very first paint
             if (firstPaint) card.el.style.transitionDelay = `${Math.min(a, 6) * 0.05}s`;
@@ -468,6 +498,9 @@ function runGame(config, collectionMovies) {
             card.el.style.zIndex = 100 - Math.round(a);
             card.el.style.pointerEvents = opacity <= 0.05 ? "none" : "auto";
             card.el.classList.toggle("in-window", a <= 2.5 && !card.eliminated); // the pressable five
+
+            if (jumped) { void card.el.offsetWidth; card.el.style.transition = ""; }
+            card._slot = slot;
         });
         if (firstPaint) {
             firstPaint = false;
@@ -530,18 +563,40 @@ function runGame(config, collectionMovies) {
         return [Math.min(mid, 2), Math.max(mid, N - 3)];
     }
     function updateArrows() {
+        // In loop mode there's always more to reveal in either direction.
+        if (loopEnabled()) {
+            if (prevBtn) prevBtn.classList.remove("cb-nav-off");
+            if (nextBtn) nextBtn.classList.remove("cb-nav-off");
+            return;
+        }
         const [lo, hi] = centerBounds();
         if (prevBtn) prevBtn.classList.toggle("cb-nav-off", center <= lo + 0.01);
         if (nextBtn) nextBtn.classList.toggle("cb-nav-off", center >= hi - 0.01);
     }
     function stepCenter(dir) {
+        // Looping: let `center` run unbounded (one card crosses the seam per step);
+        // render() wraps every card by modulo, so the value never needs clamping.
+        if (loopEnabled()) {
+            center = Math.round(center) + dir;
+            render();
+            return;
+        }
         const [lo, hi] = centerBounds();
         center = clamp(Math.round(center) + dir, lo, hi);
         render();
     }
     function recenter() {
+        const target = middleActiveIndex();
+        // Looping: pick the copy of the middle active card NEAREST the current
+        // centre, so re-centring after an elimination shifts the ring minimally
+        // instead of snapping `center` back by a whole lap.
+        if (loopEnabled()) {
+            const N = order.length;
+            center = target + N * Math.round((center - target) / N);
+            return;
+        }
         const [lo, hi] = centerBounds();
-        center = clamp(middleActiveIndex(), lo, hi);
+        center = clamp(target, lo, hi);
     }
 
     // --- eliminate a specific (visible, active) poster, then ping-pong it to a
@@ -639,6 +694,13 @@ function runGame(config, collectionMovies) {
             : "";
         window.location.href = `picker.html?panel=chopping${c}`;
     });
+
+    // "Back to Collection" returns to the collection page the game was played from.
+    const backToCollection = document.getElementById("cbBackToCollection");
+    if (backToCollection && config.collectionId != null) {
+        backToCollection.setAttribute("href",
+            `collection.html?id=${encodeURIComponent(config.collectionId)}`);
+    }
 
     // --- go ---
     window.addEventListener("resize", render);   // keep the spread matched to the viewport

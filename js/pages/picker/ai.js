@@ -166,7 +166,7 @@ function aiErrorMessage(err) {
         case 401: return 'Please sign in to use AI picks.';
         case 404: return 'That collection could not be found.';
         case 429:
-        case 503: return 'The AI is busy right now (free-tier rate limit). Give it a moment, then try again.';
+        case 503: return 'The AI director is currently busy. Please try again in a few minutes!';
         case 502: return 'The AI had trouble responding. Give it another go.';
         case 504: return 'The AI took too long to answer. Try again in a moment.';
         default:  return 'Couldn’t get AI suggestions right now. Please try again.';

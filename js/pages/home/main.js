@@ -89,11 +89,17 @@ if (aiModeBtn && searchContainer && searchInput) {
 // ==========================================
 // 14b. AI NATURAL-LANGUAGE SEARCH  (POST /api/ai/search)
 // ==========================================
+// The text of the last AI search we actually ran. Used to no-op an empty or
+// unchanged submit (Enter on a blank box, or re-submitting the identical query)
+// so it never needlessly re-renders / re-fires the costly request.
+let lastAiQuery = "";
+
 // Unlike the live catalog search, this is a single deliberate request (6–9s and
 // a real API call), so it fires on Enter only. It takes over the feed: clear,
 // show skeletons, then render the AI's picks with the SAME card builder. Setting
 // feedDone stops infinite scroll from appending the popular feed underneath.
 async function runAiSearch(query) {
+    lastAiQuery = query;
   // Snapshot the current feed so a FAILED search can leave it on screen — a
   // rate-limit / error should just toast, not dump a wall of error text.
   const prev = feedMovies.slice();
@@ -126,6 +132,9 @@ async function runAiSearch(query) {
     insertBeforeSentinel(fragmentFromHTML(results.map(buildMovieCard).join("")));
   } catch (err) {
     if (token !== feedToken) return;
+    // A failed run shouldn't lock out a retry of the same text (the early-return
+    // guard treats an unchanged query as a no-op), so forget it here.
+    lastAiQuery = "";
     // Only a short, friendly toast — never the raw upstream error. Keep the feed
     // as it was: restore the previous cards if we had any.
     if (window.toast) toast.error(aiSearchErrorMessage(err));
@@ -147,7 +156,7 @@ function aiSearchErrorMessage(err) {
       ? err.message : "That search didn’t look right — try rephrasing it.";
     case 401: return "Please sign in to use AI search.";
     case 429:
-    case 503: return "The AI is busy right now (free-tier rate limit). Give it a moment, then try again.";
+    case 503: return "The AI director is currently busy. Please try again in a few minutes!";
     case 502: return "The AI had trouble responding. Try again.";
     case 504: return "The AI took too long to answer. Try again in a moment.";
     default:  return "Couldn’t run AI search right now. Please try again.";
@@ -179,10 +188,9 @@ if (searchInput) {
     if (e.key !== "Enter" || !aiModeOn()) return;
     e.preventDefault();
     const q = searchInput.value.trim();
-    if (!q) {
-      if (window.toast) toast.info("Describe what you’re after, then press Enter.");
-      return;
-    }
+    // Early return: a blank box, or the exact query we just ran, should do
+    // absolutely nothing — no toast, no scroll, no re-render, no API call.
+    if (!q || q === lastAiQuery) return;
     window.scrollTo({ top: 0, behavior: "smooth" });
     runAiSearch(q);
   });
