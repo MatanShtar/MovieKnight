@@ -295,6 +295,14 @@
     background: rgba(var(--pink), 0.22);
     border-color: rgba(var(--pink), 0.7);
 }
+/* Reserve the Clear button's slot even when it's hidden, so it can fade in/out
+   without dropping the provider box. We override the default [hidden] display:none
+   (keep it laid out) and just make it invisible + non-interactive instead. */
+.provider-clear-btn[hidden] {
+    display: inline-block;
+    visibility: hidden;
+    pointer-events: none;
+}
 
 .placeholder-box {
     width: 100%;
@@ -610,6 +618,36 @@
     background-size: 15px 15px;
     background-position: center;
     background-repeat: no-repeat;
+}
+
+/* ==========================================
+   5b. SMART FILTER STATES (gray-out + "Any")
+   Genres/providers not present in the chosen collection are grayed out and
+   disabled (kept visible, not hidden). Providers also pin an "Any" escape hatch
+   to the top. Facets come from GET /api/collections/:id/wheel/filters.
+   ========================================== */
+
+/* A genre absent from this collection: dimmed, not clickable, no hover wiggle. */
+.genre-btn--unavailable {
+    opacity: 0.35;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+.genre-btn--unavailable:hover {
+    transform: none;   /* cancel the playful scale/rotate on a disabled tile */
+}
+
+/* A provider not available in this collection: grayed, disabled cursor, no check. */
+.provider-item--unavailable {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.provider-item--unavailable:hover {
+    opacity: 0.4;      /* cancel the row hover-fade so it stays visibly disabled */
+}
+.provider-item--unavailable .provider-checkbox,
+.provider-item--unavailable .custom-check {
+    pointer-events: none;  /* belt-and-braces with the input's disabled attribute */
 }
 
 /* ==========================================
