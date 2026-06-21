@@ -273,6 +273,7 @@ window.MovieAPI = (function () {
             q, genres, yearFrom, yearTo, minRating, sort, page,
             with_cast, with_crew, minVotes, language,
             providers, keyword,
+            providers, keyword,
         } = params;
 
         const qp = {};
@@ -286,6 +287,16 @@ window.MovieAPI = (function () {
         // Person filtering: cast for actors, crew for everyone else.
         if (with_cast) qp.with_cast = with_cast;
         if (with_crew) qp.with_crew = with_crew;
+        // Streaming-provider filter: comma-separated numeric TMDB provider ids
+        // (OR semantics, e.g. providers=8,9). Same vocabulary the wheel uses.
+        if (Array.isArray(providers) && providers.length) {
+            const pids = providers.map(Number).filter(Number.isFinite);
+            if (pids.length) qp.providers = pids.join(",");
+        }
+        // Theme/keyword search drawn from the backend's stored keywords. Results
+        // only include movies the backend has already detailed, so a theme may
+        // legitimately return few/none early on — callers handle an empty array.
+        if (keyword) qp.keyword = keyword;
         // Streaming-provider filter: comma-separated numeric TMDB provider ids
         // (OR semantics, e.g. providers=8,9). Same vocabulary the wheel uses.
         if (Array.isArray(providers) && providers.length) {
