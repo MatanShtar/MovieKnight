@@ -31,6 +31,56 @@ body {
   outline-offset: 2px;
 }
 
+/* ==========================================
+   1b. CUSTOM CURSORS (white fill, thin #BC6676 border)
+   Arrow (default), arrow + click-lines (pointer), I-beam (text). The universal base
+   forces the custom arrow everywhere with !important so it beats the cursor:default
+   declared across the pages; the more-specific pointer/text/disabled rules below are
+   also !important, so by specificity they win over the base where they apply.
+   (SVG cursors aren't supported in Safari — it falls back to the keyword after the
+   comma: default / pointer / text / not-allowed.)
+   ========================================== */
+:root {
+  --cur-default: url("../../assets/images/cursors/cursor-default.svg") 4 4, default;
+  --cur-pointer: url("../../assets/images/cursors/cursor-pointer.svg") 9 3, pointer;
+  --cur-text: url("../../assets/images/cursors/cursor-text.svg") 12 12, text;
+}
+
+/* The root holds the default arrow; EVERY element just inherits its parent's cursor
+   (overriding the pages' cursor:pointer/default keywords). Inheriting — rather than
+   forcing the arrow on `*` — is what makes a clickable element's children (e.g. an
+   <img> inside a button) keep the hand instead of reverting to the arrow. The
+   pointer/text/disabled rules below are more specific, so they set the cursor on
+   those roots and their children inherit it. */
+html { cursor: var(--cur-default) !important; }
+* { cursor: inherit !important; }
+
+a, button, summary, select, label[for], [role="button"], [role="tab"], [role="menuitem"],
+[onclick],
+input[type="button"], input[type="submit"], input[type="reset"],
+input[type="checkbox"], input[type="radio"], input[type="range"], input[type="file"],
+.genre-btn, .provider-item, .tab-btn, .cb-slider-dot, .cb-toggle, .cb-tag-more,
+.cb-tag-remove, .spin-btn, .save-btn, .winner-action, .winner-close, .ai-mode-btn,
+.back-btn, .nav-link, .icon-btn, .surprise-container, .cb-add-btn, .wheel-add-btn,
+.row-edit, .row-delete, .ai-info-btn, .ai-winner-btn, .ai-tryagain, .movie-card,
+.mobile-nav-toggle, .header-login-btn, .header-profile-btn, .provider-clear-btn {
+  cursor: var(--cur-pointer) !important;
+}
+
+input[type="text"], input[type="search"], input[type="email"], input[type="password"],
+input[type="number"], input[type="url"], input[type="tel"], input:not([type]),
+textarea, [contenteditable="true"] {
+  cursor: var(--cur-text) !important;
+}
+
+/* Disabled / unavailable keep the blocked affordance — placed AFTER the pointer rule
+   so it wins for elements that match both. */
+:disabled, [disabled], [aria-disabled="true"],
+.generate-wheel-btn--disabled, .save-btn--disabled,
+.genre-btn--unavailable, .provider-item--unavailable {
+  cursor: not-allowed !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* !important is required here: this accessibility reset must override every
      animation/transition declared elsewhere, regardless of selector specificity. */

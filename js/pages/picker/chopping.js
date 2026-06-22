@@ -61,6 +61,7 @@ function initSetup() {
     const players = ["Matan", "Niv"]; // two seeded players, like the Figma
     let eliminations = 2;             // 1 | 2 | 3
     let selectedCollection = null;    // the real collection chosen to play from
+    let overflowOpen = false;         // is the "+N" overflow dropdown open?
 
     // --- elements ---
     const input = document.getElementById("cbPlayerInput");
@@ -129,17 +130,36 @@ function initSetup() {
             visible = players.map((n, i) => [n, i]);
         } else {
             visible = players.slice(0, slots - 1).map((n, i) => [n, i]);
-            hidden = players.slice(slots - 1);
+            // Keep each hidden player's REAL index so the dropdown ✕ removes the right one.
+            hidden = players.slice(slots - 1).map((n, i) => [n, i + (slots - 1)]);
         }
 
         let html = visible.map(([n, i]) => tagHtml(n, i)).join("");
         if (hidden.length) {
-            const list = hidden.map(escapeHtml).join("<br>");
+            // A click-to-open dropdown (same dark box as the picker's provider list) of
+            // the players past the visible slots, each with an inline ✕ to remove them.
+            const rows = hidden.map(([n, i]) => `
+                <div class="cb-overflow-item">
+                    <span class="cb-overflow-name" title="${escapeHtml(n)}">${escapeHtml(n)}</span>
+                    <button class="cb-tag-remove cb-overflow-x" data-index="${i}" aria-label="Remove ${escapeHtml(n)}">
+                        <img src="assets/images/icons/genre-x-icon.svg" alt="">
+                    </button>
+                </div>`).join("");
             html += `
-                <span class="cb-tag cb-tag-more" tabindex="0" aria-label="${hidden.length} more players">
+                <span class="cb-tag cb-tag-more" id="cbMoreChip" tabindex="0" role="button"
+                      aria-haspopup="true" aria-expanded="${overflowOpen ? "true" : "false"}"
+                      aria-label="${hidden.length} more players">
                     +${hidden.length} &hellip;
-                    <span class="cb-more-tooltip">${list}</span>
+                    <svg class="cb-more-caret" viewBox="0 0 24 24" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9" fill="none" stroke="currentColor"
+                                  stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="cb-overflow-box"${overflowOpen ? "" : " hidden"} role="menu">
+                        <div class="cb-overflow-list">${rows}</div>
+                    </div>
                 </span>`;
+        } else {
+            overflowOpen = false; // nothing left to overflow → keep state clean
         }
         tagsEl.innerHTML = html;
 
@@ -151,6 +171,16 @@ function initSetup() {
                     () => tag.classList.remove("is-entering"), { once: true });
             }
         }
+    }
+
+    // Open/close the overflow dropdown (no re-render — just toggle its visibility).
+    function toggleOverflow(force) {
+        overflowOpen = (force === undefined) ? !overflowOpen : force;
+        const chip = document.getElementById("cbMoreChip");
+        if (!chip) return;
+        const box = chip.querySelector(".cb-overflow-box");
+        if (box) box.hidden = !overflowOpen;
+        chip.setAttribute("aria-expanded", overflowOpen ? "true" : "false");
     }
 
     function addPlayer(name) {
@@ -267,7 +297,15 @@ function initSetup() {
 
     tagsEl.addEventListener("click", (e) => {
         const btn = e.target.closest(".cb-tag-remove");
-        if (btn) removePlayer(Number(btn.dataset.index));
+        if (btn) { removePlayer(Number(btn.dataset.index)); return; }
+        // Click the "+N" chip (but not inside its open dropdown) → toggle the dropdown.
+        const chip = e.target.closest(".cb-tag-more");
+        if (chip && !e.target.closest(".cb-overflow-box")) toggleOverflow();
+    });
+
+    // Click anywhere outside the chip/dropdown closes it.
+    document.addEventListener("click", (e) => {
+        if (overflowOpen && !e.target.closest("#cbMoreChip")) toggleOverflow(false);
     });
 
     slider.addEventListener("click", (e) => {

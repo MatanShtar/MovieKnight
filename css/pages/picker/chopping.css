@@ -200,6 +200,84 @@
     transform: translateX(-50%) translateY(0);
 }
 
+/* The "+N" chip is now a button that opens a dropdown of the overflow players —
+   same dark scrollable box as the picker's provider list, with an inline ✕ per row
+   for quick removal of players past the visible slots. */
+.cb-tag-more { cursor: pointer; padding-right: 34px; }
+
+/* A little ▾ pinned to the right edge so the chip reads as openable; flips to ▴ open. */
+.cb-more-caret {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    width: 13px;
+    height: 13px;
+    transform: translateY(-50%);
+    color: var(--text);
+    pointer-events: none;
+    transition: transform var(--t-base) ease;
+}
+.cb-tag-more[aria-expanded="true"] .cb-more-caret {
+    transform: translateY(-50%) rotate(180deg);
+}
+
+.cb-overflow-box {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 70;
+    width: 240px;
+    background: rgba(33, 33, 33, 0.97);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+}
+.cb-overflow-box[hidden] { display: none; }
+
+.cb-overflow-list {
+    max-height: 240px;
+    overflow-y: auto;
+    padding: 6px 0;
+}
+.cb-overflow-list::-webkit-scrollbar { width: 8px; }
+.cb-overflow-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+}
+
+.cb-overflow-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 0 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(106, 106, 106, 0.55);
+}
+.cb-overflow-item:last-child { border-bottom: none; }
+
+.cb-overflow-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--text-soft);
+    font-size: 16px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Inline ✕ in the dropdown — overrides the floating-corner placement of .cb-tag-remove. */
+.cb-overflow-x {
+    position: static;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.55);
+}
+
 /* --- Right column: three stat rows. Pitch tightened to keep the setup on one
    screen while still leaving room for the slider's numbers below row 1. --- */
 .cb-col-right { gap: 64px; }
