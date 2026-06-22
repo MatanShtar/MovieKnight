@@ -271,6 +271,17 @@
     flex-shrink: 0;
 }
 
+/* Running total of how many movies are on the wheel — a quiet caption that sits
+   between the search bar and the list box. */
+.wheel-count {
+    align-self: flex-start;
+    padding-left: 6px;
+    margin-top: -2px;
+    font-size: 14px;
+    color: var(--text-soft);
+    letter-spacing: 0.3px;
+}
+
 /* Client-side filter for the loaded movies — pill input with a leading icon. */
 .wheel-search {
     position: relative;
