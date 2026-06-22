@@ -342,8 +342,7 @@ function removeMovie(index) {
     animateSlice(index, 'remove', () => {
         movies.splice(index, 1);
         renderMovieList(movies);
-        drawWheel(movies);
-        updateSaveButtonState();   // enables "Save" — the user clicks it to persist
+        updateSaveButtonState();   // enables "Save"; animateSlice repaints + fades labels
     });
 }
 
@@ -511,11 +510,16 @@ function getWheelSliceColors() {
 // Draw the wheel. `weights` (one per slice, default all 1) lets a single slice
 // grow in / shrink out for the add/remove animation, while the rest share the
 // remaining arc — so a new title appears to emerge from between its neighbours.
-function drawWheel(titles, weights) {
+function drawWheel(titles, weights, opts) {
     const canvas = document.getElementById('rouletteWheel');
     if (!canvas || titles.length === 0) return;
     const ctx = canvas.getContext('2d');
 
+    // Labels are re-fitted (measureText + ellipsis) per slice, so re-running that every
+    // frame while slices resize makes the text jiggle. add/remove pass skipLabels for
+    // the in-between frames and only draw labels on the final, settled frame.
+    const skipLabels = !!(opts && opts.skipLabels);
+    const labelAlpha = opts && opts.labelAlpha != null ? opts.labelAlpha : 1;
     const n = titles.length;
     const w = (weights && weights.length === n) ? weights : titles.map(() => 1);
     const total = w.reduce((a, b) => a + b, 0) || 1;
@@ -549,9 +553,11 @@ function drawWheel(titles, weights) {
         ctx.arc(centerX, centerY, radius, startAngle, endAngle);
         ctx.fill();
 
-        // Skip the label on a sliver (mid-animation) — it'd just be an ellipsis.
-        if (sliceAngle > 0.05) {
+        // Skip labels mid-animation (skipLabels) and on slivers — they'd just jiggle.
+        if (!skipLabels && sliceAngle > 0.05) {
+            if (labelAlpha < 1) ctx.globalAlpha = labelAlpha;   // fade labels in at settle
             drawSliceLabel(ctx, title, centerX, centerY, radius, startAngle, sliceAngle, vertical);
+            if (labelAlpha < 1) ctx.globalAlpha = 1;
         }
         startAngle = endAngle;
     });
@@ -624,25 +630,46 @@ function drawSliceLabel(ctx, title, cx, cy, radius, startAngle, sliceAngle, vert
 // resize to open / close the gap, so the new title emerges from between the two
 // slots it sits between. `done` runs once the tween settles.
 let wheelAnim = null;
+let labelFadeRaf = null;
+
+// Fade the slice labels in over the settled wheel (slices already drawn). Avoids the
+// abrupt "pop" of every label appearing at once when a resize finishes — most visible
+// with many (vertical) labels on a crowded wheel.
+function fadeInLabels() {
+    if (labelFadeRaf) cancelAnimationFrame(labelFadeRaf);
+    const dur = 180;
+    const t0 = performance.now();
+    const tick = (now) => {
+        const a = Math.min(1, (now - t0) / dur);
+        drawWheel(movies, null, { labelAlpha: a });
+        labelFadeRaf = a < 1 ? requestAnimationFrame(tick) : null;
+    };
+    labelFadeRaf = requestAnimationFrame(tick);
+}
+
 function animateSlice(index, mode, done) {
     const canvas = document.getElementById('rouletteWheel');
     if (!canvas) { if (done) done(); return; }
     if (wheelAnim) cancelAnimationFrame(wheelAnim);
+    if (labelFadeRaf) { cancelAnimationFrame(labelFadeRaf); labelFadeRaf = null; }
 
-    const duration = 300;
+    const duration = 360;
     const start = performance.now();
+    // easeInOutCubic — eases in and out so the resize glides instead of snapping.
+    const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
     const step = (now) => {
         const t = Math.min(1, (now - start) / duration);
-        const e = 1 - Math.pow(1 - t, 3); // easeOutCubic
+        const e = ease(t);
         const grow = mode === 'add' ? e : 1 - e; // add 0→1, remove 1→0
         const weights = movies.map((_, i) => (i === index ? grow : 1));
-        drawWheel(movies, weights);
+        drawWheel(movies, weights, { skipLabels: true }); // no label jiggle mid-roll
         if (t < 1) {
             wheelAnim = requestAnimationFrame(step);
         } else {
             wheelAnim = null;
-            if (done) done();
-            else drawWheel(movies);
+            if (done) done();                          // remove: splice + re-list
+            drawWheel(movies, null, { skipLabels: true }); // settle the slices, no labels
+            fadeInLabels();                            // then ease the labels in (no pop)
         }
     };
     wheelAnim = requestAnimationFrame(step);
