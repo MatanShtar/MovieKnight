@@ -126,11 +126,13 @@ window.MovieAPI = (function () {
 
         if (!res.ok) {
             let rawMessage = "";
+            let rawCode = "";
             try {
                 // Named `errorBody` to avoid shadowing the request `body` param.
                 const errorBody = await res.json();
-                // contract error shape: { ok: false, error }
+                // contract error shape: { ok: false, error, code? }
                 if (errorBody && errorBody.error) rawMessage = String(errorBody.error);
+                if (errorBody && errorBody.code) rawCode = String(errorBody.code);
             } catch {
                 /* non-JSON error body — shortError falls back to a status line */
             }
@@ -138,6 +140,9 @@ window.MovieAPI = (function () {
             // GET /collections/:id means "private or missing" → redirect to 404.html).
             const err = new Error(shortError(rawMessage, res.status));
             err.status = res.status;
+            // …and the machine-readable code when present, so callers can tell apart
+            // same-status cases (e.g. a quota 429 vs an upstream rate-limit 429).
+            if (rawCode) err.code = rawCode;
             throw err;
         }
 
@@ -678,6 +683,10 @@ window.MovieAPI = (function () {
     // the cached currentUser via login/signup/me, refreshed from /ai/usage). So
     // changing the limit server-side updates everything here with no client change.
 
+    // Error code the backend sends with the quota-exhausted 429 (services/aiQuota.js)
+    // so the UI can tell it apart from an upstream rate-limit 429 of the same status.
+    const AI_LIMIT_CODE = "AI_LIMIT_REACHED";
+
     // The cached usage object { used, remaining, limit }, or null if we've never seen
     // one (logged out, or a session cached before this feature shipped).
     function aiUsage() {
@@ -835,6 +844,7 @@ window.MovieAPI = (function () {
         aiActionsRemaining,
         aiActionsLimit,
         aiLimitReachedMessage,
+        AI_LIMIT_CODE,
         getAiSession,
         saveAiSession,
         getWheel,

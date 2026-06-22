@@ -190,6 +190,9 @@ async function runAiSearch(query, { reroll = false } = {}) {
 // A SHORT, friendly message for a failed AI search — never the raw upstream error
 // (Gemini's free-tier rate-limit replies are a huge wall of text).
 function aiSearchErrorMessage(err) {
+  // Quota exhausted is a 429 too, but distinguished by the backend's error code —
+  // surface its specific message instead of the generic "AI is busy" line.
+  if (err && err.code === MovieAPI.AI_LIMIT_CODE) return err.message;
   switch (err && err.status) {
     case 400: return (err.message && err.message.length <= 100)
       ? err.message : "That search didn’t look right — try rephrasing it.";

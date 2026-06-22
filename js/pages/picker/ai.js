@@ -260,6 +260,9 @@ async function loadState() {
 // status the envelope handler attaches (api.js): 400 bad input, 401 auth, 404
 // collection gone, 429/503 busy (rate limit), 502 bad AI data, 504 timeout.
 function aiErrorMessage(err) {
+    // Quota exhausted is a 429 too, but distinguished by the backend's error code —
+    // surface its specific message instead of the generic "AI is busy" line.
+    if (err && err.code === MovieAPI.AI_LIMIT_CODE) return err.message;
     switch (err && err.status) {
         case 400: return (err.message && err.message.length <= 100)
             ? err.message : 'Tweak your prompt and try again.';
@@ -383,6 +386,12 @@ function setupTryAgain() {
     if (!btn) return;
     btn.addEventListener('click', () => {
         if (loading || rerollUsed) return; // one reroll per result set
+        // A reroll spends another AI action — stop here (with the right message) if
+        // the daily quota is already spent, rather than firing a doomed request.
+        if (window.MovieAPI && MovieAPI.aiActionsRemaining() <= 0) {
+            if (window.toast) toast.warn(MovieAPI.aiLimitReachedMessage());
+            return;
+        }
         // Vanish on press — don't wait for the new picks to load, and don't just
         // grey it out. A reroll that FAILS brings it back (generate()'s finally).
         btn.hidden = true;
