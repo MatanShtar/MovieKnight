@@ -89,6 +89,39 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
+    // --- Smart Filter facets (per collection) -------------------------------------
+    // GET /api/collections/:id/wheel/filters → the genre + provider ids that ACTUALLY
+    // appear in this collection's movies. null until loaded → everything is treated as
+    // available (graceful). Once loaded, options not present are grayed out + disabled
+    // (never hidden), and providers are sorted available-first. We re-render both
+    // menus when the facets arrive.
+    let availableGenres = null;    // Set<number> | null
+    let availableProviders = null; // Set<number> | null
+    let lastGenreList = dataConfig.genres;        // most recent list rendered (for re-render)
+    let lastProviderList = dataConfig.providers;
+    const genreOff = new Set();    // available genre ids the user switched OFF (survives re-render)
+
+    // An option is "available" when the facets aren't loaded yet (null), it has no id
+    // to test (the offline fallback list), or its id is in the collection's facet set.
+    const genreIsAvailable = (id) =>
+        availableGenres == null || !id || availableGenres.has(Number(id));
+    const providerIsAvailable = (p) =>
+        availableProviders == null || p.id == null || availableProviders.has(Number(p.id));
+
+    (function loadWheelFilters() {
+        const cid = window.ActiveCollection && ActiveCollection.getId();
+        if (!cid || !MovieAPI.getWheelFilters) return;
+        MovieAPI.getWheelFilters(cid)
+            .then(({ availableGenres: ag, availableProviders: ap }) => {
+                availableGenres = new Set(ag);
+                availableProviders = new Set(ap);
+                renderGenres(lastGenreList);       // repaint with the gray-out state
+                renderProviders(lastProviderList); // repaint sorted + grayed + "Any"
+                refreshGenerateState();
+            })
+            .catch((err) => console.error("Could not load wheel filters:", err));
+    })();
+
     // The genre ids currently switched ON (a non-dashed genre button).
     function activeGenreIds() {
         return activeGenreButtons()
@@ -177,19 +210,30 @@ document.addEventListener('DOMContentLoaded', () => {
         MovieAPI.getGenres()
             .then(genres => {
                 if (genres.length) {
-                    renderGenres(genres.map(g => ({ id: g.id, name: g.name, available: true })));
+                    renderGenres(genres.map(g => ({ id: g.id, name: g.name })));
                 }
             })
             .catch(err => console.error("Could not load genres:", err));
     }
 
+    // Render the genre toggles. Smart Filter: a genre NOT present in this collection
+    // (per availableGenres) is grayed out + disabled (kept visible, not removed) and
+    // forced OFF. Available genres default ON; the user's OFF toggles persist across
+    // re-renders via `genreOff`, so a late facet/live-genre repaint doesn't reset them.
     function renderGenres(genres) {
-        // We ALWAYS put a "+" inside the icon; CSS rotates it to an "x" when dashed.
+        lastGenreList = genres; // remember so the facet load can repaint this same list
         genreGrid.innerHTML = genres.map(genre => {
-            const cssClass = genre.available ? "genre-btn" : "genre-btn dashed";
+            const id = Number(genre.id) || 0;
+            const avail = genreIsAvailable(id);
+            const off = !avail || (id && genreOff.has(id)); // unavailable => always off
+            const classes = ['genre-btn'];
+            if (off) classes.push('dashed');
+            if (!avail) classes.push('genre-btn--unavailable');
             const idAttr = genre.id ? ` data-genre-id="${genre.id}"` : "";
+            const aria = avail ? "" : ' aria-disabled="true"';
+            // We ALWAYS put a "+" inside the icon; CSS rotates it to an "x" when dashed.
             return `
-                <div class="${cssClass}"${idAttr} data-genre-name="${genre.name}">
+                <div class="${classes.join(' ')}"${idAttr} data-genre-name="${genre.name}"${aria}>
                     ${genre.name}
                     <div class="genre-icon">
                         <img src="assets/images/icons/genre-x-icon.svg" alt="toggle">
@@ -200,15 +244,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         genreGrid.querySelectorAll('.genre-btn').forEach(btn => {
             btn.addEventListener('click', function () {
+                // Unavailable genres are disabled — ignore clicks on them.
+                if (this.classList.contains('genre-btn--unavailable')) return;
+                const id = Number(this.dataset.genreId);
                 const isCurrentlyActive = !this.classList.contains('dashed');
-                // Block unchecking the last remaining active genre.
+                // Block unchecking the last remaining active (available) genre.
                 if (isCurrentlyActive && activeGenreButtons().length <= 1) {
                     if (window.toast) toast.info("Keep at least one genre selected.");
                     return;
                 }
                 this.classList.toggle('dashed');
                 const nowHidden = this.classList.contains('dashed');
-                const id = Number(this.dataset.genreId);
+                if (id) { nowHidden ? genreOff.add(id) : genreOff.delete(id); }
                 if (id) applyGenreVisibility(id, nowHidden);
                 refreshGenerateState();
             });
@@ -244,8 +291,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (clearProvidersBtn) clearProvidersBtn.hidden = checked.length === 0;
     }
 
-    // Reset the provider filter back to "Any": uncheck everything, clear the
-    // search box, and re-show every provider row.
+    // Reset the provider filter back to "Any" (= nothing ticked): uncheck everything,
+    // clear the search box, and re-show every provider row.
     if (clearProvidersBtn && providerList) {
         clearProvidersBtn.addEventListener('click', () => {
             providerList.querySelectorAll('.provider-checkbox:checked')
@@ -269,6 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Keep the "Any" / selected label in sync as providers are toggled, and
         // re-validate the wheel (a provider filter can empty the chosen pool).
+        // Nothing ticked = "Any" (no provider constraint).
         providerList.addEventListener('change', (e) => {
             if (e.target.classList.contains('provider-checkbox')) {
                 refreshProviderSelectionLabel();
@@ -297,25 +345,42 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Render the provider list with the Smart Filter sort + gray-out: providers
+    // present in THIS collection (availableProviders) are sorted to the TOP; the rest
+    // are pushed to the BOTTOM and rendered disabled + grayed (kept visible, not
+    // hidden). No "Any" row — nothing ticked simply means "Any" (no constraint).
     function renderProviders(providers) {
-        // Preserve any providers the user has already ticked across a re-render.
-        // The fallback list paints first, then the live list from the backend
-        // replaces it — without this, that late swap rebuilds the checkboxes from
-        // scratch and silently wipes the current selection (the summary "…" then
-        // drops back to "Any"). Re-check by name after rebuilding.
+        lastProviderList = providers; // remember so the facet load can repaint this list
+
+        // Preserve any providers already ticked across a re-render (the fallback paints
+        // first, then the live list / facet repaint replace it). Track by name so it
+        // survives the no-id fallback → live swap.
         const checkedNames = new Set(
             [...providerList.querySelectorAll('.provider-checkbox:checked')]
                 .map((cb) => cb.closest('.provider-item')?.querySelector('.provider-name')?.textContent)
                 .filter(Boolean)
         );
-        providerList.innerHTML = providers.map((p, index) => `
-            <label class="provider-item">
+
+        // Stable sort: available providers first, unavailable last.
+        const ordered = providers
+            .map((p, i) => ({ p, i, avail: providerIsAvailable(p) }))
+            .sort((a, b) => (a.avail === b.avail ? a.i - b.i : (a.avail ? -1 : 1)));
+
+        providerList.innerHTML = ordered.map(({ p, avail }, index) => {
+            const checked = checkedNames.has(p.name) ? " checked" : "";
+            const cls = avail ? "provider-item" : "provider-item provider-item--unavailable";
+            const disabled = avail ? "" : " disabled";
+            const idAttr = p.id ? ` data-provider-id="${p.id}"` : "";
+            const aria = avail ? "" : ' aria-disabled="true"';
+            return `
+            <label class="${cls}"${aria}>
                 <img src="${p.logo}" alt="${p.name}" class="provider-logo" onerror="this.style.display='none'">
                 <span class="provider-name">${p.name}</span>
-                <input type="checkbox" class="provider-checkbox" id="prov_${index}"${p.id ? ` data-provider-id="${p.id}"` : ""}${checkedNames.has(p.name) ? " checked" : ""}>
+                <input type="checkbox" class="provider-checkbox" id="prov_${index}"${idAttr}${checked}${disabled}>
                 <div class="custom-check"></div>
-            </label>
-        `).join("");
+            </label>`;
+        }).join("");
+
         refreshProviderSelectionLabel();
     }
 

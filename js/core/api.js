@@ -673,6 +673,23 @@ window.MovieAPI = (function () {
         return Array.isArray(list) ? list.filter((s) => typeof s === "string") : [];
     }
 
+    // GET /api/collections/:id/wheel/filters — the distinct genre + provider TMDB
+    // ids that ACTUALLY appear across this collection's movies, so the wheel's filter
+    // menu can offer (and highlight) only what matches something. Envelope uses `ok`
+    // (request() unwraps it); data is
+    // { availableGenres: number[], availableProviders: number[] }. Provider ids are
+    // US-flatrate only, so a collection of non-streaming titles legitimately returns
+    // availableProviders: []. Always resolves clean integer arrays.
+    async function getWheelFilters(collectionId) {
+        const data = await request(`/collections/${encodeURIComponent(collectionId)}/wheel/filters`);
+        const toIds = (arr) =>
+            Array.isArray(arr) ? arr.map(Number).filter(Number.isFinite) : [];
+        return {
+            availableGenres: toIds(data && data.availableGenres),
+            availableProviders: toIds(data && data.availableProviders),
+        };
+    }
+
     // GET /api/collections/:id/wheel — the saved wheel (or [] if never saved).
     // Owner sees theirs; a PUBLIC collection's wheel is readable by any logged-in
     // user; a PRIVATE collection you don't own throws err.status === 404.
@@ -705,6 +722,7 @@ window.MovieAPI = (function () {
         saveAiSession,
         getWheel,
         saveWheel,
+        getWheelFilters,
         searchMovies,
         getMovieDetails,
         searchPeople,
