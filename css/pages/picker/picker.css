@@ -641,6 +641,26 @@
     display: none;
 }
 
+/* Odometer roll for a count pill (Movies on the Wheel, Chopping's movie count, …).
+   The pill clips a vertical strip of numbers (.count-roll) that translateY's so the
+   value physically tumbles up/down; animateCount() in picker.js sets the pill's
+   position/overflow inline and drives the transform + a mid-roll motion blur. */
+.count-roll {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    will-change: transform, filter;
+}
+.count-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
 /* A provider not available in this collection: grayed, disabled cursor, no check. */
 .provider-item--unavailable {
     opacity: 0.4;

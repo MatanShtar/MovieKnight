@@ -27,7 +27,6 @@ let wheelIsOwner = false;
 // redundant PUTs. null until the first successful load/save.
 let serverWheel = null;
 let savingWheel = false;       // guards overlapping PUTs
-let saveDebounce = null;       // debounce handle for auto-save on edits
 
 let currentWinnerIdx = -1; // index in `movies` of the movie shown in the popup
 
@@ -306,8 +305,7 @@ function addMovie(title) {
     }
     movies.push(title);
     renderMovieList(movies);
-    updateSaveButtonState();
-    scheduleSave();
+    updateSaveButtonState();   // enables "Save" — the user clicks it to persist
 
     // Wheel: the new slice emerges from between its two neighbouring slots.
     animateSlice(movies.length - 1, 'add');
@@ -345,8 +343,7 @@ function removeMovie(index) {
         movies.splice(index, 1);
         renderMovieList(movies);
         drawWheel(movies);
-        updateSaveButtonState();
-        scheduleSave();
+        updateSaveButtonState();   // enables "Save" — the user clicks it to persist
     });
 }
 
@@ -385,7 +382,6 @@ function startRename(index) {
                 if (window.toast) toast.info(`"${next}" is already on the wheel.`);
             } else {
                 movies[index] = next;
-                scheduleSave();
             }
         }
         rerender(); // restores the title span (and refreshes the wheel + save state)
@@ -424,13 +420,6 @@ function updateSaveButtonState() {
     saveBtn.classList.toggle('save-btn--disabled', disabled);
 }
 
-// Debounced auto-save so an owner's edits persist without needing the Save button.
-function scheduleSave() {
-    if (!wheelCollectionId || !wheelIsOwner) return;
-    clearTimeout(saveDebounce);
-    saveDebounce = setTimeout(() => persistWheel({ silent: true }), 700);
-}
-
 // PUT the current wheel for the active collection. Owner-only; the server returns
 // the normalised (trimmed/capped) list, which becomes our source of truth.
 async function persistWheel({ silent = false } = {}) {
@@ -438,8 +427,7 @@ async function persistWheel({ silent = false } = {}) {
         if (!silent && window.toast) toast.info('Open a collection to save its wheel.');
         return;
     }
-    if (savingWheel) { scheduleSave(); return; }   // coalesce overlapping saves
-    clearTimeout(saveDebounce);
+    if (savingWheel) return;   // a save is already in flight
     savingWheel = true;
     try {
         const saved = await MovieAPI.saveWheel(wheelCollectionId, movies);
@@ -754,8 +742,11 @@ function setupWinnerControls() {
     const overlay = document.getElementById('winnerOverlay');
     const close = document.getElementById('winnerClose');
     const remove = document.getElementById('winnerRemove');
+    const keep = document.getElementById('winnerKeep');
 
     if (close) close.addEventListener('click', closeWinner);
+    // "Keep in the Wheel" just dismisses the popup — the movie stays on the wheel.
+    if (keep) keep.addEventListener('click', closeWinner);
     if (remove) remove.addEventListener('click', () => {
         if (currentWinnerIdx >= 0) removeMovie(currentWinnerIdx);
         closeWinner();

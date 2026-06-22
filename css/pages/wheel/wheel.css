@@ -677,29 +677,42 @@
     color: var(--text);
 }
 
-/* Remove button: 328W x 80H, #84343F (= --maroon-light), radius 50 */
-.winner-remove {
-    width: 328px;
-    height: 80px;
+/* Two side-by-side choices after a win: Keep (positive) | Remove (destructive). */
+.winner-actions {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    padding: 0 26px;
     margin-bottom: 26px;
+    box-sizing: border-box;
+}
+
+.winner-action {
+    flex: 1 1 0;
+    min-width: 0;            /* let the long labels shrink/wrap instead of overflowing */
+    height: 80px;
+    padding: 0 12px;
     border: none;
     border-radius: 50px;
-    background-color: rgb(var(--maroon-light));
     color: var(--text);
     font-family: inherit;
-    font-size: 24px;
+    font-size: 20px;
+    line-height: 1.12;
     cursor: pointer;
     transition:
         transform var(--t-base) var(--ease-pop),
         filter var(--t-base) ease;
 }
 
-.winner-remove:hover {
+.winner-keep   { background-color: #3c9d63; }              /* green — keep it on the wheel */
+.winner-remove { background-color: rgb(var(--maroon-light)); } /* maroon — drop it */
+
+.winner-action:hover {
     filter: brightness(1.12);
     transform: scale(1.04);
 }
 
-.winner-remove:active {
+.winner-action:active {
     transform: scale(0.96);
 }
 
