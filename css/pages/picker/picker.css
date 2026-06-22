@@ -542,6 +542,13 @@
 
 /* --- 2. The Scrollable List --- */
 .provider-list {
+    /* Fill the remaining height of the fixed-size .provider-box and scroll INSIDE,
+       instead of sizing to content. Without flex:1 + min-height:0 the list grows to
+       its content height and the parent's overflow:hidden clips the last row — and
+       whether it clips depends on font size / zoom / device (the "cut in half on
+       another device" bug). This makes it scroll consistently everywhere. */
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     padding: 10px 0 0 0;
 }
