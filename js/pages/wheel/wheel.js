@@ -255,6 +255,17 @@ function renderMovieList(titles) {
         </div>`;
 
     listContainer.innerHTML = addRow + rows;
+
+    // The count reflects the WHOLE wheel (titles is always the full `movies`
+    // array), so it stays correct even while the search filters the visible rows.
+    updateWheelCount(titles.length);
+}
+
+// Show how many movies are currently on the wheel (caption above the list).
+function updateWheelCount(n) {
+    const el = document.getElementById('wheelCount');
+    if (!el) return;
+    el.textContent = `${n} ${n === 1 ? 'movie' : 'movies'} on the wheel`;
 }
 
 // ==========================================

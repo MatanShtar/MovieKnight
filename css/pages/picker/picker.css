@@ -636,6 +636,10 @@
 .genre-btn--unavailable:hover {
     transform: none;   /* cancel the playful scale/rotate on a disabled tile */
 }
+/* An unavailable genre can't be toggled, so drop the +/x corner affordance. */
+.genre-btn--unavailable .genre-icon {
+    display: none;
+}
 
 /* A provider not available in this collection: grayed, disabled cursor, no check. */
 .provider-item--unavailable {

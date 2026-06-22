@@ -11,6 +11,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Default arrow everywhere on the placeholder; only the "Go Back" button
+       gets the pointer (see .cs-back). */
+    cursor: default;
     /* the dark back wall behind the curtains */
     background:
         radial-gradient(ellipse at 50% 42%, #3a2127 0%, #1c0f14 58%, #0a0608 100%);
@@ -205,6 +208,7 @@
     color: #2a0f17;
     font-size: 20px;
     text-decoration: none;
+    cursor: pointer;   /* the one interactive element on the stage */
     box-shadow: 0 10px 30px rgba(var(--pink-alt), 0.35);
     transition: transform var(--t-base) var(--ease-pop), filter var(--t-base) ease;
 }
@@ -230,12 +234,14 @@
        valance) — it only fades in after the panels have begun opening anyway. */
     .cs-content { z-index: 6; }
 
-    /* Scale the copy down so it sits comfortably inside the narrow parted gap. */
-    .cs-eyebrow { font-size: 12px; letter-spacing: 3px; margin-bottom: 8px; }
-    .cs-title   { font-size: clamp(30px, 11vw, 46px); }
-    .cs-copy    { font-size: clamp(14px, 4.1vw, 17px); margin: 14px auto 26px; line-height: 1.5; }
-    .cs-back    { font-size: 16px; padding: 11px 26px; }
-    .cs-back-arrow { font-size: 18px; }
+    /* Scale the copy down further so it sits comfortably inside the narrow parted
+       gap between the curtains (smaller headline + body on phones). */
+    .cs-content { max-width: 78vw; padding: 0 14px; }
+    .cs-eyebrow { font-size: 11px; letter-spacing: 2.5px; margin-bottom: 7px; }
+    .cs-title   { font-size: clamp(24px, 8.2vw, 38px); }
+    .cs-copy    { font-size: clamp(12px, 3.4vw, 15px); margin: 12px auto 22px; line-height: 1.45; }
+    .cs-back    { font-size: 14px; padding: 10px 22px; }
+    .cs-back-arrow { font-size: 16px; }
 
     /* Same weighted, multi-phase open as desktop, but a wider final gap for phones. */
     @keyframes cs-curtain-left {
