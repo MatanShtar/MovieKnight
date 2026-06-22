@@ -6,6 +6,76 @@
 // one from fewer than this many movies (after filtering).
 const MIN_WHEEL_MOVIES = 2;
 
+// Roll a numeric pill to `to` like a physical odometer/tumbler: a vertical strip of
+// every integer between the old and new value slides through the pill — UP for an
+// increase, DOWN for a decrease — accelerating to a motion-blur in the middle
+// (easeInOut + a blur that peaks mid-roll) before settling crisply on the target.
+// Cancels any in-flight roll; a repeat of the same target is a no-op; honours
+// reduced-motion (snaps instantly).
+function animateCount(el, to) {
+    if (!el) return;
+    to = Number(to) || 0;
+    if (el._countTarget === to && el._countRaf) return; // already rolling to this
+
+    const parsed = parseInt(el.textContent, 10);
+    const from = (el._countCurrent != null) ? el._countCurrent
+               : (Number.isFinite(parsed) ? parsed : to);
+    el._countTarget = to;
+    if (el._countRaf) { cancelAnimationFrame(el._countRaf); el._countRaf = null; }
+
+    const reduce = window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || from === to) {
+        el._countCurrent = to;
+        el.textContent = String(to);
+        return;
+    }
+
+    // Build the tumbler: one cell per integer in [lo..hi], each as tall as the pill.
+    const lo = Math.min(from, to), hi = Math.max(from, to);
+    const H = el.clientHeight || 43;
+    const track = document.createElement('span');
+    track.className = 'count-roll';
+    for (let n = lo; n <= hi; n++) {
+        const cell = document.createElement('span');
+        cell.className = 'count-cell';
+        cell.style.height = H + 'px';
+        cell.textContent = String(n);
+        track.appendChild(cell);
+    }
+    el.style.position = 'relative';   // make the pill the clip/anchor for the roll
+    el.style.overflow = 'hidden';
+    el.textContent = '';
+    el.appendChild(track);
+
+    // Translate from the row showing `from` to the row showing `to`. from<to → the
+    // strip moves up; from>to → it moves down.
+    const yFrom = -(from - lo) * H;
+    const yTo = -(to - lo) * H;
+    const dist = Math.abs(to - from);
+    const duration = Math.min(850, 300 + dist * 55);
+    const blurMax = Math.min(6, 1 + dist * 0.6);
+    const t0 = performance.now();
+    // easeInOutCubic — slow start, fast (blurred) middle, slow settle.
+    const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+    const tick = (now) => {
+        const p = Math.min(1, (now - t0) / duration);
+        const e = ease(p);
+        track.style.transform = `translateY(${yFrom + (yTo - yFrom) * e}px)`;
+        track.style.filter = `blur(${(blurMax * Math.sin(Math.PI * p)).toFixed(2)}px)`;
+        el._countCurrent = Math.round(from + (to - from) * e);
+        if (p < 1) {
+            el._countRaf = requestAnimationFrame(tick);
+        } else {
+            el._countRaf = null;
+            el._countCurrent = to;
+            el.textContent = String(to);       // settle on a crisp, un-blurred number
+        }
+    };
+    el._countRaf = requestAnimationFrame(tick);
+}
+
 // Point the hub's "Back" at the collection it plays from (collection.html?id=<id>),
 // resolved from ?collection= or the remembered active collection. Removing data-back
 // opts this link out of smartBack's history.back(), which is what could otherwise
@@ -38,7 +108,13 @@ const dataConfig = {
         { id: 80, name: "Crime", available: true },
         { id: 10751, name: "Family", available: true },
         { id: 37, name: "Western", available: true },
-        { id: 9648, name: "Mystery", available: true }
+        { id: 9648, name: "Mystery", available: true },
+        // The remaining TMDB genres, so even this OFFLINE fallback covers all 19 —
+        // a movie tagged only History/Music/War/TV Movie still has a button to match.
+        { id: 36, name: "History", available: true },
+        { id: 10402, name: "Music", available: true },
+        { id: 10752, name: "War", available: true },
+        { id: 10770, name: "TV Movie", available: true }
     ],
     // Providers you want to display
     providers: [
@@ -431,6 +507,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // no collection chosen → no genres selected → nothing left after filtering.
     function refreshGenerateState() {
         if (!generateBtn) return;
+
+        // How many of the collection's movies survive the current filters — shown in
+        // the "Movies on the Wheel" pill and reused for the validation below.
+        const matched = selectedCollection ? filteredWheelMovies().length : 0;
+        const countPill = document.getElementById('wheelMovieCount');
+        if (countPill) animateCount(countPill, matched);
+
         let invalid = false;
         let msg = "";
 
@@ -440,19 +523,16 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (activeGenreButtons().length < 1) {
             invalid = true;
             msg = "Select at least one genre.";
-        } else {
-            const matched = filteredWheelMovies().length;
-            if (matched === 0) {
-                invalid = true;
-                // A provider filter is the usual culprit: provider_ids is US-flatrate
-                // only, so movies that don't stream there are correctly excluded.
-                msg = selectedProviderIds().length
-                    ? "None of your movies stream on the selected providers."
-                    : "No movies in this collection match your filters.";
-            } else if (matched < MIN_WHEEL_MOVIES) {
-                invalid = true;
-                msg = "A wheel needs at least 2 movies — add more or loosen your filters.";
-            }
+        } else if (matched === 0) {
+            invalid = true;
+            // A provider filter is the usual culprit: provider_ids is US-flatrate
+            // only, so movies that don't stream there are correctly excluded.
+            msg = selectedProviderIds().length
+                ? "None of your movies stream on the selected providers."
+                : "No movies in this collection match your filters.";
+        } else if (matched < MIN_WHEEL_MOVIES) {
+            invalid = true;
+            msg = "A wheel needs at least 2 movies — add more or loosen your filters.";
         }
 
         if (wheelError) {

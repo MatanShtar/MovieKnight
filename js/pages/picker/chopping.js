@@ -227,7 +227,10 @@ function initSetup() {
     function refresh() {
         bump(totalPlayersEl, players.length);
         const movies = totalMovies();
-        bump(totalMoviesEl, movies);
+        // "Random Movies Selected" gets the odometer roll (shared from picker.js); no
+        // box-grow pop. Fall back to the plain bump if that helper isn't loaded.
+        if (typeof animateCount === 'function') animateCount(totalMoviesEl, movies);
+        else bump(totalMoviesEl, movies);
 
         const noCollection = !selectedCollection;
         const collSize = collectionSize();
@@ -623,20 +626,31 @@ function runGame(config, collectionMovies) {
         btn.textContent = "ELIMINATED";
         btn.disabled = true;
 
+        const pushed = pingRight;            // which graveyard edge this card flies to
         order.splice(idx, 1);
-        if (pingRight) order.push(card); else order.unshift(card);
+        if (pushed) order.push(card); else order.unshift(card);
         pingRight = !pingRight;
 
         const active = activeIndices();
         if (active.length <= 1) {
             gameOver = true;                 // lock the board; the winner has been decided
             const winner = order[active[0]] || card;
-            recenter();
+            recenter();                      // the lone winner — fine to centre it
             render();
             setTimeout(() => declareWinner(winner), 560);
             return;
         }
-        recenter();
+
+        // Don't snap back to the middle — keep the player parked where they were
+        // looking. The chopped card flies to a graveyard edge; we only nudge `center`
+        // by the index shift its removal+reinsert caused near it, so the neighbour
+        // that fills the gap is centred with no jump.
+        if (pushed) { if (center > idx) center -= 1; }   // cards after idx slid left
+        else        { if (center < idx) center += 1; }   // unshift pushed earlier cards right
+        if (!loopEnabled()) {
+            const [lo, hi] = centerBounds();
+            center = clamp(center, lo, hi);
+        }
         advanceTurn();
         render();
     }
