@@ -68,13 +68,30 @@ window.MovieAPI = (function () {
         return !!getToken();
     }
 
+    // Keep user-facing error text SHORT. The backend already sanitises (its central
+    // handler turns unexpected bugs into a generic "Server error" and never forwards
+    // a raw TMDB/Gemini body), so a clean, brief message passes through untouched.
+    // This is the hard guarantee the UI never shows a "full detail" wall of text: a
+    // long or multi-line message is swapped for a brief, status-based line instead.
+    const SHORT_ERROR_MAX = 120;
+    function shortError(raw, status) {
+        const msg = typeof raw === "string" ? raw.trim() : "";
+        if (msg && msg.length <= SHORT_ERROR_MAX && !msg.includes("\n")) return msg;
+        if (status >= 500) return "Something went wrong on the server. Please try again.";
+        if (status === 429) return "Too many requests — give it a moment and try again.";
+        if (status === 404) return "Not found.";
+        if (status === 401 || status === 403) return "You’re not allowed to do that.";
+        if (status === 400) return "That request wasn’t valid.";
+        return `Request failed (HTTP ${status}).`;
+    }
+
     // ==========================================
     // 1. LOW-LEVEL REQUEST HELPER
     // ==========================================
     // One fetch wrapper so every call gets the same JSON parsing and error
     // handling. `path` is relative to API_BASE, e.g. "/movies/search".
     // Any non-2xx is treated as a failure; the backend's { error: "..." }
-    // body is surfaced as the thrown message when present.
+    // body is surfaced (shortened via shortError) as the thrown message.
     async function request(path, { params, body, headers, ...options } = {}) {
         const url = new URL(API_BASE + API_PREFIX + path);
         if (params) {
@@ -108,18 +125,18 @@ window.MovieAPI = (function () {
         }
 
         if (!res.ok) {
-            let message = `Request failed (HTTP ${res.status})`;
+            let rawMessage = "";
             try {
                 // Named `errorBody` to avoid shadowing the request `body` param.
                 const errorBody = await res.json();
                 // contract error shape: { ok: false, error }
-                if (errorBody && errorBody.error) message = errorBody.error;
+                if (errorBody && errorBody.error) rawMessage = String(errorBody.error);
             } catch {
-                /* non-JSON error body — keep the generic message */
+                /* non-JSON error body — shortError falls back to a status line */
             }
             // Attach the HTTP status so callers can branch on it (e.g. a 404 from
             // GET /collections/:id means "private or missing" → redirect to 404.html).
-            const err = new Error(message);
+            const err = new Error(shortError(rawMessage, res.status));
             err.status = res.status;
             throw err;
         }
@@ -130,7 +147,7 @@ window.MovieAPI = (function () {
         // directly. Bare/legacy responses (array or object) pass through as-is.
         if (json && typeof json === "object" && !Array.isArray(json) && "ok" in json) {
             if (!json.ok) {
-                throw new Error(json.error || `Request failed (HTTP ${res.status})`);
+                throw new Error(shortError(json.error, res.status));
             }
             return json.data;
         }
