@@ -289,7 +289,7 @@ window.MovieAPI = (function () {
         const {
             q, genres, yearFrom, yearTo, minRating, sort, page,
             with_cast, with_crew, minVotes, language,
-            providers, keyword,
+            providers,
         } = params;
 
         const qp = {};
@@ -309,10 +309,6 @@ window.MovieAPI = (function () {
             const pids = providers.map(Number).filter(Number.isFinite);
             if (pids.length) qp.providers = pids.join(",");
         }
-        // Theme/keyword search drawn from the backend's stored keywords. Results
-        // only include movies the backend has already detailed, so a theme may
-        // legitimately return few/none early on — callers handle an empty array.
-        if (keyword) qp.keyword = keyword;
         // Default-feed quality guards (vote count floor + language); only the
         // empty-query feed sets these, so a real text search stays unrestricted.
         if (minVotes) qp.minVotes = minVotes;
