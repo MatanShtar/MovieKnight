@@ -36,23 +36,40 @@ let allGenres = [],
 // Name -> TMDB id, so the filters can send ids while the UI shows names.
 let genreNameToId = {},
   platformNameToId = {};
+// The curated "popular" providers shown by default (the rest are revealed by the
+// platform search), plus the director preset — both read from filterMenuData.json
+// and consumed by home/filters.js.
+let popularPlatforms = [];
+let directorDefaults = [];
 
-// Load the filter options once, then build the dropdowns that depend on them.
-// Genres + providers come from the live backend (with ids for filtering);
-// age-ratings still come from the static file because the backend has no
-// endpoint for them yet. (Actors/directors don't read this file — they use the
-// popular-people endpoint and DIRECTOR_DEFAULTS respectively.)
+// Load the static filter-menu data once, then build the dropdowns that depend on
+// it. Genres come from the live backend (with ids for filtering). Age-rating
+// certifications + the popular providers + the director preset come from
+// data/filterMenuData.json; the full provider catalogue is appended from the
+// backend so the platform search can reach beyond the popular few.
 (async () => {
   try {
-    const res = await fetch("data/filterData.json");
+    const res = await fetch("data/filterMenuData.json");
     if (res.ok) {
       const data = await res.json();
-      allAgeRatings = data.ageRating || [];
-      allGenres = data.genres || []; // fallback until the backend call returns
-      allPlatforms = data.watchProviders || [];
+      // TMDB certifications (G / PG / PG-13 / R / …) used by the age-rating filter.
+      allAgeRatings = data.certifications || [];
+      // Director preset for the People filter (TMDB person ids for with_crew).
+      directorDefaults = (data.directors || []).map((d) => ({
+        id: d.id,
+        name: d.name,
+        department: d.department || "Directing",
+      }));
+      // Popular providers (TMDB provider ids for the `providers` query param).
+      const providers = data.providers || [];
+      popularPlatforms = providers.map((p) => p.name);
+      allPlatforms = providers.map((p) => p.name);
+      providers.forEach((p) => {
+        if (p.id != null) platformNameToId[p.name] = p.id;
+      });
     }
   } catch (err) {
-    console.error("Could not load filter data:", err);
+    console.error("Could not load filter menu data:", err);
   }
 
   try {
@@ -65,14 +82,16 @@ let genreNameToId = {},
     console.error("Could not load genres:", err);
   }
 
+  // Append the rest of the backend's provider catalogue (anything not already in
+  // the popular list) so the platform search can find it; popular stays first.
   try {
     const providers = await MovieAPI.getProviders();
-    if (providers.length) {
-      allPlatforms = providers.map((p) => p.name);
-      platformNameToId = Object.fromEntries(
-        providers.filter((p) => p.id).map((p) => [p.name, p.id]),
-      );
-    }
+    providers.forEach((p) => {
+      if (!p.name) return;
+      if (p.id != null && platformNameToId[p.name] == null)
+        platformNameToId[p.name] = p.id;
+      if (!allPlatforms.includes(p.name)) allPlatforms.push(p.name);
+    });
   } catch (err) {
     console.error("Could not load providers:", err);
   }
@@ -218,6 +237,11 @@ document.addEventListener("keydown", (e) => {
 
   // 3. Only accept single character letters/numbers
   if (e.key.length === 1) {
+    // Starting a fresh typing burst while scrolled down the list glides the
+    // dropdown back to the top first (matches the scroll-to-top the search-box
+    // dropdowns do on input), so typing always begins from the top.
+    if (typeString === "") openMenu.scrollTo({ top: 0, behavior: "smooth" });
+
     typeString += e.key.toLowerCase();
 
     // Reset the typing string after 0.8 seconds of no typing

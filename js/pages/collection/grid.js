@@ -181,7 +181,9 @@
           posterPath: m.posterPath,
         })
       );
-      window.location.href = `movie.html?id=${encodeURIComponent(m.id)}`;
+      // Opened from the collection page (not Home) → open details in a new tab
+      // so the collection stays put behind it.
+      window.open(`movie.html?id=${encodeURIComponent(m.id)}`, "_blank", "noopener");
     };
     card.addEventListener("click", openMovie);
     card.addEventListener("keydown", (e) => {

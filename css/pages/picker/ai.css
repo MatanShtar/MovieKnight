@@ -518,4 +518,11 @@
         height: auto;
         min-height: 220px;
     }
+
+    /* Smaller "Back" label on phones, padded to keep an easy tap target. */
+    .back-btn {
+        font-size: 14px;
+        padding: 8px 12px;
+        margin: -8px 0 0 -12px;
+    }
 }

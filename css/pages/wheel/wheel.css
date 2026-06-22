@@ -135,7 +135,7 @@
     flex: 1;
     display: flex;
     justify-content: center;
-    align-items: flex-end;   /* the wheel hangs at the bottom */
+    align-items: flex-start;   /* anchor the wheel to the top (near the top bar) */
 }
 
 /* ==========================================
@@ -151,7 +151,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 69px;     /* hang 69px above the bottom of the screen */
+    margin-top: 8px;         /* sit near the top bar (anchored to the top) */
     /* Clip the transparent corners the square canvas sweeps out while spinning,
        so the rotation never grows the page's scroll area (no shaking). */
     overflow: hidden;
@@ -163,6 +163,49 @@
     border-radius: 50%;
     /* Long, weighted ease-out so the spin feels physical and alive */
     transition: transform 5s cubic-bezier(0.12, 0.74, 0.04, 1);
+}
+
+/* ---- Loading skeleton: while the server wheel hydrates, the canvas shows a
+   label-less, gently-rotating coloured wheel (drawn by wheel.js). Soften it with
+   a calm pulse + a faint blur so it reads as a placeholder, and mute the SPIN
+   button so it's clearly not ready yet. */
+.wheel-visual-container.is-loading #rouletteWheel {
+    animation: wheel-skeleton-pulse 1.5s ease-in-out infinite;
+    filter: saturate(0.7) blur(1px);
+    transition: none;   /* don't let the spin transition fight the skeleton turn */
+}
+.wheel-visual-container.is-loading .spin-btn {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(0.4);
+}
+@keyframes wheel-skeleton-pulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 0.9; }
+}
+
+/* Shimmer rows that stand in for the movie list while it loads. */
+.wheel-skeleton-row {
+    height: 38px;
+    margin: 10px 6px;
+    border-radius: 10px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 25%,
+        rgba(255, 255, 255, 0.16) 37%,
+        rgba(255, 255, 255, 0.05) 63%
+    );
+    background-size: 320px 100%;
+    animation: wheel-skeleton-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes wheel-skeleton-shimmer {
+    0%   { background-position: -160px 0; }
+    100% { background-position: calc(160px + 100%) 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wheel-visual-container.is-loading #rouletteWheel { animation: none; }
+    .wheel-skeleton-row { animation: none; }
 }
 
 /* Downward pointer at the top: 20W x 23H, #212121 @ 90% */
@@ -238,6 +281,11 @@
     justify-content: center;
     gap: 56px;
     padding-top: 30px;
+    /* Size to its content (the list column) and stay anchored to the top of the
+       stage, instead of stretching to the full viewport height. That way the
+       save/load buttons bottom-align to the LIST BOX rather than dropping to the
+       bottom of the screen when the page is zoomed out. */
+    align-self: flex-start;
 }
 
 /* The dark translucent box: 390W wide, radius 40, #212121 @ 30%. Height scales
@@ -525,8 +573,10 @@
     display: flex;
     flex-direction: column;
     gap: 18px;
+    /* Bottom-align to the list box (the panel is now sized to that column, not the
+       whole stage), so the buttons sit just inside the box's bottom edge. */
     align-self: flex-end;
-    margin-bottom: 84px;
+    margin-bottom: 0;
 }
 
 .save-btn {
@@ -638,6 +688,7 @@
     pointer-events: auto;
     position: relative;
     width: 468px;
+    max-width: 92vw;
     height: 364px;
     border-radius: 50px;
     background-color: rgba(215, 215, 215, 0.2);
@@ -704,8 +755,11 @@
         filter var(--t-base) ease;
 }
 
-.winner-keep   { background-color: #3c9d63; }              /* green — keep it on the wheel */
-.winner-remove { background-color: rgb(var(--maroon-light)); } /* maroon — drop it */
+/* Match the Chopping Block winner screen exactly: destructive red on the LEFT,
+   the calmer "green" (#596d73 — the same hex the Chopping Block winner uses for
+   its secondary button) on the RIGHT. */
+.winner-remove { background-color: rgb(var(--maroon-light)); } /* red — drop it (left) */
+.winner-keep   { background-color: #596d73; }                  /* green — keep it (right) */
 
 .winner-action:hover {
     filter: brightness(1.12);
@@ -824,4 +878,24 @@
         height: 64px;
         font-size: 30px;
     }
+
+    /* Smaller "Back" label on phones, padded to keep an easy tap target. */
+    .back-btn {
+        font-size: 14px;
+        padding: 8px 12px;
+        margin: -8px 0 0 -12px;
+    }
+
+    /* Scale the winner popup down so the whole thing fits a phone screen without
+       scrolling or clipping — smaller box, header, title and action buttons. */
+    .winner-box {
+        width: min(380px, 90vw);
+        height: auto;
+        border-radius: 36px;
+        padding-bottom: 20px;
+    }
+    .winner-header { font-size: 26px; padding: 16px 0; }
+    .winner-title { font-size: 26px; padding: 26px 16px; }
+    .winner-actions { padding: 0 18px; margin-bottom: 0; gap: 12px; }
+    .winner-action { height: 60px; font-size: 17px; }
 }

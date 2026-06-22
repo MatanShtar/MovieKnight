@@ -146,6 +146,16 @@
     animation: panel-fade-in var(--t-base) ease;
 }
 
+/* Wheel hub: fill the container and reserve the fixed action bar's height
+   (error + GENERATE WHEEL) so the bottom-anchored "Movies on the Wheel" count
+   (.cb-random, margin-top:auto) stays just ABOVE the button instead of being
+   pushed down behind it when a tall provider list stretches the column.
+   Mirrors the Chopping Block's .cb-setup reservation. */
+.picker-panel[data-panel="wheel"].active {
+    flex: 1;
+    padding-bottom: 48px;
+}
+
 /* Opacity only — a transform here would become the containing block for the
    fixed Generate/Send button and make it jump on every tab switch. */
 @keyframes panel-fade-in {
@@ -764,6 +774,15 @@
         font-size: 28px;
         height: 78px;
         padding: 16px 24px;
+    }
+
+    /* Shrink the "Back" label on phones, but pad it back out so the tap target
+       stays comfortably large. Negative margins cancel the padding so the text
+       still sits in the top-left corner. */
+    .back-btn {
+        font-size: 14px;
+        padding: 8px 12px;
+        margin: -8px 0 0 -12px;
     }
 }
 

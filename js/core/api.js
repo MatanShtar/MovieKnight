@@ -285,13 +285,15 @@ window.MovieAPI = (function () {
     //     minRating: 7,             // 0-10              -> minRating
     //     sort:      "rating_desc", // server-side sort  -> sort
     //     page:      2,             // -> page
+    //     providers: [8, 9],        // TMDB provider ids -> providers (comma)
+    //     certification: "PG-13",   // TMDB age rating   -> certification
     //   }
     async function searchMovies(params = {}) {
         if (typeof params === "string") params = { q: params };
         const {
             q, genres, yearFrom, yearTo, minRating, sort, page,
             with_cast, with_crew, minVotes, language,
-            providers, keyword,
+            providers, certification,
         } = params;
 
         const qp = {};
@@ -311,10 +313,13 @@ window.MovieAPI = (function () {
             const pids = providers.map(Number).filter(Number.isFinite);
             if (pids.length) qp.providers = pids.join(",");
         }
-        // Theme/keyword search drawn from the backend's stored keywords. Results
-        // only include movies the backend has already detailed, so a theme may
-        // legitimately return few/none early on — callers handle an empty array.
-        if (keyword) qp.keyword = keyword;
+        // Age-rating filter: a single TMDB certification (e.g. "PG-13", "R").
+        // TMDB ignores `certification` unless a country is given too, so always
+        // pair it with the US certification system the values come from.
+        if (certification) {
+            qp.certification = certification;
+            qp.certification_country = "US";
+        }
         // Default-feed quality guards (vote count floor + language); only the
         // empty-query feed sets these, so a real text search stays unrestricted.
         if (minVotes) qp.minVotes = minVotes;
