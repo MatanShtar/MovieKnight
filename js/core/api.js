@@ -92,7 +92,7 @@ window.MovieAPI = (function () {
     // handling. `path` is relative to API_BASE, e.g. "/movies/search".
     // Any non-2xx is treated as a failure; the backend's { error: "..." }
     // body is surfaced (shortened via shortError) as the thrown message.
-    async function request(path, { params, body, headers, ...options } = {}) {
+    async function request(path, { params, body, headers, returnEnvelope, ...options } = {}) {
         const url = new URL(API_BASE + API_PREFIX + path);
         if (params) {
             Object.entries(params).forEach(([k, v]) => {
@@ -145,11 +145,13 @@ window.MovieAPI = (function () {
         // API contract envelope: { ok: true, data } / { ok: false, error }.
         // Unwrap to the inner `data` so the normalisers below see the payload
         // directly. Bare/legacy responses (array or object) pass through as-is.
+        // `returnEnvelope` keeps the whole object instead, for the few endpoints that
+        // attach sibling fields beyond `data` (e.g. AI actions return `aiUsage`).
         if (json && typeof json === "object" && !Array.isArray(json) && "ok" in json) {
             if (!json.ok) {
                 throw new Error(shortError(json.error, res.status));
             }
-            return json.data;
+            return returnEnvelope ? json : json.data;
         }
         return json;
     }
@@ -621,13 +623,24 @@ window.MovieAPI = (function () {
         const body = { collectionId, prompt, count };
         const exclude = toExcludeIds(exclude_ids);
         if (exclude.length) body.exclude_ids = exclude;
-        const data = await request("/ai/picker", { method: "POST", body });
-        return extractList(data, "movies")
-            .map((m) => {
-                const n = normalizeMovie(m);
-                return n ? { ...n, reason: m.reason || "" } : null;
-            })
-            .filter(Boolean);
+        try {
+            // returnEnvelope: read the `aiUsage` the endpoint already sends back (the
+            // action it just spent) and update the badge from it — no separate
+            // /ai/usage round-trip.
+            const env = await request("/ai/picker", { method: "POST", body, returnEnvelope: true });
+            if (env) cacheAiUsage(env.aiUsage);
+            return extractList(env && env.data, "movies")
+                .map((m) => {
+                    const n = normalizeMovie(m);
+                    return n ? { ...n, reason: m.reason || "" } : null;
+                })
+                .filter(Boolean);
+        } catch (err) {
+            // A 429 body carries no usage (it threw before spending), so on the rare
+            // cache desync that lets one through, fetch the authoritative count.
+            if (err && err.status === 429) refreshAiUsage();
+            throw err;
+        }
     }
 
     // POST /api/ai/search — natural-language search. Body { query, exclude_ids? }.
@@ -638,8 +651,86 @@ window.MovieAPI = (function () {
         const body = { query };
         const exclude = toExcludeIds(exclude_ids);
         if (exclude.length) body.exclude_ids = exclude;
-        const data = await request("/ai/search", { method: "POST", body });
-        return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
+        try {
+            // returnEnvelope: read the `aiUsage` the endpoint already sends back and
+            // update the badge from it — no separate /ai/usage round-trip.
+            const env = await request("/ai/search", { method: "POST", body, returnEnvelope: true });
+            if (env) cacheAiUsage(env.aiUsage);
+            return extractList(env && env.data, "movies").map(normalizeMovie).filter(Boolean);
+        } catch (err) {
+            // A 429 body carries no usage (it threw before spending), so on the rare
+            // cache desync that lets one through, fetch the authoritative count.
+            if (err && err.status === 429) refreshAiUsage();
+            throw err;
+        }
+    }
+
+    // ---- AI daily quota ---------------------------------------------------------
+    // The header menu shows "AI Actions: N of LIMIT left". The BACKEND owns the limit
+    // (services/aiQuota.js → DAILY_AI_LIMIT) and is the real guard (it 429s the
+    // over-limit request); the client never hard-codes the number — it reads both the
+    // count and the limit from the `aiUsage` payload the backend delivers (carried on
+    // the cached currentUser via login/signup/me, refreshed from /ai/usage). So
+    // changing the limit server-side updates everything here with no client change.
+
+    // The cached usage object { used, remaining, limit }, or null if we've never seen
+    // one (logged out, or a session cached before this feature shipped).
+    function aiUsage() {
+        const user = getCurrentUser();
+        const u = user && user.aiUsage;
+        return u && typeof u === "object" ? u : null;
+    }
+
+    // Store the latest usage on the cached currentUser and notify the shell so the
+    // header badge updates live (common.js listens for "mk:ai-usage").
+    function cacheAiUsage(usage) {
+        if (!usage || typeof usage !== "object") return usage;
+        const user = getCurrentUser();
+        if (user) {
+            user.aiUsage = usage;
+            setSession(null, user);
+        }
+        try {
+            window.dispatchEvent(new CustomEvent("mk:ai-usage", { detail: usage }));
+        } catch (_) { /* CustomEvent unsupported — badge just won't live-update */ }
+        return usage;
+    }
+
+    // Actions left today from the CACHED user (no network). Unknown → Infinity so we
+    // never wrongly block before the first refresh — the backend 429 is the real stop.
+    function aiActionsRemaining() {
+        const u = aiUsage();
+        return u && Number.isFinite(u.remaining) ? u.remaining : Infinity;
+    }
+
+    // The daily limit as reported by the backend, or null until we've seen a usage
+    // payload. Callers that display it must tolerate null (show no number).
+    function aiActionsLimit() {
+        const u = aiUsage();
+        return u && Number.isFinite(u.limit) ? u.limit : null;
+    }
+
+    // The single, shared "you're out of actions" message for the instant client-side
+    // pre-check. Mirrors the backend's 429 wording; folds in the backend-provided
+    // limit when known so the number is never hard-coded.
+    function aiLimitReachedMessage() {
+        const limit = aiActionsLimit();
+        return limit
+            ? `You've used all ${limit} daily AI actions. They reset at midnight Pacific time.`
+            : "You've used all your daily AI actions. They reset at midnight Pacific time.";
+    }
+
+    // GET /api/ai/usage → { used, remaining, limit }. Refreshes the cache + badge.
+    // Resolves null when logged out. Throws are the caller's to ignore (badge stale).
+    async function getAiUsage() {
+        if (!isLoggedIn()) return null;
+        const data = await request("/ai/usage");
+        return cacheAiUsage(data);
+    }
+
+    // Fire-and-forget badge resync (used after an AI action); never rejects.
+    function refreshAiUsage() {
+        getAiUsage().catch(() => {});
     }
 
     // ---- AI session persistence (GET/PUT /api/ai/session) -----------------------
@@ -735,6 +826,10 @@ window.MovieAPI = (function () {
         API_BASE,
         aiPicker,
         aiSearch,
+        getAiUsage,
+        aiActionsRemaining,
+        aiActionsLimit,
+        aiLimitReachedMessage,
         getAiSession,
         saveAiSession,
         getWheel,

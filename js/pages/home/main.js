@@ -77,6 +77,10 @@ let aiResultsShowing = false;
 
 if (aiModeBtn && searchContainer && searchInput) {
   aiModeBtn.addEventListener("click", () => {
+    // AI features are logged-in only. A guest clicking AI mode gets the same
+    // "must be logged in" toast as the heart/eye actions, and the mode stays off.
+    // (Only gate turning it ON — turning it back off must always work.)
+    if (!aiModeOn() && window.requireAuth && !requireAuth()) return;
     aiModeBtn.classList.toggle("pressed");
     searchContainer.classList.toggle("ai-glow");
     if (aiModeOn()) {
@@ -225,6 +229,15 @@ if (searchInput) {
     e.preventDefault();
     const q = searchInput.value.trim();
     if (!q) return; // a blank box does nothing
+    // Guests can't enter AI mode, but guard anyway; and stop here if the daily
+    // quota is spent — instant feedback from the cached count (the backend, which
+    // also counts a reroll as an action, would 429 regardless). Limit/message come
+    // from the backend, never hard-coded here.
+    if (window.requireAuth && !requireAuth()) return;
+    if (window.MovieAPI && MovieAPI.aiActionsRemaining() <= 0) {
+      if (window.toast) toast.warn(MovieAPI.aiLimitReachedMessage());
+      return;
+    }
     if (q === lastAiQuery) {
       // Re-submitting the SAME query acts as a single "reroll": fresh picks that
       // exclude what's on screen. Allowed once per query (#2); after that it's a

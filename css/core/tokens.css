@@ -15,6 +15,7 @@
   --ink: 26, 26, 46;            /* deep background / scrollbar track (#1a1a2e) */
   --danger: 255, 107, 107;      /* destructive text / error glow */
   --danger-input: 255, 71, 87;  /* invalid-field border + glow (#ff4757) */
+  --warn: 232, 168, 86;         /* amber warning (e.g. AI quota low) */
   --surface-menu: #1c1613;      /* collection popup menu */
   --surface-dropdown: #492828;  /* header profile dropdown */
   --surface-chip: #2d2319;      /* collection menu button, badge title ink */

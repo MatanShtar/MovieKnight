@@ -659,6 +659,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiPrompt = document.getElementById('aiPrompt');
     if (aiSendBtn) {
         aiSendBtn.addEventListener('click', () => {
+            // AI features are logged-in only: a guest gets the same "must be logged
+            // in" toast as the heart/eye actions (requireAuth shows it), and we stop.
+            if (window.requireAuth && !requireAuth()) return;
+
             // The AI picker runs over the collection the user came here with —
             // same source as the wheel. Without one there's nothing to pick from.
             if (!selectedCollection) {
@@ -671,6 +675,14 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!promptText) {
                 if (window.toast) toast.error("You must enter a prompt.");
                 if (aiPrompt) aiPrompt.focus();
+                return;
+            }
+
+            // Daily AI quota spent? Stop before navigating (the backend would 429
+            // anyway) — instant feedback from the cached count. Limit/message come
+            // from the backend, never hard-coded here.
+            if (window.MovieAPI && MovieAPI.aiActionsRemaining() <= 0) {
+                if (window.toast) toast.warn(MovieAPI.aiLimitReachedMessage());
                 return;
             }
 

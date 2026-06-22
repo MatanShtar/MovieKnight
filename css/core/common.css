@@ -549,6 +549,73 @@ textarea, [contenteditable="true"] {
   background-color: rgba(var(--danger), 0.1) !important;
 }
 
+/* Logged-in header injected at the top of the dropdown by common.js: the username
+   (also the only place the handle shows on mobile, where the header text is hidden)
+   plus the daily AI-actions badge. Avatar isn't repeated — it's the trigger button. */
+.dropdown-user {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 20px 10px;
+}
+.dropdown-username {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* AI quota label. Colour escalates as it depletes: soft → amber → faded/muted.
+   The "out" state is intentionally NOT danger-red — Sign Out below owns that, and
+   should stay the most prominent thing in the menu. */
+.dropdown-ai-usage {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-soft);
+}
+.dropdown-ai-usage.is-low {
+  color: rgb(var(--warn));
+}
+.dropdown-ai-usage.is-out {
+  color: var(--text-muted); /* faded — communicates "empty", doesn't shout */
+}
+
+/* The quota stat bar (under the label): a slim fill that shrinks as actions are
+   spent — at-a-glance, no percentages. Width is set inline by common.js; colour is
+   driven by the state class on the track (good → warn → faded-out). */
+.ai-bar {
+  height: 5px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--overlay); /* empty track */
+  overflow: hidden;
+}
+.ai-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: rgb(var(--pink)); /* good */
+  transition:
+    width var(--t-base) ease,
+    background-color var(--t-base) ease;
+}
+.ai-bar.is-low .ai-bar-fill {
+  background: rgb(var(--warn)); /* warning */
+}
+/* Out: the fill is 0-width (nothing left), so the empty track carries the state —
+   a faint, faded wash rather than a bright alarm. */
+.ai-bar.is-out {
+  background: rgba(var(--warn), 0.1);
+}
+/* Thin separator between the injected user header and the menu links below it. */
+.dropdown-divider {
+  height: 1px;
+  margin: 4px 12px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 /* ==========================================
    10. GLOBAL MODALS
    ========================================== */
