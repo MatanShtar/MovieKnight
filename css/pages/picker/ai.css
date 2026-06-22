@@ -312,6 +312,13 @@
     filter: none;
 }
 
+/* Once the one allowed reroll is used the button is hidden via the `hidden`
+   attribute. The base rule sets display:inline-flex, which would otherwise win
+   over the UA `[hidden]{display:none}` — so make it explicit: gone, not greyed. */
+.ai-tryagain[hidden] {
+    display: none;
+}
+
 .ai-tryagain-arrows {
     width: 30px;
     height: 30px;

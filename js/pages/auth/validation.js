@@ -39,6 +39,45 @@ function makeShowError(errorMsg) {
   };
 }
 
+// On touch devices the native <input type="date"> renders as an oversized, often
+// blank control that pops the OS calendar — jarring next to the other fields. There
+// we swap it for a plain text field with a "DD / MM / YYYY" mask so it matches the
+// rest of the form (and the desktop layout). Desktop keeps the native date picker.
+// Either way the value is normalised to ISO "YYYY-MM-DD" on submit (see readDobIso).
+function setupMobileDob(dobInput) {
+  if (!dobInput) return;
+  const isTouch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  if (!isTouch) return;
+
+  dobInput.type = "text";
+  dobInput.setAttribute("inputmode", "numeric");
+  dobInput.setAttribute("autocomplete", "bday");
+  dobInput.placeholder = "DD / MM / YYYY";
+  dobInput.maxLength = 14; // "DD / MM / YYYY"
+
+  // Auto-format the digits into "DD / MM / YYYY" as the user types.
+  dobInput.addEventListener("input", () => {
+    const digits = dobInput.value.replace(/\D/g, "").slice(0, 8);
+    const parts = [];
+    if (digits.length) parts.push(digits.slice(0, 2));
+    if (digits.length > 2) parts.push(digits.slice(2, 4));
+    if (digits.length > 4) parts.push(digits.slice(4, 8));
+    dobInput.value = parts.join(" / ");
+  });
+}
+
+// The ISO "YYYY-MM-DD" the server expects, read from either the native date input
+// (already ISO) or the mobile "DD / MM / YYYY" text mask. Returns "" when it isn't a
+// complete date so the caller can flag it.
+function readDobIso(dobInput) {
+  if (!dobInput) return "";
+  if (dobInput.type === "date") return dobInput.value; // native → already ISO
+  const digits = dobInput.value.replace(/\D/g, "");
+  if (digits.length !== 8) return "";
+  const dd = digits.slice(0, 2), mm = digits.slice(2, 4), yyyy = digits.slice(4, 8);
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   // ==========================================
   // 1. LOGIN
@@ -112,6 +151,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const errorMsg = document.getElementById("signupErrorMsg");
     const submitBtn = signupForm.querySelector(".submit-btn");
 
+    // Touch devices get a masked text field instead of the native calendar.
+    setupMobileDob(dobInput);
+
     const allInputs = [
       nameInput,
       dobInput,
@@ -150,6 +192,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return showError("Password must be at least 6 characters.");
       }
 
+      // Normalise the DOB to ISO. On mobile the masked field can be partially typed
+      // and still pass the empty-field check, so verify it's a full date here.
+      const dobIso = readDobIso(dobInput);
+      if (!dobIso) {
+        dobInput.classList.add("input-error");
+        return showError("Please enter your date of birth as DD / MM / YYYY.");
+      }
+
       if (!window.MovieAPI) {
         return showError("Sign up is unavailable right now. Please try again later.");
       }
@@ -159,7 +209,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await MovieAPI.signup({
           name: nameInput.value.trim(),
-          dateOfBirth: dobInput.value, // <input type="date"> → "YYYY-MM-DD"
+          dateOfBirth: dobIso, // ISO "YYYY-MM-DD" (native date input or mobile mask)
           email: emailInput.value.trim(),
           username: usernameInput.value.trim(),
           password: passwordInput.value,

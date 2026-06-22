@@ -173,6 +173,9 @@ async function generate(isReroll = false) {
     } finally {
         loading = false;
         setTryAgainBusy(false);
+        // Re-show Try Again if this reroll DIDN'T consume it (a failed/empty reroll
+        // leaves rerollUsed false); a successful one keeps it hidden.
+        updateTryAgainVisibility();
     }
 }
 
@@ -378,12 +381,9 @@ function setupTryAgain() {
     if (!btn) return;
     btn.addEventListener('click', () => {
         if (loading || rerollUsed) return; // one reroll per result set
-        // Spin the arrows once on each press (CSS animation; restart it cleanly).
-        btn.classList.remove('is-spinning');
-        void btn.offsetWidth;        // reflow so the animation can replay
-        btn.classList.add('is-spinning');
-        btn.addEventListener('animationend', () => btn.classList.remove('is-spinning'),
-            { once: true });
+        // Vanish on press — don't wait for the new picks to load, and don't just
+        // grey it out. A reroll that FAILS brings it back (generate()'s finally).
+        btn.hidden = true;
         generate(true); // a Try Again is a reroll: excludes the current picks
     });
 }

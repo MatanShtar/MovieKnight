@@ -262,7 +262,8 @@
   font-weight: 300;
 }
 
-/* Date Field */
+/* Date Field (desktop only — on touch devices the field is swapped to a plain
+   text input with a DD / MM / YYYY mask; see setupMobileDob in validation.js). */
 .input-group input[type="date"] {
   color: var(--text-muted);
   font-weight: 300;
