@@ -34,6 +34,12 @@ let currentWinnerIdx = -1; // index in `movies` of the movie shown in the popup
 // Holds the raw trimmed query; the list is matched case-insensitively against it.
 let wheelFilter = "";
 
+// True while the server-backed wheel is still loading — drives the skeleton
+// placeholder (a spinning, label-less coloured wheel + shimmer list rows) and
+// blocks spinning until the real movies are in.
+let wheelLoading = false;
+let skeletonRaf = null;
+
 // Circled-plus glyph for the empty "add a movie" rows.
 const PLUS_SVG = `
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
@@ -52,7 +58,11 @@ document.addEventListener('DOMContentLoaded', () => {
     setupWheelHover();
     setupSaveLoad();
     setupSearch();
-    rerender();
+    // If there's a collection to hydrate from the server, show a loading skeleton
+    // instead of the editable placeholders (which read as real "Movie 1 / Movie 2"
+    // titles); otherwise paint immediately. initWheelData() swaps in the real wheel.
+    if (resolveWheelCollectionId()) showWheelLoading();
+    else rerender();
     initWheelData();
 });
 
@@ -120,11 +130,16 @@ async function initWheelData() {
     wheelCollectionId = resolveWheelCollectionId();
     wireWheelBack(); // point Back's fallback at the hub for THIS collection
 
-    // No collection in context: a standalone wheel. Use the hand-off if present;
-    // otherwise keep placeholders. Nothing to load/save server-side.
+    // A fresh hand-off from the picker is already in hand — show it immediately
+    // (clearing the skeleton) so the user sees their generated wheel at once. The
+    // ownership / saved-wheel load below still runs for Save/Load gating, but
+    // leaves these movies in place.
+    if (handoff) { movies = handoff; currentRotation = 0; rerender(); }
+
+    // No collection in context: a standalone wheel. The hand-off (if any) is shown
+    // above; otherwise the placeholders already painted stay. Nothing server-side.
     if (!wheelCollectionId) {
-        if (handoff) { movies = handoff; rerender(); }
-        else updateButtonStates();
+        updateButtonStates();
         return;
     }
 
@@ -171,6 +186,7 @@ async function initWheelData() {
 // 401 → re-auth; 404 → no-access state; anything else → keep the current wheel and
 // surface a transient toast (the editable placeholders still work in-memory).
 function handleWheelLoadError(err) {
+    stopWheelLoading();   // never leave the skeleton spinning on an error
     if (err && err.status === 401) { window.location.replace('login.html'); return; }
     if (err && err.status === 404) {
         showWheelMessage("Wheel unavailable",
@@ -178,7 +194,7 @@ function handleWheelLoadError(err) {
         return;
     }
     if (window.toast) toast.error("Couldn’t load the saved wheel. You can still spin this one.");
-    updateButtonStates();
+    rerender();   // fall back to the editable placeholders so the page is usable
 }
 
 // Replace the wheel stage with a simple message (no-access / error states).
@@ -194,9 +210,81 @@ function showWheelMessage(title, detail) {
 }
 
 function rerender() {
+    stopWheelLoading();   // real content is about to paint — drop any skeleton
     renderMovieList(movies);
     drawWheel(movies);
     updateButtonStates(); // keep "Save" enabled only when there are unsaved changes
+}
+
+// ==========================================
+// 1d. LOADING SKELETON (while the server wheel hydrates)
+// ==========================================
+// Draw a label-less wheel of equal coloured slices — the "skeleton" the user sees
+// before the real titles arrive. `rotationDeg` lets it turn gently for a loading cue.
+function drawSkeletonWheel(rotationDeg, colors) {
+    const canvas = document.getElementById('rouletteWheel');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const cx = canvas.width / 2, cy = canvas.height / 2, r = canvas.width / 2;
+    const n = colors.length || 8;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let start = -Math.PI / 2 + (rotationDeg * Math.PI / 180);
+    for (let i = 0; i < n; i++) {
+        const end = start + (2 * Math.PI) / n;
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, start, end);
+        ctx.fill();
+        start = end;
+    }
+}
+
+function showWheelLoading() {
+    wheelLoading = true;
+
+    // Shimmer rows in the list box (no real titles to read).
+    const listContainer = document.getElementById('wheelMovieList');
+    if (listContainer) {
+        listContainer.innerHTML = Array.from({ length: 6 })
+            .map(() => `<div class="wheel-skeleton-row" aria-hidden="true"></div>`)
+            .join("");
+    }
+    const countEl = document.getElementById('wheelCount');
+    if (countEl) countEl.textContent = 'Loading your wheel…';
+
+    // Dim + softly pulse the wheel, and gently rotate the coloured skeleton.
+    const container = document.querySelector('.wheel-visual-container');
+    if (container) container.classList.add('is-loading');
+
+    const colors = getWheelSliceColors();
+    if (skeletonRaf) cancelAnimationFrame(skeletonRaf);
+
+    // Honour reduced-motion: draw the coloured skeleton once, no rotation.
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        drawSkeletonWheel(0, colors);
+        updateButtonStates();
+        return;
+    }
+
+    let deg = 0;
+    const tick = () => {
+        const canvas = document.getElementById('rouletteWheel');
+        if (!canvas || !wheelLoading) { skeletonRaf = null; return; }
+        deg = (deg + 0.35) % 360;            // slow, calming turn
+        drawSkeletonWheel(deg, colors);
+        skeletonRaf = requestAnimationFrame(tick);
+    };
+    skeletonRaf = requestAnimationFrame(tick);
+    updateButtonStates();
+}
+
+function stopWheelLoading() {
+    if (!wheelLoading && !skeletonRaf) return;
+    wheelLoading = false;
+    if (skeletonRaf) { cancelAnimationFrame(skeletonRaf); skeletonRaf = null; }
+    const container = document.querySelector('.wheel-visual-container');
+    if (container) container.classList.remove('is-loading');
 }
 
 // Back returns to the hub (picker). smartBack uses history.back() when there's
@@ -523,6 +611,43 @@ function getWheelSliceColors() {
         .filter(Boolean);
 }
 
+// Each movie keeps a STABLE colour for the life of the wheel (keyed by title —
+// titles are unique on a wheel), so removing one slice never re-colours the
+// others (no colour "jump"). Returns one palette index per title.
+let colorByTitle = new Map();
+function assignSliceColors(titles, paletteLen) {
+    const n = titles.length;
+    if (paletteLen < 1) return titles.map(() => 0);
+    // Start from each slice's remembered colour (or -1 = "needs one").
+    const colors = titles.map(t => (colorByTitle.has(t) ? colorByTitle.get(t) : -1));
+    // Lowest palette index (starting the search at i, for variety) that avoids
+    // both neighbours' current colours.
+    const pick = (avoidA, avoidB, i) => {
+        for (let k = 0; k < paletteLen; k++) {
+            const c = (i + k) % paletteLen;
+            if (c !== avoidA && c !== avoidB) return c;
+        }
+        return i % paletteLen;
+    };
+    // Settle the cycle: assign unknowns and repair any slice that matches a
+    // neighbour (including the wrap-around seam between the last and first slice).
+    // A few passes converge with an 8-colour palette.
+    for (let pass = 0; pass < 4; pass++) {
+        let changed = false;
+        for (let i = 0; i < n; i++) {
+            const prev = n > 1 ? colors[(i - 1 + n) % n] : -1;
+            const next = n > 2 ? colors[(i + 1) % n] : -1; // n===2: the other slice is already `prev`
+            if (colors[i] === -1 || colors[i] === prev || colors[i] === next) {
+                const c = pick(prev, next, i);
+                if (c !== colors[i]) { colors[i] = c; changed = true; }
+            }
+        }
+        if (!changed) break;
+    }
+    titles.forEach((t, i) => colorByTitle.set(t, colors[i]));
+    return colors;
+}
+
 // Draw the wheel. `weights` (one per slice, default all 1) lets a single slice
 // grow in / shrink out for the add/remove animation, while the rest share the
 // remaining arc — so a new title appears to emerge from between its neighbours.
@@ -544,6 +669,8 @@ function drawWheel(titles, weights, opts) {
     const centerY = canvas.height / 2;
     const radius = canvas.width / 2;
     const sliceColors = getWheelSliceColors();
+    // Stable, no-adjacent-duplicate colour index per slice (keyed by title).
+    const colorIdx = assignSliceColors(titles, sliceColors.length);
 
     // 10 or fewer titles read horizontally; more than 10 all switch to vertical
     // so every label is consistent and legible in the narrower wedges.
@@ -555,15 +682,20 @@ function drawWheel(titles, weights, opts) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Slice 0 is centred at the top at rest; everything turns by rotationRad.
-    let startAngle = -Math.PI / 2 - (w[0] / total) * Math.PI + rotationRad;
+    // Slice 0's LEADING edge is anchored at the top, then everything turns by
+    // rotationRad. This anchor is independent of the slice count, so adding /
+    // removing a movie can't make the wheel snap to re-centre a slice under the
+    // pointer — the absolute rotation is preserved and the arrow simply lands
+    // wherever it lands (off-centre or on a seam is fine).
+    let startAngle = -Math.PI / 2 + rotationRad;
 
     titles.forEach((title, i) => {
         const sliceAngle = (w[i] / total) * 2 * Math.PI;
         const endAngle = startAngle + sliceAngle;
 
-        // The 8 colors repeat if there are ever more than 8 slices.
-        ctx.fillStyle = sliceColors[i % sliceColors.length];
+        // Stable per-movie colour (no jump on remove) with no two adjacent slices
+        // — including the wrap-around seam — sharing a colour.
+        ctx.fillStyle = sliceColors[colorIdx[i]];
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, startAngle, endAngle);
@@ -701,7 +833,7 @@ function setupWheelHover() {
     document.body.appendChild(tip);
 
     canvas.addEventListener('mousemove', (e) => {
-        if (isSpinning || movies.length === 0) { tip.classList.remove('show'); return; }
+        if (wheelLoading || isSpinning || movies.length === 0) { tip.classList.remove('show'); return; }
 
         const rect = canvas.getBoundingClientRect();
         const cx = rect.left + rect.width / 2;
@@ -714,7 +846,8 @@ function setupWheelHover() {
 
         const n = movies.length;
         const sliceAngle = (2 * Math.PI) / n;
-        const startOffset = -Math.PI / 2 - sliceAngle / 2;
+        // Slice 0's leading edge sits at the top (matches drawWheel's anchor).
+        const startOffset = -Math.PI / 2;
         const rot = currentRotation * Math.PI / 180;
         let a = Math.atan2(dy, dx) - rot - startOffset;
         a = ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
@@ -741,7 +874,7 @@ function setupSpinPhysics() {
     if (!spinBtn || !canvas) return;
 
     spinBtn.addEventListener('click', () => {
-        if (isSpinning || movies.length === 0) return;
+        if (wheelLoading || isSpinning || movies.length === 0) return;
 
         isSpinning = true;
         spinBtn.classList.add('spinning');
@@ -774,11 +907,13 @@ function setupSpinPhysics() {
 }
 
 // Which slice sits under the top pointer after the current rotation?
+// Slice 0's leading edge is anchored at the top (see drawWheel), so the pointer
+// falls *inside* a slice — floor() of the angle picks whichever wedge contains it.
 function getWinningIndex() {
     const n = movies.length;
     const sliceDeg = 360 / n;
     const rot = ((currentRotation % 360) + 360) % 360;
-    return Math.round(((360 - rot) % 360) / sliceDeg) % n;
+    return Math.floor(((360 - rot) % 360) / sliceDeg) % n;
 }
 
 function setupWinnerControls() {

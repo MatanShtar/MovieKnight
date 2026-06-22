@@ -6,9 +6,9 @@
 // are declared there) and BEFORE home/ui.js / home/main.js.
 
 // Gather the live UI state into one query object for GET /api/movies/search.
-// Genres are stored as names in the UI, so resolve them to ids here. Anything
-// left at its default is omitted. (Providers aren't part of the search contract
-// yet, so the "Where To Watch" filter isn't sent.)
+// Genres are stored as names in the UI, so resolve them to ids here. Age ratings
+// map to the backend's `certification` param and platforms to `providers` (TMDB
+// provider ids). Anything left at its default ("Any" / empty) is omitted.
 function collectQuery() {
   const query = {};
 
@@ -40,6 +40,19 @@ function collectQuery() {
 
   const director = directorFilter ? directorFilter.getSelected()[0] : null;
   if (director) query.with_crew = director.id;
+
+  // Age rating -> certification. The button's text is the chosen TMDB cert;
+  // "Any" (or empty) means no certification filter.
+  const ageBtn = document.getElementById("ageRatingBtn");
+  const cert = ageBtn ? ageBtn.textContent.trim() : "";
+  if (cert && cert !== "Any") query.certification = cert;
+
+  // Platforms -> providers. Resolve the selected provider names to TMDB ids;
+  // searchMovies() joins them into a comma list (OR semantics).
+  const providerIds = activePlatforms
+    .map((name) => platformNameToId[name])
+    .filter((id) => id != null);
+  if (providerIds.length) query.providers = providerIds;
 
   query.sort = currentSortValue(); // always send a sort (default: popularity)
 
@@ -262,18 +275,8 @@ async function loadPopularPeople() {
 
 // TMDB's "popular people" list is almost all actors, so the Director row uses a
 // curated preset instead of the popular endpoint (typing still live-searches).
-const DIRECTOR_DEFAULTS = [
-  { id: 488, name: "Steven Spielberg", department: "Directing" },
-  { id: 525, name: "Christopher Nolan", department: "Directing" },
-  { id: 1032, name: "Martin Scorsese", department: "Directing" },
-  { id: 138, name: "Quentin Tarantino", department: "Directing" },
-  { id: 111303, name: "Greta Gerwig", department: "Directing" },
-  { id: 110816, name: "Denis Villeneuve", department: "Directing" },
-  { id: 2710, name: "James Cameron", department: "Directing" },
-  { id: 7467, name: "David Fincher", department: "Directing" },
-  { id: 240, name: "Stanley Kubrick", department: "Directing" },
-  { id: 21684, name: "Bong Joon-ho", department: "Directing" },
-];
+// The preset now lives in data/filterMenuData.json and is loaded into
+// `directorDefaults` by home/ui.js.
 
 // Build one person filter. `multiple` = actors (many) vs director (one).
 function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple, loadDefaults }) {
@@ -461,8 +464,9 @@ directorFilter = setupPersonFilter({
   addBtnId: "addDirectorBtn",
   clearBtnId: "clearDirectorBtn",
   multiple: false,
-  // Curated directors (no popular fetch); typing still live-searches.
-  loadDefaults: async () => DIRECTOR_DEFAULTS,
+  // Curated directors from filterMenuData.json (no popular fetch); typing still
+  // live-searches. Resolved lazily so it picks up the loaded preset.
+  loadDefaults: async () => directorDefaults,
 });
 
 // ==========================================
@@ -538,17 +542,29 @@ function renderPlatforms() {
 }
 
 function renderPlatformDropdown() {
-  // Rebuild from scratch and add a live filter box (like the person search),
-  // so a long provider list can be narrowed down by typing.
+  // Rebuild from scratch. The dropdown shows the POPULAR providers by default and
+  // reveals the rest of the catalogue only when the user searches — "popular by
+  // default, search for the rest".
   platformDropdown.innerHTML = "";
-  injectSearchBar(platformDropdown);
 
+  const searchInput = document.createElement("input");
+  searchInput.type = "text";
+  searchInput.className = "dropdown-search";
+  searchInput.placeholder = "Search providers...";
+  searchInput.onclick = (e) => e.stopPropagation();
+  searchInput.onkeydown = (e) => e.stopPropagation();
+  platformDropdown.appendChild(searchInput);
+
+  const popularSet = new Set(popularPlatforms);
+  const optionEls = [];
   allPlatforms
     .filter((p) => !activePlatforms.includes(p))
     .forEach((platform) => {
       const opt = document.createElement("div");
       opt.className = "pill-option";
       opt.textContent = platform;
+      // Non-popular providers stay hidden until a search matches them.
+      if (!popularSet.has(platform)) opt.style.display = "none";
       opt.onclick = (e) => {
         e.stopPropagation();
         activePlatforms.unshift(platform);
@@ -557,7 +573,20 @@ function renderPlatformDropdown() {
         platformDropdown.classList.remove("show");
       };
       platformDropdown.appendChild(opt);
+      optionEls.push(opt);
     });
+
+  searchInput.oninput = () => {
+    // Typing while scrolled down glides the dropdown back to the top.
+    platformDropdown.scrollTo({ top: 0, behavior: "smooth" });
+    const term = searchInput.value.trim().toLowerCase();
+    optionEls.forEach((opt) => {
+      const show = term
+        ? opt.textContent.toLowerCase().includes(term)
+        : popularSet.has(opt.textContent); // empty box -> popular only
+      opt.style.display = show ? "block" : "none";
+    });
+  };
 }
 
 if (addPlatformBtn) {
