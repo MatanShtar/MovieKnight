@@ -307,6 +307,9 @@
     font-size: 24px;
     color: var(--text-soft);
     cursor: default;            /* read-only — no I-beam/pointer */
+    /* Inner shadow so the count pill reads as a recessed, "caved in" well —
+       used by both the Wheel and Chopping Block hub counters. */
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.65);
     transition: transform var(--t-base) var(--ease-pop);
 }
 
@@ -644,6 +647,7 @@
 .cb-card.in-window .cb-card-title { color: var(--text); }
 
 .cb-poster {
+    position: relative;
     width: 236px;
     height: 342px;
     border: 1px solid #000000;
@@ -654,6 +658,39 @@
 }
 
 .cb-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* "i" info badge on each poster — mirrors the add-to-collection modal's .am-info
+   (round dark chip, italic serif "i", fades in on hover/focus, pink on hover). */
+.cb-info {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font-style: italic;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0;
+    z-index: 2;
+    transition: opacity var(--t-base) ease, background var(--t-base) ease;
+}
+.cb-card:hover .cb-info,
+.cb-card:focus-within .cb-info,
+.cb-info:focus-visible { opacity: 1; }
+.cb-info:hover { background: rgba(var(--pink), 0.9); }
+/* Touch devices can't hover, so keep the badge visible there (like .am-info). */
+@media (hover: none) {
+    .cb-info { opacity: 0.92; }
+}
 .cb-card.in-window:hover .cb-poster { transform: translateY(-4px); }
 
 .cb-eliminate {
@@ -937,17 +974,26 @@
        START bar instead of floating statically over it / other elements. */
     .cb-random { position: relative; z-index: 0; }
 
+    /* The "+N more …" overflow dropdown is a fixed 240px wide and centred on the
+       chip; on a narrow phone that spills past the screen edge. Cap it to the
+       viewport so it always fits safely inside the mobile layout. */
+    .cb-overflow-box {
+        width: min(240px, 80vw);
+        max-width: 80vw;
+    }
+
     .cb-config {
         height: auto;
         flex-direction: column;
         align-items: center;
-        gap: 40px;
+        gap: 56px;             /* more breathing room between the stacked rows */
         margin-top: 24px;
         margin-bottom: 24px;   /* count + .cb-setup padding now clear the fixed bar */
     }
 
     .cb-col-left, .cb-col-right { align-items: center; }
-    .cb-col-right { gap: 40px; }
+    .cb-col-left { gap: 28px; }
+    .cb-col-right { gap: 56px; }
 
     .cb-add-row { flex-wrap: wrap; justify-content: center; }
     .cb-input-pill { width: min(410px, 78vw); }
@@ -975,6 +1021,15 @@
         padding: 0 18px;
     }
 
+    /* The "+N more …" chip text overflowed its pill on phones — shrink it (and the
+       caret) so the whole label fits comfortably inside the smaller tag. */
+    .cb-tag-more {
+        font-size: 13px;
+        min-width: 0;
+        padding: 0 24px 0 12px;
+    }
+    .cb-more-caret { right: 8px; width: 10px; height: 10px; }
+
     .cb-tag-name { font-size: 16px; }
 
     .cb-stat-row { gap: 20px; }
@@ -994,7 +1049,7 @@
     .cb-label { font-size: 20px; }
 
     /* stack each stat row so the 328px slider + label never overflow */
-    .cb-stat-row { flex-direction: column; gap: 12px; min-height: 0; }
+    .cb-stat-row { flex-direction: column; gap: 18px; min-height: 0; }
     .cb-stat-row .cb-label { text-align: center; }
     .cb-slider { width: min(328px, 80vw); }
 
@@ -1010,9 +1065,20 @@
     .cb-poster { width: 186px; height: 268px; }
     .cb-eliminate { width: 190px; height: 48px; font-size: 20px; }
 
-    .winner-box { height: auto; padding-bottom: 8px; }
-    .winner-header { font-size: 30px; }
-    .winner-title { font-size: 30px; padding: 28px 18px; }
+    /* Scale the winner popup down so it fits a phone screen comfortably without
+       scrolling/clipping — smaller box, header, title and action buttons. */
+    .winner-box { width: min(380px, 90vw); height: auto; border-radius: 36px; padding-bottom: 18px; }
+    .winner-header { font-size: 26px; padding: 16px 0; }
+    .winner-title { font-size: 26px; padding: 26px 16px; }
+    .winner-actions { gap: 12px; padding: 0 18px 4px; }
+    .winner-remove { height: 60px; font-size: 18px; min-width: 130px; }
+
+    /* Smaller "Back" label on phones, padded to keep an easy tap target. */
+    .cb-page-header .back-btn {
+        font-size: 14px;
+        padding: 8px 12px;
+        margin: -8px 0 0 -12px;
+    }
 }
 
 /* ---- Touch carousel (≤1024px): a native CSS scroll-snap strip ---------------

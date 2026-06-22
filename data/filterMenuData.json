@@ -1,0 +1,25 @@
+{
+  "directors": [
+    { "id": 488, "name": "Steven Spielberg", "department": "Directing" },
+    { "id": 525, "name": "Christopher Nolan", "department": "Directing" },
+    { "id": 1032, "name": "Martin Scorsese", "department": "Directing" },
+    { "id": 138, "name": "Quentin Tarantino", "department": "Directing" },
+    { "id": 111303, "name": "Greta Gerwig", "department": "Directing" },
+    { "id": 110816, "name": "Denis Villeneuve", "department": "Directing" },
+    { "id": 2710, "name": "James Cameron", "department": "Directing" },
+    { "id": 7467, "name": "David Fincher", "department": "Directing" },
+    { "id": 240, "name": "Stanley Kubrick", "department": "Directing" },
+    { "id": 21684, "name": "Bong Joon-ho", "department": "Directing" }
+  ],
+  "certifications": ["Any", "G", "PG", "PG-13", "R", "NC-17", "NR"],
+  "providers": [
+    { "id": 8, "name": "Netflix" },
+    { "id": 9, "name": "Amazon Prime Video" },
+    { "id": 337, "name": "Disney Plus" },
+    { "id": 1899, "name": "Max" },
+    { "id": 15, "name": "Hulu" },
+    { "id": 350, "name": "Apple TV Plus" },
+    { "id": 531, "name": "Paramount Plus" },
+    { "id": 386, "name": "Peacock" }
+  ]
+}

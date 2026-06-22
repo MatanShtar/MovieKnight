@@ -43,11 +43,11 @@
   line-height: 1.5;
   color: var(--text);
   text-align: left;
-  /* Fill the content column; side gutters come from .about-main padding, so the
-     text never runs edge-to-edge nor overflows the sidebar at narrow widths. */
+  /* Narrower column (was 1300px): the mission text wraps into more, shorter rows
+     for a tighter, more centered "block" of copy. Centred with auto side margins. */
   width: 100%;
-  max-width: 1300px;
-  margin: clamp(8px, 1.2vh, 14px) 0 0;
+  max-width: 760px;
+  margin: clamp(8px, 1.2vh, 14px) auto 0;
 }
 
 /* Tagline — reuse the site font (the Figma uses Geologica); a hairline stroke
@@ -73,8 +73,9 @@
   flex-wrap: nowrap; /* stay on one row — cards shrink instead of wrapping */
   align-items: stretch;
   gap: clamp(24px, 5vw, 110px);
-  /* Top room for the avatars overflowing each card's top edge. */
-  margin-top: clamp(85px, 7vh, 100px);
+  /* Pushed further down the page so the cards sit well below the (now narrower)
+     mission copy. Still leaves room for the avatars overflowing each card's top. */
+  margin-top: clamp(120px, 16vh, 220px);
 }
 
 .dev-card {

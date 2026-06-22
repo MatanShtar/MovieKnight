@@ -58,7 +58,11 @@ function initSetup() {
     const maxTagSlots = () => (cbIsMobile() ? 4 : 8);
 
     // --- state ---
-    const players = ["Matan", "Niv"]; // two seeded players, like the Figma
+    // A fresh session starts with exactly one player: the signed-in user,
+    // pre-filled with their full name (falls back to their username, then a
+    // generic label for guests). `currentUser` is the cached user from common.js.
+    const cu = (typeof currentUser !== "undefined" && currentUser) || null;
+    const players = [(cu && (cu.name || cu.username)) || "Player 1"];
     let eliminations = 2;             // 1 | 2 | 3
     let selectedCollection = null;    // the real collection chosen to play from
     let overflowOpen = false;         // is the "+N" overflow dropdown open?
@@ -149,7 +153,7 @@ function initSetup() {
                 <span class="cb-tag cb-tag-more" id="cbMoreChip" tabindex="0" role="button"
                       aria-haspopup="true" aria-expanded="${overflowOpen ? "true" : "false"}"
                       aria-label="${hidden.length} more players">
-                    +${hidden.length} &hellip;
+                    +${hidden.length} more &hellip;
                     <svg class="cb-more-caret" viewBox="0 0 24 24" aria-hidden="true">
                         <polyline points="6 9 12 15 18 9" fill="none" stroke="currentColor"
                                   stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -327,6 +331,14 @@ function initSetup() {
             collectionName: selectedCollection.name,
         }));
 
+        // Rewrite THIS picker entry to the Chopping tab before navigating to the
+        // game, so a later Back (history.back) from the game returns here to the
+        // Chopping Block tab — not the default Wheel tab. Mirrors the AI flow.
+        try {
+            history.replaceState(history.state, "",
+                `picker.html?panel=chopping&collection=${encodeURIComponent(selectedCollection.id)}`);
+        } catch (_) { /* non-critical */ }
+
         // Same tab-collapse hand-off the "Generate Wheel" button uses.
         const tabs = document.getElementById("pickerTabs");
         if (tabs) tabs.classList.add("collapsing");
@@ -464,9 +476,19 @@ function runGame(config, collectionMovies) {
             <div class="cb-poster">
                 <img src="${escapeHtml(m.posterPath)}" alt="${escapeHtml(m.title)}"
                      onerror="this.onerror=null;this.src='${POSTER_FALLBACK}'">
+                <button class="cb-info" type="button"
+                        aria-label="View details for ${escapeHtml(m.title)}" title="View details">i</button>
             </div>
             <button class="cb-eliminate" type="button">ELIMINATE</button>`;
         track.appendChild(el);
+        // The "i" badge opens the movie's details in a new tab (so the game stays
+        // open behind it) — same style/behaviour as the add-to-collection modal.
+        const info = el.querySelector(".cb-info");
+        if (info) info.addEventListener("click", (e) => {
+            e.stopPropagation();
+            try { sessionStorage.setItem("mk:lastMovie", JSON.stringify(m)); } catch (_) {}
+            window.open("movie.html?id=" + encodeURIComponent(m.id), "_blank", "noopener");
+        });
         return { ...m, eliminated: false, el };
     });
 

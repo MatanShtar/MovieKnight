@@ -370,7 +370,9 @@ function openDetails(movie, { backToPicker = false } = {}) {
     // from=ai so the movie page renders Back in the aligned feature style either way.
     let url = `movie.html?id=${encodeURIComponent(movie.id)}`;
     url += backToPicker ? `&back=${encodeURIComponent(pickerAiUrl())}` : '&from=ai';
-    window.location.href = url;
+    // Opened from the AI suggestions flow (not Home) → open details in a new tab
+    // so the suggestions stay put behind it.
+    window.open(url, "_blank", "noopener");
 }
 
 // ==========================================
