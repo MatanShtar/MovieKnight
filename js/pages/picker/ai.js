@@ -78,12 +78,13 @@ function wireBackLink() {
 // ==========================================
 const RESULTS_KEY = 'mk:aiResults';
 
-// Initial load: reuse THIS generation's cached picks if we have them — so coming
-// back from a movie's "Info" shows the very same set, not a freshly generated one.
-// A new SEND from the picker carries a new token, so it always generates instead.
-// The fast local cache (sessionStorage) wins for instant restore; if there's no
-// match we fall back to the server-persisted session before generating fresh.
-async function loadInitial() {
+// Initial load: reuse the cached picks for THIS run if we have them — so a reload,
+// or coming back from a movie's "Info", shows the very same set instead of firing a
+// fresh (quota-spending) generation. The cache is keyed by the SEND token, so a new
+// SEND from the picker (new token) never matches and always generates instead.
+// localStorage holds the cache, so it survives a reload AND closing the tab; only a
+// "Try Again" reroll spends another AI action.
+function loadInitial() {
     const cached = readCachedResults();
     if (cached && aiConfig.token && cached.token === aiConfig.token &&
         Array.isArray(cached.movies) && cached.movies.length) {
@@ -94,22 +95,7 @@ async function loadInitial() {
         return;
     }
 
-    // No local cache: show skeletons while we ask the server for a saved session
-    // (a reload / another device). loadState() never throws — on any error it
-    // resolves null so we cleanly fall through to generating a fresh set.
-    renderSkeletons(aiConfig.count);
-    const session = await loadState();
-    if (session && session.token === aiConfig.token &&
-        Array.isArray(session.movies) && session.movies.length) {
-        movies = dedupeById(session.movies);
-        rerollUsed = !!session.rerollUsed;
-        cacheResults(movies);
-        renderCards(movies);
-        updateTryAgainVisibility();
-        return;
-    }
-
-    generate();
+    generate(); // no cached set for this run → generate once (no reload re-fires it)
 }
 
 // Fetch a fresh set from the AI (first generation, and every "Try Again").
@@ -155,8 +141,7 @@ async function generate(isReroll = false) {
             // even though the backend also dedupes — the guard for the soft reroll.
             movies = dedupeById(results);
             if (isReroll) rerollUsed = true; // consume the one allowed reroll
-            cacheResults(movies);
-            saveState(); // persist the new set server-side (best-effort)
+            cacheResults(movies); // persist to localStorage so a reload restores it
             renderCards(movies);
             updateTryAgainVisibility();
         }
@@ -191,68 +176,23 @@ function dedupeById(list) {
     });
 }
 
-// Per-generation result cache (sessionStorage), keyed by the SEND token so a back
+// Per-run result cache (localStorage), keyed by the SEND token so a reload or back
 // navigation restores the same picks while a new SEND / Try Again replaces them.
+// localStorage (not sessionStorage) so the picks survive a reload and a tab close —
+// this is what replaced the old server-persisted session.
 function readCachedResults() {
-    try { return JSON.parse(sessionStorage.getItem(RESULTS_KEY)); }
+    try { return JSON.parse(localStorage.getItem(RESULTS_KEY)); }
     catch { return null; }
 }
 function cacheResults(list) {
     try {
-        sessionStorage.setItem(RESULTS_KEY, JSON.stringify({
+        localStorage.setItem(RESULTS_KEY, JSON.stringify({
             token: aiConfig.token, movies: list, rerollUsed,
         }));
-    } catch (_) { /* private mode / quota — just skip caching */ }
+    } catch (_) { /* storage full / disabled — just skip caching */ }
 }
 function clearCachedResults() {
-    try { sessionStorage.removeItem(RESULTS_KEY); } catch (_) {}
-}
-
-// ==========================================
-// 2b. SERVER-SIDE SESSION  (GET/PUT /api/ai/session)
-// ==========================================
-// The AI session is persisted server-side so the same picks restore on a reload or
-// another device. The stored value is a plain object whose shape we own; we tag it
-// with the SEND token so a stale session for an OLD run is ignored (we generate a
-// fresh set instead). Both calls are best-effort: a failure never blocks the UI.
-
-// Build the plain-object snapshot to persist. Kept tiny (a handful of movie cards),
-// well under the server's ~100 KB cap, and an object (the server rejects arrays).
-function buildSessionState() {
-    return {
-        token: aiConfig.token,
-        collectionId: aiConfig.collectionId,
-        prompt: aiConfig.prompt,
-        count: aiConfig.count,
-        rerollUsed,
-        movies,
-    };
-}
-
-// PUT the current state. Best-effort: log a failure but never surface it — losing
-// cross-device restore is not worth a toast, and the local cache still works.
-async function saveState() {
-    if (!MovieAPI.saveAiSession) return;
-    try {
-        await MovieAPI.saveAiSession(buildSessionState());
-    } catch (err) {
-        console.error("Failed to save AI session:", err);
-    }
-}
-
-// GET the saved state. Resolves the session object, or null when there's nothing
-// saved OR on ANY error (non-2xx / parse failure) — the caller then renders the
-// default UI / generates fresh rather than leaving the page half-initialised.
-async function loadState() {
-    if (!MovieAPI.getAiSession) return null;
-    try {
-        const session = await MovieAPI.getAiSession();
-        if (!session || typeof session !== "object" || Array.isArray(session)) return null;
-        return session;
-    } catch (err) {
-        console.error("Failed to load AI session:", err);
-        return null;
-    }
+    try { localStorage.removeItem(RESULTS_KEY); } catch (_) {}
 }
 
 // A SHORT, friendly message for a failed pick — never the raw upstream error

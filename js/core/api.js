@@ -63,6 +63,10 @@ window.MovieAPI = (function () {
     function clearSession() {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
+        // Also drop the cached AI Picker results — they live in localStorage now
+        // (so they survive a reload), so logout must clear them rather than letting
+        // one user's picks linger for the next person on this browser.
+        localStorage.removeItem("mk:aiResults");
     }
     function isLoggedIn() {
         return !!getToken();
@@ -747,38 +751,8 @@ window.MovieAPI = (function () {
         getAiUsage().catch(() => {});
     }
 
-    // ---- AI session persistence (GET/PUT /api/ai/session) -----------------------
-    // The AI suggestions page persists its current state server-side so it survives
-    // a reload / another device. Auth is required (request() attaches the Bearer
-    // token). The stored value is an opaque plain object owned by the client.
-
-    // GET /api/ai/session → data is { session: <object|null> }. Resolves the saved
-    // object, or null when nothing has been saved yet (a normal empty state).
-    async function getAiSession() {
-        const data = await request("/ai/session");
-        if (!data || typeof data !== "object") return null;
-        return "session" in data ? data.session ?? null : null;
-    }
-
-    // PUT /api/ai/session with body { session: <plain object|null> }. The server
-    // rejects arrays / strings / numbers / a missing key with 400, so guard here
-    // and fail fast with a clear message rather than a confusing server error.
-    // Pass null to clear the saved session.
-    async function saveAiSession(session) {
-        const isPlainObject =
-            session !== null &&
-            typeof session === "object" &&
-            !Array.isArray(session);
-        if (session !== null && !isPlainObject) {
-            throw new Error("AI session must be a plain object or null.");
-        }
-        const data = await request("/ai/session", {
-            method: "PUT",
-            body: { session },
-        });
-        if (!data || typeof data !== "object") return null;
-        return "session" in data ? data.session ?? null : null;
-    }
+    // (AI Picker session persistence was removed — the picker results page now caches
+    // its picks in localStorage instead of a server-side session.)
 
     // ==========================================
     // 8. SPIN-THE-WHEEL PERSISTENCE (per collection, server-backed)
@@ -845,8 +819,6 @@ window.MovieAPI = (function () {
         aiActionsLimit,
         aiLimitReachedMessage,
         AI_LIMIT_CODE,
-        getAiSession,
-        saveAiSession,
         getWheel,
         saveWheel,
         getWheelFilters,
