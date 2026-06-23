@@ -216,6 +216,9 @@ function aiSearchErrorMessage(err) {
 if (searchInput) {
   let searchDebounce;
   searchInput.addEventListener("input", () => {
+    // Keep the Filters/Sort controls in sync with whether a text search is active
+    // (they don't apply during a text search). Runs regardless of AI mode.
+    updateSearchModeUI();
     // In AI mode typing is NOT live — the user submits with Enter (handled below),
     // so don't fire the debounced catalog search.
     if (aiModeOn()) return;

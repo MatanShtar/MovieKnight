@@ -10,20 +10,20 @@
 // map to the backend's `certification` param and platforms to `providers` (TMDB
 // provider ids). Anything left at its default ("Any" / empty) is omitted.
 function collectQuery() {
-  const query = {};
-
   const searchEl = document.getElementById("movieSearch");
   const term = searchEl ? searchEl.value.trim() : "";
   if (term) {
-    // A real text search hits the whole TMDB catalog — no quality guards, so
-    // obscure / foreign titles the user is looking for aren't filtered out.
-    query.q = term;
-  } else {
-    // Default feed (empty box): keep it to well-known English movies by
-    // requiring a healthy vote count and an English language.
-    query.minVotes = 500;
-    query.language = "en";
+    // A real text search is PURE relevance: the backend ignores sort and EVERY
+    // filter for a text query (so the original ranks above its sequels and typos
+    // are tolerated). Send ONLY the query — adding filters/sort would have no
+    // effect, and the controls are dimmed to match (see updateSearchModeUI).
+    return { q: term };
   }
+
+  // Default / Browse feed (empty box): keep it to well-known English movies by
+  // requiring a healthy vote count and an English language, then layer on the
+  // chosen sort + every active filter.
+  const query = { minVotes: 500, language: "en" };
 
   const genreIds = activeGenres.map((n) => genreNameToId[n]).filter(Boolean);
   if (genreIds.length) query.genres = genreIds;
@@ -387,19 +387,26 @@ function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple,
     searchInput.onclick = (e) => e.stopPropagation();
     searchInput.onkeydown = (e) => e.stopPropagation();
     searchInput.oninput = () => {
-      // Typing while scrolled down the people list glides it back to the top.
-      dropdownEl.scrollTo({ top: 0, behavior: "smooth" });
       const q = searchInput.value.trim();
       clearTimeout(searchDebounce);
       if (q.length < 2) {
         renderOptions(defaults); // back to this row's default list
+        // Scroll the list back to the top AFTER re-rendering, so the reflow can't
+        // interrupt the scroll (a scroll fired before the render would be cancelled).
+        dropdownEl.scrollTo({ top: 0, behavior: "smooth" });
         return;
       }
+      // Glide back to the top as soon as the user starts typing (before the
+      // debounced results land), then again once they render.
+      dropdownEl.scrollTo({ top: 0, behavior: "smooth" });
       searchDebounce = setTimeout(async () => {
         const seq = ++searchSeq;
         try {
           const people = await MovieAPI.searchPeople(q);
-          if (seq === searchSeq) renderOptions(people); // ignore stale
+          if (seq === searchSeq) {
+            renderOptions(people); // ignore stale
+            dropdownEl.scrollTo({ top: 0, behavior: "smooth" });
+          }
         } catch (err) {
           console.error("Person search failed:", err);
           if (seq === searchSeq && window.toast) toast.error(err.message);
@@ -407,6 +414,7 @@ function setupPersonFilter({ listId, dropdownId, addBtnId, clearBtnId, multiple,
       }, 300);
     };
     dropdownEl.appendChild(searchInput);
+    attachClearButton(searchInput); // inline "X" — clears + re-runs the search
     optionsWrap = document.createElement("div");
     optionsWrap.className = "people-options";
     dropdownEl.appendChild(optionsWrap);
@@ -554,6 +562,7 @@ function renderPlatformDropdown() {
   searchInput.onclick = (e) => e.stopPropagation();
   searchInput.onkeydown = (e) => e.stopPropagation();
   platformDropdown.appendChild(searchInput);
+  attachClearButton(searchInput); // inline "X" — clears + re-runs the search
 
   const popularSet = new Set(popularPlatforms);
   const optionEls = [];
@@ -577,8 +586,6 @@ function renderPlatformDropdown() {
     });
 
   searchInput.oninput = () => {
-    // Typing while scrolled down glides the dropdown back to the top.
-    platformDropdown.scrollTo({ top: 0, behavior: "smooth" });
     const term = searchInput.value.trim().toLowerCase();
     optionEls.forEach((opt) => {
       const show = term
@@ -586,6 +593,9 @@ function renderPlatformDropdown() {
         : popularSet.has(opt.textContent); // empty box -> popular only
       opt.style.display = show ? "block" : "none";
     });
+    // Glide back to the top AFTER re-filtering, so the reflow from showing/hiding
+    // options can't interrupt the scroll.
+    platformDropdown.scrollTo({ top: 0, behavior: "smooth" });
   };
 }
 
@@ -609,8 +619,16 @@ if (clearPlatformBtn) {
 // ==========================================
 // The backend sorts natively; we just pass the chosen option as a `sort` query
 // param and re-run the query. No client-side re-ordering of the grid.
+//
+// `sort` is the value the backend uses; the labels are display-only. The two
+// popularity feeds are genuinely different lists: "popularity" = all-time
+// most-rated (vote_count.desc — the timeless classics), "trending" = TMDB's
+// most-popular-right-now (popularity.desc). The compact `short` label is what the
+// button shows ("Top" / "Trending"); the descriptive `long` label is what the
+// dropdown menu shows ("Popular All-Time" / "Popular This Week").
 const sortOptionsData = [
-  { short: "Popular", long: "Popular This Week", sort: "popularity" },
+  { short: "Top", long: "Popular All-Time", sort: "popularity" },
+  { short: "Trending", long: "Popular This Week", sort: "trending" },
   { short: "Rating ↓", long: "Rating (Best to Worst)", sort: "rating_desc" },
   { short: "Rating ↑", long: "Rating (Worst to Best)", sort: "rating_asc" },
   { short: "A ➔ Z", long: "Alphabetical (A-->Z)", sort: "title_asc" },
@@ -619,36 +637,87 @@ const sortOptionsData = [
   { short: "Oldest", long: "Release Date (Old to New)", sort: "year_asc" },
 ];
 
-// The server `sort` value for the currently selected option (default popularity).
+// The currently selected server `sort` value (default popularity = all-time).
+// Tracked explicitly because the button shows the short label while the menu
+// shows the long one, so it can't be reverse-engineered from the button text.
+let currentSort = "popularity";
 function currentSortValue() {
+  return currentSort;
+}
+
+// The button always shows the compact `short` label (e.g. "Top", "Trending",
+// "Rating ↓"); the full descriptive name lives in the dropdown menu.
+function renderSortButtonLabel() {
   const label = document.getElementById("sortSelectedText");
-  const current = label ? label.textContent.trim() : "Popular";
-  const option = sortOptionsData.find((o) => o.short === current);
-  return option ? option.sort : "popularity";
+  if (!label) return;
+  const opt = sortOptionsData.find((o) => o.sort === currentSort) || sortOptionsData[0];
+  label.textContent = opt.short;
+}
+
+// Select a sort WITHOUT firing a search (the caller decides). Updates the tracked
+// value, the menu's highlighted row, and the button label.
+function selectSort(value) {
+  const opt = sortOptionsData.find((o) => o.sort === value) || sortOptionsData[0];
+  currentSort = opt.sort;
+  document.querySelectorAll(".sort-option").forEach((el) => {
+    el.classList.toggle("selected", el.dataset.sort === currentSort);
+  });
+  renderSortButtonLabel();
 }
 
 if (sortCustomBtn && sortCustomMenu) {
-  const sortSelectedText = document.getElementById("sortSelectedText");
   sortOptionsData.forEach((option) => {
     const div = document.createElement("div");
     div.className = "sort-option";
-    div.textContent = option.long;
-    if (option.short === sortSelectedText.textContent)
-      div.classList.add("selected");
-
+    div.dataset.sort = option.sort;
+    div.textContent = option.long; // the menu always shows the full label
     div.onclick = (e) => {
       e.stopPropagation();
-      sortSelectedText.textContent = option.short;
-      document
-        .querySelectorAll(".sort-option")
-        .forEach((opt) => opt.classList.remove("selected"));
-      div.classList.add("selected");
+      selectSort(option.sort);
       sortCustomMenu.classList.remove("show");
       runSearch(); // re-fetch from the backend ordered by the new sort
       window.scrollTo({ top: 0, behavior: "smooth" }); // jump back to the new top
     };
     sortCustomMenu.appendChild(div);
   });
+  selectSort("popularity"); // initial highlight + button label
+}
+
+// Reset every filter row to its default. Used by the filter panel's "Clear"
+// (includeSort: true → also reset the sort) and the empty-results "Clear Filters"
+// button (includeSort: false → leave the chosen sort alone). Does NOT re-fetch —
+// the caller runs the search when it wants the change to take effect.
+function resetAllFilters({ includeSort = false } = {}) {
+  activeGenres = [];
+  if (genreList) {
+    renderTags();
+    renderDropdown();
+  }
+  activePlatforms = [];
+  if (platformList) {
+    renderPlatforms();
+    renderPlatformDropdown();
+  }
+  if (actorFilter) actorFilter.clear();
+  if (directorFilter) directorFilter.clear();
+
+  currentFromYear = "Any";
+  currentTillYear = "Any";
+  if (fromYearBtn) fromYearBtn.textContent = "Any";
+  if (tillYearBtn) tillYearBtn.textContent = "Any";
+  updateYearConstraints();
+
+  currentRating = 0;
+  stars.forEach((s) => {
+    s.src = BLANK_STAR_PATH;
+  });
+
+  if (ageRatingBtn) ageRatingBtn.textContent = "Any";
+
+  if (includeSort) selectSort("popularity"); // default = all-time most popular
+
+  closeAllInnerDropdowns();
+  updateClearFiltersVisibility();
 }
 
 // All filter state + elements are wired now: enable the "Clear Filters" toggle

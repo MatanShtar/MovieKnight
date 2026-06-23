@@ -77,6 +77,23 @@
   outline: none;
 }
 
+/* The search input is wrapped (for its inline "X"); the wrapper grows to fill the
+   bar between the icon and the AI-mode button, and the input leaves room for the
+   button on its right edge. */
+.search-container .input-clear-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.search-container .input-clear-wrap input {
+  padding-right: 38px;
+}
+.search-container .input-clear-btn {
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+}
+
 /* AI-mode hint ("Describe a movie, press Enter…") is long and the AI-mode button
    eats part of the bar, so on a narrow bar it would clip. Scale ITS font with the
    bar width (1cqi = 1% of the bar) — clamped readable — so it shrinks to fit instead

@@ -292,7 +292,7 @@ window.MovieAPI = (function () {
     //     yearFrom:  2000,          // -> yearFrom
     //     yearTo:    2024,          // -> yearTo
     //     minRating: 7,             // 0-10              -> minRating
-    //     sort:      "rating_desc", // server-side sort  -> sort
+    //     sort:      "rating_desc", // semantic sort intent -> sortBy (canonical)
     //     page:      2,             // -> page
     //     providers: [8, 9],        // TMDB provider ids -> providers (comma)
     //     certification: "PG-13",   // TMDB age rating   -> certification
@@ -311,7 +311,10 @@ window.MovieAPI = (function () {
         if (yearFrom) qp.yearFrom = yearFrom;
         if (yearTo) qp.yearTo = yearTo;
         if (minRating) qp.minRating = minRating;
-        if (sort) qp.sort = sort;
+        // The backend's canonical sort param is `sortBy` (a semantic intent name
+        // like "popularity"/"trending" — NOT a TMDB sort string; the server owns
+        // the mapping). It still accepts legacy `sort`, but `sortBy` is what we send.
+        if (sort) qp.sortBy = sort;
         if (page) qp.page = page;
         // Person filtering: cast for actors, crew for everyone else.
         if (with_cast) qp.with_cast = with_cast;

@@ -144,50 +144,11 @@ const filterClearBtn = document.getElementById("filterClearBtn");
 if (filterClearBtn) {
   filterClearBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-
-    // Genres + providers (platforms).
-    activeGenres = [];
-    if (genreList) {
-      renderTags();
-      renderDropdown();
-    }
-    activePlatforms = [];
-    if (platformList) {
-      renderPlatforms();
-      renderPlatformDropdown();
-    }
-
-    // Actors (multi) + director (single).
-    if (actorFilter) actorFilter.clear();
-    if (directorFilter) directorFilter.clear();
-
-    // Release year -> Any (and rebuild the constrained year menus).
-    currentFromYear = "Any";
-    currentTillYear = "Any";
-    if (fromYearBtn) fromYearBtn.textContent = "Any";
-    if (tillYearBtn) tillYearBtn.textContent = "Any";
-    updateYearConstraints();
-
-    // Star rating -> none.
-    currentRating = 0;
-    stars.forEach((s) => {
-      s.src = BLANK_STAR_PATH;
-    });
-
-    // Age rating -> Any.
-    if (ageRatingBtn) ageRatingBtn.textContent = "Any";
-
-    // Sort -> default "Popular".
-    const sortSelectedText = document.getElementById("sortSelectedText");
-    if (sortSelectedText) sortSelectedText.textContent = "Popular";
-    document.querySelectorAll(".sort-option").forEach((opt) => {
-      opt.classList.toggle("selected", opt.textContent === "Popular This Week");
-    });
-
-    closeAllInnerDropdowns();
-    updateClearFiltersVisibility(); // nothing active now -> hides itself
+    // Reset every filter row AND the sort back to its default (resetAllFilters
+    // lives in home/filters.js and owns all the filter/sort state).
     // No runSearch() here on purpose — clearing just resets the controls; the
     // feed only changes when "Apply" is pressed.
+    resetAllFilters({ includeSort: true });
   });
 }
 
@@ -273,6 +234,76 @@ document.addEventListener("keydown", (e) => {
 // ==========================================
 // 5. HELPER FUNCTIONS
 // ==========================================
+// Add an inline "X" clear button to a text input. The "X" shows only when the
+// box has text; clicking it clears the box, refocuses it, and re-runs the same
+// handler an empty box would (by default it dispatches a real `input` event, so
+// whatever live handler is bound to the input fires exactly as if the user had
+// deleted the text). Accessible: type=button (never submits) + aria-label.
+function attachClearButton(input, onClear) {
+  if (!input || input.dataset.clearBtnAttached) return null;
+  input.dataset.clearBtnAttached = "1";
+
+  // Wrap the input so the "X" can be absolutely positioned at its right edge.
+  const wrap = document.createElement("span");
+  wrap.className = "input-clear-wrap";
+  input.parentNode.insertBefore(wrap, input);
+  wrap.appendChild(input);
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "input-clear-btn";
+  btn.setAttribute("aria-label", "Clear");
+  btn.textContent = "×";
+  btn.hidden = true;
+  wrap.appendChild(btn);
+
+  const sync = () => {
+    btn.hidden = !input.value;
+  };
+  input.addEventListener("input", sync);
+  sync();
+
+  btn.addEventListener("click", () => {
+    input.value = "";
+    sync();
+    input.focus();
+    if (onClear) onClear();
+    else input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  return btn;
+}
+
+// Reflect "is the user running a text search?" in the controls bar. A text search
+// is pure relevance — the backend ignores sort + every filter — so the Filters
+// and Sort controls are disabled (and a hover tooltip explains why), instead of
+// letting the user's selections appear silently ignored mid-search.
+function updateSearchModeUI() {
+  const searchEl = document.getElementById("movieSearch");
+  const searching = !!(searchEl && searchEl.value.trim());
+
+  const bar = document.querySelector(".controls-bar");
+  if (bar) bar.classList.toggle("controls-bar--searching", searching);
+
+  [filterBtn, sortCustomBtn].forEach((b) => {
+    if (!b) return;
+    b.disabled = searching;
+    b.setAttribute("aria-disabled", String(searching));
+  });
+
+  if (searching) {
+    // Close anything open so a disabled control can't leave a panel hanging.
+    if (filterMenu) filterMenu.classList.remove("show");
+    if (sortCustomMenu) sortCustomMenu.classList.remove("show");
+    closeAllInnerDropdowns();
+  }
+}
+
+// The homepage search bar gets the same inline "X". Clearing it dispatches an
+// `input` event so home/main.js's live-search handler runs exactly as if the box
+// had been emptied by hand (re-running the feed + refreshing the search-mode UI).
+attachClearButton(document.getElementById("movieSearch"));
+updateSearchModeUI();
+
 function injectSearchBar(dropdownElement) {
   const searchInput = document.createElement("input");
   searchInput.type = "text";
@@ -293,4 +324,5 @@ function injectSearchBar(dropdownElement) {
     });
   };
   dropdownElement.appendChild(searchInput);
+  attachClearButton(searchInput); // inline "X" — clears + re-runs the filter
 }

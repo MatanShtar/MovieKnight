@@ -25,6 +25,41 @@
   color: var(--text-muted);
 }
 
+/* The "no results" empty state stacks its message + the one-click Clear Filters
+   escape hatch. */
+.grid-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.grid-empty-text {
+  margin: 0;
+}
+.grid-clear-filters-btn {
+  padding: 10px 26px;
+  background: rgba(var(--maroon), 0.6);
+  color: var(--text);
+  border: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 16px;
+  cursor: pointer;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-fast) var(--ease-snap);
+}
+.grid-clear-filters-btn:hover {
+  background: rgba(var(--maroon), 0.9);
+}
+.grid-clear-filters-btn:active {
+  transform: scale(0.96);
+}
+.grid-clear-filters-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
+}
+
 /* Infinite-scroll sentinel: a 1px full-row marker the IntersectionObserver
    watches. `overflow-anchor: none` keeps the browser from ever choosing it as
    the scroll-anchor element, so appending cards above it can't yank the view. */
