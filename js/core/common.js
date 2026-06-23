@@ -341,7 +341,14 @@ if (headerProfileBtn && headerDropdown) {
   headerProfileBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    headerDropdown.classList.toggle("show");
+    const opened = headerDropdown.classList.toggle("show");
+    // Re-fetch the AI-actions count every time the menu opens, so it reflects the
+    // midnight-Pacific reset (or actions spent in another tab) even if the page has
+    // been sitting open — without this, opening the menu would show the stale cached
+    // count until a reload. Guests have no badge, so getAiUsage() no-ops (null).
+    if (opened && window.MovieAPI && MovieAPI.getAiUsage) {
+      MovieAPI.getAiUsage().then(renderAiUsageBadge).catch(() => {});
+    }
   });
 
   // Close the menu when clicking anywhere else
