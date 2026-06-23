@@ -84,9 +84,11 @@ if (aiModeBtn && searchContainer && searchInput) {
     aiModeBtn.classList.toggle("pressed");
     searchContainer.classList.toggle("ai-glow");
     if (aiModeOn()) {
-      // AI mode is deliberate, not live: typing won't fire a (slow, costly) AI
-      // call — the user submits with Enter. The hint reflects that.
-      searchInput.placeholder = "Describe a movie, then press Enter…";
+      // AI mode is deliberate, not live: typing won't fire a (slow, costly) AI call —
+      // the user submits with Enter, which the hint reflects. The hint's FONT scales
+      // with the search-bar width (CSS, scoped to .ai-glow) so it never clips, on any
+      // screen or layout — see css/pages/home/layout.css.
+      searchInput.placeholder = "Describe a movie, press Enter…";
     } else {
       // Back to the normal catalog. Only re-run the feed if AI results are actually
       // on screen; otherwise the catalog is already showing — don't refresh it.
