@@ -77,33 +77,40 @@
   max-width: 40ch;
 }
 
-/* ---- "Back to Home Page" — Figma: #49080f @ 40%, radius 30, white 32px ---- */
+/* ---- "Back to Home Page" — styled to match the "Coming Soon" page's pink pill
+   (.cs-back): rounded pink-alt button with a nudging arrow. ---- */
 .error-home-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 38px;
-  padding: 40px 60px;
-  min-width: 396px;
-  min-height: 126px;
-  border-radius: 30px;
-  background: rgba(var(--wine), 0.4);
-  border: 1px solid #000;
-  color: var(--text);
-  font-size: clamp(18px, 1.7vw, 32px);
+  gap: 10px;
+  margin-top: 16px;
+  padding: 16px 40px;
+  border-radius: 50px;
+  background-color: rgb(var(--pink-alt));
+  color: #2a0f17;
+  font-size: clamp(18px, 1.7vw, 22px);
   text-decoration: none;
+  box-shadow: 0 10px 30px rgba(var(--pink-alt), 0.35);
   transition:
-    background var(--t-base) ease,
-    transform var(--t-fast) var(--ease-snap),
-    box-shadow var(--t-base) ease;
+    transform var(--t-base) var(--ease-pop),
+    filter var(--t-base) ease;
 }
 .error-home-btn:hover {
-  background: rgba(var(--wine), 0.78);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
-  transform: translateY(-2px);
+  transform: scale(1.05);
+  filter: brightness(1.06);
 }
 .error-home-btn:active {
-  transform: translateY(0) scale(0.98);
+  transform: scale(0.97);
+}
+
+.error-home-arrow {
+  font-size: 22px;
+  line-height: 1;
+  transition: transform var(--t-base) var(--ease-snap);
+}
+.error-home-btn:hover .error-home-arrow {
+  transform: translateX(-4px);
 }
 
 @media (prefers-reduced-motion: reduce) {
