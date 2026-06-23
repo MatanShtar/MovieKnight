@@ -143,6 +143,7 @@ if (currentUser) {
   if (userProfileDisplay) userProfileDisplay.style.display = "flex";
   if (sidebarSettings) sidebarSettings.style.display = "flex";
   if (displayUsername) displayUsername.textContent = currentUser.username;
+  setupDropdownUserPanel(currentUser);
   // Show the user's uploaded avatar (if any) in every page's header/profile pics.
   if (currentUser.avatarUrl) {
     document.querySelectorAll(".profile-pic, .avatar-pic").forEach((img) => {
@@ -245,6 +246,94 @@ if (profileNavLink) {
 // ==========================================
 // 6. HEADER PROFILE DROPDOWN
 // ==========================================
+
+// Build the logged-in header for the profile dropdown: a non-clickable username
+// line + an "AI Actions remaining" badge, injected once at the top of the menu.
+// The avatar isn't repeated here — it's already the dropdown's trigger button. The
+// username doubles as the only place the handle shows on mobile (the header text is
+// hidden there). Called from the post-login UI block above; safe to call once.
+function setupDropdownUserPanel(user) {
+  const dropdown = document.getElementById("headerDropdown");
+  if (!dropdown || !user) return;
+  if (dropdown.querySelector(".dropdown-user")) return; // already injected
+
+  const panel = document.createElement("div");
+  panel.className = "dropdown-user";
+  panel.innerHTML =
+    '<span class="dropdown-username"></span>' +
+    '<span class="dropdown-ai-usage" id="dropdownAiUsage">AI Actions: …</span>' +
+    '<span class="ai-bar"><span class="ai-bar-fill" id="dropdownAiBar"></span></span>';
+  panel.querySelector(".dropdown-username").textContent = user.username || "";
+
+  const divider = document.createElement("div");
+  divider.className = "dropdown-divider";
+
+  dropdown.insertBefore(divider, dropdown.firstChild);
+  dropdown.insertBefore(panel, dropdown.firstChild);
+
+  renderAiUsageBadge(user.aiUsage); // instant paint from the cached user…
+  // …then resync from the server (covers the midnight reset while logged in, or
+  // actions spent on another tab). api.js is loaded AFTER common.js on every page,
+  // so window.MovieAPI doesn't exist yet at this point — wait until the deferred
+  // scripts have all run before reaching for it. Best-effort: the cached value (or
+  // the "…" placeholder for a pre-feature session) already showed.
+  whenMovieApiReady(() => {
+    MovieAPI.getAiUsage().then(renderAiUsageBadge).catch(() => {});
+  });
+}
+
+// Run `fn` once window.MovieAPI is available. It's defined in api.js, which loads
+// AFTER common.js, so at common.js execution time it isn't there yet — defer to
+// DOMContentLoaded (fires after all `defer` scripts have executed) unless it's
+// somehow already present or the page has finished loading.
+function whenMovieApiReady(fn) {
+  const run = () => {
+    if (window.MovieAPI && MovieAPI.getAiUsage) fn();
+  };
+  if (window.MovieAPI && MovieAPI.getAiUsage) return run();
+  if (document.readyState === "complete") return run();
+  document.addEventListener("DOMContentLoaded", run, { once: true });
+}
+
+// Paint the AI-actions label + stat bar from a { remaining, limit } usage object,
+// colouring both by how much is left (ok → low → out). The limit is backend-owned
+// (never hard-coded here): until a usage payload has arrived we show a neutral
+// placeholder and wait for the server refresh in setupDropdownUserPanel.
+function renderAiUsageBadge(usage) {
+  const el = document.getElementById("dropdownAiUsage");
+  const bar = document.getElementById("dropdownAiBar");
+  const track = bar && bar.parentElement; // the .ai-bar carries the state class
+  if (!el) return;
+
+  const limit = usage && Number.isFinite(usage.limit) ? usage.limit : null;
+  const remaining = usage && Number.isFinite(usage.remaining) ? usage.remaining : null;
+
+  el.classList.remove("is-ok", "is-low", "is-out");
+  if (track) track.classList.remove("is-ok", "is-low", "is-out");
+
+  if (limit === null || remaining === null) {
+    el.textContent = "AI Actions: …"; // unknown yet — server refresh will replace this
+    if (bar) bar.style.width = "0%";
+    return;
+  }
+
+  // Warning band: the last 30% of the daily allowance (but always at least the final
+  // action, so small limits still get a warning). Derived from the backend-owned
+  // limit, so bumping DAILY_AI_LIMIT keeps it sensible (limit 5 → warn at ≤1;
+  // limit 10 → ≤3; limit 20 → ≤6).
+  const lowAt = Math.max(1, Math.ceil(limit * 0.3));
+  const state = remaining <= 0 ? "is-out" : remaining <= lowAt ? "is-low" : "is-ok";
+
+  el.textContent = `AI Actions: ${remaining} of ${limit} left`;
+  el.classList.add(state);
+  if (track) track.classList.add(state);
+  if (bar) bar.style.width = `${(remaining / limit) * 100}%`;
+}
+
+// Keep the badge live whenever an AI action is spent anywhere in the app
+// (api.js dispatches "mk:ai-usage" with the fresh usage after each call).
+window.addEventListener("mk:ai-usage", (e) => renderAiUsageBadge(e.detail));
+
 const headerProfileBtn = document.getElementById("headerProfileBtn");
 const headerDropdown = document.getElementById("headerDropdown");
 if (headerProfileBtn && headerDropdown) {
@@ -252,7 +341,14 @@ if (headerProfileBtn && headerDropdown) {
   headerProfileBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    headerDropdown.classList.toggle("show");
+    const opened = headerDropdown.classList.toggle("show");
+    // Re-fetch the AI-actions count every time the menu opens, so it reflects the
+    // midnight-Pacific reset (or actions spent in another tab) even if the page has
+    // been sitting open — without this, opening the menu would show the stale cached
+    // count until a reload. Guests have no badge, so getAiUsage() no-ops (null).
+    if (opened && window.MovieAPI && MovieAPI.getAiUsage) {
+      MovieAPI.getAiUsage().then(renderAiUsageBadge).catch(() => {});
+    }
   });
 
   // Close the menu when clicking anywhere else

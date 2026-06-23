@@ -31,6 +31,59 @@ body {
   outline-offset: 2px;
 }
 
+/* ==========================================
+   1b. CUSTOM CURSORS (white fill, thin #BC6676 border)
+   Arrow (default), arrow + click-lines (pointer), I-beam (text). The universal base
+   forces the custom arrow everywhere with !important so it beats the cursor:default
+   declared across the pages; the more-specific pointer/text/disabled rules below are
+   also !important, so by specificity they win over the base where they apply.
+   (SVG cursors aren't supported in Safari — it falls back to the keyword after the
+   comma: default / pointer / text / not-allowed.)
+   ========================================== */
+/* The SVGs are inlined as data URIs (not url() to a file) so the custom cursor is
+   ready the instant this stylesheet applies — a separate file fetch would leave the
+   browser showing the OS fallback cursor for the first moments of every page load. */
+:root {
+  --cur-default: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2224%22%20height=%2224%22%20viewBox=%220%200%2024%2024%22%3E%20%3Cpath%20d=%22M4%204%2011.07%2021%2013.58%2013.61%2021%2011.07Z%22%20fill=%22%23ffffff%22%20stroke=%22%23BC6676%22%20stroke-width=%221.3%22%20stroke-linejoin=%22round%22/%3E%20%3C/svg%3E") 4 4, default;
+  --cur-pointer: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2224%22%20height=%2224%22%20viewBox=%220%200%2024%2024%22%3E%20%3Cpath%20d=%22M8%2012%20V5.6%20a1.6%201.6%200%200%201%203.2%200%20V10%20h4.4%20a3.4%203.4%200%200%201%203.4%203.4%20v2.4%20a4%204%200%200%201%20-4%204%20h-4%20a4%204%200%200%201%20-3.35%20-1.8%20l-2.1%20-3.2%20a1.45%201.45%200%200%201%202.2%20-1.85%20L8%2013%20Z%22%20fill=%22%23ffffff%22%20stroke=%22%23BC6676%22%20stroke-width=%221.2%22%20stroke-linejoin=%22round%22/%3E%20%3C/svg%3E") 9 4, pointer;
+  --cur-text: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2224%22%20height=%2224%22%20viewBox=%220%200%2024%2024%22%3E%20%3Cpath%20d=%22M9%204.5H15V6H13V18H15V19.5H9V18H11V6H9Z%22%20fill=%22%23ffffff%22%20stroke=%22%23BC6676%22%20stroke-width=%220.8%22%20stroke-linejoin=%22round%22/%3E%20%3C/svg%3E") 12 12, text;
+}
+
+/* The root holds the default arrow; EVERY element just inherits its parent's cursor
+   (overriding the pages' cursor:pointer/default keywords). Inheriting — rather than
+   forcing the arrow on `*` — is what makes a clickable element's children (e.g. an
+   <img> inside a button) keep the hand instead of reverting to the arrow. The
+   pointer/text/disabled rules below are more specific, so they set the cursor on
+   those roots and their children inherit it. */
+html { cursor: var(--cur-default) !important; }
+* { cursor: inherit !important; }
+
+a, button, summary, select, label[for], [role="button"], [role="tab"], [role="menuitem"],
+[onclick],
+input[type="button"], input[type="submit"], input[type="reset"],
+input[type="checkbox"], input[type="radio"], input[type="range"], input[type="file"],
+.genre-btn, .provider-item, .tab-btn, .cb-slider-dot, .cb-toggle, .cb-tag-more,
+.cb-tag-remove, .spin-btn, .save-btn, .winner-action, .winner-close, .ai-mode-btn,
+.back-btn, .nav-link, .icon-btn, .surprise-container, .cb-add-btn, .wheel-add-btn,
+.row-edit, .row-delete, .ai-info-btn, .ai-winner-btn, .ai-tryagain, .movie-card,
+.mobile-nav-toggle, .header-login-btn, .header-profile-btn, .provider-clear-btn {
+  cursor: var(--cur-pointer) !important;
+}
+
+input[type="text"], input[type="search"], input[type="email"], input[type="password"],
+input[type="number"], input[type="url"], input[type="tel"], input:not([type]),
+textarea, [contenteditable="true"] {
+  cursor: var(--cur-text) !important;
+}
+
+/* Disabled / unavailable keep the blocked affordance — placed AFTER the pointer rule
+   so it wins for elements that match both. */
+:disabled, [disabled], [aria-disabled="true"],
+.generate-wheel-btn--disabled, .save-btn--disabled,
+.genre-btn--unavailable, .provider-item--unavailable {
+  cursor: not-allowed !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   /* !important is required here: this accessibility reset must override every
      animation/transition declared elsewhere, regardless of selector specificity. */
@@ -494,6 +547,73 @@ body {
 }
 .danger-text:hover {
   background-color: rgba(var(--danger), 0.1) !important;
+}
+
+/* Logged-in header injected at the top of the dropdown by common.js: the username
+   (also the only place the handle shows on mobile, where the header text is hidden)
+   plus the daily AI-actions badge. Avatar isn't repeated — it's the trigger button. */
+.dropdown-user {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 20px 10px;
+}
+.dropdown-username {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* AI quota label. Colour escalates as it depletes: soft → amber → faded/muted.
+   The "out" state is intentionally NOT danger-red — Sign Out below owns that, and
+   should stay the most prominent thing in the menu. */
+.dropdown-ai-usage {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-soft);
+}
+.dropdown-ai-usage.is-low {
+  color: rgb(var(--warn));
+}
+.dropdown-ai-usage.is-out {
+  color: var(--text-muted); /* faded — communicates "empty", doesn't shout */
+}
+
+/* The quota stat bar (under the label): a slim fill that shrinks as actions are
+   spent — at-a-glance, no percentages. Width is set inline by common.js; colour is
+   driven by the state class on the track (good → warn → faded-out). */
+.ai-bar {
+  height: 5px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--overlay); /* empty track */
+  overflow: hidden;
+}
+.ai-bar-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  background: rgb(var(--pink)); /* good */
+  transition:
+    width var(--t-base) ease,
+    background-color var(--t-base) ease;
+}
+.ai-bar.is-low .ai-bar-fill {
+  background: rgb(var(--warn)); /* warning */
+}
+/* Out: the fill is 0-width (nothing left), so the empty track carries the state —
+   a faint, faded wash rather than a bright alarm. */
+.ai-bar.is-out {
+  background: rgba(var(--warn), 0.1);
+}
+/* Thin separator between the injected user header and the menu links below it. */
+.dropdown-divider {
+  height: 1px;
+  margin: 4px 12px;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 /* ==========================================

@@ -63,9 +63,30 @@ window.MovieAPI = (function () {
     function clearSession() {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
+        // Also drop the cached AI Picker results — they live in localStorage now
+        // (so they survive a reload), so logout must clear them rather than letting
+        // one user's picks linger for the next person on this browser.
+        localStorage.removeItem("mk:aiResults");
     }
     function isLoggedIn() {
         return !!getToken();
+    }
+
+    // Keep user-facing error text SHORT. The backend already sanitises (its central
+    // handler turns unexpected bugs into a generic "Server error" and never forwards
+    // a raw TMDB/Gemini body), so a clean, brief message passes through untouched.
+    // This is the hard guarantee the UI never shows a "full detail" wall of text: a
+    // long or multi-line message is swapped for a brief, status-based line instead.
+    const SHORT_ERROR_MAX = 120;
+    function shortError(raw, status) {
+        const msg = typeof raw === "string" ? raw.trim() : "";
+        if (msg && msg.length <= SHORT_ERROR_MAX && !msg.includes("\n")) return msg;
+        if (status >= 500) return "Something went wrong on the server. Please try again.";
+        if (status === 429) return "Too many requests — give it a moment and try again.";
+        if (status === 404) return "Not found.";
+        if (status === 401 || status === 403) return "You’re not allowed to do that.";
+        if (status === 400) return "That request wasn’t valid.";
+        return `Request failed (HTTP ${status}).`;
     }
 
     // ==========================================
@@ -74,8 +95,8 @@ window.MovieAPI = (function () {
     // One fetch wrapper so every call gets the same JSON parsing and error
     // handling. `path` is relative to API_BASE, e.g. "/movies/search".
     // Any non-2xx is treated as a failure; the backend's { error: "..." }
-    // body is surfaced as the thrown message when present.
-    async function request(path, { params, body, headers, ...options } = {}) {
+    // body is surfaced (shortened via shortError) as the thrown message.
+    async function request(path, { params, body, headers, returnEnvelope, ...options } = {}) {
         const url = new URL(API_BASE + API_PREFIX + path);
         if (params) {
             Object.entries(params).forEach(([k, v]) => {
@@ -108,19 +129,24 @@ window.MovieAPI = (function () {
         }
 
         if (!res.ok) {
-            let message = `Request failed (HTTP ${res.status})`;
+            let rawMessage = "";
+            let rawCode = "";
             try {
                 // Named `errorBody` to avoid shadowing the request `body` param.
                 const errorBody = await res.json();
-                // contract error shape: { ok: false, error }
-                if (errorBody && errorBody.error) message = errorBody.error;
+                // contract error shape: { ok: false, error, code? }
+                if (errorBody && errorBody.error) rawMessage = String(errorBody.error);
+                if (errorBody && errorBody.code) rawCode = String(errorBody.code);
             } catch {
-                /* non-JSON error body — keep the generic message */
+                /* non-JSON error body — shortError falls back to a status line */
             }
             // Attach the HTTP status so callers can branch on it (e.g. a 404 from
             // GET /collections/:id means "private or missing" → redirect to 404.html).
-            const err = new Error(message);
+            const err = new Error(shortError(rawMessage, res.status));
             err.status = res.status;
+            // …and the machine-readable code when present, so callers can tell apart
+            // same-status cases (e.g. a quota 429 vs an upstream rate-limit 429).
+            if (rawCode) err.code = rawCode;
             throw err;
         }
 
@@ -128,11 +154,13 @@ window.MovieAPI = (function () {
         // API contract envelope: { ok: true, data } / { ok: false, error }.
         // Unwrap to the inner `data` so the normalisers below see the payload
         // directly. Bare/legacy responses (array or object) pass through as-is.
+        // `returnEnvelope` keeps the whole object instead, for the few endpoints that
+        // attach sibling fields beyond `data` (e.g. AI actions return `aiUsage`).
         if (json && typeof json === "object" && !Array.isArray(json) && "ok" in json) {
             if (!json.ok) {
-                throw new Error(json.error || `Request failed (HTTP ${res.status})`);
+                throw new Error(shortError(json.error, res.status));
             }
-            return json.data;
+            return returnEnvelope ? json : json.data;
         }
         return json;
     }
@@ -264,14 +292,17 @@ window.MovieAPI = (function () {
     //     yearFrom:  2000,          // -> yearFrom
     //     yearTo:    2024,          // -> yearTo
     //     minRating: 7,             // 0-10              -> minRating
-    //     sort:      "rating_desc", // server-side sort  -> sort
+    //     sort:      "rating_desc", // semantic sort intent -> sortBy (canonical)
     //     page:      2,             // -> page
+    //     providers: [8, 9],        // TMDB provider ids -> providers (comma)
+    //     certification: "PG-13",   // TMDB age rating   -> certification
     //   }
     async function searchMovies(params = {}) {
         if (typeof params === "string") params = { q: params };
         const {
             q, genres, yearFrom, yearTo, minRating, sort, page,
             with_cast, with_crew, minVotes, language,
+            providers, certification,
         } = params;
 
         const qp = {};
@@ -280,11 +311,27 @@ window.MovieAPI = (function () {
         if (yearFrom) qp.yearFrom = yearFrom;
         if (yearTo) qp.yearTo = yearTo;
         if (minRating) qp.minRating = minRating;
-        if (sort) qp.sort = sort;
+        // The backend's canonical sort param is `sortBy` (a semantic intent name
+        // like "popularity"/"trending" — NOT a TMDB sort string; the server owns
+        // the mapping). It still accepts legacy `sort`, but `sortBy` is what we send.
+        if (sort) qp.sortBy = sort;
         if (page) qp.page = page;
         // Person filtering: cast for actors, crew for everyone else.
         if (with_cast) qp.with_cast = with_cast;
         if (with_crew) qp.with_crew = with_crew;
+        // Streaming-provider filter: comma-separated numeric TMDB provider ids
+        // (OR semantics, e.g. providers=8,9). Same vocabulary the wheel uses.
+        if (Array.isArray(providers) && providers.length) {
+            const pids = providers.map(Number).filter(Number.isFinite);
+            if (pids.length) qp.providers = pids.join(",");
+        }
+        // Age-rating filter: a single TMDB certification (e.g. "PG-13", "R").
+        // TMDB ignores `certification` unless a country is given too, so always
+        // pair it with the US certification system the values come from.
+        if (certification) {
+            qp.certification = certification;
+            qp.certification_country = "US";
+        }
         // Default-feed quality guards (vote count floor + language); only the
         // empty-query feed sets these, so a real text search stays unrestricted.
         if (minVotes) qp.minVotes = minVotes;
@@ -559,8 +606,225 @@ window.MovieAPI = (function () {
         return _library;
     }
 
+    // ==========================================
+    // 7. AI (Gemini-backed picker + search)
+    // ==========================================
+    // Both go through the standard envelope: request() returns the inner `data`
+    // on success and throws an Error (with err.status set) on { ok:false } / a
+    // non-2xx, so callers can branch on 400/404/502/504 for tailored toasts.
+
+    // Coerce a list of TMDB ids (movies, numbers, strings) into a clean array of
+    // unique integers for the AI `exclude_ids` soft filter. Drops anything
+    // non-numeric so the backend always receives integers (not strings/objects).
+    function toExcludeIds(ids) {
+        if (!Array.isArray(ids)) return [];
+        const out = [];
+        const seen = new Set();
+        ids.forEach((x) => {
+            const n = Number(typeof x === "object" && x ? x.id : x);
+            if (Number.isFinite(n) && !seen.has(n)) {
+                seen.add(n);
+                out.push(n);
+            }
+        });
+        return out;
+    }
+
+    // POST /api/ai/picker — "Let AI Choose". Body { collectionId, prompt, count,
+    // exclude_ids? }. `exclude_ids` is a soft "don't repeat these" filter for a
+    // reroll (an array of integer TMDB ids); the backend may still reuse some if
+    // it would otherwise return fewer than 3, so callers must still dedupe.
+    // `data` is [{ id, title, poster_path, reason... }]: TMDB-shaped movies with an
+    // extra AI `reason`. Normalise to the app's movie shape but preserve `reason`.
+    async function aiPicker({ collectionId, prompt, count, exclude_ids } = {}) {
+        const body = { collectionId, prompt, count };
+        const exclude = toExcludeIds(exclude_ids);
+        if (exclude.length) body.exclude_ids = exclude;
+        try {
+            // returnEnvelope: read the `aiUsage` the endpoint already sends back (the
+            // action it just spent) and update the badge from it — no separate
+            // /ai/usage round-trip.
+            const env = await request("/ai/picker", { method: "POST", body, returnEnvelope: true });
+            if (env) cacheAiUsage(env.aiUsage);
+            return extractList(env && env.data, "movies")
+                .map((m) => {
+                    const n = normalizeMovie(m);
+                    return n ? { ...n, reason: m.reason || "" } : null;
+                })
+                .filter(Boolean);
+        } catch (err) {
+            // A 429 body carries no usage (it threw before spending), so on the rare
+            // cache desync that lets one through, fetch the authoritative count.
+            if (err && err.status === 429) refreshAiUsage();
+            throw err;
+        }
+    }
+
+    // POST /api/ai/search — natural-language search. Body { query, exclude_ids? }.
+    // `exclude_ids` is the same soft reroll filter as aiPicker (integer TMDB ids).
+    // `data` is an array of standard TMDB movie objects → normalise to the app's
+    // movie shape so the existing card UI can render them unchanged.
+    async function aiSearch(query, { exclude_ids } = {}) {
+        const body = { query };
+        const exclude = toExcludeIds(exclude_ids);
+        if (exclude.length) body.exclude_ids = exclude;
+        try {
+            // returnEnvelope: read the `aiUsage` the endpoint already sends back and
+            // update the badge from it — no separate /ai/usage round-trip.
+            const env = await request("/ai/search", { method: "POST", body, returnEnvelope: true });
+            if (env) cacheAiUsage(env.aiUsage);
+            return extractList(env && env.data, "movies").map(normalizeMovie).filter(Boolean);
+        } catch (err) {
+            // A 429 body carries no usage (it threw before spending), so on the rare
+            // cache desync that lets one through, fetch the authoritative count.
+            if (err && err.status === 429) refreshAiUsage();
+            throw err;
+        }
+    }
+
+    // ---- AI daily quota ---------------------------------------------------------
+    // The header menu shows "AI Actions: N of LIMIT left". The BACKEND owns the limit
+    // (services/aiQuota.js → DAILY_AI_LIMIT) and is the real guard (it 429s the
+    // over-limit request); the client never hard-codes the number — it reads both the
+    // count and the limit from the `aiUsage` payload the backend delivers (carried on
+    // the cached currentUser via login/signup/me, refreshed from /ai/usage). So
+    // changing the limit server-side updates everything here with no client change.
+
+    // Error code the backend sends with the quota-exhausted 429 (services/aiQuota.js)
+    // so the UI can tell it apart from an upstream rate-limit 429 of the same status.
+    const AI_LIMIT_CODE = "AI_LIMIT_REACHED";
+
+    // The cached usage object { used, remaining, limit }, or null if we've never seen
+    // one (logged out, or a session cached before this feature shipped).
+    function aiUsage() {
+        const user = getCurrentUser();
+        const u = user && user.aiUsage;
+        return u && typeof u === "object" ? u : null;
+    }
+
+    // Store the latest usage on the cached currentUser and notify the shell so the
+    // header badge updates live (common.js listens for "mk:ai-usage").
+    function cacheAiUsage(usage) {
+        if (!usage || typeof usage !== "object") return usage;
+        const user = getCurrentUser();
+        if (user) {
+            user.aiUsage = usage;
+            setSession(null, user);
+        }
+        try {
+            window.dispatchEvent(new CustomEvent("mk:ai-usage", { detail: usage }));
+        } catch (_) { /* CustomEvent unsupported — badge just won't live-update */ }
+        return usage;
+    }
+
+    // Actions left today from the CACHED user (no network). Unknown → Infinity so we
+    // never wrongly block before the first refresh — the backend 429 is the real stop.
+    function aiActionsRemaining() {
+        const u = aiUsage();
+        return u && Number.isFinite(u.remaining) ? u.remaining : Infinity;
+    }
+
+    // The daily limit as reported by the backend, or null until we've seen a usage
+    // payload. Callers that display it must tolerate null (show no number).
+    function aiActionsLimit() {
+        const u = aiUsage();
+        return u && Number.isFinite(u.limit) ? u.limit : null;
+    }
+
+    // The single, shared "you're out of actions" message for the instant client-side
+    // pre-check. Mirrors the backend's 429 wording; folds in the backend-provided
+    // limit when known so the number is never hard-coded.
+    function aiLimitReachedMessage() {
+        const limit = aiActionsLimit();
+        return limit
+            ? `You've used all ${limit} daily AI actions. They reset at midnight Pacific time.`
+            : "You've used all your daily AI actions. They reset at midnight Pacific time.";
+    }
+
+    // GET /api/ai/usage → { used, remaining, limit }. Refreshes the cache + badge.
+    // Resolves null when logged out. Throws are the caller's to ignore (badge stale).
+    async function getAiUsage() {
+        if (!isLoggedIn()) return null;
+        const data = await request("/ai/usage");
+        return cacheAiUsage(data);
+    }
+
+    // Fire-and-forget badge resync (used after an AI action); never rejects.
+    function refreshAiUsage() {
+        getAiUsage().catch(() => {});
+    }
+
+    // (AI Picker session persistence was removed — the picker results page now caches
+    // its picks in localStorage instead of a server-side session.)
+
+    // ==========================================
+    // 8. SPIN-THE-WHEEL PERSISTENCE (per collection, server-backed)
+    // ==========================================
+    // The wheel for a collection is stored on the server as an ordered array of
+    // strings (movie titles / free-form entries). Both calls require auth (the
+    // Bearer token request() already attaches). request() unwraps the { ok, data }
+    // envelope and throws an Error with .status set, so callers branch on 401/404/5xx.
+
+    // Pull the array of strings out of whichever key the server used (GET returns
+    // `wheelConfig`; PUT returns the normalised list as `wheelConfig`/`saved`).
+    function extractWheel(data) {
+        const list = data && (data.wheelConfig || data.saved);
+        return Array.isArray(list) ? list.filter((s) => typeof s === "string") : [];
+    }
+
+    // GET /api/collections/:id/wheel/filters — the distinct genre + provider TMDB
+    // ids that ACTUALLY appear across this collection's movies, so the wheel's filter
+    // menu can offer (and highlight) only what matches something. Envelope uses `ok`
+    // (request() unwraps it); data is
+    // { availableGenres: number[], availableProviders: number[] }. Provider ids are
+    // US-flatrate only, so a collection of non-streaming titles legitimately returns
+    // availableProviders: []. Always resolves clean integer arrays.
+    async function getWheelFilters(collectionId) {
+        const data = await request(`/collections/${encodeURIComponent(collectionId)}/wheel/filters`);
+        const toIds = (arr) =>
+            Array.isArray(arr) ? arr.map(Number).filter(Number.isFinite) : [];
+        return {
+            availableGenres: toIds(data && data.availableGenres),
+            availableProviders: toIds(data && data.availableProviders),
+        };
+    }
+
+    // GET /api/collections/:id/wheel — the saved wheel (or [] if never saved).
+    // Owner sees theirs; a PUBLIC collection's wheel is readable by any logged-in
+    // user; a PRIVATE collection you don't own throws err.status === 404.
+    async function getWheel(collectionId) {
+        const data = await request(`/collections/${encodeURIComponent(collectionId)}/wheel`);
+        return extractWheel(data);
+    }
+
+    // PUT /api/collections/:id/wheel — save/overwrite the wheel (owner only; a
+    // non-owner gets 404). Sends a cleaned list (trim, drop blanks, cap at 100) to
+    // match the server's own coercion, and returns the server's normalised array.
+    async function saveWheel(collectionId, wheelConfig) {
+        const clean = (Array.isArray(wheelConfig) ? wheelConfig : [])
+            .map((s) => String(s).trim())
+            .filter(Boolean)
+            .slice(0, 100);
+        const data = await request(`/collections/${encodeURIComponent(collectionId)}/wheel`, {
+            method: "PUT",
+            body: { wheelConfig: clean },
+        });
+        const saved = extractWheel(data);
+        return saved.length || clean.length === 0 ? saved : clean;
+    }
+
     return {
         API_BASE,
+        aiPicker,
+        aiSearch,
+        getAiUsage,
+        aiActionsRemaining,
+        aiActionsLimit,
+        aiLimitReachedMessage,
+        AI_LIMIT_CODE,
+        getWheel,
+        saveWheel,
+        getWheelFilters,
         searchMovies,
         getMovieDetails,
         searchPeople,

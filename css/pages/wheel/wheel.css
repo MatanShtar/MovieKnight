@@ -36,8 +36,8 @@
 }
 
 .wheel-main-logo {
-    /* Matches the picker page logo size (picker.css) */
-    height: 228px;
+    /* Matches the picker page logo size (picker.css) — scaled down from 228px. */
+    height: 150px;
     object-fit: contain;
 }
 
@@ -95,11 +95,47 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
+/* No-access / error state shown in place of the wheel (e.g. a private collection
+   you don't own, or a failed load). */
+.wheel-message {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 14px;
+    padding: 40px 24px;
+    color: var(--text-soft);
+}
+
+.wheel-message h2 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--text);
+}
+
+.wheel-message p {
+    margin: 0;
+    max-width: 460px;
+    font-size: 18px;
+    color: var(--text-muted);
+}
+
+.wheel-message .save-btn {
+    margin-top: 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .wheel-zone {
     flex: 1;
     display: flex;
     justify-content: center;
-    align-items: flex-end;   /* the wheel hangs at the bottom */
+    align-items: flex-start;   /* anchor the wheel to the top (near the top bar) */
 }
 
 /* ==========================================
@@ -115,7 +151,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-bottom: 69px;     /* hang 69px above the bottom of the screen */
+    margin-top: 8px;         /* sit near the top bar (anchored to the top) */
     /* Clip the transparent corners the square canvas sweeps out while spinning,
        so the rotation never grows the page's scroll area (no shaking). */
     overflow: hidden;
@@ -127,6 +163,49 @@
     border-radius: 50%;
     /* Long, weighted ease-out so the spin feels physical and alive */
     transition: transform 5s cubic-bezier(0.12, 0.74, 0.04, 1);
+}
+
+/* ---- Loading skeleton: while the server wheel hydrates, the canvas shows a
+   label-less, gently-rotating coloured wheel (drawn by wheel.js). Soften it with
+   a calm pulse + a faint blur so it reads as a placeholder, and mute the SPIN
+   button so it's clearly not ready yet. */
+.wheel-visual-container.is-loading #rouletteWheel {
+    animation: wheel-skeleton-pulse 1.5s ease-in-out infinite;
+    filter: saturate(0.7) blur(1px);
+    transition: none;   /* don't let the spin transition fight the skeleton turn */
+}
+.wheel-visual-container.is-loading .spin-btn {
+    opacity: 0.35;
+    pointer-events: none;
+    filter: grayscale(0.4);
+}
+@keyframes wheel-skeleton-pulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 0.9; }
+}
+
+/* Shimmer rows that stand in for the movie list while it loads. */
+.wheel-skeleton-row {
+    height: 38px;
+    margin: 10px 6px;
+    border-radius: 10px;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 25%,
+        rgba(255, 255, 255, 0.16) 37%,
+        rgba(255, 255, 255, 0.05) 63%
+    );
+    background-size: 320px 100%;
+    animation: wheel-skeleton-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes wheel-skeleton-shimmer {
+    0%   { background-position: -160px 0; }
+    100% { background-position: calc(160px + 100%) 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wheel-visual-container.is-loading #rouletteWheel { animation: none; }
+    .wheel-skeleton-row { animation: none; }
 }
 
 /* Downward pointer at the top: 20W x 23H, #212121 @ 90% */
@@ -202,24 +281,101 @@
     justify-content: center;
     gap: 56px;
     padding-top: 30px;
+    /* Size to its content (the list column) and stay anchored to the top of the
+       stage, instead of stretching to the full viewport height. That way the
+       save/load buttons bottom-align to the LIST BOX rather than dropping to the
+       bottom of the screen when the page is zoomed out. */
+    align-self: flex-start;
 }
 
-/* The dark translucent box: 390W x 620H, radius 40, #212121 @ 30%
-   (height scales down on short viewports; the list scrolls inside). */
+/* The dark translucent box: 390W wide, radius 40, #212121 @ 30%. Height scales
+   with the viewport and the list scrolls inside; we subtract the search bar above
+   it (≈64px incl. gap) so the search + box column still fits one screen — fewer
+   names show before it becomes scrollable rather than pushing the page taller. */
 .movie-list-box {
     width: 390px;
-    height: min(620px, 64vh);
+    height: min(556px, calc(64vh - 64px));
     flex-shrink: 0;
     border-radius: 40px;
     background-color: rgba(var(--wheel-panel), 0.3);
     padding: 15px 22.5px;    /* leaves a 345px-wide content column */
     overflow-y: auto;
     overflow-x: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);   /* slick drop shadow (matches the provider box) */
 }
 
 .movie-list {
     display: flex;
     flex-direction: column;
+}
+
+/* Column wrapper so the search bar sits ABOVE the scrolling list box while the
+   wheel-panel itself stays a row (list column | save controls). */
+.wheel-list-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 390px;
+    flex-shrink: 0;
+}
+
+/* Running total of how many movies are on the wheel — a quiet caption that sits
+   between the search bar and the list box. */
+.wheel-count {
+    align-self: flex-start;
+    padding-left: 6px;
+    margin-top: -2px;
+    font-size: 14px;
+    color: var(--text-soft);
+    letter-spacing: 0.3px;
+}
+
+/* Client-side filter for the loaded movies — pill input with a leading icon. */
+.wheel-search {
+    position: relative;
+    width: 100%;
+}
+
+.wheel-search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    opacity: 0.5;
+    pointer-events: none;
+    filter: brightness(0) invert(1);   /* white to match the dark panel */
+}
+
+.wheel-search-input {
+    width: 100%;
+    height: 46px;
+    border: none;
+    border-radius: 100px;
+    background-color: rgba(var(--wheel-panel), 0.45);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 18px;
+    padding: 0 20px 0 46px;            /* leave room for the icon */
+    outline: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);    /* slick drop shadow (matches the provider box) */
+    transition: background-color var(--t-base) ease, box-shadow var(--t-base) ease;
+}
+
+.wheel-search-input::placeholder { color: rgba(255, 255, 255, 0.45); }
+
+.wheel-search-input:focus {
+    background-color: rgba(var(--wheel-panel), 0.6);
+    box-shadow: 0 0 0 2px rgba(var(--pink), 0.3), 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Shown inside the list when a filter matches nothing. */
+.wheel-list-empty {
+    padding: 26px 8px;
+    text-align: center;
+    color: var(--text-soft);
+    font-size: 18px;
 }
 
 /* Each row is 59px tall, so its separator sits 59px from the next */
@@ -417,8 +573,10 @@
     display: flex;
     flex-direction: column;
     gap: 18px;
+    /* Bottom-align to the list box (the panel is now sized to that column, not the
+       whole stage), so the buttons sit just inside the box's bottom edge. */
     align-self: flex-end;
-    margin-bottom: 84px;
+    margin-bottom: 0;
 }
 
 .save-btn {
@@ -530,6 +688,7 @@
     pointer-events: auto;
     position: relative;
     width: 468px;
+    max-width: 92vw;
     height: 364px;
     border-radius: 50px;
     background-color: rgba(215, 215, 215, 0.2);
@@ -569,29 +728,45 @@
     color: var(--text);
 }
 
-/* Remove button: 328W x 80H, #84343F (= --maroon-light), radius 50 */
-.winner-remove {
-    width: 328px;
-    height: 80px;
+/* Two side-by-side choices after a win: Keep (positive) | Remove (destructive). */
+.winner-actions {
+    display: flex;
+    gap: 14px;
+    width: 100%;
+    padding: 0 26px;
     margin-bottom: 26px;
+    box-sizing: border-box;
+}
+
+.winner-action {
+    flex: 1 1 0;
+    min-width: 0;            /* let the long labels shrink/wrap instead of overflowing */
+    height: 80px;
+    padding: 0 12px;
     border: none;
     border-radius: 50px;
-    background-color: rgb(var(--maroon-light));
     color: var(--text);
     font-family: inherit;
-    font-size: 24px;
+    font-size: 20px;
+    line-height: 1.12;
     cursor: pointer;
     transition:
         transform var(--t-base) var(--ease-pop),
         filter var(--t-base) ease;
 }
 
-.winner-remove:hover {
+/* Match the Chopping Block winner screen exactly: destructive red on the LEFT,
+   the calmer "green" (#596d73 — the same hex the Chopping Block winner uses for
+   its secondary button) on the RIGHT. */
+.winner-remove { background-color: rgb(var(--maroon-light)); } /* red — drop it (left) */
+.winner-keep   { background-color: #596d73; }                  /* green — keep it (right) */
+
+.winner-action:hover {
     filter: brightness(1.12);
     transform: scale(1.04);
 }
 
-.winner-remove:active {
+.winner-action:active {
     transform: scale(0.96);
 }
 
@@ -667,8 +842,12 @@
         width: 100%;
     }
 
-    .movie-list-box {
+    .wheel-list-col {
         width: min(100%, 440px);
+    }
+
+    .movie-list-box {
+        width: 100%;
         height: min(520px, 56vh);
     }
 
@@ -699,4 +878,24 @@
         height: 64px;
         font-size: 30px;
     }
+
+    /* Smaller "Back" label on phones, padded to keep an easy tap target. */
+    .back-btn {
+        font-size: 14px;
+        padding: 8px 12px;
+        margin: -8px 0 0 -12px;
+    }
+
+    /* Scale the winner popup down so the whole thing fits a phone screen without
+       scrolling or clipping — smaller box, header, title and action buttons. */
+    .winner-box {
+        width: min(380px, 90vw);
+        height: auto;
+        border-radius: 36px;
+        padding-bottom: 20px;
+    }
+    .winner-header { font-size: 24px; padding: 14px 46px; } /* padded clear of the close X */
+    .winner-title { font-size: 26px; padding: 26px 16px; }
+    .winner-actions { padding: 0 18px; margin-bottom: 0; gap: 12px; }
+    .winner-action { height: 60px; font-size: 17px; }
 }

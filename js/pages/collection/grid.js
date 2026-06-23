@@ -181,6 +181,9 @@
           posterPath: m.posterPath,
         })
       );
+      // Navigate in the SAME tab (matches Home) — smartBack returns to the
+      // collection. The mk:lastMovie stash above makes the details page paint
+      // instantly on arrival.
       window.location.href = `movie.html?id=${encodeURIComponent(m.id)}`;
     };
     card.addEventListener("click", openMovie);

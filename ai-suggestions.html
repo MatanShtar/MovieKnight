@@ -4,20 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spin The Wheel - MovieKnight</title>
+    <title>AI Suggestions - MovieKnight</title>
     <link rel="icon" type="image/png" sizes="32x32" href="assets/images/favicon-32.png?v=2" />
     <link rel="icon" type="image/png" sizes="16x16" href="assets/images/favicon-16.png?v=2" />
     <link rel="icon" type="image/png" sizes="192x192" href="assets/images/favicon-192.png?v=2" />
     <link rel="apple-touch-icon" href="assets/images/favicon-180.png?v=2" />
     <link rel="stylesheet" href="css/core/common.css">
     <link rel="stylesheet" href="vendor/toastify/toastify.min.css">
-    <link rel="stylesheet" href="css/pages/wheel/wheel.css">
+    <link rel="stylesheet" href="css/pages/picker/ai.css">
 
     <script src="vendor/toastify/toastify.min.js" defer></script>
     <script src="js/core/toast.js" defer></script>
     <script src="js/core/common.js" defer></script>
     <script src="js/core/api.js" defer></script>
-    <script src="js/pages/wheel/wheel.js" defer></script>
+    <script src="js/pages/picker/ai.js" defer></script>
 </head>
 
 <body class="app-body feature-page">
@@ -63,44 +63,36 @@
             </nav>
         </aside>
 
-        <main class="main-content wheel-page">
-            <div class="wheel-header">
-                <a href="picker.html" class="back-btn" data-back="picker.html">Back</a>
+        <main class="main-content ai-page">
+            <div class="ai-header">
+                <a href="picker.html?panel=ai" class="back-btn" id="aiBackBtn">Back</a>
                 <img src="assets/images/login-logo-text.svg" alt="MovieKnight" class="wheel-main-logo">
             </div>
 
-            <div class="feature-tabs" id="pickerTabs">
-                <p>SPIN THE WHEEL</p>
+            <div class="feature-tabs" id="aiHeaderBar">
+                <p>LET AI CHOOSE</p>
             </div>
 
-            <section class="wheel-stage">
-                <div class="wheel-zone">
-                    <div class="wheel-visual-container">
-                        <div class="wheel-pointer"></div>
-                        <canvas id="rouletteWheel" width="584" height="584"></canvas>
-                        <button class="spin-btn" id="spinBtn">SPIN</button>
-                    </div>
-                </div>
+            <section class="ai-stage">
+                <div class="ai-results" id="aiResults"></div>
 
-                <div class="wheel-panel">
-                    <div class="wheel-list-col">
-                        <div class="wheel-search">
-                            <img class="wheel-search-icon" src="assets/images/icons/search-icon.svg" alt="" aria-hidden="true">
-                            <input type="text" class="wheel-search-input" id="wheelSearch"
-                                   placeholder="Search the wheel…" aria-label="Filter the loaded movies"
-                                   autocomplete="off">
-                        </div>
-                        <div class="wheel-count" id="wheelCount" aria-live="polite"></div>
-                        <div class="movie-list-box">
-                            <div class="movie-list" id="wheelMovieList"></div>
-                        </div>
-                    </div>
-
-                    <div class="wheel-save-controls">
-                        <button class="save-btn load-btn">Load Latest Wheel</button>
-                        <button class="save-btn save-current-btn">Save Current Wheel</button>
-                    </div>
-                </div>
+                <button class="ai-tryagain" id="aiTryAgain" type="button">
+                    TRY AGAIN
+                    <svg class="ai-tryagain-arrows" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-8.49-6"
+                              fill="none" stroke="currentColor" stroke-width="2"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="3 21 3 15 9 15"
+                                  fill="none" stroke="currentColor" stroke-width="2"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M3 12a9 9 0 0 1 9-9 9 9 0 0 1 8.49 6"
+                              fill="none" stroke="currentColor" stroke-width="2"
+                              stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="21 3 21 9 15 9"
+                                  fill="none" stroke="currentColor" stroke-width="2"
+                                  stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
             </section>
         </main>
 
@@ -131,14 +123,17 @@
 
     <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
 
+    <!-- Winner popup — same format as the Spin the Wheel / Chopping Block winner
+         screen. The AI flow's action is "View Details" (the pick is already in
+         the collection, so there's nothing to add). -->
     <div class="winner-overlay" id="winnerOverlay">
         <div class="winner-box">
             <button class="winner-close" id="winnerClose" aria-label="Close">&#10005;</button>
             <div class="winner-header">WE HAVE A WINNER!</div>
             <div class="winner-title" id="winnerTitle"></div>
             <div class="winner-actions">
-                <button class="winner-action winner-remove" id="winnerRemove">Remove from the Wheel</button>
-                <button class="winner-action winner-keep" id="winnerKeep">Keep in the Wheel</button>
+                <button class="winner-remove" id="aiViewDetails">View Details</button>
+                <a class="winner-remove winner-secondary" id="aiBackToCollection" href="collection.html">Back to Collection</a>
             </div>
         </div>
     </div>

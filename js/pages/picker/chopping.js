@@ -26,6 +26,12 @@ function escapeHtml(str) {
     ));
 }
 
+// At/below this width the game screen uses a native CSS scroll-snap strip instead
+// of the JS-driven 3D coverflow (must match the @media breakpoint in chopping.css).
+// 1024px is the app-wide "mobile" cutoff, so tablets get the swipe strip too.
+const cbMobileMq = window.matchMedia("(max-width: 1024px)");
+const cbIsMobile = () => cbMobileMq.matches;
+
 // Fisher–Yates shuffle (returns a new array).
 function shuffle(list) {
     const pool = list.slice();
@@ -45,14 +51,21 @@ document.addEventListener("DOMContentLoaded", () => {
 // 2. SETUP SCREEN  (picker.html → chopping panel)
 // ==========================================
 function initSetup() {
-    // How many tags fit in the 2-column grid before we collapse the rest into a
-    // "+N …" chip (8 slots = 2 columns × 4 rows; the chip occupies the 8th).
-    const MAX_TAG_SLOTS = 8;
+    // How many player tags we show before collapsing the rest into a "+N …" chip.
+    // Desktop fits 8 (2 columns × 4 rows; the chip takes the 8th). Phones are far
+    // narrower, so a lower threshold keeps the pills from pushing the page wider
+    // than the screen (the bug: adding players forced horizontal scrolling).
+    const maxTagSlots = () => (cbIsMobile() ? 4 : 8);
 
     // --- state ---
-    const players = ["Matan", "Niv"]; // two seeded players, like the Figma
+    // A fresh session starts with exactly one player: the signed-in user,
+    // pre-filled with their full name (falls back to their username, then a
+    // generic label for guests). `currentUser` is the cached user from common.js.
+    const cu = (typeof currentUser !== "undefined" && currentUser) || null;
+    const players = [(cu && (cu.name || cu.username)) || "Player 1"];
     let eliminations = 2;             // 1 | 2 | 3
     let selectedCollection = null;    // the real collection chosen to play from
+    let overflowOpen = false;         // is the "+N" overflow dropdown open?
 
     // --- elements ---
     const input = document.getElementById("cbPlayerInput");
@@ -115,22 +128,42 @@ function initSetup() {
     }
 
     function renderTags(enteringIndex = -1) {
+        const slots = maxTagSlots();
         let visible, hidden = [];
-        if (players.length <= MAX_TAG_SLOTS) {
+        if (players.length <= slots) {
             visible = players.map((n, i) => [n, i]);
         } else {
-            visible = players.slice(0, MAX_TAG_SLOTS - 1).map((n, i) => [n, i]);
-            hidden = players.slice(MAX_TAG_SLOTS - 1);
+            visible = players.slice(0, slots - 1).map((n, i) => [n, i]);
+            // Keep each hidden player's REAL index so the dropdown ✕ removes the right one.
+            hidden = players.slice(slots - 1).map((n, i) => [n, i + (slots - 1)]);
         }
 
         let html = visible.map(([n, i]) => tagHtml(n, i)).join("");
         if (hidden.length) {
-            const list = hidden.map(escapeHtml).join("<br>");
+            // A click-to-open dropdown (same dark box as the picker's provider list) of
+            // the players past the visible slots, each with an inline ✕ to remove them.
+            const rows = hidden.map(([n, i]) => `
+                <div class="cb-overflow-item">
+                    <span class="cb-overflow-name" title="${escapeHtml(n)}">${escapeHtml(n)}</span>
+                    <button class="cb-tag-remove cb-overflow-x" data-index="${i}" aria-label="Remove ${escapeHtml(n)}">
+                        <img src="assets/images/icons/genre-x-icon.svg" alt="">
+                    </button>
+                </div>`).join("");
             html += `
-                <span class="cb-tag cb-tag-more" tabindex="0" aria-label="${hidden.length} more players">
-                    +${hidden.length} &hellip;
-                    <span class="cb-more-tooltip">${list}</span>
+                <span class="cb-tag cb-tag-more" id="cbMoreChip" tabindex="0" role="button"
+                      aria-haspopup="true" aria-expanded="${overflowOpen ? "true" : "false"}"
+                      aria-label="${hidden.length} more players">
+                    +${hidden.length} more &hellip;
+                    <svg class="cb-more-caret" viewBox="0 0 24 24" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9" fill="none" stroke="currentColor"
+                                  stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <div class="cb-overflow-box"${overflowOpen ? "" : " hidden"} role="menu">
+                        <div class="cb-overflow-list">${rows}</div>
+                    </div>
                 </span>`;
+        } else {
+            overflowOpen = false; // nothing left to overflow → keep state clean
         }
         tagsEl.innerHTML = html;
 
@@ -142,6 +175,16 @@ function initSetup() {
                     () => tag.classList.remove("is-entering"), { once: true });
             }
         }
+    }
+
+    // Open/close the overflow dropdown (no re-render — just toggle its visibility).
+    function toggleOverflow(force) {
+        overflowOpen = (force === undefined) ? !overflowOpen : force;
+        const chip = document.getElementById("cbMoreChip");
+        if (!chip) return;
+        const box = chip.querySelector(".cb-overflow-box");
+        if (box) box.hidden = !overflowOpen;
+        chip.setAttribute("aria-expanded", overflowOpen ? "true" : "false");
     }
 
     function addPlayer(name) {
@@ -218,7 +261,10 @@ function initSetup() {
     function refresh() {
         bump(totalPlayersEl, players.length);
         const movies = totalMovies();
-        bump(totalMoviesEl, movies);
+        // "Random Movies Selected" gets the odometer roll (shared from picker.js); no
+        // box-grow pop. Fall back to the plain bump if that helper isn't loaded.
+        if (typeof animateCount === 'function') animateCount(totalMoviesEl, movies);
+        else bump(totalMoviesEl, movies);
 
         const noCollection = !selectedCollection;
         const collSize = collectionSize();
@@ -244,6 +290,10 @@ function initSetup() {
     renderSlider();
     refresh();
 
+    // The "+N …" overflow threshold differs between desktop and mobile, so
+    // re-collapse/expand the tag list when the viewport crosses that breakpoint.
+    cbMobileMq.addEventListener("change", () => renderTags());
+
     addBtn.addEventListener("click", () => addPlayer(input.value));
     input.addEventListener("keydown", (e) => {
         if (e.key === "Enter") { e.preventDefault(); addPlayer(input.value); }
@@ -251,7 +301,15 @@ function initSetup() {
 
     tagsEl.addEventListener("click", (e) => {
         const btn = e.target.closest(".cb-tag-remove");
-        if (btn) removePlayer(Number(btn.dataset.index));
+        if (btn) { removePlayer(Number(btn.dataset.index)); return; }
+        // Click the "+N" chip (but not inside its open dropdown) → toggle the dropdown.
+        const chip = e.target.closest(".cb-tag-more");
+        if (chip && !e.target.closest(".cb-overflow-box")) toggleOverflow();
+    });
+
+    // Click anywhere outside the chip/dropdown closes it.
+    document.addEventListener("click", (e) => {
+        if (overflowOpen && !e.target.closest("#cbMoreChip")) toggleOverflow(false);
     });
 
     slider.addEventListener("click", (e) => {
@@ -272,6 +330,14 @@ function initSetup() {
             collectionId: selectedCollection.id,
             collectionName: selectedCollection.name,
         }));
+
+        // Rewrite THIS picker entry to the Chopping tab before navigating to the
+        // game, so a later Back (history.back) from the game returns here to the
+        // Chopping Block tab — not the default Wheel tab. Mirrors the AI flow.
+        try {
+            history.replaceState(history.state, "",
+                `picker.html?panel=chopping&collection=${encodeURIComponent(selectedCollection.id)}`);
+        } catch (_) { /* non-critical */ }
 
         // Same tab-collapse hand-off the "Generate Wheel" button uses.
         const tabs = document.getElementById("pickerTabs");
@@ -303,6 +369,16 @@ function initGame() {
     }
     if (!Array.isArray(config.players) || config.players.length < 1) {
         config.players = ["Niv", "Matan"];
+    }
+
+    // Point the top "Back" at the hub's Chopping tab for THIS collection. smartBack
+    // still prefers history.back() (returning to the hub with setup intact); this is
+    // just the fallback target for a direct visit, kept logical with the collection.
+    const back = document.querySelector('.back-btn');
+    if (back && config.collectionId != null) {
+        const url = `picker.html?panel=chopping&collection=${encodeURIComponent(config.collectionId)}`;
+        back.setAttribute('href', url);
+        back.setAttribute('data-back', url);
     }
 
     // Fetch the real collection + its movies (login-gated). Spinner while we wait,
@@ -400,9 +476,19 @@ function runGame(config, collectionMovies) {
             <div class="cb-poster">
                 <img src="${escapeHtml(m.posterPath)}" alt="${escapeHtml(m.title)}"
                      onerror="this.onerror=null;this.src='${POSTER_FALLBACK}'">
+                <button class="cb-info" type="button"
+                        aria-label="View details for ${escapeHtml(m.title)}" title="View details">i</button>
             </div>
             <button class="cb-eliminate" type="button">ELIMINATE</button>`;
         track.appendChild(el);
+        // The "i" badge opens the movie's details in a new tab (so the game stays
+        // open behind it) — same style/behaviour as the add-to-collection modal.
+        const info = el.querySelector(".cb-info");
+        if (info) info.addEventListener("click", (e) => {
+            e.stopPropagation();
+            try { sessionStorage.setItem("mk:lastMovie", JSON.stringify(m)); } catch (_) {}
+            window.open("movie.html?id=" + encodeURIComponent(m.id), "_blank", "noopener");
+        });
         return { ...m, eliminated: false, el };
     });
 
@@ -440,11 +526,34 @@ function runGame(config, collectionMovies) {
     //     size; only the two at the edges are slightly smaller ("peeking"). Cards
     //     past that start tiny + transparent, so they grow + fade in "from nowhere"
     //     as they slide on (and shrink + fade out as they slide off). ---
+    // Infinite (looping) coverflow: the strip wraps into an endless ring — scroll
+    // past the last poster and the first re-enters from the other side. Instead of a
+    // fixed card count, this engages the moment the pool has MORE posters than fit
+    // across the stage — i.e. as soon as any poster would sit off-screen. On a wide
+    // monitor where every poster is visible it stays a static fan (nothing to scroll
+    // to); narrow the window (or add movies) and it becomes a carousel. The off-stage
+    // surplus also doubles as the buffer that lets a wrapping card slide in from the
+    // edge instead of popping onto a peek. Mobile uses the native scroll-snap row.
+    //
+    // How many full posters fit across the stage right now (poster width incl. gap).
+    function fitCount() {
+        const w = coverflow.clientWidth || window.innerWidth || 0;
+        const step = stepPx();
+        return step > 0 ? Math.max(1, Math.floor(w / step)) : order.length;
+    }
+    function loopEnabled() { return !cbIsMobile() && order.length > fitCount(); }
+
     let firstPaint = true;
     function render() {
+        if (cbIsMobile()) { renderMobile(); return; }
         const step = stepPx();
+        const N = order.length;
+        const loop = loopEnabled();
         order.forEach((card, i) => {
-            const slot = i - center;            // signed distance from centre, in cards
+            let slot = i - center;              // signed distance from centre, in cards
+            // Map each card to its nearest copy around the centre so one leaving an
+            // edge re-enters from the opposite side (the endless ring).
+            if (loop) slot -= N * Math.round(slot / N);
             const a = Math.abs(slot);
 
             let scale, opacity;
@@ -452,6 +561,14 @@ function runGame(config, collectionMovies) {
             else if (a <= 3.5) { scale = 0.84; opacity = 0.9; }   // the 2 peeking (smaller)
             else               { scale = 0.62; opacity = 0; }     // off-stage: tiny, so it grows in
             if (card.eliminated) opacity = Math.min(opacity, a <= 3.5 ? 0.35 : 0);
+
+            // When a card crosses the loop seam its slot flips sign by ~N. It's at
+            // the off-stage (opacity 0) edge there, so snap it across with NO
+            // transition — otherwise it'd visibly fly back over the whole strip on
+            // the next step instead of sliding in from the near edge.
+            const prev = card._slot;
+            const jumped = loop && prev !== undefined && Math.abs(slot - prev) > N / 2;
+            if (jumped) card.el.style.transition = "none";
 
             // staggered grow-from-centre entrance on the very first paint
             if (firstPaint) card.el.style.transitionDelay = `${Math.min(a, 6) * 0.05}s`;
@@ -461,6 +578,9 @@ function runGame(config, collectionMovies) {
             card.el.style.zIndex = 100 - Math.round(a);
             card.el.style.pointerEvents = opacity <= 0.05 ? "none" : "auto";
             card.el.classList.toggle("in-window", a <= 2.5 && !card.eliminated); // the pressable five
+
+            if (jumped) { void card.el.offsetWidth; card.el.style.transition = ""; }
+            card._slot = slot;
         });
         if (firstPaint) {
             firstPaint = false;
@@ -468,6 +588,45 @@ function runGame(config, collectionMovies) {
         }
         updateArrows();
     }
+
+    // Mobile: drop the absolute 3D transforms and let the CSS scroll-snap strip
+    // (chopping.css ≤768px) lay the cards out. We only (a) reflow the DOM so its
+    // order matches the `order` array — keeping eliminated cards at the strip's
+    // ends like the desktop graveyard — and (b) clear the inline styles desktop
+    // render() leaves behind so they don't fight the stylesheet. Every active
+    // card is pressable here (there's no five-poster "window" on a swipe strip).
+    function renderMobile() {
+        order.forEach((card) => {
+            track.appendChild(card.el);          // move into place (no-op if already last)
+            card.el.style.transform = "";
+            card.el.style.opacity = "";
+            card.el.style.zIndex = "";
+            card.el.style.pointerEvents = "";
+            card.el.style.transitionDelay = "";
+            card.el.classList.toggle("in-window", !card.eliminated);
+        });
+        updateMobilePeek();
+    }
+
+    // Grey out the cards that are only peeking at the strip edges, so just the two
+    // fully-visible posters stay in colour. A card is "peeking" when any part of it
+    // sits outside the scroll viewport. Cheap geometry, throttled to one rAF/scroll.
+    function updateMobilePeek() {
+        if (!cbIsMobile()) return;
+        const sl = track.scrollLeft;
+        const vw = track.clientWidth;
+        order.forEach((card) => {
+            const left = card.el.offsetLeft;            // relative to the position:relative track
+            const right = left + card.el.offsetWidth;
+            const fullyVisible = left >= sl - 2 && right <= sl + vw + 2;
+            card.el.classList.toggle("cb-peek", !fullyVisible);
+        });
+    }
+    let peekRaf = null;
+    track.addEventListener("scroll", () => {
+        if (peekRaf) return;
+        peekRaf = requestAnimationFrame(() => { peekRaf = null; updateMobilePeek(); });
+    }, { passive: true });
 
     function activeIndices() {
         return order.reduce((acc, c, i) => (c.eliminated ? acc : (acc.push(i), acc)), []);
@@ -484,18 +643,41 @@ function runGame(config, collectionMovies) {
         return [Math.min(mid, 2), Math.max(mid, N - 3)];
     }
     function updateArrows() {
+        // In loop mode there's always more to reveal in either direction.
+        if (loopEnabled()) {
+            if (prevBtn) prevBtn.classList.remove("cb-nav-off");
+            if (nextBtn) nextBtn.classList.remove("cb-nav-off");
+            return;
+        }
         const [lo, hi] = centerBounds();
         if (prevBtn) prevBtn.classList.toggle("cb-nav-off", center <= lo + 0.01);
         if (nextBtn) nextBtn.classList.toggle("cb-nav-off", center >= hi - 0.01);
     }
     function stepCenter(dir) {
+        stopMomentum();   // a discrete step (arrow/key/wheel) cancels any coast
+        // Looping: let `center` run unbounded (one card crosses the seam per step);
+        // render() wraps every card by modulo, so the value never needs clamping.
+        if (loopEnabled()) {
+            center = Math.round(center) + dir;
+            render();
+            return;
+        }
         const [lo, hi] = centerBounds();
         center = clamp(Math.round(center) + dir, lo, hi);
         render();
     }
     function recenter() {
+        const target = middleActiveIndex();
+        // Looping: pick the copy of the middle active card NEAREST the current
+        // centre, so re-centring after an elimination shifts the ring minimally
+        // instead of snapping `center` back by a whole lap.
+        if (loopEnabled()) {
+            const N = order.length;
+            center = target + N * Math.round((center - target) / N);
+            return;
+        }
         const [lo, hi] = centerBounds();
-        center = clamp(middleActiveIndex(), lo, hi);
+        center = clamp(target, lo, hi);
     }
 
     // --- eliminate a specific (visible, active) poster, then ping-pong it to a
@@ -512,20 +694,31 @@ function runGame(config, collectionMovies) {
         btn.textContent = "ELIMINATED";
         btn.disabled = true;
 
+        const pushed = pingRight;            // which graveyard edge this card flies to
         order.splice(idx, 1);
-        if (pingRight) order.push(card); else order.unshift(card);
+        if (pushed) order.push(card); else order.unshift(card);
         pingRight = !pingRight;
 
         const active = activeIndices();
         if (active.length <= 1) {
             gameOver = true;                 // lock the board; the winner has been decided
             const winner = order[active[0]] || card;
-            recenter();
+            recenter();                      // the lone winner — fine to centre it
             render();
             setTimeout(() => declareWinner(winner), 560);
             return;
         }
-        recenter();
+
+        // Don't snap back to the middle — keep the player parked where they were
+        // looking. The chopped card flies to a graveyard edge; we only nudge `center`
+        // by the index shift its removal+reinsert caused near it, so the neighbour
+        // that fills the gap is centred with no jump.
+        if (pushed) { if (center > idx) center -= 1; }   // cards after idx slid left
+        else        { if (center < idx) center += 1; }   // unshift pushed earlier cards right
+        if (!loopEnabled()) {
+            const [lo, hi] = centerBounds();
+            center = clamp(center, lo, hi);
+        }
         advanceTurn();
         render();
     }
@@ -536,12 +729,16 @@ function runGame(config, collectionMovies) {
     if (prevBtn) prevBtn.addEventListener("click", () => stepCenter(-1));
     if (nextBtn) nextBtn.addEventListener("click", () => stepCenter(1));
     document.addEventListener("keydown", (e) => {
+        if (cbIsMobile()) return;                 // the touch strip scrolls natively
         if (e.key === "ArrowLeft") { e.preventDefault(); stepCenter(-1); }
         else if (e.key === "ArrowRight") { e.preventDefault(); stepCenter(1); }
     });
 
     let wheelAccum = 0, wheelLock = false;
     coverflow.addEventListener("wheel", (e) => {
+        // On the touch strip (≤1024) the browser scrolls the row natively — don't
+        // intercept the trackpad's horizontal wheel here, or we'd block that scroll.
+        if (cbIsMobile()) return;
         if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;   // vertical → let the page scroll
         e.preventDefault();
         wheelAccum += e.deltaX;
@@ -551,6 +748,198 @@ function runGame(config, collectionMovies) {
         wheelLock = true;
         setTimeout(() => { wheelLock = false; }, 150);
     }, { passive: false });
+
+    // --- click-and-drag scrolling (desktop): grab the strip and pull it sideways
+    //     like a trackpad swipe. Pointer movement maps 1:1 to poster-widths so the
+    //     cards track the cursor. A flick keeps the strip coasting after release with
+    //     friction (momentum), settling on a poster once it slows down; a slow drag
+    //     just settles on the nearest one. Touch (≤1024) scrolls natively. ---
+    let dragging = false, dragId = null, dragStartX = 0, dragStartCenter = 0, dragMoved = false;
+    // Velocity tracking (in `center` units — i.e. posters — per millisecond) and the
+    // running momentum animation handle.
+    let velocity = 0, lastMoveT = 0, lastMoveCenter = 0, momentumRaf = null;
+
+    // Keep `center` inside the scrollable range (no-op while looping — that runs
+    // unbounded and render() wraps every card by modulo instead).
+    function clampCenter() {
+        if (loopEnabled()) return;
+        const [lo, hi] = centerBounds();
+        center = clamp(center, lo, hi);
+    }
+
+    function stopMomentum() {
+        if (momentumRaf) { cancelAnimationFrame(momentumRaf); momentumRaf = null; }
+        coverflow.classList.remove("cb-coasting");
+    }
+
+    // Land on the nearest whole poster, with the card easing turned back on so the
+    // final adjustment is a smooth snap rather than an instant jump.
+    function settle() {
+        stopMomentum();
+        center = Math.round(center);
+        clampCenter();
+        render();
+    }
+
+    // Coast after a flick: advance `center` by the release velocity each frame while
+    // friction bleeds it away, then settle once it drops below a slow-walk speed.
+    const FLICK_MIN = 0.0014;   // posters/ms (~1.4 posters/sec) — below this, just settle
+    const FLICK_MAX = 0.06;     // posters/ms (~60 posters/sec) — cap so a jitter can't fling it
+    const FRICTION_TAU = 320;   // ms; velocity decays to ~37% every this-many ms
+    function startMomentum() {
+        stopMomentum();
+        if (Math.abs(velocity) < FLICK_MIN) { settle(); return; }
+        coverflow.classList.add("cb-coasting");   // keep transitions off while it glides
+        let last = performance.now();
+        const tick = (now) => {
+            const dt = Math.min(now - last, 40);   // clamp long frames (tab blur) so it can't lurch
+            last = now;
+            center += velocity * dt;
+            velocity *= Math.exp(-dt / FRICTION_TAU);
+            if (!loopEnabled()) {
+                const [lo, hi] = centerBounds();
+                if (center <= lo || center >= hi) { settle(); return; }   // hit an end → stop dead
+            }
+            if (Math.abs(velocity) < FLICK_MIN) { settle(); return; }
+            render();
+            momentumRaf = requestAnimationFrame(tick);
+        };
+        momentumRaf = requestAnimationFrame(tick);
+    }
+
+    coverflow.addEventListener("pointerdown", (e) => {
+        if (cbIsMobile() || e.button !== 0) return;            // touch strip / non-left → skip
+        // Don't start a drag from the interactive controls — the nav arrows, the
+        // ELIMINATE button, or the "i" info badge. A tiny move while pressing those
+        // would otherwise turn into a drag and swallow their click. Drag begins from
+        // the poster/title area (above ELIMINATE) instead.
+        if (e.target.closest(".carousel-control-prev, .carousel-control-next, .cb-eliminate, .cb-info")) return;
+        stopMomentum();                                        // grabbing a coasting strip catches it
+        dragging = true; dragMoved = false; dragId = e.pointerId;
+        dragStartX = e.clientX; dragStartCenter = center;
+        velocity = 0; lastMoveT = performance.now(); lastMoveCenter = center;
+        coverflow.classList.add("cb-dragging");
+        // Stop the press from starting a text selection / native image-drag, both of
+        // which steal the pointer and make the strip stick mid-drag.
+        e.preventDefault();
+        try { coverflow.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    // Safari/Firefox can still kick off the native image drag-and-drop on a poster;
+    // cancel it outright so it never competes with our pointer drag.
+    coverflow.addEventListener("dragstart", (e) => e.preventDefault());
+
+    coverflow.addEventListener("pointermove", (e) => {
+        if (!dragging || e.pointerId !== dragId) return;
+        const dx = e.clientX - dragStartX;
+        if (Math.abs(dx) > 4) dragMoved = true;                // past this it's a drag, not a click
+        center = dragStartCenter - dx / stepPx();              // pull left → reveal posters on the right
+        clampCenter();
+        // Track velocity with light smoothing so a single jittery frame can't spike it.
+        const now = performance.now();
+        const dt = now - lastMoveT;
+        if (dt > 0) {
+            const inst = (center - lastMoveCenter) / dt;
+            velocity = velocity * 0.6 + inst * 0.4;
+            lastMoveT = now; lastMoveCenter = center;
+        }
+        render();
+    });
+
+    function endDrag(e) {
+        if (!dragging || (e && e.pointerId !== dragId)) return;
+        dragging = false; dragId = null;
+        coverflow.classList.remove("cb-dragging");
+        if (!dragMoved) { center = Math.round(center); clampCenter(); render(); return; }
+        // If the pointer was held still just before release, there's no flick — drop
+        // any stale velocity so the strip settles where the user left it.
+        if (performance.now() - lastMoveT > 80) velocity = 0;
+        velocity = clamp(velocity, -FLICK_MAX, FLICK_MAX);
+        startMomentum();
+    }
+    coverflow.addEventListener("pointerup", endDrag);
+    coverflow.addEventListener("pointercancel", endDrag);
+
+    // --- mobile strip: the same grab-and-fling, but driving the native scroll
+    //     container's scrollLeft instead of the coverflow transform. TOUCH keeps the
+    //     browser's own inertial scroll + snap (we don't fight it); this is for MOUSE
+    //     users at narrow widths (≤1024), where the strip replaces the coverflow but a
+    //     mouse otherwise can't drag a native scroller. Velocity is in px/ms here. ---
+    let mDragging = false, mDragId = null, mStartX = 0, mStartScroll = 0, mMoved = false;
+    let mVel = 0, mLastT = 0, mLastScroll = 0, mRaf = null;
+    const M_FLICK_MIN = 0.02;   // px/ms — below this, stop and let it snap
+    const M_FLICK_MAX = 6;      // px/ms cap so a jitter can't fling it across
+
+    function mStopMomentum() {
+        if (mRaf) { cancelAnimationFrame(mRaf); mRaf = null; }
+    }
+    // Re-enable scroll-snap so the strip lands cleanly on the nearest poster (we turn
+    // it off during the drag/coast so scrollLeft can move freely without re-snapping).
+    function mSnap() { mStopMomentum(); track.style.scrollSnapType = ""; }
+
+    function mStartMomentum() {
+        mStopMomentum();
+        if (Math.abs(mVel) < M_FLICK_MIN) { mSnap(); return; }
+        let last = performance.now();
+        const tick = (now) => {
+            const dt = Math.min(now - last, 40); last = now;
+            track.scrollLeft += mVel * dt;
+            mVel *= Math.exp(-dt / FRICTION_TAU);
+            const maxScroll = track.scrollWidth - track.clientWidth;
+            if (track.scrollLeft <= 0 || track.scrollLeft >= maxScroll
+                || Math.abs(mVel) < M_FLICK_MIN) { mSnap(); return; }   // hit an end / slowed → stop
+            mRaf = requestAnimationFrame(tick);
+        };
+        mRaf = requestAnimationFrame(tick);
+    }
+
+    track.addEventListener("pointerdown", (e) => {
+        if (!cbIsMobile() || e.pointerType !== "mouse" || e.button !== 0) return;  // touch → native
+        if (e.target.closest(".cb-eliminate, .cb-info")) return;   // let their clicks through
+        mStopMomentum();
+        mDragging = true; mMoved = false; mDragId = e.pointerId;
+        mStartX = e.clientX; mStartScroll = track.scrollLeft;
+        mVel = 0; mLastT = performance.now(); mLastScroll = track.scrollLeft;
+        track.style.scrollSnapType = "none";                   // scroll freely while dragging/coasting
+        e.preventDefault();
+        try { track.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    track.addEventListener("pointermove", (e) => {
+        if (!mDragging || e.pointerId !== mDragId) return;
+        const dx = e.clientX - mStartX;
+        if (Math.abs(dx) > 4) mMoved = true;
+        track.scrollLeft = mStartScroll - dx;                  // pull left → scroll right
+        const now = performance.now();
+        const dt = now - mLastT;
+        if (dt > 0) {
+            const inst = (track.scrollLeft - mLastScroll) / dt;
+            mVel = mVel * 0.6 + inst * 0.4;                    // same light smoothing as desktop
+            mLastT = now; mLastScroll = track.scrollLeft;
+        }
+    });
+
+    function mEndDrag(e) {
+        if (!mDragging || (e && e.pointerId !== mDragId)) return;
+        mDragging = false; mDragId = null;
+        if (!mMoved) { mSnap(); return; }
+        if (performance.now() - mLastT > 80) mVel = 0;         // held still before release → no flick
+        mVel = clamp(mVel, -M_FLICK_MAX, M_FLICK_MAX);
+        mStartMomentum();
+    }
+    track.addEventListener("pointerup", mEndDrag);
+    track.addEventListener("pointercancel", mEndDrag);
+
+    // A drag that actually moved (desktop coverflow OR mobile strip) shouldn't also
+    // fire the ELIMINATE/info click it happens to end on — swallow that click in the
+    // capture phase, before it reaches the button handlers below. (A plain click never
+    // trips either moved-flag, so it passes through.)
+    coverflow.addEventListener("click", (e) => {
+        if (dragMoved || mMoved) {
+            e.stopPropagation(); e.preventDefault();
+            dragMoved = false; mMoved = false;
+        }
+    }, true);
 
     // click an ELIMINATE button — only the five in-window posters are pressable
     track.addEventListener("click", (e) => {
@@ -590,8 +979,18 @@ function runGame(config, collectionMovies) {
         window.location.href = `picker.html?panel=chopping${c}`;
     });
 
+    // "Back to Collection" returns to the collection page the game was played from.
+    const backToCollection = document.getElementById("cbBackToCollection");
+    if (backToCollection && config.collectionId != null) {
+        backToCollection.setAttribute("href",
+            `collection.html?id=${encodeURIComponent(config.collectionId)}`);
+    }
+
     // --- go ---
-    window.addEventListener("resize", render);   // keep the spread matched to the viewport
+    // Resizing can change how many posters fit (and so flip looping on/off) — re-clamp
+    // `center` into the new bounds before repainting so it never lands out of range.
+    window.addEventListener("resize", () => { clampCenter(); render(); });
+    cbMobileMq.addEventListener("change", () => { clampCenter(); render(); }); // coverflow ⇄ scroll-snap strip
     recenter();                        // clamp the starting centre into bounds
     updateTurn();
     requestAnimationFrame(render);     // first paint with transforms in place

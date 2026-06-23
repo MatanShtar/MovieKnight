@@ -11,13 +11,13 @@
 //
 // Each result: click the poster to ADD/REMOVE (toggles "+" ⇄ "✓"); the small
 // "i" button opens that movie's details page in a new tab (so the add session
-// isn't lost). Shows the top 21 matches so the grid stays full.
+// isn't lost). Shows the top 12 matches so the grid stays full.
 window.AddToCollectionModal = (function () {
-  const MAX_RESULTS = 21; // a full grid (7×3 on desktop, 3×7 on phone)
+  const MAX_RESULTS = 12; // a full grid (6×2 desktop, 4×3 tablet, 3×4 phone)
   const PLACEHOLDER = "assets/images/poster-placeholder.svg";
   const esc = (s) => (window.escapeHtml ? window.escapeHtml(s) : String(s ?? ""));
 
-  let overlay = null, titleEl = null, input = null, results = null;
+  let overlay = null, titleEl = null, input = null, results = null, clearBtn = null;
   let debounce = null, seq = 0;
   let ctx = null; // { id, name, isDemo, inCollection:Set, onChange }
 
@@ -35,6 +35,7 @@ window.AddToCollectionModal = (function () {
         <div class="am-search">
           <img src="assets/images/icons/search-icon.svg" alt="" width="20" height="20" />
           <input type="text" placeholder="Search movies to add…" aria-label="Search movies" />
+          <button class="am-clear" type="button" aria-label="Clear search" hidden>&times;</button>
         </div>
         <div class="am-results"></div>
       </div>`;
@@ -42,6 +43,7 @@ window.AddToCollectionModal = (function () {
     titleEl = overlay.querySelector(".am-title");
     input = overlay.querySelector("input");
     results = overlay.querySelector(".am-results");
+    clearBtn = overlay.querySelector(".am-clear");
 
     overlay.querySelector(".am-close").addEventListener("click", close);
     overlay.addEventListener("click", (e) => {
@@ -51,9 +53,22 @@ window.AddToCollectionModal = (function () {
       if (e.key === "Escape" && overlay.classList.contains("is-open")) close();
     });
     input.addEventListener("input", () => {
+      toggleClear();
       clearTimeout(debounce);
       debounce = setTimeout(runSearch, 300);
     });
+    clearBtn.addEventListener("click", () => {
+      input.value = "";
+      toggleClear();
+      seq++; // invalidate any in-flight search so its late results don't land
+      hint("Start typing to search for movies to add.");
+      input.focus();
+    });
+  }
+
+  // Show the clear "×" only when the box has text to clear.
+  function toggleClear() {
+    if (clearBtn) clearBtn.hidden = !input.value;
   }
 
   function hint(text) {
@@ -69,22 +84,11 @@ window.AddToCollectionModal = (function () {
     const s = ++seq;
     hint("Searching…");
     try {
-      // The search API serves 20 per page, so pull two pages and dedupe to fill
-      // a full 21-card grid (7×3 desktop / 3×7 phone).
-      const [p1, p2] = await Promise.all([
-        MovieAPI.searchMovies({ q }),
-        MovieAPI.searchMovies({ q, page: 2 }),
-      ]);
+      // The search API serves 20 per page — one page is plenty to fill the
+      // 12-card grid (6×2 desktop / 4×3 tablet / 3×4 phone).
+      const page1 = await MovieAPI.searchMovies({ q });
       if (s !== seq) return; // a newer search superseded this one
-      const seen = new Set();
-      const merged = [];
-      for (const m of [...(p1 || []), ...(p2 || [])]) {
-        if (!seen.has(m.id)) {
-          seen.add(m.id);
-          merged.push(m);
-        }
-      }
-      renderResults(merged.slice(0, MAX_RESULTS));
+      renderResults((page1 || []).slice(0, MAX_RESULTS));
     } catch (err) {
       if (s === seq) hint(err.message || "Search failed.");
     }
@@ -171,6 +175,7 @@ window.AddToCollectionModal = (function () {
     };
     titleEl.textContent = `Add to “${ctx.name}”`;
     input.value = "";
+    toggleClear();
     hint("Start typing to search for movies to add.");
     overlay.classList.add("is-open");
     document.body.classList.add("cm-no-scroll");

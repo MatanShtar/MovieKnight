@@ -66,17 +66,145 @@ const aiModeBtn = document.querySelector(".ai-mode-btn");
 const searchContainer = document.querySelector(".search-container");
 const searchInput = document.getElementById("movieSearch");
 
+function aiModeOn() {
+  return !!(aiModeBtn && aiModeBtn.classList.contains("pressed"));
+}
+
+// Whether AI results currently OWN the grid. Only then does leaving AI mode need to
+// restore the catalog feed — toggling AI on and back off without ever searching
+// should be a no-op, not a needless full-feed refresh.
+let aiResultsShowing = false;
+
 if (aiModeBtn && searchContainer && searchInput) {
   aiModeBtn.addEventListener("click", () => {
+    // AI features are logged-in only. A guest clicking AI mode gets the same
+    // "must be logged in" toast as the heart/eye actions, and the mode stays off.
+    // (Only gate turning it ON — turning it back off must always work.)
+    if (!aiModeOn() && window.requireAuth && !requireAuth()) return;
     aiModeBtn.classList.toggle("pressed");
     searchContainer.classList.toggle("ai-glow");
-    if (aiModeBtn.classList.contains("pressed")) {
-      searchInput.placeholder = "Search movies with AI...";
-      toast.soon("AI Mode - Coming Soon!");
+    if (aiModeOn()) {
+      // AI mode is deliberate, not live: typing won't fire a (slow, costly) AI call —
+      // the user submits with Enter, which the hint reflects. The hint's FONT scales
+      // with the search-bar width (CSS, scoped to .ai-glow) so it never clips, on any
+      // screen or layout — see css/pages/home/layout.css.
+      searchInput.placeholder = "Describe a movie, press Enter…";
     } else {
+      // Back to the normal catalog. Only re-run the feed if AI results are actually
+      // on screen; otherwise the catalog is already showing — don't refresh it.
       searchInput.placeholder = "Search movies...";
+      if (aiResultsShowing) {
+        aiResultsShowing = false;
+        runSearch();
+      }
     }
   });
+}
+
+// ==========================================
+// 14b. AI NATURAL-LANGUAGE SEARCH  (POST /api/ai/search)
+// ==========================================
+// The text of the last AI search we actually ran. Used to no-op an empty or
+// unchanged submit (Enter on a blank box, or re-submitting the identical query)
+// so it never needlessly re-renders / re-fires the costly request.
+let lastAiQuery = "";
+// Whether the user has already "rerolled" the current AI query (re-submitting the
+// same text once asks for fresh picks excluding what's shown). Reset whenever the
+// query text changes, so each new query gets its own single reroll. (#1/#2)
+let aiSearchRerolled = false;
+
+// De-dupe a movie list so each TMDB id renders once (#3): the safety net for the
+// soft `exclude_ids` reroll, where the backend may reuse an id to avoid returning
+// too few. Movies without an id are kept (they can't collide).
+function dedupeMoviesById(list) {
+  const seen = new Set();
+  return (Array.isArray(list) ? list : []).filter((m) => {
+    if (!m || m.id == null) return !!m;
+    if (seen.has(m.id)) return false;
+    seen.add(m.id);
+    return true;
+  });
+}
+
+// Unlike the live catalog search, this is a single deliberate request (6–9s and
+// a real API call), so it fires on Enter only. It takes over the feed: clear,
+// show skeletons, then render the AI's picks with the SAME card builder. Setting
+// feedDone stops infinite scroll from appending the popular feed underneath.
+// `reroll` re-runs the same query excluding the currently shown ids for a fresh set.
+async function runAiSearch(query, { reroll = false } = {}) {
+    lastAiQuery = query;
+  // Snapshot the current feed so a FAILED search can leave it on screen — a
+  // rate-limit / error should just toast, not dump a wall of error text.
+  const prev = feedMovies.slice();
+  // On a reroll, ask the AI not to repeat the on-screen picks (soft filter).
+  const excludeIds = reroll ? prev.map((m) => m && m.id) : [];
+  feedMovies = [];
+  feedPage = 0;
+  feedDone = true; // AI results are a fixed set — no paging beneath them
+  feedLoading = false;
+  const token = ++feedToken; // invalidate any in-flight catalog page load
+  const grid = document.getElementById("movieGrid");
+  if (grid) {
+    clearGridCards();
+    insertBeforeSentinel(fragmentFromHTML(movieSkeletonMarkup(10)));
+  }
+
+  try {
+    const results = dedupeMoviesById(
+      await MovieAPI.aiSearch(query, { exclude_ids: excludeIds })
+    );
+    if (token !== feedToken) return; // a newer search superseded this one
+    clearGridCards();
+    if (!results.length) {
+      if (prev.length) {
+        feedMovies = prev;
+        aiResultsShowing = false; // catalog restored — AI no longer owns the grid
+        insertBeforeSentinel(fragmentFromHTML(prev.map(buildMovieCard).join("")));
+        if (window.toast) toast.info("No matches — keeping your previous results.");
+      } else {
+        showGridMessage("The AI couldn’t find a match — try rephrasing.");
+      }
+      return;
+    }
+    feedMovies = results;
+    aiResultsShowing = true; // AI results now own the grid
+    insertBeforeSentinel(fragmentFromHTML(results.map(buildMovieCard).join("")));
+  } catch (err) {
+    if (token !== feedToken) return;
+    // A failed run shouldn't lock out a retry of the same text (the early-return
+    // guard treats an unchanged query as a no-op), so forget it here.
+    lastAiQuery = "";
+    aiSearchRerolled = false; // a failed run doesn't consume the reroll
+    aiResultsShowing = false; // grid fell back to the catalog (or an error message)
+    // Only a short, friendly toast — never the raw upstream error. Keep the feed
+    // as it was: restore the previous cards if we had any.
+    if (window.toast) toast.error(aiSearchErrorMessage(err));
+    clearGridCards();
+    if (prev.length) {
+      feedMovies = prev;
+      insertBeforeSentinel(fragmentFromHTML(prev.map(buildMovieCard).join("")));
+    } else {
+      showGridMessage("Couldn’t run AI search right now. Please try again.");
+    }
+  }
+}
+
+// A SHORT, friendly message for a failed AI search — never the raw upstream error
+// (Gemini's free-tier rate-limit replies are a huge wall of text).
+function aiSearchErrorMessage(err) {
+  // Quota exhausted is a 429 too, but distinguished by the backend's error code —
+  // surface its specific message instead of the generic "AI is busy" line.
+  if (err && err.code === MovieAPI.AI_LIMIT_CODE) return err.message;
+  switch (err && err.status) {
+    case 400: return (err.message && err.message.length <= 100)
+      ? err.message : "That search didn’t look right — try rephrasing it.";
+    case 401: return "Please sign in to use AI search.";
+    case 429:
+    case 503: return "The AI director is currently busy. Please try again in a few minutes!";
+    case 502: return "The AI had trouble responding. Try again.";
+    case 504: return "The AI took too long to answer. Try again in a moment.";
+    default:  return "Couldn’t run AI search right now. Please try again.";
+  }
 }
 
 // ==========================================
@@ -88,11 +216,50 @@ if (aiModeBtn && searchContainer && searchInput) {
 if (searchInput) {
   let searchDebounce;
   searchInput.addEventListener("input", () => {
+    // Keep the Filters/Sort controls in sync with whether a text search is active
+    // (they don't apply during a text search). Runs regardless of AI mode.
+    updateSearchModeUI();
+    // In AI mode typing is NOT live — the user submits with Enter (handled below),
+    // so don't fire the debounced catalog search.
+    if (aiModeOn()) return;
     // If the user scrolled down the feed and starts typing again, glide back to
     // the top so the fresh results aren't hidden below the fold.
     window.scrollTo({ top: 0, behavior: "smooth" });
+    aiResultsShowing = false; // a live catalog search replaces any AI results
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(runSearch, 300);
+  });
+
+  // Enter submits an AI search when AI mode is on. (In normal mode the live
+  // input handler already covers it, so Enter is a harmless no-op there.)
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" || !aiModeOn()) return;
+    e.preventDefault();
+    const q = searchInput.value.trim();
+    if (!q) return; // a blank box does nothing
+    // Guests can't enter AI mode, but guard anyway; and stop here if the daily
+    // quota is spent — instant feedback from the cached count (the backend, which
+    // also counts a reroll as an action, would 429 regardless). Limit/message come
+    // from the backend, never hard-coded here.
+    if (window.requireAuth && !requireAuth()) return;
+    if (window.MovieAPI && MovieAPI.aiActionsRemaining() <= 0) {
+      if (window.toast) toast.warn(MovieAPI.aiLimitReachedMessage());
+      return;
+    }
+    if (q === lastAiQuery) {
+      // Re-submitting the SAME query acts as a single "reroll": fresh picks that
+      // exclude what's on screen. Allowed once per query (#2); after that it's a
+      // no-op until the text changes.
+      if (aiSearchRerolled) return;
+      aiSearchRerolled = true;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      runAiSearch(q, { reroll: true });
+      return;
+    }
+    // A brand-new query: reset the per-query reroll allowance.
+    aiSearchRerolled = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    runAiSearch(q);
   });
 }
 

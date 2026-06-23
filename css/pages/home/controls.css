@@ -15,7 +15,59 @@
   max-width: var(--content-width);
 }
 
+/* During an active text search the backend ignores sort + every filter (pure
+   relevance), so those controls are disabled — the user never sees their
+   selections silently ignored mid-search. The buttons are pointer-events:none
+   so a hover lands on their (still-interactive) wrapper, which shows a tooltip
+   explaining why they're inert. */
+.controls-bar--searching .filter-btn,
+.controls-bar--searching .sort-custom-btn {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+.controls-bar--searching .sort-label {
+  opacity: 0.4;
+}
+.controls-bar--searching .filter-wrapper,
+.controls-bar--searching .sort-custom-wrapper {
+  cursor: not-allowed;
+}
+
+/* "Unavailable while searching" tooltip on the disabled Filters / Sort controls.
+   Black bubble matching the pill tooltips; shown on hover of the wrapper. */
+.controls-bar--searching .filter-wrapper::after,
+.controls-bar--searching .sort-custom-wrapper::after {
+  content: "Unavailable while searching";
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 300;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background-color: rgba(20, 20, 20, 0.95);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease;
+}
+.controls-bar--searching .filter-wrapper::after {
+  left: 0;
+}
+.controls-bar--searching .sort-custom-wrapper::after {
+  right: 0;
+}
+.controls-bar--searching .filter-wrapper:hover::after,
+.controls-bar--searching .sort-custom-wrapper:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
 .filter-btn {
+  position: relative; /* anchors the active-filter count badge */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -31,6 +83,31 @@
   transition:
     background-color var(--t-base) ease,
     transform var(--t-fast) var(--ease-snap);
+}
+
+/* Small circular badge showing how many filters are active. Hidden (the [hidden]
+   attribute) when none are set; shown with the count otherwise. */
+.filter-count-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  box-sizing: border-box;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background-color: rgb(var(--pink));
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 0 0 2px rgb(var(--wine)); /* dark ring to lift it off the bar */
+}
+.filter-count-badge[hidden] {
+  display: none;
 }
 
 .filter-btn img {

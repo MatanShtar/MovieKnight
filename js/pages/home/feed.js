@@ -30,26 +30,44 @@ const PRELOAD_MARGIN_PX = 1000;
 // helpers must no-op until everything is wired. Flipped true at end of init.
 let filtersReady = false;
 
-// True when any filter (not sort) is set away from its default.
-function anyFilterActive() {
+// How many filter categories are active (not sort). Release Year counts once
+// whether one or both bounds are set; each other category (genres, platforms,
+// rating, age rating, actor, director) counts once when set away from default.
+function activeFilterCount() {
   const ageBtn = document.getElementById("ageRatingBtn");
-  return (
-    (typeof activeGenres !== "undefined" && activeGenres.length > 0) ||
-    (typeof activePlatforms !== "undefined" && activePlatforms.length > 0) ||
-    (typeof currentRating !== "undefined" && currentRating > 0) ||
+  let n = 0;
+  if (typeof activeGenres !== "undefined" && activeGenres.length > 0) n++;
+  if (typeof activePlatforms !== "undefined" && activePlatforms.length > 0) n++;
+  if (typeof currentRating !== "undefined" && currentRating > 0) n++;
+  if (
     (typeof currentFromYear !== "undefined" && currentFromYear !== "Any") ||
-    (typeof currentTillYear !== "undefined" && currentTillYear !== "Any") ||
-    (ageBtn && ageBtn.textContent.trim() !== "Any") ||
-    (typeof actorFilter !== "undefined" && actorFilter && actorFilter.getSelected().length > 0) ||
-    (typeof directorFilter !== "undefined" && directorFilter && directorFilter.getSelected().length > 0)
-  );
+    (typeof currentTillYear !== "undefined" && currentTillYear !== "Any")
+  ) {
+    n++;
+  }
+  if (ageBtn && ageBtn.textContent.trim() !== "Any") n++;
+  if (typeof actorFilter !== "undefined" && actorFilter && actorFilter.getSelected().length > 0) n++;
+  if (typeof directorFilter !== "undefined" && directorFilter && directorFilter.getSelected().length > 0) n++;
+  return n;
 }
 
-// Show the "Clear Filters" button only when at least one filter is active.
+// True when any filter (not sort) is set away from its default.
+function anyFilterActive() {
+  return activeFilterCount() > 0;
+}
+
+// Show the "Clear Filters" button + the numeric badge on the Filters button only
+// when at least one filter is active; the badge shows the active-filter count.
 function updateClearFiltersVisibility() {
   if (!filtersReady) return;
+  const count = activeFilterCount();
   const btn = document.getElementById("filterClearBtn");
-  if (btn) btn.style.display = anyFilterActive() ? "" : "none";
+  if (btn) btn.style.display = count > 0 ? "" : "none";
+  const badge = document.getElementById("filterCountBadge");
+  if (badge) {
+    badge.textContent = String(count);
+    badge.hidden = count < 1;
+  }
 }
 
 // The persistent infinite-scroll sentinel (lives in index.html as the grid's
@@ -95,6 +113,43 @@ function showGridMessage(text) {
   insertBeforeSentinel(p);
 }
 
+// The "no results" empty state. When filters are the likely culprit (the Browse
+// feed has at least one active filter), render a one-click "Clear Filters" button
+// beside the message that resets every filter and re-runs the search — leaving the
+// text query intact. A text search ignores filters entirely, so the button is
+// hidden there (clearing filters wouldn't change a thing).
+function showEmptyState() {
+  if (!document.getElementById("movieGrid")) return;
+  clearGridCards();
+
+  const wrap = document.createElement("div");
+  wrap.className = "grid-message grid-empty";
+
+  const isTextSearch = !!(feedQuery && feedQuery.q);
+  const canClear = !isTextSearch && anyFilterActive();
+
+  const p = document.createElement("p");
+  p.className = "grid-empty-text";
+  p.textContent = canClear
+    ? "No movies found, try clearing some filters."
+    : "No movies found.";
+  wrap.appendChild(p);
+
+  if (canClear) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "grid-clear-filters-btn";
+    btn.textContent = "Clear Filters";
+    btn.addEventListener("click", () => {
+      resetAllFilters({ includeSort: false }); // filters only — keep the sort
+      runSearch();
+    });
+    wrap.appendChild(btn);
+  }
+
+  insertBeforeSentinel(wrap);
+}
+
 // Build cards for a list of movies, preload posters, then REPLACE the cards
 // (leaving the sentinel in place).
 async function renderMovieGrid(movies) {
@@ -102,7 +157,7 @@ async function renderMovieGrid(movies) {
   if (!grid) return;
 
   if (!movies.length) {
-    showGridMessage("No movies found.");
+    showEmptyState();
     return;
   }
 
@@ -220,7 +275,7 @@ async function loadFeedBatch(token = feedToken) {
   feedMovies.push(...collected);
   if (firstLoad) {
     if (collected.length) await renderMovieGrid(feedMovies);
-    else showGridMessage("No movies found. Try removing a filter.");
+    else showEmptyState();
   } else if (collected.length) {
     appendMovieCards(collected); // real cards go in before the skeletons clear
   }

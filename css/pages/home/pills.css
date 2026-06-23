@@ -308,6 +308,68 @@
   border-bottom-color: rgba(var(--pink), 0.8);
 }
 
+/* ---- Inline "X" clear button for text inputs ------------------------------- */
+/* The input is wrapped so the "X" can sit at its right edge. */
+.input-clear-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-clear-btn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+  transition:
+    background-color var(--t-fast) ease,
+    opacity var(--t-fast) ease;
+}
+
+.input-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.32);
+  opacity: 1;
+}
+
+.input-clear-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
+}
+
+/* [hidden] must win over the flex display above. */
+.input-clear-btn[hidden] {
+  display: none;
+}
+
+/* Inside a dropdown the wrapper takes over the sticky role (so the "X" rides
+   along with the search box as the list scrolls underneath it), and the input
+   reserves room on the right for the button. */
+.pill-dropdown .input-clear-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: block;
+}
+.pill-dropdown .input-clear-wrap .dropdown-search {
+  position: static;
+  padding-right: 34px;
+}
+
+
 /* Non-interactive "No people found" row in the actor/director dropdowns */
 .pill-option--empty,
 .pill-option--empty:hover {
@@ -359,7 +421,13 @@
 }
 
 .sort-custom-btn {
-  width: 97.83px;
+  /* Auto width with the original 97.83px as a floor: short labels (Rating ↓, …)
+     keep their original look, while the longer popularity labels ("Popular
+     All-Time" / "Popular This Week") grow the button instead of clipping. The
+     ≤1024px override swaps in the short labels + a smaller min width. */
+  width: auto;
+  min-width: 97.83px;
+  white-space: nowrap;
   height: 45.3px;
   background-color: rgba(var(--pink), 0.13);
   color: var(--text-soft);
