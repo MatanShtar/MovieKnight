@@ -526,15 +526,22 @@ function runGame(config, collectionMovies) {
     //     size; only the two at the edges are slightly smaller ("peeking"). Cards
     //     past that start tiny + transparent, so they grow + fade in "from nowhere"
     //     as they slide on (and shrink + fade out as they slide off). ---
-    // Infinite (looping) coverflow: once a game has enough cards, the strip wraps
-    // into an endless ring — scroll past the last poster and the first re-enters
-    // from the other side. On screen at once are 5 mains + 2 peeks; the loop needs
-    // one more hidden, off-stage card on EACH side as a buffer so a wrapping card
-    // slides in from the edge instead of popping straight onto a peek — i.e. ≥9
-    // cards (5 + 2 + 2). Smaller pools keep the original clamped strip, and mobile
-    // uses the native scroll-snap row.
-    const LOOP_MIN = 9;
-    function loopEnabled() { return !cbIsMobile() && order.length >= LOOP_MIN; }
+    // Infinite (looping) coverflow: the strip wraps into an endless ring — scroll
+    // past the last poster and the first re-enters from the other side. Instead of a
+    // fixed card count, this engages the moment the pool has MORE posters than fit
+    // across the stage — i.e. as soon as any poster would sit off-screen. On a wide
+    // monitor where every poster is visible it stays a static fan (nothing to scroll
+    // to); narrow the window (or add movies) and it becomes a carousel. The off-stage
+    // surplus also doubles as the buffer that lets a wrapping card slide in from the
+    // edge instead of popping onto a peek. Mobile uses the native scroll-snap row.
+    //
+    // How many full posters fit across the stage right now (poster width incl. gap).
+    function fitCount() {
+        const w = coverflow.clientWidth || window.innerWidth || 0;
+        const step = stepPx();
+        return step > 0 ? Math.max(1, Math.floor(w / step)) : order.length;
+    }
+    function loopEnabled() { return !cbIsMobile() && order.length > fitCount(); }
 
     let firstPaint = true;
     function render() {
@@ -647,6 +654,7 @@ function runGame(config, collectionMovies) {
         if (nextBtn) nextBtn.classList.toggle("cb-nav-off", center >= hi - 0.01);
     }
     function stepCenter(dir) {
+        stopMomentum();   // a discrete step (arrow/key/wheel) cancels any coast
         // Looping: let `center` run unbounded (one card crosses the seam per step);
         // render() wraps every card by modulo, so the value never needs clamping.
         if (loopEnabled()) {
@@ -741,6 +749,198 @@ function runGame(config, collectionMovies) {
         setTimeout(() => { wheelLock = false; }, 150);
     }, { passive: false });
 
+    // --- click-and-drag scrolling (desktop): grab the strip and pull it sideways
+    //     like a trackpad swipe. Pointer movement maps 1:1 to poster-widths so the
+    //     cards track the cursor. A flick keeps the strip coasting after release with
+    //     friction (momentum), settling on a poster once it slows down; a slow drag
+    //     just settles on the nearest one. Touch (≤1024) scrolls natively. ---
+    let dragging = false, dragId = null, dragStartX = 0, dragStartCenter = 0, dragMoved = false;
+    // Velocity tracking (in `center` units — i.e. posters — per millisecond) and the
+    // running momentum animation handle.
+    let velocity = 0, lastMoveT = 0, lastMoveCenter = 0, momentumRaf = null;
+
+    // Keep `center` inside the scrollable range (no-op while looping — that runs
+    // unbounded and render() wraps every card by modulo instead).
+    function clampCenter() {
+        if (loopEnabled()) return;
+        const [lo, hi] = centerBounds();
+        center = clamp(center, lo, hi);
+    }
+
+    function stopMomentum() {
+        if (momentumRaf) { cancelAnimationFrame(momentumRaf); momentumRaf = null; }
+        coverflow.classList.remove("cb-coasting");
+    }
+
+    // Land on the nearest whole poster, with the card easing turned back on so the
+    // final adjustment is a smooth snap rather than an instant jump.
+    function settle() {
+        stopMomentum();
+        center = Math.round(center);
+        clampCenter();
+        render();
+    }
+
+    // Coast after a flick: advance `center` by the release velocity each frame while
+    // friction bleeds it away, then settle once it drops below a slow-walk speed.
+    const FLICK_MIN = 0.0014;   // posters/ms (~1.4 posters/sec) — below this, just settle
+    const FLICK_MAX = 0.06;     // posters/ms (~60 posters/sec) — cap so a jitter can't fling it
+    const FRICTION_TAU = 320;   // ms; velocity decays to ~37% every this-many ms
+    function startMomentum() {
+        stopMomentum();
+        if (Math.abs(velocity) < FLICK_MIN) { settle(); return; }
+        coverflow.classList.add("cb-coasting");   // keep transitions off while it glides
+        let last = performance.now();
+        const tick = (now) => {
+            const dt = Math.min(now - last, 40);   // clamp long frames (tab blur) so it can't lurch
+            last = now;
+            center += velocity * dt;
+            velocity *= Math.exp(-dt / FRICTION_TAU);
+            if (!loopEnabled()) {
+                const [lo, hi] = centerBounds();
+                if (center <= lo || center >= hi) { settle(); return; }   // hit an end → stop dead
+            }
+            if (Math.abs(velocity) < FLICK_MIN) { settle(); return; }
+            render();
+            momentumRaf = requestAnimationFrame(tick);
+        };
+        momentumRaf = requestAnimationFrame(tick);
+    }
+
+    coverflow.addEventListener("pointerdown", (e) => {
+        if (cbIsMobile() || e.button !== 0) return;            // touch strip / non-left → skip
+        // Don't start a drag from the interactive controls — the nav arrows, the
+        // ELIMINATE button, or the "i" info badge. A tiny move while pressing those
+        // would otherwise turn into a drag and swallow their click. Drag begins from
+        // the poster/title area (above ELIMINATE) instead.
+        if (e.target.closest(".carousel-control-prev, .carousel-control-next, .cb-eliminate, .cb-info")) return;
+        stopMomentum();                                        // grabbing a coasting strip catches it
+        dragging = true; dragMoved = false; dragId = e.pointerId;
+        dragStartX = e.clientX; dragStartCenter = center;
+        velocity = 0; lastMoveT = performance.now(); lastMoveCenter = center;
+        coverflow.classList.add("cb-dragging");
+        // Stop the press from starting a text selection / native image-drag, both of
+        // which steal the pointer and make the strip stick mid-drag.
+        e.preventDefault();
+        try { coverflow.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    // Safari/Firefox can still kick off the native image drag-and-drop on a poster;
+    // cancel it outright so it never competes with our pointer drag.
+    coverflow.addEventListener("dragstart", (e) => e.preventDefault());
+
+    coverflow.addEventListener("pointermove", (e) => {
+        if (!dragging || e.pointerId !== dragId) return;
+        const dx = e.clientX - dragStartX;
+        if (Math.abs(dx) > 4) dragMoved = true;                // past this it's a drag, not a click
+        center = dragStartCenter - dx / stepPx();              // pull left → reveal posters on the right
+        clampCenter();
+        // Track velocity with light smoothing so a single jittery frame can't spike it.
+        const now = performance.now();
+        const dt = now - lastMoveT;
+        if (dt > 0) {
+            const inst = (center - lastMoveCenter) / dt;
+            velocity = velocity * 0.6 + inst * 0.4;
+            lastMoveT = now; lastMoveCenter = center;
+        }
+        render();
+    });
+
+    function endDrag(e) {
+        if (!dragging || (e && e.pointerId !== dragId)) return;
+        dragging = false; dragId = null;
+        coverflow.classList.remove("cb-dragging");
+        if (!dragMoved) { center = Math.round(center); clampCenter(); render(); return; }
+        // If the pointer was held still just before release, there's no flick — drop
+        // any stale velocity so the strip settles where the user left it.
+        if (performance.now() - lastMoveT > 80) velocity = 0;
+        velocity = clamp(velocity, -FLICK_MAX, FLICK_MAX);
+        startMomentum();
+    }
+    coverflow.addEventListener("pointerup", endDrag);
+    coverflow.addEventListener("pointercancel", endDrag);
+
+    // --- mobile strip: the same grab-and-fling, but driving the native scroll
+    //     container's scrollLeft instead of the coverflow transform. TOUCH keeps the
+    //     browser's own inertial scroll + snap (we don't fight it); this is for MOUSE
+    //     users at narrow widths (≤1024), where the strip replaces the coverflow but a
+    //     mouse otherwise can't drag a native scroller. Velocity is in px/ms here. ---
+    let mDragging = false, mDragId = null, mStartX = 0, mStartScroll = 0, mMoved = false;
+    let mVel = 0, mLastT = 0, mLastScroll = 0, mRaf = null;
+    const M_FLICK_MIN = 0.02;   // px/ms — below this, stop and let it snap
+    const M_FLICK_MAX = 6;      // px/ms cap so a jitter can't fling it across
+
+    function mStopMomentum() {
+        if (mRaf) { cancelAnimationFrame(mRaf); mRaf = null; }
+    }
+    // Re-enable scroll-snap so the strip lands cleanly on the nearest poster (we turn
+    // it off during the drag/coast so scrollLeft can move freely without re-snapping).
+    function mSnap() { mStopMomentum(); track.style.scrollSnapType = ""; }
+
+    function mStartMomentum() {
+        mStopMomentum();
+        if (Math.abs(mVel) < M_FLICK_MIN) { mSnap(); return; }
+        let last = performance.now();
+        const tick = (now) => {
+            const dt = Math.min(now - last, 40); last = now;
+            track.scrollLeft += mVel * dt;
+            mVel *= Math.exp(-dt / FRICTION_TAU);
+            const maxScroll = track.scrollWidth - track.clientWidth;
+            if (track.scrollLeft <= 0 || track.scrollLeft >= maxScroll
+                || Math.abs(mVel) < M_FLICK_MIN) { mSnap(); return; }   // hit an end / slowed → stop
+            mRaf = requestAnimationFrame(tick);
+        };
+        mRaf = requestAnimationFrame(tick);
+    }
+
+    track.addEventListener("pointerdown", (e) => {
+        if (!cbIsMobile() || e.pointerType !== "mouse" || e.button !== 0) return;  // touch → native
+        if (e.target.closest(".cb-eliminate, .cb-info")) return;   // let their clicks through
+        mStopMomentum();
+        mDragging = true; mMoved = false; mDragId = e.pointerId;
+        mStartX = e.clientX; mStartScroll = track.scrollLeft;
+        mVel = 0; mLastT = performance.now(); mLastScroll = track.scrollLeft;
+        track.style.scrollSnapType = "none";                   // scroll freely while dragging/coasting
+        e.preventDefault();
+        try { track.setPointerCapture(e.pointerId); } catch (_) {}
+    });
+
+    track.addEventListener("pointermove", (e) => {
+        if (!mDragging || e.pointerId !== mDragId) return;
+        const dx = e.clientX - mStartX;
+        if (Math.abs(dx) > 4) mMoved = true;
+        track.scrollLeft = mStartScroll - dx;                  // pull left → scroll right
+        const now = performance.now();
+        const dt = now - mLastT;
+        if (dt > 0) {
+            const inst = (track.scrollLeft - mLastScroll) / dt;
+            mVel = mVel * 0.6 + inst * 0.4;                    // same light smoothing as desktop
+            mLastT = now; mLastScroll = track.scrollLeft;
+        }
+    });
+
+    function mEndDrag(e) {
+        if (!mDragging || (e && e.pointerId !== mDragId)) return;
+        mDragging = false; mDragId = null;
+        if (!mMoved) { mSnap(); return; }
+        if (performance.now() - mLastT > 80) mVel = 0;         // held still before release → no flick
+        mVel = clamp(mVel, -M_FLICK_MAX, M_FLICK_MAX);
+        mStartMomentum();
+    }
+    track.addEventListener("pointerup", mEndDrag);
+    track.addEventListener("pointercancel", mEndDrag);
+
+    // A drag that actually moved (desktop coverflow OR mobile strip) shouldn't also
+    // fire the ELIMINATE/info click it happens to end on — swallow that click in the
+    // capture phase, before it reaches the button handlers below. (A plain click never
+    // trips either moved-flag, so it passes through.)
+    coverflow.addEventListener("click", (e) => {
+        if (dragMoved || mMoved) {
+            e.stopPropagation(); e.preventDefault();
+            dragMoved = false; mMoved = false;
+        }
+    }, true);
+
     // click an ELIMINATE button — only the five in-window posters are pressable
     track.addEventListener("click", (e) => {
         const btn = e.target.closest(".cb-eliminate");
@@ -787,8 +987,10 @@ function runGame(config, collectionMovies) {
     }
 
     // --- go ---
-    window.addEventListener("resize", render);   // keep the spread matched to the viewport
-    cbMobileMq.addEventListener("change", render); // swap between coverflow ⇄ scroll-snap strip
+    // Resizing can change how many posters fit (and so flip looping on/off) — re-clamp
+    // `center` into the new bounds before repainting so it never lands out of range.
+    window.addEventListener("resize", () => { clampCenter(); render(); });
+    cbMobileMq.addEventListener("change", () => { clampCenter(); render(); }); // coverflow ⇄ scroll-snap strip
     recenter();                        // clamp the starting centre into bounds
     updateTurn();
     requestAnimationFrame(render);     // first paint with transforms in place

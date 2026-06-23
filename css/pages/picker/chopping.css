@@ -606,6 +606,32 @@
     overflow: hidden;
 }
 
+/* Click-and-drag (desktop): grab the strip and pull it sideways. While dragging,
+   show the grabbing hand and kill the per-card easing so every poster tracks the
+   cursor 1:1 (this overrides the inline transition render() leaves on each card).
+   The !important on the cursor is needed to beat common.css's global custom-cursor
+   rule (`* { cursor: inherit !important }`); the themed arrow stays put at rest, so
+   the native hand only appears during the deliberate drag gesture. */
+.cb-coverflow.cb-dragging .carousel-inner,
+.cb-coverflow.cb-dragging .carousel-inner * { cursor: grabbing !important; }
+/* No card easing while the user drags OR while the strip coasts on momentum — both
+   drive `center` every frame and need the posters to track it instantly. The easing
+   comes back the moment it settles, for the smooth final snap onto a poster. */
+.cb-coverflow.cb-dragging .cb-card,
+.cb-coverflow.cb-coasting .cb-card { transition: none !important; }
+
+/* A horizontal drag must not select the titles or start the browser's native
+   image-drag (the ghost poster) — either one hijacks the pointer and makes the
+   strip "stick". Block text selection across the strip and disable image dragging. */
+.cb-coverflow .carousel-inner {
+    user-select: none;
+    -webkit-user-select: none;
+}
+.cb-coverflow img {
+    -webkit-user-drag: none;
+    user-drag: none;
+}
+
 /* every card is absolutely centred; JS drives a transform per card, and these
    transitions animate both the rotation and the graveyard re-sort (FLIP-style). */
 .cb-card {
