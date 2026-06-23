@@ -393,6 +393,7 @@
     pointer-events: auto;
     position: relative;
     width: 468px;
+    max-width: 92vw; /* never overflow a narrow screen */
     height: 364px;
     border-radius: 50px;
     background-color: rgba(215, 215, 215, 0.2);
@@ -431,20 +432,45 @@
     color: var(--text);
 }
 
+/* Two buttons side by side (View Details + Back to Collection) — same layout,
+   colours and order as the Chopping Block winner. Wraps to a stack only if the
+   box gets very narrow. */
+.winner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 0 24px 26px;
+}
+
 .winner-remove {
-    width: 328px;
-    height: 80px;
-    margin-bottom: 26px;
+    flex: 1 1 0;
+    min-width: 150px;
+    max-width: 220px;
+    height: 70px;
     border: none;
     border-radius: 50px;
     background-color: rgb(var(--maroon-light));
     color: var(--text);
     font-family: inherit;
-    font-size: 24px;
+    font-size: 22px;
     cursor: pointer;
+    /* an <a> + a <button> share this class — keep both centred + un-underlined */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    text-decoration: none;
+    padding: 0 12px;
     transition:
         transform var(--t-base) var(--ease-pop),
         filter var(--t-base) ease;
+}
+
+/* Back to Collection — distinct secondary tone (matches Chopping Block). */
+.winner-secondary {
+    background-color: #596d73;
 }
 
 .winner-remove:hover {
@@ -509,6 +535,12 @@
         gap: 6px;
     }
 
+    /* Stretch the Info / Select Winner pill to the full card width so it lines up
+       with the poster (262px) instead of shrinking to its text. */
+    .ai-actions {
+        width: 100%;
+    }
+
     /* On a narrow screen the side-by-side slide doesn't fit, so reveal in place. */
     .ai-card:not(.is-revealed) .ai-poster {
         transform: translateX(0);
@@ -525,4 +557,20 @@
         padding: 8px 12px;
         margin: -8px 0 0 -12px;
     }
+}
+
+/* Scale the winner popup down for phones — same treatment as Wheel / Chopping Block:
+   a smaller, inset box (not full-width), a smaller header padded clear of the close
+   X, and two action buttons that still sit side by side. */
+@media (max-width: 600px) {
+    .winner-box {
+        width: min(380px, 90vw);
+        height: auto;
+        border-radius: 36px;
+        padding-bottom: 18px;
+    }
+    .winner-header { font-size: 24px; padding: 14px 46px; }
+    .winner-title { font-size: 26px; padding: 22px 18px; }
+    .winner-actions { gap: 12px; padding: 0 18px 4px; }
+    .winner-remove { height: 60px; font-size: 18px; min-width: 130px; }
 }

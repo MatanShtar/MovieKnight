@@ -77,12 +77,18 @@ let aiResultsShowing = false;
 
 if (aiModeBtn && searchContainer && searchInput) {
   aiModeBtn.addEventListener("click", () => {
+    // AI features are logged-in only. A guest clicking AI mode gets the same
+    // "must be logged in" toast as the heart/eye actions, and the mode stays off.
+    // (Only gate turning it ON — turning it back off must always work.)
+    if (!aiModeOn() && window.requireAuth && !requireAuth()) return;
     aiModeBtn.classList.toggle("pressed");
     searchContainer.classList.toggle("ai-glow");
     if (aiModeOn()) {
-      // AI mode is deliberate, not live: typing won't fire a (slow, costly) AI
-      // call — the user submits with Enter. The hint reflects that.
-      searchInput.placeholder = "Describe a movie, then press Enter…";
+      // AI mode is deliberate, not live: typing won't fire a (slow, costly) AI call —
+      // the user submits with Enter, which the hint reflects. The hint's FONT scales
+      // with the search-bar width (CSS, scoped to .ai-glow) so it never clips, on any
+      // screen or layout — see css/pages/home/layout.css.
+      searchInput.placeholder = "Describe a movie, press Enter…";
     } else {
       // Back to the normal catalog. Only re-run the feed if AI results are actually
       // on screen; otherwise the catalog is already showing — don't refresh it.
@@ -186,6 +192,9 @@ async function runAiSearch(query, { reroll = false } = {}) {
 // A SHORT, friendly message for a failed AI search — never the raw upstream error
 // (Gemini's free-tier rate-limit replies are a huge wall of text).
 function aiSearchErrorMessage(err) {
+  // Quota exhausted is a 429 too, but distinguished by the backend's error code —
+  // surface its specific message instead of the generic "AI is busy" line.
+  if (err && err.code === MovieAPI.AI_LIMIT_CODE) return err.message;
   switch (err && err.status) {
     case 400: return (err.message && err.message.length <= 100)
       ? err.message : "That search didn’t look right — try rephrasing it.";
@@ -225,6 +234,15 @@ if (searchInput) {
     e.preventDefault();
     const q = searchInput.value.trim();
     if (!q) return; // a blank box does nothing
+    // Guests can't enter AI mode, but guard anyway; and stop here if the daily
+    // quota is spent — instant feedback from the cached count (the backend, which
+    // also counts a reroll as an action, would 429 regardless). Limit/message come
+    // from the backend, never hard-coded here.
+    if (window.requireAuth && !requireAuth()) return;
+    if (window.MovieAPI && MovieAPI.aiActionsRemaining() <= 0) {
+      if (window.toast) toast.warn(MovieAPI.aiLimitReachedMessage());
+      return;
+    }
     if (q === lastAiQuery) {
       // Re-submitting the SAME query acts as a single "reroll": fresh picks that
       // exclude what's on screen. Allowed once per query (#2); after that it's a

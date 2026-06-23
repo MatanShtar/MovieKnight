@@ -894,7 +894,7 @@
         border-radius: 36px;
         padding-bottom: 20px;
     }
-    .winner-header { font-size: 26px; padding: 16px 0; }
+    .winner-header { font-size: 24px; padding: 14px 46px; } /* padded clear of the close X */
     .winner-title { font-size: 26px; padding: 26px 16px; }
     .winner-actions { padding: 0 18px; margin-bottom: 0; gap: 12px; }
     .winner-action { height: 60px; font-size: 17px; }

@@ -181,9 +181,10 @@
           posterPath: m.posterPath,
         })
       );
-      // Opened from the collection page (not Home) → open details in a new tab
-      // so the collection stays put behind it.
-      window.open(`movie.html?id=${encodeURIComponent(m.id)}`, "_blank", "noopener");
+      // Navigate in the SAME tab (matches Home) — smartBack returns to the
+      // collection. The mk:lastMovie stash above makes the details page paint
+      // instantly on arrival.
+      window.location.href = `movie.html?id=${encodeURIComponent(m.id)}`;
     };
     card.addEventListener("click", openMovie);
     card.addEventListener("keydown", (e) => {

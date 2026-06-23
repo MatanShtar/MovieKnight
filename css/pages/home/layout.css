@@ -61,6 +61,10 @@
     border-color var(--t-base) ease,
     box-shadow var(--t-base) ease;
   border: 5px solid transparent;
+  /* Make the bar a query container so the AI hint below can size its font to the
+     bar's actual width (cqi units) — robust whatever the layout makes the bar
+     (full-row on mobile, squeezed beside Surprise Me in the 1024–1140px range). */
+  container-type: inline-size;
 }
 
 .search-container input {
@@ -71,6 +75,15 @@
   width: 100%;
   padding: 10px;
   outline: none;
+}
+
+/* AI-mode hint ("Describe a movie, press Enter…") is long and the AI-mode button
+   eats part of the bar, so on a narrow bar it would clip. Scale ITS font with the
+   bar width (1cqi = 1% of the bar) — clamped readable — so it shrinks to fit instead
+   of cropping, at any width. Scoped to .ai-glow so the normal short placeholder and
+   the text you type keep their full size. */
+.search-container.ai-glow input::placeholder {
+  font-size: clamp(9px, 3.4cqi, 18px);
 }
 
 .search-container > .nav-search-icon {

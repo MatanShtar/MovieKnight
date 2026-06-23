@@ -1094,7 +1094,7 @@
     /* Scale the winner popup down so it fits a phone screen comfortably without
        scrolling/clipping — smaller box, header, title and action buttons. */
     .winner-box { width: min(380px, 90vw); height: auto; border-radius: 36px; padding-bottom: 18px; }
-    .winner-header { font-size: 26px; padding: 16px 0; }
+    .winner-header { font-size: 24px; padding: 14px 46px; } /* padded clear of the close X */
     .winner-title { font-size: 26px; padding: 26px 16px; }
     .winner-actions { gap: 12px; padding: 0 18px 4px; }
     .winner-remove { height: 60px; font-size: 18px; min-width: 130px; }
