@@ -362,11 +362,19 @@ function setupWinnerControls() {
     const overlay = document.getElementById('winnerOverlay');
     const close = document.getElementById('winnerClose');
     const view = document.getElementById('aiViewDetails');
+    const back = document.getElementById('aiBackToCollection');
 
     if (close) close.addEventListener('click', closeWinner);
     if (view) view.addEventListener('click', () => {
         if (currentWinner) openDetails(currentWinner, { backToPicker: true });
     });
+    // "Back to Collection" → the collection these picks came from (same as Chopping
+    // Block). aiConfig.collectionId is guaranteed set here (the page redirects on a
+    // direct visit without it).
+    if (back && aiConfig && aiConfig.collectionId != null) {
+        back.setAttribute('href',
+            `collection.html?id=${encodeURIComponent(aiConfig.collectionId)}`);
+    }
     if (overlay) overlay.addEventListener('click', (e) => {
         if (e.target === overlay) closeWinner();
     });
