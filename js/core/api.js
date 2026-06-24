@@ -493,9 +493,9 @@ window.MovieAPI = (function () {
             posterUrl: c.posterUrl ? toPosterUrl(c.posterUrl) : null,
             sort: c.sort || "added_desc",
             movieCount: c.movieCount || 0,
-            posters: (c.posters || []).map(toPosterUrl).filter(Boolean),
             // First ≤4 movies, each with BOTH image URLs so the cover generator can
             // pick poster or backdrop per layout/viewport (see buildCollectionCover).
+            // This is the sole source for the cover — the backend always returns it.
             covers: (c.covers || []).map((x) => ({
                 poster: toPosterUrl(x && x.poster),
                 backdrop: toCoverBackdropUrl(x && x.backdrop),

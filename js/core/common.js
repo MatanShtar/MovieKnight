@@ -93,16 +93,13 @@ function coverTile(src) {
   return `<img class="cover-tile" src="${escapeHtml(src)}" alt="" loading="lazy" onerror="${COVER_TILE_ERR}">`;
 }
 
-// Normalise a card into an ordered [{poster, backdrop}] of its first ≤4 movies.
-// Accepts the new `covers` shape, or falls back to the legacy flat `posters`.
+// Normalise a card into an ordered [{poster, backdrop}] of its first ≤4 movies,
+// from the card's `covers` (the backend's single source of truth for the cover).
 function coverPairs(c) {
-  if (c && Array.isArray(c.covers) && c.covers.length) {
-    return c.covers
-      .slice(0, 4)
-      .map((x) => ({ poster: (x && x.poster) || "", backdrop: (x && x.backdrop) || "" }));
-  }
-  const posters = (c && c.posters) || [];
-  return posters.slice(0, 4).map((p) => ({ poster: p || "", backdrop: "" }));
+  const covers = (c && Array.isArray(c.covers) && c.covers) || [];
+  return covers
+    .slice(0, 4)
+    .map((x) => ({ poster: (x && x.poster) || "", backdrop: (x && x.backdrop) || "" }));
 }
 
 function coverIsMobile() {
