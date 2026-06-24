@@ -150,6 +150,188 @@
   }
 }
 
+/* Phone (≤600): condense the profile HEADER so it stops reading as one tall
+   single-file column. The avatar sits in a ROW beside the name + bio (compact
+   "identity block", Instagram-style — saves vertical space when the avatar is
+   small and the bio is short), the badges shrink into a slim band, and the meta
+   row leads straight into the collections grid. The collections layout itself is
+   intentionally left untouched (see the block below). */
+@media (max-width: 1440px) {
+  /* 2-column grid: [avatar | name+bio] on row 1, then badges + meta full-width.
+     The .profile-info / left-col wrappers stay display:contents (from the ≤1440
+     rule) so their children lift up as direct grid items we can place by area —
+     except the right-hand text column, which we restore to a real box so the
+     name + bio stack inside it. */
+  .profile-header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "avatar identity"
+      "badges badges"
+      "meta meta";
+    align-items: start; /* username sits at the TOP of the avatar circle */
+    column-gap: 16px;
+    row-gap: 22px;
+    text-align: left;
+  }
+
+  .profile-avatar-container {
+    grid-area: avatar;
+    justify-content: center;
+  }
+  .profile-avatar {
+    width: 92px;
+  }
+  /* thinner ring + a tucked-in corner camera badge read better this small */
+  .avatar-pic {
+    border-width: 4px;
+  }
+  .upload-new-pic {
+    width: 32px;
+    top: -2px;
+    right: -2px;
+  }
+
+  /* name + bio: restore the column as a real box, left-aligned beside the avatar */
+  .profile-info-right-col {
+    grid-area: identity;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+    padding-left: 0;
+    text-align: left;
+    min-width: 0;
+  }
+  .profile-username {
+    order: 0; /* neutralise the stacked-column order from the ≤1440 rule */
+    margin-top: 0;
+    min-height: 0;
+    text-align: left;
+    font-size: 22px;
+  }
+  .bio-edit {
+    display: block; /* re-anchor the absolute edit button (was display:contents) */
+    position: relative;
+    padding-top: 0;
+  }
+  .profile-bio {
+    order: 0;
+    margin-top: 0;
+    text-align: left;
+    font-size: 15px;
+    /* keep the base 10-row cap on phone too (no shorter clamp here) */
+    padding-right: 32px; /* keep bio text clear of the edit button top-right */
+  }
+  /* small edit button (was a chunky 44px on touch), aligned to the bio box top */
+  .bio-edit-btn {
+    width: 28px;
+    height: 28px;
+    top: 0;
+    right: 0;
+    border-radius: 6px;
+  }
+  .bio-edit-btn img {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Badges: a left-aligned band. Its own grid so "View All Badges" rides in the
+     SAME row as the "Progression Badges" heading; the shields sit on row 2.
+     col1 = heading (shrinks/wraps if squeezed), col2 = the button. */
+  .profile-badges {
+    grid-area: badges;
+    display: grid;
+    grid-template-columns: minmax(0, max-content) 1fr;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 14px;
+    margin-top: 0;
+    width: 100%;
+  }
+  .prog-badges-header {
+    grid-column: 1;
+    grid-row: 1;
+    justify-content: flex-start;
+    text-align: left;
+    white-space: normal;
+    font-size: 22px; /* match the username (req: same size as username) */
+  }
+  .view-badges-container {
+    grid-column: 2;
+    grid-row: 1;
+    justify-content: flex-end; /* View All Badges hugs the right edge */
+    width: auto;
+    margin-top: 0;
+  }
+  /* shields spread across the whole row with equal space around each one */
+  .badges-display {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: space-evenly;
+    gap: 0;
+  }
+  /* the 0×0 gradient-defs svg is also a grid child — park it on a 0-height row */
+  .badge-gradient-defs {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .badge-shield {
+    flex: 0 0 92px; /* fixed size so space-evenly can space them out */
+    width: 92px;
+    max-width: 92px;
+  }
+  .badge-shield svg {
+    max-width: 92px;
+  }
+  /* shrink the label so it no longer spills past the shield edges */
+  .badge-title {
+    font-size: 8px;
+    line-height: 1.2;
+    letter-spacing: 0.2px;
+    width: 76%; /* narrow enough that two-word titles wrap inside the shield */
+  }
+
+  /* Meta row: collection count (left) + New Collection (right) on ONE line. */
+  .profile-meta {
+    grid-area: meta;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0;
+    gap: 12px;
+  }
+  .profile-meta > p {
+    text-align: left;
+    margin: 0;
+    font-size: 18px;
+  }
+
+  /* View All Badges + New Collection: an identical button pair — same font, same
+     padding and the SAME fixed width (border-box so the icon button matches). */
+  .view-badges-btn,
+  .new-collection-btn {
+    box-sizing: border-box;
+    width: 150px;
+    max-width: none;
+    font-size: 14px;
+    padding: 9px 8px;
+    border-radius: 10px;
+  }
+  .new-collection-btn {
+    gap: 6px;
+    justify-content: center; /* centre icon+label like the text-only button */
+  }
+  .new-collection-btn img {
+    width: 14px;
+    height: 14px;
+  }
+  .new-collection-btn span {
+    flex: 0 0 auto; /* don't stretch the label — keep it centred in the button */
+  }
+}
+
 /* Phone: ONE full-width card per row, but with a HORIZONTAL cover (the first ≤4
    posters in a wide banner) so a single card never absorbs the whole screen.
    Every width ABOVE this keeps ≥2 columns via the min() track on .collections-row. */
@@ -164,19 +346,10 @@
     margin-bottom: 0;
   }
 
+  /* Phone: the cover becomes a wide banner (not a screen-tall 2:3 portrait). The
+     layout CLASS itself is swapped by buildCollectionCover (1 backdrop / 2 backdrops
+     / 3-4 posters in columns), so here we only reshape the box. */
   .collection-cover {
-    aspect-ratio: 5 / 2; /* wide banner, not a screen-tall 2:3 portrait */
-  }
-  .cover-1 {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr;
-  }
-  .cover-2 {
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr;
-  }
-  .cover-4 {
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: 1fr;
+    aspect-ratio: 5 / 2;
   }
 }

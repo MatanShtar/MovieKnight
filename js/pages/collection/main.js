@@ -290,7 +290,21 @@
       window.location.href = `picker.html${q}`;
     });
     $("colEnhanceBtn").addEventListener("click", () => {
-      if (window.toast) toast.soon("Enhance My Collection — Coming Soon!");
+      // Enhance acts on a real, saved collection (the demo harness has no backend).
+      if (state.isDemo || !state.id) {
+        if (window.toast) toast.info("Open a saved collection to enhance it.");
+        return;
+      }
+      // The first AI recommendation spends a daily action — surface the shared
+      // "out of daily actions" toast instead of opening a doomed modal.
+      if (window.MovieAPI && MovieAPI.aiActionsRemaining() <= 0) {
+        if (window.toast) toast.warn(MovieAPI.aiLimitReachedMessage());
+        return;
+      }
+      window.EnhanceModal.open(state.id, {
+        name: state.collection && state.collection.name,
+        onChange: () => load(), // refresh the grid + count once, on close, if a movie was added
+      });
     });
 
     load();

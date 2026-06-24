@@ -117,8 +117,14 @@
     setCount("Collections"); // label placeholder (avoids a lone "…" glyph)
     try {
       collections = await MovieAPI.listCollections();
-      // preload a few cover posters so the grid doesn't pop in piecemeal
-      await preloadImages(collections.flatMap((c) => c.posters).slice(0, 12));
+      // preload a few cover images (poster + backdrop) so the grid doesn't pop in
+      // piecemeal — whichever the layout picks for the current viewport is warm.
+      await preloadImages(
+        collections
+          .flatMap((c) => (c.covers || []).flatMap((x) => [x.poster, x.backdrop]))
+          .filter(Boolean)
+          .slice(0, 12)
+      );
       renderCards();
     } catch (err) {
       console.error("Could not load collections:", err);

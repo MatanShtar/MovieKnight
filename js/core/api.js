@@ -472,6 +472,14 @@ window.MovieAPI = (function () {
         if (/^(https?:)?\/\//i.test(path) || /^data:/i.test(path)) return path;
         return TMDB_IMAGE_BASE + path;
     }
+    // Backdrops for cover tiles are small — pull a lighter width than the full
+    // movie-page backdrop (w1280) since these render at thumbnail size.
+    const TMDB_COVER_BACKDROP_BASE = "https://image.tmdb.org/t/p/w780";
+    function toCoverBackdropUrl(path) {
+        if (!path) return "";
+        if (/^(https?:)?\/\//i.test(path) || /^data:/i.test(path)) return path;
+        return TMDB_COVER_BACKDROP_BASE + path;
+    }
 
     // A collection "card" (profile grid): identity + visibility + up to 4 cover
     // posters (as full URLs) + counts. Likes/saves are deferred (always 0).
@@ -486,6 +494,12 @@ window.MovieAPI = (function () {
             sort: c.sort || "added_desc",
             movieCount: c.movieCount || 0,
             posters: (c.posters || []).map(toPosterUrl).filter(Boolean),
+            // First ≤4 movies, each with BOTH image URLs so the cover generator can
+            // pick poster or backdrop per layout/viewport (see buildCollectionCover).
+            covers: (c.covers || []).map((x) => ({
+                poster: toPosterUrl(x && x.poster),
+                backdrop: toCoverBackdropUrl(x && x.backdrop),
+            })),
             likesCount: c.likesCount || 0,
             savesCount: c.savesCount || 0,
             author: c.author || null,
@@ -682,6 +696,42 @@ window.MovieAPI = (function () {
         }
     }
 
+    // POST /api/ai/enhance/:id — "Enhance Collection". Recommends up to 3 movies
+    // NOT already in the collection that fit its taste, each with an AI `reason`.
+    // For a "Try Again" reroll the caller passes everything shown so far:
+    //   • exclude_ids    — integer TMDB ids, the HARD filter (never returned again).
+    //   • exclude_titles — the titles, fed into the prompt so the model itself avoids
+    //     them (Gemini deals in titles, not ids, so this is what truly stops repeats).
+    // `data` is TMDB-shaped movies + `reason`; normalise but keep `reason`.
+    async function aiEnhance(collectionId, { exclude_ids, exclude_titles } = {}) {
+        const body = {};
+        const exclude = toExcludeIds(exclude_ids);
+        if (exclude.length) body.exclude_ids = exclude;
+        if (Array.isArray(exclude_titles)) {
+            const titles = exclude_titles.map((t) => String(t || "").trim()).filter(Boolean);
+            if (titles.length) body.exclude_titles = titles;
+        }
+        try {
+            // returnEnvelope: read the `aiUsage` the endpoint already sends back (the
+            // action it just spent) and update the badge from it — no extra round-trip.
+            const env = await request(`/ai/enhance/${encodeURIComponent(collectionId)}`, {
+                method: "POST", body, returnEnvelope: true,
+            });
+            if (env) cacheAiUsage(env.aiUsage);
+            return extractList(env && env.data, "movies")
+                .map((m) => {
+                    const n = normalizeMovie(m);
+                    return n ? { ...n, reason: m.reason || "" } : null;
+                })
+                .filter(Boolean);
+        } catch (err) {
+            // A 429 body carries no usage (it threw before spending), so on the rare
+            // cache desync that lets one through, fetch the authoritative count.
+            if (err && err.status === 429) refreshAiUsage();
+            throw err;
+        }
+    }
+
     // ---- AI daily quota ---------------------------------------------------------
     // The header menu shows "AI Actions: N of LIMIT left". The BACKEND owns the limit
     // (services/aiQuota.js → DAILY_AI_LIMIT) and is the real guard (it 429s the
@@ -817,6 +867,7 @@ window.MovieAPI = (function () {
         API_BASE,
         aiPicker,
         aiSearch,
+        aiEnhance,
         getAiUsage,
         aiActionsRemaining,
         aiActionsLimit,

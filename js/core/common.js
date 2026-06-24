@@ -68,36 +68,106 @@ window.escapeHtml = escapeHtml;
 // ==========================================
 // 0c. COLLECTION COVER COLLAGE (GLOBAL)
 // ==========================================
-// Build a collection's cover from its first ≤4 movie posters — the SAME rules
-// the profile grid uses, shared so the Add-to-Collection modal matches it:
-// 0 → checkerboard "+" placeholder, 1 → single full poster, 2-3 → two side by
-// side, 4+ → 2×2. A custom uploaded cover (c.posterUrl) wins. (Styles live in
-// common.css under ".collection-cover".)
-function buildCollectionCover(c) {
-  const TILE_ERR =
-    "this.replaceWith(Object.assign(document.createElement('span'),{className:'cover-tile cover-tile--empty'}))";
-  const tileImg = (src) =>
-    `<img class="cover-tile" src="${escapeHtml(src)}" alt="" loading="lazy" onerror="${TILE_ERR}">`;
-  if (c && c.posterUrl) {
-    return `<div class="collection-cover cover-1">${tileImg(c.posterUrl)}</div>`;
+// Build a collection's cover from its first ≤4 movies. The layout depends on BOTH
+// the movie count AND the card shape — the profile grid is a 2:3 portrait on
+// desktop but a 5:2 banner at ≤600px (see common.css / profile responsive.css):
+//
+//   count   Desktop (portrait 2:3)        Mobile (banner 5:2)
+//   ----    ----------------------        -------------------
+//   1       1 poster                      1 backdrop
+//   2-3     2-3 backdrops, stacked        2 → 2 backdrops side by side
+//   4+      2×2 poster grid               3 → 3 posters / 4+ → 4 posters, in cols
+//
+// Each movie carries BOTH a poster and a backdrop URL (c.covers); each layout picks
+// whichever image type it wants, with the other as a per-tile fallback. A custom
+// uploaded cover (c.posterUrl) always wins. Styles live in common.css.
+//
+// `opts.responsive` (default true) follows the viewport and re-lays-out live when
+// the card crosses the breakpoint. The Add-to-Collection modal passes `false`: its
+// tiles are pinned to 2:3 regardless of viewport, so they keep the desktop layout.
+const COVER_MOBILE_MQ = "(max-width: 600px)";
+const COVER_TILE_ERR =
+  "this.replaceWith(Object.assign(document.createElement('span'),{className:'cover-tile cover-tile--empty'}))";
+
+function coverTile(src) {
+  return `<img class="cover-tile" src="${escapeHtml(src)}" alt="" loading="lazy" onerror="${COVER_TILE_ERR}">`;
+}
+
+// Normalise a card into an ordered [{poster, backdrop}] of its first ≤4 movies.
+// Accepts the new `covers` shape, or falls back to the legacy flat `posters`.
+function coverPairs(c) {
+  if (c && Array.isArray(c.covers) && c.covers.length) {
+    return c.covers
+      .slice(0, 4)
+      .map((x) => ({ poster: (x && x.poster) || "", backdrop: (x && x.backdrop) || "" }));
   }
   const posters = (c && c.posters) || [];
-  const n = posters.length;
-  if (n === 0) {
+  return posters.slice(0, 4).map((p) => ({ poster: p || "", backdrop: "" }));
+}
+
+function coverIsMobile() {
+  return !!(window.matchMedia && window.matchMedia(COVER_MOBILE_MQ).matches);
+}
+
+// Choose the layout class + the ordered image srcs for a movie set and viewport.
+function pickCoverLayout(pairs, mobile) {
+  const n = pairs.length;
+  const poster = (m) => m.poster || m.backdrop || "";
+  const backdrop = (m) => m.backdrop || m.poster || "";
+  if (mobile) {
+    if (n === 1) return { cls: "cover-m1", srcs: [backdrop(pairs[0])] };
+    if (n === 2) return { cls: "cover-m2", srcs: pairs.map(backdrop) };
+    const cols = n === 3 ? 3 : 4; // 3 → 3 columns, 4+ → 4 columns
+    return { cls: `cover-mcols cover-mcols-${cols}`, srcs: pairs.slice(0, cols).map(poster) };
+  }
+  if (n === 1) return { cls: "cover-d1", srcs: [poster(pairs[0])] };
+  if (n <= 3) return { cls: `cover-dstack cover-dstack-${n}`, srcs: pairs.map(backdrop) };
+  return { cls: "cover-dgrid", srcs: pairs.slice(0, 4).map(poster) };
+}
+
+// One global listener re-lays-out every responsive cover when the card flips
+// between its portrait (desktop) and banner (mobile) shapes. Covers are pure images
+// (no per-tile listeners — the profile grid delegates clicks on the card), so
+// swapping innerHTML in place is safe.
+let _coverRelayoutReady = false;
+function ensureCoverRelayout() {
+  if (_coverRelayoutReady || !window.matchMedia) return;
+  _coverRelayoutReady = true;
+  const mq = window.matchMedia(COVER_MOBILE_MQ);
+  const relayout = () => {
+    document.querySelectorAll(".collection-cover[data-cover]").forEach((el) => {
+      let pairs;
+      try {
+        pairs = JSON.parse(el.getAttribute("data-cover"));
+      } catch (_) {
+        return;
+      }
+      if (!Array.isArray(pairs) || !pairs.length) return;
+      const { cls, srcs } = pickCoverLayout(pairs, mq.matches);
+      el.className = `collection-cover ${cls}`;
+      el.innerHTML = srcs.map(coverTile).join("");
+    });
+  };
+  if (mq.addEventListener) mq.addEventListener("change", relayout);
+  else if (mq.addListener) mq.addListener(relayout); // older Safari
+}
+
+function buildCollectionCover(c, opts) {
+  const responsive = !opts || opts.responsive !== false;
+  if (responsive) ensureCoverRelayout();
+  if (c && c.posterUrl) {
+    // Custom uploaded cover: one image filling the card (portrait or banner).
+    return `<div class="collection-cover cover-d1">${coverTile(c.posterUrl)}</div>`;
+  }
+  const pairs = coverPairs(c);
+  if (!pairs.length) {
     return `<div class="collection-cover cover-empty" role="img" aria-label="No movies yet"><span class="cover-empty__plus" aria-hidden="true"></span></div>`;
   }
-  let layout, tiles;
-  if (n === 1) {
-    layout = "cover-1";
-    tiles = posters.slice(0, 1);
-  } else if (n <= 3) {
-    layout = "cover-2";
-    tiles = posters.slice(0, 2);
-  } else {
-    layout = "cover-4";
-    tiles = posters.slice(0, 4);
-  }
-  return `<div class="collection-cover ${layout}">${tiles.map(tileImg).join("")}</div>`;
+  const { cls, srcs } = pickCoverLayout(pairs, responsive && coverIsMobile());
+  // Responsive covers stash their data so the breakpoint listener can re-lay-out
+  // in place; fixed (modal) covers don't — they stay on the desktop layout.
+  const data = responsive ? ` data-cover="${escapeHtml(JSON.stringify(pairs))}"` : "";
+  return `<div class="collection-cover ${cls}"${data}>${srcs.map(coverTile).join("")}</div>`;
 }
 window.buildCollectionCover = buildCollectionCover;
 

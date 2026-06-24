@@ -129,12 +129,13 @@ window.CollectionModal = (function () {
     item.dataset.id = c.id;
     item.setAttribute("role", "checkbox");
 
-    // Cover built EXACTLY like the profile grid (shared helper in common.js):
-    // 0 → placeholder, 1 → single full poster, 2-3 → two, 4+ → 2×2.
+    // Cover built with the shared helper (common.js). The modal tiles are pinned
+    // to 2:3 regardless of viewport, so pass responsive:false to keep the desktop
+    // (portrait) layout — 1 poster / 2-3 stacked backdrops / 2×2 — not the banner.
     item.innerHTML = `
       <span class="cm-check" aria-hidden="true"></span>
       <span class="cm-name"></span>
-      ${window.buildCollectionCover(c)}`;
+      ${window.buildCollectionCover(c, { responsive: false })}`;
     const nameEl = item.querySelector(".cm-name");
     nameEl.textContent = c.name;
     // Surface the full name on hover when it ellipsis-truncates.
