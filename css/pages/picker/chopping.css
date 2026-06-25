@@ -1104,8 +1104,10 @@
     .cb-stat-row .cb-label { text-align: left; white-space: normal; }
 
     /* The eliminations slider stacks under its label and spans the FULL width, so the
-       1 / 2 / 3 spread across the whole screen. */
-    .cb-stat-row--stack { flex-direction: column; align-items: stretch; gap: 18px; }
+       1 / 2 / 3 spread across the whole screen. The slider's numbers are absolutely
+       positioned and hang ~45px BELOW its box (no layout height), which would eat into
+       the gap before the next row — reserve that space so all the row gaps read even. */
+    .cb-stat-row--stack { flex-direction: column; align-items: stretch; gap: 18px; padding-bottom: 45px; }
     .cb-stat-row--stack .cb-label { text-align: left; }
     .cb-slider { width: 100%; }
 
@@ -1115,6 +1117,13 @@
         width: 100%;
         justify-content: space-between;
     }
+
+    /* Size the Random Order toggle to match the count pills (.cb-pill is 84×43) so
+       all three right-hand controls share the same footprint. The handle scales up
+       to stay proportionate in the taller track. */
+    .cb-toggle { width: 84px; height: 43px; }
+    .cb-toggle-handle { width: 35px; height: 35px; }
+    .cb-toggle input:checked ~ .cb-toggle-handle { left: calc(100% - 39px); }
 
     .cb-tag { min-width: 0; height: 44px; padding: 0 14px; }
     .cb-tag-name { font-size: 15px; }
