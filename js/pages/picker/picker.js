@@ -272,18 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return [...genreGrid.querySelectorAll('.genre-btn:not(.dashed)')];
     }
 
-    // Faithful to the requirement: when a genre is switched off, hide any movie
-    // elements on the page tagged with that genre id. The picker itself shows no
-    // movie list, so this is a no-op here, but it correctly drives any movie grid
-    // that opts in via data-genre-ids (kept generic on purpose).
-    function applyGenreVisibility(genreId, hidden) {
-        document
-            .querySelectorAll(`[data-genre-ids~="${genreId}"]`)
-            .forEach((el) => {
-                el.style.display = hidden ? "none" : "";
-            });
-    }
-
     if (genreGrid) {
         renderGenres(dataConfig.genres); // show fallback immediately
         // Then replace with live genres from the backend when they arrive.
@@ -336,7 +324,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.classList.toggle('dashed');
                 const nowHidden = this.classList.contains('dashed');
                 if (id) { nowHidden ? genreOff.add(id) : genreOff.delete(id); }
-                if (id) applyGenreVisibility(id, nowHidden);
                 refreshGenerateState();
             });
         });

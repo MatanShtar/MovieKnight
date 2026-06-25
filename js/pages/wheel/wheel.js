@@ -6,10 +6,6 @@
 // The free-form title cap shared by "add" and "rename".
 const MAX_TITLE_LEN = 20;
 
-// Legacy key for the old localStorage-only wheel — read ONCE for a best-effort
-// migration into the server (see initWheelData), never written to anymore.
-const LEGACY_WHEEL_KEY = "movieKnightWheel";
-
 // Per-collection sessionStorage key for the unsaved WORKING DRAFT. This is what lets a
 // generated/edited wheel survive a page RELOAD — it is NEVER auto-saved to the server
 // (the user still saves explicitly). Kept in sessionStorage so it's scoped to this tab
@@ -115,19 +111,12 @@ function resolveWheelCollectionId() {
 }
 
 // Parse a stored JSON array of titles → a blanks-filtered array, or null if the key is
-// absent/empty/not an array. Shared by the legacy-wheel and working-draft readers.
+// absent/empty/not an array. Used by the working-draft reader (readWheelDraft).
 function readStoredArray(storage, key) {
     try {
         const parsed = JSON.parse(storage.getItem(key));
         return Array.isArray(parsed) ? parsed.filter(Boolean) : null;
     } catch { return null; }
-}
-
-// Read the legacy localStorage-only wheel — shown as an unsaved fallback when a
-// collection has no saved wheel yet. Never auto-migrated; the user saves it if they
-// want it on the server.
-function readLegacyWheel() {
-    return readStoredArray(localStorage, LEGACY_WHEEL_KEY);
 }
 
 // ---- working draft (sessionStorage) ----
@@ -153,7 +142,6 @@ function readWheelDraft() {
 //   • a fresh picker hand-off (the user just chose filters) — shown but NOT saved;
 //   • else the working draft from before a reload (sessionStorage), also unsaved;
 //   • else the server's saved wheel;
-//   • else (nothing saved) a one-time legacy localStorage wheel, also unsaved;
 //   • else the two editable placeholders.
 // Nothing is ever persisted here — saving happens ONLY when the user clicks Save.
 async function initWheelData() {
@@ -193,19 +181,11 @@ async function initWheelData() {
 
         // A fresh picker hand-off or a restored draft is already on screen (set in the
         // early paint above) — keep it; serverWheel is now just the Save/Load baseline.
-        // Only when there's neither do we choose what to show: this collection's saved
-        // wheel, else a legacy localStorage-only wheel (if any), else the placeholders.
-        if (!handoff && !draft) {
-            if (wc.length) {
-                movies = wc;
-                currentRotation = 0;
-            } else {
-                const legacy = readLegacyWheel();
-                if (legacy && legacy.length) {
-                    movies = legacy;
-                    currentRotation = 0;
-                }
-            }
+        // Only when there's neither do we fall back to this collection's saved wheel
+        // (else the editable placeholders already on screen stay).
+        if (!handoff && !draft && wc.length) {
+            movies = wc;
+            currentRotation = 0;
         }
         rerender();
     } catch (err) {

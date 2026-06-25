@@ -178,8 +178,7 @@ function dedupeById(list) {
 
 // Per-run result cache (localStorage), keyed by the SEND token so a reload or back
 // navigation restores the same picks while a new SEND / Try Again replaces them.
-// localStorage (not sessionStorage) so the picks survive a reload and a tab close —
-// this is what replaced the old server-persisted session.
+// localStorage (not sessionStorage) so the picks survive a reload and a tab close.
 function readCachedResults() {
     try { return JSON.parse(localStorage.getItem(RESULTS_KEY)); }
     catch { return null; }

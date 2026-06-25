@@ -88,7 +88,7 @@ window.AddToCollectionModal = (function () {
       // 12-card grid (6×2 desktop / 4×3 tablet / 3×4 phone).
       const page1 = await MovieAPI.searchMovies({ q });
       if (s !== seq) return; // a newer search superseded this one
-      renderResults((page1 || []).slice(0, MAX_RESULTS));
+      renderResults(page1.slice(0, MAX_RESULTS));
     } catch (err) {
       if (s === seq) hint(err.message || "Search failed.");
     }

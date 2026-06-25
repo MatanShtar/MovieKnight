@@ -153,7 +153,6 @@ function paintDetails(d) {
   }
 
   // Trailer: inject the YouTube embed URL into the iframe when we have a key.
-  // (The #trailer-player id is left in place so a URL can also be injected later.)
   const player = el("trailer-player");
   if (player) {
     if (d.trailerKey) {

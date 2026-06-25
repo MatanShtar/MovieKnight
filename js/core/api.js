@@ -204,18 +204,14 @@ window.MovieAPI = (function () {
         }
 
         const json = await res.json();
-        // API contract envelope: { ok: true, data } / { ok: false, error }.
-        // Unwrap to the inner `data` so the normalisers below see the payload
-        // directly. Bare/legacy responses (array or object) pass through as-is.
-        // `returnEnvelope` keeps the whole object instead, for the few endpoints that
-        // attach sibling fields beyond `data` (e.g. AI actions return `aiUsage`).
-        if (json && typeof json === "object" && !Array.isArray(json) && "ok" in json) {
-            if (!json.ok) {
-                throw new Error(shortError(json.error, res.status));
-            }
-            return returnEnvelope ? json : json.data;
+        // Success responses (2xx) always use the { ok: true, data } envelope — error
+        // statuses already threw above. Unwrap to the inner `data` for the normalisers;
+        // `returnEnvelope` keeps the whole object for the few endpoints with sibling
+        // fields beyond `data` (e.g. AI actions return `aiUsage`).
+        if (!json.ok) {
+            throw new Error(shortError(json.error, res.status));
         }
-        return json;
+        return returnEnvelope ? json : json.data;
     }
 
     // ==========================================
@@ -426,11 +422,15 @@ window.MovieAPI = (function () {
         return extractList(data, "people").map(normalizePerson).filter(Boolean);
     }
 
-    // A single random movie, used by the home "Surprise Me" button. The backend
-    // may answer with a bare movie object, { movie: {...} }, or a one-item list —
-    // all are accepted and normalised to the app's movie shape.
-    async function getRandomMovie() {
-        const data = await request("/movies/random");
+    // A single random movie, used by the home "Surprise Me" button. The SERVER owns
+    // the randomization now — it returns a random title from a random page of the
+    // popular, well-voted feed. Optional `pages` caps how many pages to randomize
+    // from; omitted for now (server uses its default), later derived from a user
+    // setting (movies-to-randomize-from ÷ 20). The backend may answer with a bare
+    // movie object, { movie: {...} }, or a one-item list — all are accepted and
+    // normalised to the app's movie shape.
+    async function getRandomMovie(pages) {
+        const data = await request("/movies/random", { params: { pages } });
         const list = extractList(data, "movies");
         const raw = list.length ? list[0] : data && data.movie ? data.movie : data;
         return normalizeMovie(raw);

@@ -13,27 +13,9 @@
 
 window.CollectionModal = (function () {
 
-  // Self-contained fallback so the standalone demo page (no common.js) still
-  // escapes interpolated strings. Prefers the shared global when present.
-  const escapeHtml =
-    typeof window.escapeHtml === "function"
-      ? window.escapeHtml
-      : function (value) {
-          return String(value == null ? "" : value).replace(/[&<>"']/g, (ch) => {
-            switch (ch) {
-              case "&":
-                return "&amp;";
-              case "<":
-                return "&lt;";
-              case ">":
-                return "&gt;";
-              case '"':
-                return "&quot;";
-              default:
-                return "&#39;";
-            }
-          });
-        };
+  // escapeHtml is the shared global from core/common.js (loaded before this module on
+  // every page that uses it — index and movie).
+  const escapeHtml = window.escapeHtml;
 
   let overlay = null; // built lazily on first open
   let nameInput = null;
