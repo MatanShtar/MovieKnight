@@ -19,7 +19,7 @@ window.MovieAPI = (function () {
     //     while developing — run `npm run dev` in server/ first.
     //   • anything else (the deployed site)            → the deployed Render API.
     // To force one, set localStorage "mk:apiBase" to a URL (cleared = auto).
-    const DEPLOYED_API = "https://movieknight-server.onrender.com";
+    const DEPLOYED_API = "https://movieknight-server-7d8h.onrender.com";
     const LOCAL_API = "http://localhost:3000";
     const API_BASE =
         localStorage.getItem("mk:apiBase") ||
