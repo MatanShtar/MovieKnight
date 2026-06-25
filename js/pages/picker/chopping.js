@@ -185,7 +185,29 @@ function initSetup() {
         const box = chip.querySelector(".cb-overflow-box");
         if (box) box.hidden = !overflowOpen;
         chip.setAttribute("aria-expanded", overflowOpen ? "true" : "false");
+        if (overflowOpen) clampOverflowBox();
     }
+
+    // The dropdown is absolutely centred on the "+N" chip, which (in the centred,
+    // wrapping player row) can sit anywhere across the width. A centred box near the
+    // screen edge would spill past it and push the page sideways (horizontal scroll
+    // on mobile). Keep it centred when it fits, otherwise nudge it back inside the
+    // viewport with a left/right margin — purely via transform, so it stays
+    // position:absolute and never alters the document flow.
+    function clampOverflowBox() {
+        const chip = document.getElementById("cbMoreChip");
+        const box = chip && chip.querySelector(".cb-overflow-box");
+        if (!box || box.hidden) return;
+        box.style.transform = "translateX(-50%)";   // start centred, then measure
+        const rect = box.getBoundingClientRect();
+        const margin = 8;
+        let shift = 0;
+        if (rect.right > window.innerWidth - margin) shift = (window.innerWidth - margin) - rect.right;
+        else if (rect.left < margin) shift = margin - rect.left;
+        if (shift) box.style.transform = `translateX(calc(-50% + ${shift}px))`;
+    }
+    // A viewport resize (or rotate) can move the chip under the open box — re-clamp it.
+    window.addEventListener("resize", () => { if (overflowOpen) clampOverflowBox(); });
 
     function addPlayer(name) {
         name = (name || "").trim();
@@ -544,8 +566,15 @@ function runGame(config, collectionMovies) {
     function loopEnabled() { return !cbIsMobile() && order.length > fitCount(); }
 
     let firstPaint = true;
+    // Mobile seamless-loop state (see buildMobileLoop): whether the wrap is engaged,
+    // the scroll position that snaps the first real poster to the start (homeStart),
+    // and one full lap's width (realSetWidth).
+    let mobileFirstBuild = true;
+    let loopActiveMobile = false;
+    const mobileLoop = { homeStart: 0, realSetWidth: 0 };
     function render() {
         if (cbIsMobile()) { renderMobile(); return; }
+        clearMobileClones();   // shed the mobile loop clones when switching back to the desktop coverflow
         const step = stepPx();
         const N = order.length;
         const loop = loopEnabled();
@@ -596,6 +625,7 @@ function runGame(config, collectionMovies) {
     // render() leaves behind so they don't fight the stylesheet. Every active
     // card is pressable here (there's no five-poster "window" on a swipe strip).
     function renderMobile() {
+        clearMobileClones();
         order.forEach((card) => {
             track.appendChild(card.el);          // move into place (no-op if already last)
             card.el.style.transform = "";
@@ -605,25 +635,104 @@ function runGame(config, collectionMovies) {
             card.el.style.transitionDelay = "";
             card.el.classList.toggle("in-window", !card.eliminated);
         });
+        buildMobileLoop();
         updateMobilePeek();
+    }
+
+    // Remove any loop clones so the real cards stand alone (before a rebuild, and
+    // when handing back to the desktop coverflow which lays cards out absolutely).
+    function clearMobileClones() {
+        track.querySelectorAll(".cb-clone").forEach((n) => n.remove());
+    }
+
+    // Seamless infinite loop for the native mobile scroll strip. We flank the real
+    // posters with cloned copies — the tail block before the first card, the head
+    // block after the last — each wide enough to cover the viewport. As the user
+    // swipes into a clone zone, wrapMobileScroll() silently jumps scrollLeft by one
+    // full lap so the equivalent REAL posters are shown: the content is periodic, so
+    // a lap-sized jump renders identical pixels and the swipe never visibly stops.
+    // Clones are inert visual fillers (aria-hidden, no JS listeners); a tap on a
+    // clone's ELIMINATE is mapped back to its real card by id in the click handler.
+    // Engages only when the strip actually overflows (more posters than fit across).
+    function buildMobileLoop() {
+        loopActiveMobile = false;
+        mobileLoop.realSetWidth = 0;
+        const cards = order.map((c) => c.el);
+        if (cards.length < 2) return;
+
+        const first = cards[0], last = cards[cards.length - 1];
+        const realWidth = (last.offsetLeft + last.offsetWidth) - first.offsetLeft;
+        if (realWidth <= track.clientWidth + 1) return;     // it all fits → plain finite strip
+
+        const leftPad = parseFloat(getComputedStyle(track).paddingLeft) || 0;
+        const cardOuter = first.offsetWidth + 8;            // poster width + the 8px flex gap
+        const k = Math.min(cards.length, Math.ceil(track.clientWidth / cardOuter) + 1);
+
+        const mkClone = (src) => {
+            const c = src.cloneNode(true);
+            c.classList.add("cb-clone");
+            c.setAttribute("aria-hidden", "true");
+            return c;
+        };
+        // Head clones (copies of the first k cards) go AFTER the last real card…
+        for (let i = 0; i < k; i++) track.appendChild(mkClone(cards[i]));
+        // …tail clones (copies of the last k, in order) go BEFORE the first real card.
+        const frag = document.createDocumentFragment();
+        for (let i = cards.length - k; i < cards.length; i++) frag.appendChild(mkClone(cards[i]));
+        track.insertBefore(frag, first);
+
+        // One lap = the gap from the first real card to its head-clone copy.
+        const headCloneOfFirst = last.nextElementSibling;
+        mobileLoop.realSetWidth = headCloneOfFirst.offsetLeft - first.offsetLeft;
+        mobileLoop.homeStart = first.offsetLeft - leftPad;  // scroll pos that snaps the first real card to the start
+        loopActiveMobile = true;
+
+        if (mobileFirstBuild) {
+            track.scrollLeft = mobileLoop.homeStart;
+            mobileFirstBuild = false;
+        } else {
+            // A rebuild (after an elimination/resize) — keep the current view, just
+            // folded back into the home window so the wrap math stays in range.
+            const span = mobileLoop.realSetWidth;
+            const rel = (((track.scrollLeft - mobileLoop.homeStart) % span) + span) % span;
+            track.scrollLeft = mobileLoop.homeStart + rel;
+        }
+    }
+
+    // The wrap itself: when the strip scrolls out of the home window (into a clone
+    // zone on either side), jump it back by one lap. Runs synchronously on every
+    // scroll event so a clone is never on screen long enough to be seen.
+    function wrapMobileScroll() {
+        if (!loopActiveMobile || mobileLoop.realSetWidth <= 0) return;
+        const { homeStart, realSetWidth } = mobileLoop;
+        let jump = 0;
+        if (track.scrollLeft < homeStart - 0.5) jump = realSetWidth;
+        else if (track.scrollLeft >= homeStart + realSetWidth - 0.5) jump = -realSetWidth;
+        if (!jump) return;
+        track.scrollLeft += jump;
+        // If a mouse-drag is in flight, shift its baseline by the same lap so the next
+        // pointermove (scrollLeft = mStartScroll - dx) doesn't undo the wrap.
+        if (mDragging) { mStartScroll += jump; mLastScroll += jump; }
     }
 
     // Grey out the cards that are only peeking at the strip edges, so just the two
     // fully-visible posters stay in colour. A card is "peeking" when any part of it
-    // sits outside the scroll viewport. Cheap geometry, throttled to one rAF/scroll.
+    // sits outside the scroll viewport. Applies to real cards AND loop clones (so a
+    // clone scrolling through looks identical), throttled to one rAF/scroll.
     function updateMobilePeek() {
         if (!cbIsMobile()) return;
         const sl = track.scrollLeft;
         const vw = track.clientWidth;
-        order.forEach((card) => {
-            const left = card.el.offsetLeft;            // relative to the position:relative track
-            const right = left + card.el.offsetWidth;
+        track.querySelectorAll(".cb-card").forEach((el) => {
+            const left = el.offsetLeft;                 // relative to the position:relative track
+            const right = left + el.offsetWidth;
             const fullyVisible = left >= sl - 2 && right <= sl + vw + 2;
-            card.el.classList.toggle("cb-peek", !fullyVisible);
+            el.classList.toggle("cb-peek", !fullyVisible);
         });
     }
     let peekRaf = null;
     track.addEventListener("scroll", () => {
+        wrapMobileScroll();                 // keep the loop seamless — must run promptly
         if (peekRaf) return;
         peekRaf = requestAnimationFrame(() => { peekRaf = null; updateMobilePeek(); });
     }, { passive: true });
@@ -886,8 +995,10 @@ function runGame(config, collectionMovies) {
             track.scrollLeft += mVel * dt;
             mVel *= Math.exp(-dt / FRICTION_TAU);
             const maxScroll = track.scrollWidth - track.clientWidth;
-            if (track.scrollLeft <= 0 || track.scrollLeft >= maxScroll
-                || Math.abs(mVel) < M_FLICK_MIN) { mSnap(); return; }   // hit an end / slowed → stop
+            // While looping the wrap handles the ends (there are no hard bounds) — only
+            // stop on a real edge when the loop is off; otherwise just stop once slowed.
+            const hitEnd = !loopActiveMobile && (track.scrollLeft <= 0 || track.scrollLeft >= maxScroll);
+            if (hitEnd || Math.abs(mVel) < M_FLICK_MIN) { mSnap(); return; }
             mRaf = requestAnimationFrame(tick);
         };
         mRaf = requestAnimationFrame(tick);
@@ -947,7 +1058,9 @@ function runGame(config, collectionMovies) {
         if (!btn) return;
         const cardEl = btn.closest(".cb-card");
         if (!cardEl || !cardEl.classList.contains("in-window")) return;
-        const idx = order.findIndex(c => c.el === cardEl);
+        let idx = order.findIndex(c => c.el === cardEl);
+        // A tap on a loop clone (mobile) won't match by element — map it to the real card by id.
+        if (idx < 0) idx = order.findIndex(c => String(c.id) === cardEl.dataset.id);
         if (idx >= 0) eliminate(idx);
     });
 

@@ -212,6 +212,7 @@ textarea, [contenteditable="true"] {
    6. SETTINGS MENU
    ========================================== */
 .settings-container {
+  position: relative; /* anchors the pink active-indicator line (::before) */
   display: flex;
   flex-direction: column;
   border-radius: 12px;
@@ -223,10 +224,44 @@ textarea, [contenteditable="true"] {
   background-color: var(--overlay-weak);
 }
 
+/* Pink active line down the left edge. It's pinned top-to-bottom of the WHOLE
+   container (toggle + submenu), so as the accordion's max-height animation grows
+   the submenu, the container — and this line with it — grows downward in lockstep,
+   then shrinks back up on close. The bar itself is the full height at all times;
+   we just fade it in/out with the open state. (Belt-and-braces: an explicit height
+   transition for any browser that lays the bar out at an intermediate height.) */
+.settings-container::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  border-radius: 3px;
+  background-color: rgba(var(--pink), 0.9);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--t-base) ease,
+    height 0.3s ease-in-out;
+}
+
+.settings-container.open::before {
+  opacity: 1;
+}
+
 .settings-container.open .nav-link {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   background-color: transparent;
+}
+
+/* While open, the full-height container line (::before) is the active indicator,
+   so suppress the toggle's own per-link hover line + 4px shift — otherwise the two
+   pink lines would sit 4px apart on the top row. */
+.settings-container.open #settingsToggleBtn:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 #settingsToggleBtn {

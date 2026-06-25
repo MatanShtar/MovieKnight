@@ -168,6 +168,7 @@
     color: var(--text);
     background: rgba(var(--maroon-light), 0.55);
     font-size: 18px;
+    white-space: nowrap;   /* keep "+N more …" on one line so it never wraps inside the pill */
 }
 
 .cb-more-tooltip {
@@ -1052,9 +1053,10 @@
     .cb-tag-more {
         font-size: 13px;
         min-width: 0;
-        padding: 0 24px 0 12px;
+        width: auto;                 /* hug the label so it isn't squeezed to the 86px tag floor */
+        padding: 0 30px 0 16px;      /* room for the text on the left + the caret on the right */
     }
-    .cb-more-caret { right: 8px; width: 10px; height: 10px; }
+    .cb-more-caret { right: 10px; width: 10px; height: 10px; }
 
     .cb-tag-name { font-size: 16px; }
 

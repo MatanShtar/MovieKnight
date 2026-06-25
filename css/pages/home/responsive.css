@@ -69,6 +69,19 @@
     padding-right: 24px;
   }
 
+  /* The Sort By panel is anchored to the RIGHT edge of its button (which lives at
+     the right end of the controls bar), so it opens leftward and stays on-screen.
+     The desktop 250px floor would push past the left edge on a narrow phone, so we
+     drop the floor and cap the panel to the viewport instead. overflow-x:hidden
+     stops any long option from widening it past that cap. */
+  .sort-custom-menu {
+    right: 0;
+    left: auto;
+    min-width: 0;
+    max-width: 90vw;
+    overflow-x: hidden;
+  }
+
   .surprise-container {
     flex-direction: row;
     align-items: center;
