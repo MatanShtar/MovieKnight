@@ -10,6 +10,13 @@ const MAX_TITLE_LEN = 20;
 // migration into the server (see initWheelData), never written to anymore.
 const LEGACY_WHEEL_KEY = "movieKnightWheel";
 
+// Per-collection sessionStorage key for the unsaved WORKING DRAFT. This is what lets a
+// generated/edited wheel survive a page RELOAD — it is NEVER auto-saved to the server
+// (the user still saves explicitly). Kept in sessionStorage so it's scoped to this tab
+// and cleared automatically when the tab closes — a throwaway working copy. Keyed by
+// collection so switching collections can't show the wrong draft; standalone uses ":none".
+const WHEEL_DRAFT_PREFIX = "mk:wheelDraft:";
+
 // On initial load the wheel shows two editable placeholder items. When the user
 // arrives from the picker these are replaced by their chosen collection's filtered
 // titles (the "mk:wheelGame" hand-off); otherwise the saved wheel is loaded from
@@ -107,20 +114,44 @@ function resolveWheelCollectionId() {
     } catch (_) { return null; }
 }
 
+// Parse a stored JSON array of titles → a blanks-filtered array, or null if the key is
+// absent/empty/not an array. Shared by the legacy-wheel and working-draft readers.
+function readStoredArray(storage, key) {
+    try {
+        const parsed = JSON.parse(storage.getItem(key));
+        return Array.isArray(parsed) ? parsed.filter(Boolean) : null;
+    } catch { return null; }
+}
+
 // Read the legacy localStorage-only wheel — shown as an unsaved fallback when a
 // collection has no saved wheel yet. Never auto-migrated; the user saves it if they
 // want it on the server.
 function readLegacyWheel() {
-    try {
-        const parsed = JSON.parse(localStorage.getItem(LEGACY_WHEEL_KEY));
-        return Array.isArray(parsed) ? parsed.filter(Boolean) : null;
-    } catch { return null; }
+    return readStoredArray(localStorage, LEGACY_WHEEL_KEY);
+}
+
+// ---- working draft (sessionStorage) ----
+// Saved after every edit; restored on load if present, so the wheel survives a page
+// RELOAD. sessionStorage means it's tab-scoped and dropped automatically when the tab
+// closes — so there's nothing to clean up. A fresh picker hand-off overwrites it (see
+// initWheelData). Keyed by collection (resolved in initWheelData before these run).
+function wheelDraftKey() {
+    return WHEEL_DRAFT_PREFIX + (wheelCollectionId || "none");
+}
+// Persist the on-screen wheel so a reload can restore it. Best-effort (storage may be
+// full/blocked); called after every edit and after a successful save.
+function saveWheelDraft() {
+    try { sessionStorage.setItem(wheelDraftKey(), JSON.stringify(movies)); } catch (_) {}
+}
+function readWheelDraft() {
+    return readStoredArray(sessionStorage, wheelDraftKey());
 }
 
 // Resolve ownership + the saved wheel from the server, then hydrate. We ALWAYS
 // fetch the collection's saved wheel first so `serverWheel` is the correct baseline
 // for gating Save/Load — then decide what to SHOW on top of it:
 //   • a fresh picker hand-off (the user just chose filters) — shown but NOT saved;
+//   • else the working draft from before a reload (sessionStorage), also unsaved;
 //   • else the server's saved wheel;
 //   • else (nothing saved) a one-time legacy localStorage wheel, also unsaved;
 //   • else the two editable placeholders.
@@ -130,14 +161,15 @@ async function initWheelData() {
     wheelCollectionId = resolveWheelCollectionId();
     wireWheelBack(); // point Back's fallback at the hub for THIS collection
 
-    // A fresh hand-off from the picker is already in hand — show it immediately
-    // (clearing the skeleton) so the user sees their generated wheel at once. The
-    // ownership / saved-wheel load below still runs for Save/Load gating, but
-    // leaves these movies in place.
-    if (handoff) { movies = handoff; currentRotation = 0; rerender(); }
+    const draft = readWheelDraft();
 
-    // No collection in context: a standalone wheel. The hand-off (if any) is shown
-    // above; otherwise the placeholders already painted stay. Nothing server-side.
+    // Paint immediately to clear the skeleton: a fresh hand-off wins, else the restored
+    // draft. The server load below still runs to set the Save/Load baseline.
+    if (handoff) { movies = handoff; currentRotation = 0; saveWheelDraft(); rerender(); }
+    else if (draft) { movies = draft; currentRotation = 0; rerender(); }
+
+    // No collection in context: a standalone wheel. The draft/hand-off (if any) is
+    // shown above; otherwise the placeholders already painted stay. Nothing server-side.
     if (!wheelCollectionId) {
         updateButtonStates();
         return;
@@ -159,22 +191,20 @@ async function initWheelData() {
         const wc = await MovieAPI.getWheel(wheelCollectionId);
         serverWheel = wc.slice();
 
-        if (handoff) {
-            // Fresh wheel from the picker: SHOW it, but never auto-save. The saved
-            // wheel on the server is left untouched until the user clicks Save.
-            movies = handoff;
-            currentRotation = 0;
-        } else if (wc.length) {
-            // No new generation: restore this collection's real persisted wheel.
-            movies = wc;
-            currentRotation = 0;
-        } else {
-            // Nothing saved yet: surface a legacy localStorage-only wheel (if any) as
-            // the current — unsaved — set so the user can choose to Save it here.
-            const legacy = readLegacyWheel();
-            if (legacy && legacy.length) {
-                movies = legacy;
+        // A fresh picker hand-off or a restored draft is already on screen (set in the
+        // early paint above) — keep it; serverWheel is now just the Save/Load baseline.
+        // Only when there's neither do we choose what to show: this collection's saved
+        // wheel, else a legacy localStorage-only wheel (if any), else the placeholders.
+        if (!handoff && !draft) {
+            if (wc.length) {
+                movies = wc;
                 currentRotation = 0;
+            } else {
+                const legacy = readLegacyWheel();
+                if (legacy && legacy.length) {
+                    movies = legacy;
+                    currentRotation = 0;
+                }
             }
         }
         rerender();
@@ -397,6 +427,7 @@ function addMovie(title) {
     movies.push(title);
     renderMovieList(movies);
     updateButtonStates();   // enables "Save" — the user clicks it to persist
+    saveWheelDraft();       // keep the reload-survival draft in sync
 
     // Wheel: the new slice emerges from between its two neighbouring slots.
     animateSlice(movies.length - 1, 'add');
@@ -434,6 +465,7 @@ function removeMovie(index) {
         movies.splice(index, 1);
         renderMovieList(movies);
         updateButtonStates();   // enables "Save"; animateSlice repaints + fades labels
+        saveWheelDraft();       // keep the reload-survival draft in sync
     });
 }
 
@@ -472,6 +504,7 @@ function startRename(index) {
                 if (window.toast) toast.info(`"${next}" is already on the wheel.`);
             } else {
                 movies[index] = next;
+                saveWheelDraft();   // keep the reload-survival draft in sync
             }
         }
         rerender(); // restores the title span (and refreshes the wheel + save state)
@@ -542,6 +575,7 @@ async function persistWheel({ silent = false } = {}) {
         } else {
             updateButtonStates();
         }
+        saveWheelDraft();   // draft now matches the server (until the next edit)
         if (!silent && window.toast) toast.success('Wheel saved.');
     } catch (err) {
         if (err && err.status === 401) { window.location.replace('login.html'); return; }
@@ -587,6 +621,7 @@ function setupSaveLoad() {
                 movies = saved.slice();
                 currentRotation = 0; // reset the spin orientation for the loaded set
                 rerender();
+                saveWheelDraft();    // the loaded wheel is now the working draft
                 if (window.toast) toast.success('Loaded the saved wheel.');
             } catch (err) {
                 if (err && err.status === 401) { window.location.replace('login.html'); return; }
