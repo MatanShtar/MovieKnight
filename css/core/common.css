@@ -129,7 +129,10 @@ textarea, [contenteditable="true"] {
 .toastify.mk-toast {
   width: -moz-fit-content;
   width: fit-content;
-  white-space: nowrap;
+  /* short messages stay on one line (fit-content shrinks to them); long ones
+     wrap inside max-width instead of overflowing/clipping off the edge */
+  white-space: normal;
+  overflow-wrap: break-word;
   max-width: 90vw;
   line-height: 1.35;
 }
@@ -798,9 +801,9 @@ textarea, [contenteditable="true"] {
   }
 
   .mobile-brand-text {
-    height: 19px;
+    height: 24px;
     width: auto;
-    max-width: 52vw;
+    max-width: 60vw;
     object-fit: contain;
   }
 
@@ -977,7 +980,7 @@ textarea, [contenteditable="true"] {
   }
 
   .mobile-brand-text {
-    height: 16px;
+    height: 21px;
   }
 
   .mobile-topbar .user-welcome {
@@ -1023,18 +1026,43 @@ textarea, [contenteditable="true"] {
 .cover-tile--empty {
   background: #4f454b;
 }
-/* layouts: rows are explicit so tiles stretch to fill the fixed-height box */
-.cover-1 {
+/* Layouts — buildCollectionCover() (common.js) applies exactly ONE of these per
+   cover, matched to the movie count AND the card shape. Rows/columns are explicit
+   so tiles always stretch to fill the fixed-aspect box.
+   Desktop = portrait 2:3 box; mobile = the 5:2 banner (profile responsive.css). */
+/* Desktop: 1 poster / 2-3 stacked backdrops / 2×2 poster grid */
+.cover-d1 {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
 }
-.cover-2 {
+.cover-dstack-2 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+.cover-dstack-3 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr 1fr 1fr;
+}
+.cover-dgrid {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+/* Mobile banner: a single row of N columns (1 backdrop / 2 backdrops / 3-4 posters) */
+.cover-m1 {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.cover-m2 {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr;
 }
-.cover-4 {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
+.cover-mcols-3 {
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: 1fr;
+}
+.cover-mcols-4 {
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: 1fr;
 }
 
 /* ---- Empty (0-movie) cover ----

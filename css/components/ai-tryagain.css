@@ -1,0 +1,80 @@
+/* ai-tryagain.css — the shared "TRY AGAIN" button for the Gemini-backed AI
+   features. Single source of truth so the button looks IDENTICAL everywhere it
+   appears: the "Let AI Choose" results page (ai-suggestions.html) and the
+   "Enhance My Collection" modal (collection.html). A maroon pill in Impact with a
+   refresh glyph that spins on hover (gentle) and on press / reload (full turn).
+
+   Markup it expects:
+     <button class="ai-tryagain" type="button">
+       TRY AGAIN
+       <svg class="ai-tryagain-arrows" viewBox="0 0 24 24" aria-hidden="true">…</svg>
+     </button>
+   Add `.is-spinning` for one full-turn spin (drop it on animationend to replay). */
+
+.ai-tryagain {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    min-width: 300px;
+    padding: 20px 44px;
+    border: none;
+    border-radius: 50px;
+    background-color: rgb(var(--maroon-light));
+    color: var(--text);
+    font-family: 'Impact', sans-serif;
+    font-size: 28px;
+    font-weight: 100;
+    letter-spacing: 10%;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition:
+        transform var(--t-base) var(--ease-pop),
+        filter var(--t-base) ease;
+}
+
+.ai-tryagain:hover {
+    filter: brightness(1.12);
+    transform: scale(1.03);
+}
+
+.ai-tryagain:active {
+    transform: scale(0.97);
+}
+
+.ai-tryagain[disabled] {
+    opacity: 0.55;
+    cursor: default;
+    transform: none;
+    filter: none;
+}
+
+/* When a caller hides the button via the `hidden` attribute, the base rule's
+   display:inline-flex would otherwise win over the UA `[hidden]{display:none}` —
+   so make it explicit: gone, not greyed. */
+.ai-tryagain[hidden] {
+    display: none;
+}
+
+.ai-tryagain-arrows {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+    color: currentColor;
+    transition: transform 0.6s var(--ease-snap);
+}
+
+/* Arrows do a gentle spin on hover... */
+.ai-tryagain:hover .ai-tryagain-arrows {
+    transform: rotate(180deg);
+}
+
+/* ...and a full, faster spin on click / while reloading. */
+.ai-tryagain.is-spinning .ai-tryagain-arrows {
+    animation: ai-spin 0.8s var(--ease-snap);
+}
+
+@keyframes ai-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}

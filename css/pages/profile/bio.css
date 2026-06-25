@@ -11,14 +11,14 @@
   white-space: pre-wrap; /* preserve the line breaks the user types in their bio */
   word-wrap: break-word;
   overflow-wrap: break-word; /* break long unbroken strings instead of overflowing */
-  /* Cap the DISPLAYED bio at 12 visual rows (including typed line breaks) so a
+  /* Cap the DISPLAYED bio at 10 visual rows (including typed line breaks) so a
      newline-heavy bio can't stretch the profile; overflow gets a trailing "…".
      max-height is a hard fallback for browsers that ignore line-clamp. */
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 12;
-  line-clamp: 12;
-  max-height: calc(1.6em * 12);
+  -webkit-line-clamp: 10;
+  line-clamp: 10;
+  max-height: calc(1.6em * 10);
   overflow: hidden;
   cursor: pointer; /* the whole bio is clickable to edit */
   transition: opacity var(--t-base) ease;
