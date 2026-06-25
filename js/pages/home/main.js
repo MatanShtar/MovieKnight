@@ -266,34 +266,14 @@ if (searchInput) {
 // ==========================================
 // 16. SURPRISE ME RANDOMIZER
 // ==========================================
-// Picks a random movie to take over the screen with one result. Rather than the
-// generic /movies/random endpoint (which surfaced obscure / foreign titles), it
-// draws from the SAME pool as the default feed — popular, well-voted, English
-// movies — so the "surprise" is always a recognisable, normal pick. It grabs a
-// random page from the top of that pool and chooses a movie from it at random.
-const SURPRISE_PAGES = 50; // sample from roughly the top ~1000 popular movies
-
+// Picks a random movie to take over the screen with one result. The SERVER now owns
+// the randomization (GET /api/movies/random returns a random title from a random page
+// of the popular, well-voted feed — the same pool as the default feed), so the
+// "surprise" is always a recognisable pick. Later, account settings will pass a page
+// limit derived from a user preference; for now we call with no params and the server
+// uses its default pool.
 async function fetchSurpriseMovie() {
-  const page = Math.floor(Math.random() * SURPRISE_PAGES) + 1;
-  // Mirrors the empty-box default feed: popularity sort + quality guards.
-  let results = await MovieAPI.searchMovies({
-    sort: "popularity",
-    minVotes: 500,
-    language: "en",
-    page,
-  });
-  // A high random page can fall past the result set on a thin catalog — retry
-  // once from page 1 so the button still returns something popular.
-  if (!results.length && page !== 1) {
-    results = await MovieAPI.searchMovies({
-      sort: "popularity",
-      minVotes: 500,
-      language: "en",
-      page: 1,
-    });
-  }
-  if (!results.length) return null;
-  return results[Math.floor(Math.random() * results.length)];
+  return MovieAPI.getRandomMovie();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
