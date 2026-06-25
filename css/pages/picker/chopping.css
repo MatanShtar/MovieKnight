@@ -91,11 +91,13 @@
     border: none;
     cursor: pointer;
     opacity: 0.85;
-    transition: transform var(--t-fast) var(--ease-pop), opacity var(--t-base);
+    transition: transform var(--t-fast) var(--ease-pop), opacity var(--t-base), filter var(--t-base) ease;
 }
 
 .cb-add-btn img { width: 35px; height: 35px; }
-.cb-add-btn:hover { opacity: 1; transform: scale(1.12) rotate(90deg); }
+/* A slight grow + brighten on hover (no spin), matching the app's other buttons. */
+.cb-add-btn:hover { opacity: 1; transform: scale(1.1); filter: brightness(1.15); }
+.cb-add-btn:active { transform: scale(0.96); }
 
 /* --- Player tags: fill the first column, then wrap into a second column --- */
 .cb-players {
@@ -203,23 +205,30 @@
 
 /* The "+N" chip is now a button that opens a dropdown of the overflow players —
    same dark scrollable box as the picker's provider list, with an inline ✕ per row
-   for quick removal of players past the visible slots. */
-.cb-tag-more { cursor: pointer; padding-right: 34px; }
+   for quick removal of players past the visible slots. The label + caret are laid
+   out as in-flow flex siblings with a gap (NOT an absolute caret), so the caret can
+   never overlap the "…" no matter how narrow the chip is squeezed. */
+.cb-tag-more {
+    cursor: pointer;
+    gap: 8px;
+    /* It only ever holds a short "+N more …" label — let it size to that content and
+       ignore the player-tag width floor/cap so the text isn't forced to overflow. */
+    width: auto;
+    min-width: 0;
+    max-width: none;
+}
 
-/* A little ▾ pinned to the right edge so the chip reads as openable; flips to ▴ open. */
+/* A little ▾ after the label so the chip reads as openable; flips to ▴ open. */
 .cb-more-caret {
-    position: absolute;
-    right: 12px;
-    top: 50%;
+    flex: 0 0 auto;
     width: 13px;
     height: 13px;
-    transform: translateY(-50%);
     color: var(--text);
     pointer-events: none;
     transition: transform var(--t-base) ease;
 }
 .cb-tag-more[aria-expanded="true"] .cb-more-caret {
-    transform: translateY(-50%) rotate(180deg);
+    transform: rotate(180deg);
 }
 
 .cb-overflow-box {
@@ -351,7 +360,7 @@
     position: absolute;
     border-radius: 50%;
     background: rgb(var(--maroon-light));
-    transition: left 0.6s cubic-bezier(0.45, 0, 0.55, 1);   /* even ease → steady spacing */
+    transition: left 0.45s cubic-bezier(0.45, 0, 0.55, 1);   /* even ease → steady spacing */
 }
 
 .cb-slider-dot {
@@ -993,75 +1002,81 @@
 @media (max-width: 1024px) {
     .picker-panel[data-panel="chopping"].active { max-width: 100%; }
 
-    /* page bottom-padding is smaller here, so reserve a bit more for the fixed bar */
-    .cb-setup { padding-bottom: 80px; }
+    /* page bottom-padding is smaller here, so reserve a bit more for the fixed bar.
+       Left-align the whole setup (hub) on mobile instead of centring it. */
+    .cb-setup { padding-bottom: 80px; align-items: flex-start; }
 
     /* Keep the "Random Movies Selected" count in normal flow BELOW the fixed
        action bar's stacking layer (z-index 40), so on mobile it scrolls under the
        START bar instead of floating statically over it / other elements. */
-    .cb-random { position: relative; z-index: 0; }
+    .cb-random { position: relative; z-index: 0; justify-content: flex-start; }
 
     /* The "+N more …" overflow dropdown is a fixed 240px wide and centred on the
-       chip; on a narrow phone that spills past the screen edge. Cap it to the
-       viewport so it always fits safely inside the mobile layout. */
+       chip; on a narrow phone that spills past the screen edge. Cap it well inside
+       the viewport (clampOverflowBox() then nudges it back from either edge). */
     .cb-overflow-box {
-        width: min(240px, 80vw);
-        max-width: 80vw;
+        width: min(220px, 84vw);
+        max-width: calc(100vw - 16px);
     }
 
     .cb-config {
         height: auto;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
         gap: 56px;             /* more breathing room between the stacked rows */
         margin-top: 24px;
         margin-bottom: 24px;   /* count + .cb-setup padding now clear the fixed bar */
     }
 
-    .cb-col-left, .cb-col-right { align-items: center; }
+    .cb-col-left, .cb-col-right { align-items: flex-start; width: 100%; }
     .cb-col-left { gap: 28px; }
     .cb-col-right { gap: 56px; }
 
-    .cb-add-row { flex-wrap: wrap; justify-content: center; }
-    .cb-input-pill { width: min(410px, 78vw); }
+    /* "Add Player :" stays on its own line; the input + button share the full-width
+       row below it — input flush to the left, + flush to the right. The label's
+       100% flex-basis forces the input/button to wrap onto the next line. */
+    .cb-add-row { flex-wrap: wrap; justify-content: flex-start; width: 100%; }
+    .cb-add-row .cb-label { flex: 0 0 100%; }
+    .cb-input-pill { flex: 1 1 auto; width: auto; min-width: 0; }
 
-    /* Wrap the player pills as centred ROWS that stay inside the viewport, instead
-       of the desktop's fixed-height column fill (which spilled into extra columns
-       and pushed the page wider than the screen). Shrink the pills a touch too. */
+    /* Keep the player pills on a SINGLE row that never wraps: the surplus collapses
+       into the "+N more" chip (maxTagSlots in chopping.js), and the visible pills
+       shrink to fit (min-width:0 + the name's ellipsis) rather than pushing onto a
+       second line. This is the fix for the wrapping in the bug report. */
     .cb-players {
         flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: center;
-        align-content: flex-start;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
         align-items: center;
         max-height: none;
         max-width: 100%;
-        gap: 12px;
-        padding-left: 0;
+        gap: 10px;
+        padding: 8px 6px 0;   /* top room for the pills' floating ✕; side room from the edge */
     }
 
     .cb-tag {
+        flex: 0 1 auto;       /* may shrink to share the row; never grows */
         width: auto;
-        min-width: 86px;
-        max-width: 44vw;
+        min-width: 0;         /* let the name ellipsis engage instead of forcing a wider row */
+        max-width: 40vw;
         height: 46px;
-        padding: 0 18px;
+        padding: 0 16px;
     }
 
-    /* The "+N more …" chip text overflowed its pill on phones — shrink it (and the
-       caret) so the whole label fits comfortably inside the smaller tag. */
+    /* The name fills its (shrinkable) pill and ellipsises when there isn't room. */
+    .cb-tag-name { font-size: 16px; min-width: 0; }
+
+    /* The "+N more …" chip keeps its full label (caret is an in-flow sibling, so the
+       text and the ▾ never collide) and never shrinks — only the name pills do. */
     .cb-tag-more {
+        flex: 0 0 auto;
         font-size: 13px;
-        min-width: 0;
-        width: auto;                 /* hug the label so it isn't squeezed to the 86px tag floor */
-        padding: 0 30px 0 16px;      /* room for the text on the left + the caret on the right */
+        padding: 0 16px;
     }
-    .cb-more-caret { right: 10px; width: 10px; height: 10px; }
+    .cb-more-caret { width: 11px; height: 11px; }
 
-    .cb-tag-name { font-size: 16px; }
-
-    .cb-stat-row { gap: 20px; }
-    .cb-stat-row .cb-label { width: auto; text-align: right; }
+    .cb-stat-row { gap: 20px; justify-content: flex-start; }
+    .cb-stat-row .cb-label { width: auto; text-align: left; }
 
     .cb-page-header .wheel-main-logo { height: 120px; }
     .cb-game .feature-tabs p { font-size: 22px; }
@@ -1076,12 +1091,41 @@
 @media (max-width: 600px) {
     .cb-label { font-size: 20px; }
 
-    /* stack each stat row so the 328px slider + label never overflow */
-    .cb-stat-row { flex-direction: column; gap: 18px; min-height: 0; }
-    .cb-stat-row .cb-label { text-align: center; }
-    .cb-slider { width: min(328px, 80vw); }
+    /* Total-Players and Random-Order: label pinned left, the value (count pill /
+       toggle) pushed to the right edge of the full-width row. */
+    .cb-stat-row {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 14px;
+        min-height: 0;
+    }
+    .cb-stat-row .cb-label { text-align: left; white-space: normal; }
 
-    .cb-tag { min-width: 78px; height: 44px; padding: 0 14px; }
+    /* The eliminations slider stacks under its label and spans the FULL width, so the
+       1 / 2 / 3 spread across the whole screen. The slider's numbers are absolutely
+       positioned and hang ~45px BELOW its box (no layout height), which would eat into
+       the gap before the next row — reserve that space so all the row gaps read even. */
+    .cb-stat-row--stack { flex-direction: column; align-items: stretch; gap: 18px; padding-bottom: 45px; }
+    .cb-stat-row--stack .cb-label { text-align: left; }
+    .cb-slider { width: 100%; }
+
+    /* "Random Movies Selected :" — label left, count pill pushed to the right, to
+       match the player-count / random-order rows above. */
+    .cb-setup .cb-random {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* Size the Random Order toggle to match the count pills (.cb-pill is 84×43) so
+       all three right-hand controls share the same footprint. The handle scales up
+       to stay proportionate in the taller track. */
+    .cb-toggle { width: 84px; height: 43px; }
+    .cb-toggle-handle { width: 35px; height: 35px; }
+    .cb-toggle input:checked ~ .cb-toggle-handle { left: calc(100% - 39px); }
+
+    .cb-tag { min-width: 0; height: 44px; padding: 0 14px; }
     .cb-tag-name { font-size: 15px; }
 
     .cb-page-header .wheel-main-logo { height: 88px; }

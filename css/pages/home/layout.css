@@ -275,6 +275,29 @@
   transform-origin: center center;
 }
 
+/* Hover "wind-up": the dice rock gently, as if being shaken in hand, ready for the
+   throw. The actual toss (roll-left/right, added on click) takes over — the :not()
+   guards drop the shake the instant a throw starts so the two never fight. */
+@keyframes diceReadyLeft {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25%      { transform: translate(-1.5px, -1px) rotate(-7deg); }
+  50%      { transform: translate(1px, 1px) rotate(5deg); }
+  75%      { transform: translate(-1px, 0) rotate(-3deg); }
+}
+@keyframes diceReadyRight {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25%      { transform: translate(1.5px, -1px) rotate(7deg); }
+  50%      { transform: translate(-1px, 1px) rotate(-5deg); }
+  75%      { transform: translate(1px, 0) rotate(3deg); }
+}
+.surprise-btn:hover #diceOne:not(.roll-left)  { animation: diceReadyLeft 0.5s ease-in-out infinite; transform-origin: center center; }
+.surprise-btn:hover #diceTwo:not(.roll-right) { animation: diceReadyRight 0.5s ease-in-out infinite; transform-origin: center center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .surprise-btn:hover #diceOne:not(.roll-left),
+  .surprise-btn:hover #diceTwo:not(.roll-right) { animation: none; }
+}
+
 #diceIcon {
   display: inline-block;
 }
