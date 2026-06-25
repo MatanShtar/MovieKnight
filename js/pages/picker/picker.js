@@ -143,6 +143,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // which is before section D — so this must exist before then (no TDZ).
     const generateBtn = document.getElementById('generateBtn');
     const wheelError = document.getElementById('wheelError');
+    // The "Movies on the Wheel" count row — on mobile it sits just above the fixed
+    // action bar, so when the inline error appears we raise this row (CSS) to make
+    // room for the error pill between it and the GENERATE button.
+    const wheelRandom = document.querySelector('.picker-panel[data-panel="wheel"] .cb-random');
 
     // The collection this picker plays from — chosen on the collection page, which
     // links here as picker.html?collection=<id>. Null until it loads (or if the
@@ -539,6 +543,9 @@ document.addEventListener('DOMContentLoaded', () => {
             wheelError.textContent = msg;
             wheelError.classList.toggle("show", !!msg);
         }
+        // Raise the "Movies on the Wheel" count (mobile) so the error pill has room
+        // between it and the button instead of covering it. CSS handles the slide.
+        if (wheelRandom) wheelRandom.classList.toggle("cb-random--raised", !!msg);
         generateBtn.disabled = invalid;
         generateBtn.classList.toggle('generate-wheel-btn--disabled', invalid);
     }

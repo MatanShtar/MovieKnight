@@ -53,9 +53,10 @@ document.addEventListener("DOMContentLoaded", () => {
 function initSetup() {
     // How many player tags we show before collapsing the rest into a "+N …" chip.
     // Desktop fits 8 (2 columns × 4 rows; the chip takes the 8th). Phones are far
-    // narrower, so a lower threshold keeps the pills from pushing the page wider
-    // than the screen (the bug: adding players forced horizontal scrolling).
-    const maxTagSlots = () => (cbIsMobile() ? 4 : 8);
+    // narrower and the pills must stay on ONE non-wrapping row, so cap at 3 — beyond
+    // that the surplus folds into the "+N more" chip instead of wrapping to a second
+    // line (the bug: long names pushed pills onto a new row / off the screen).
+    const maxTagSlots = () => (cbIsMobile() ? 3 : 8);
 
     // --- state ---
     // A fresh session starts with exactly one player: the signed-in user,
@@ -185,7 +186,10 @@ function initSetup() {
         const box = chip.querySelector(".cb-overflow-box");
         if (box) box.hidden = !overflowOpen;
         chip.setAttribute("aria-expanded", overflowOpen ? "true" : "false");
-        if (overflowOpen) clampOverflowBox();
+        // Clamp after the box has actually been laid out (next frame), so the
+        // measurement reflects its real on-screen position and it never spills off
+        // the edge — the bug where the open dropdown extended past the screen.
+        if (overflowOpen) requestAnimationFrame(clampOverflowBox);
     }
 
     // The dropdown is absolutely centred on the "+N" chip, which (in the centred,

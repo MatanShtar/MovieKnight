@@ -312,6 +312,15 @@ document.addEventListener("DOMContentLoaded", () => {
     diceTwo.classList.add("roll-right");
   }
 
+  // Clear the toss class once the throw finishes, so the dice settle back to their
+  // resting (and hover "wind-up") state and are ready for the next roll.
+  if (diceOne) diceOne.addEventListener("animationend", (e) => {
+    if (e.animationName === "tossLeft") diceOne.classList.remove("roll-left");
+  });
+  if (diceTwo) diceTwo.addEventListener("animationend", (e) => {
+    if (e.animationName === "tossRight") diceTwo.classList.remove("roll-right");
+  });
+
   if (surpriseTrigger) {
     surpriseTrigger.addEventListener("click", async (e) => {
       e.preventDefault();
@@ -333,7 +342,13 @@ document.addEventListener("DOMContentLoaded", () => {
         feedPage = 0;
         feedDone = true; // no more pages for a single random pick
         feedToken++; // abandon any in-flight page load
-        if (movieSearchInput) movieSearchInput.value = movie.title;
+        if (movieSearchInput) {
+          movieSearchInput.value = movie.title;
+          // Show the inline clear "X" for the now-populated box (a `change`, not an
+          // `input`, so the live search doesn't re-fire and replace this pick) — the
+          // user can wipe it back to the feed exactly like a typed query.
+          movieSearchInput.dispatchEvent(new Event("change"));
+        }
         await renderMovieGrid([movie]);
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (err) {

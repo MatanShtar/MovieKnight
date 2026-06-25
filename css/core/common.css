@@ -1120,3 +1120,213 @@ textarea, [contenteditable="true"] {
 .collection-card:hover .cover-0 {
   transform: none;
 }
+
+/* ==========================================
+   SERVER-DOWN MAINTENANCE CURTAIN (GLOBAL)
+   ==========================================
+   When api.js can't reach the backend at all (the fetch throws — server not
+   running / offline), common.js drops this full-screen cinematic curtain instead
+   of a fleeting toast. It reuses the Coming Soon page's red-velvet stage: the
+   curtains sweep CLOSED, hold, then part to reveal a "We'll Be Back Soon" message
+   with a random movie-flavoured maintenance pun. It's a terminal state (no back
+   button) — the app can't function without the server. Self-contained here so it's
+   available on every page that loads common.css, with no per-page markup. */
+body.mk-maint-open { overflow: hidden; }
+/* The curtain owns the screen — hide any toast that fired underneath it (Toastify
+   pins its container to the max z-index, so we can't simply out-stack it). */
+body.mk-maint-open .toastify { display: none !important; }
+
+.mk-maint {
+    position: fixed;
+    inset: 0;
+    z-index: 2147483000;       /* above the app shell; the toast is hidden via the rule above */
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    background:
+        radial-gradient(ellipse at 50% 42%, #3a2127 0%, #1c0f14 58%, #0a0608 100%);
+}
+
+/* THE CURTAINS — two velvet panels that sweep in to meet at the centre (closed),
+   pause, then settle back to a framed-open position that leaves the copy in the gap. */
+.mk-maint-curtain {
+    position: absolute;
+    top: 0;
+    height: 145vh;
+    width: 76vw;
+    z-index: 3;
+    overflow: hidden;
+    transform-origin: top center;
+    background-color: #7d1820;
+    background-image:
+        repeating-linear-gradient(90deg,
+            rgba(0, 0, 0, 0.5) 0px,
+            rgba(0, 0, 0, 0.08) 16px,
+            rgba(255, 255, 255, 0.10) 31px,
+            rgba(0, 0, 0, 0.08) 46px,
+            rgba(0, 0, 0, 0.5) 62px),
+        linear-gradient(90deg, #450b11, #8e1c24 50%, #450b11);
+    box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.55);
+    will-change: transform;
+}
+
+/* A soft diagonal stage-light gleam that sweeps across the closed velvet during the hold. */
+.mk-maint-curtain::before {
+    content: "";
+    position: absolute;
+    top: -10%;
+    bottom: -10%;
+    left: -40%;
+    width: 60%;
+    pointer-events: none;
+    background: linear-gradient(105deg,
+        transparent 40%,
+        rgba(255, 235, 210, 0.16) 50%,
+        transparent 60%);
+    opacity: 0;
+    animation: mk-maint-sheen 2.4s ease-in-out 0.35s 1 forwards;
+}
+
+@keyframes mk-maint-sheen {
+    0%   { opacity: 0;   transform: translateX(0); }
+    25%  { opacity: 0.9; }
+    100% { opacity: 0;   transform: translateX(240%); }
+}
+
+.mk-maint-curtain--right::before {
+    left: auto;
+    right: -40%;
+    background: linear-gradient(255deg,
+        transparent 40%,
+        rgba(255, 235, 210, 0.16) 50%,
+        transparent 60%);
+    animation-name: mk-maint-sheen-right;
+}
+
+@keyframes mk-maint-sheen-right {
+    0%   { opacity: 0;   transform: translateX(0); }
+    25%  { opacity: 0.9; }
+    100% { opacity: 0;   transform: translateX(-240%); }
+}
+
+.mk-maint-curtain--left {
+    left: -22vw;
+    box-shadow: inset -34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
+    animation: mk-maint-curtain-left 3.2s cubic-bezier(0.62, 0.02, 0.2, 1) forwards;
+}
+
+.mk-maint-curtain--right {
+    right: -22vw;
+    box-shadow: inset 34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
+    animation: mk-maint-curtain-right 3.2s cubic-bezier(0.62, 0.02, 0.2, 1) forwards;
+}
+
+@keyframes mk-maint-curtain-left {
+    0%   { transform: translateX(0) rotate(0deg) skewX(0deg); }
+    16%  { transform: translateX(0) rotate(0deg) skewX(0deg); }
+    34%  { transform: translateX(-3vw) rotate(-11deg) skewX(3deg); }
+    62%  { transform: translateX(-24vw) rotate(-5deg) skewX(1.5deg); }
+    84%  { transform: translateX(-32vw) rotate(2.5deg) skewX(-1.5deg); }
+    93%  { transform: translateX(-29vw) rotate(-1deg) skewX(0.6deg); }
+    100% { transform: translateX(-30vw) rotate(0deg) skewX(0deg); }
+}
+
+@keyframes mk-maint-curtain-right {
+    0%   { transform: translateX(0) rotate(0deg) skewX(0deg); }
+    16%  { transform: translateX(0) rotate(0deg) skewX(0deg); }
+    34%  { transform: translateX(3vw) rotate(11deg) skewX(-3deg); }
+    62%  { transform: translateX(24vw) rotate(5deg) skewX(-1.5deg); }
+    84%  { transform: translateX(32vw) rotate(-2.5deg) skewX(1.5deg); }
+    93%  { transform: translateX(29vw) rotate(1deg) skewX(-0.6deg); }
+    100% { transform: translateX(30vw) rotate(0deg) skewX(0deg); }
+}
+
+/* THE VALANCE — a draped, scalloped swag pinned across the top (never moves). */
+.mk-maint-valance {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: clamp(96px, 19vh, 200px);
+    z-index: 4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 200' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='v' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23a51f29'/%3E%3Cstop offset='1' stop-color='%234d0c12'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0,0 H1000 V95 Q900,185 800,95 Q700,185 600,95 Q500,185 400,95 Q300,185 200,95 Q100,185 0,95 Z' fill='url(%23v)'/%3E%3Cpath d='M1000,95 Q900,185 800,95 Q700,185 600,95 Q500,185 400,95 Q300,185 200,95 Q100,185 0,95' fill='none' stroke='%23d9b15a' stroke-width='3' opacity='0.55'/%3E%3C/svg%3E");
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.5));
+    pointer-events: none;
+}
+
+/* THE COPY — revealed in the central gap as the curtains part. */
+.mk-maint-content {
+    position: relative;
+    z-index: 2;
+    max-width: min(560px, 86vw);
+    padding: 0 24px;
+    text-align: center;
+    opacity: 0;
+    animation: mk-maint-reveal 1.1s ease 1.6s forwards;
+}
+
+@keyframes mk-maint-reveal {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.mk-maint-eyebrow {
+    margin: 0 0 10px;
+    font-size: 16px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: rgba(var(--pink-alt), 0.85);
+}
+
+.mk-maint-title {
+    margin: 0;
+    font-size: clamp(40px, 8vw, 78px);
+    line-height: 1.05;
+    font-weight: 400;
+    color: var(--text);
+    text-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+}
+
+.mk-maint-copy {
+    margin: 20px auto 0;
+    font-size: clamp(17px, 2.2vw, 21px);
+    line-height: 1.6;
+    color: var(--text-soft);
+}
+
+@media (max-width: 600px) {
+    .mk-maint-curtain { width: 84vw; }
+    .mk-maint-content { z-index: 6; max-width: 80vw; padding: 0 14px; }
+    .mk-maint-eyebrow { font-size: 11px; letter-spacing: 2.5px; margin-bottom: 7px; }
+    .mk-maint-title   { font-size: clamp(26px, 8.6vw, 40px); }
+    .mk-maint-copy    { font-size: clamp(13px, 3.6vw, 16px); margin-top: 14px; line-height: 1.5; }
+
+    @keyframes mk-maint-curtain-left {
+        0%, 16% { transform: translateX(0) rotate(0deg) skewX(0deg); }
+        34%     { transform: translateX(-4vw) rotate(-11deg) skewX(3deg); }
+        62%     { transform: translateX(-30vw) rotate(-5deg) skewX(1.5deg); }
+        84%     { transform: translateX(-38vw) rotate(2.5deg) skewX(-1.5deg); }
+        93%     { transform: translateX(-35vw) rotate(-1deg) skewX(0.6deg); }
+        100%    { transform: translateX(-36vw) rotate(0deg) skewX(0deg); }
+    }
+    @keyframes mk-maint-curtain-right {
+        0%, 16% { transform: translateX(0) rotate(0deg) skewX(0deg); }
+        34%     { transform: translateX(4vw) rotate(11deg) skewX(-3deg); }
+        62%     { transform: translateX(30vw) rotate(5deg) skewX(-1.5deg); }
+        84%     { transform: translateX(38vw) rotate(-2.5deg) skewX(1.5deg); }
+        93%     { transform: translateX(35vw) rotate(1deg) skewX(-0.6deg); }
+        100%    { transform: translateX(36vw) rotate(0deg) skewX(0deg); }
+    }
+}
+
+/* Reduced motion: skip the sweep + gleam, land on the final revealed state. */
+@media (prefers-reduced-motion: reduce) {
+    .mk-maint-curtain--left  { animation: none; transform: translateX(-30vw); }
+    .mk-maint-curtain--right { animation: none; transform: translateX(30vw); }
+    .mk-maint-curtain::before { animation: none; opacity: 0; }
+    .mk-maint-content { animation: none; opacity: 1; }
+}

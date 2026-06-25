@@ -90,6 +90,55 @@ window.MovieAPI = (function () {
     }
 
     // ==========================================
+    // 0c. SERVER-DOWN MAINTENANCE CURTAIN
+    // ==========================================
+    // When a request can't reach the backend at all (the fetch throws — server not
+    // running / offline), we drop a full-screen cinematic "We'll Be Back Soon"
+    // curtain (the same red-velvet stage as the Coming Soon page, styled in
+    // common.css) with a random movie-flavoured maintenance pun — mirroring how the
+    // 404 page randomises its one-liner. This replaces the old fleeting toast; it's a
+    // terminal state (no back button), since the app can't function without the
+    // server. Lives here (not common.js) so it also covers the login/signup pages,
+    // which load api.js but not the shared shell. Shown at most once per page.
+    const MAINT_QUOTES = [
+        "We'll be back. — our server took that line a little too literally.", // The Terminator
+        "Intermission! Grab some popcorn while we change the reel.",
+        "Houston, the server has a problem. We're working the checklist.", // Apollo 13
+        "The projector jammed mid-reel. Our crew is splicing it back together.",
+        "The server's sleeping with the fishes. We're reviving it now.", // The Godfather
+        "Roads? Where we're going, we just need the server back online.", // Back to the Future
+        "Our server wandered off to the dark side. We're restoring balance.", // Star Wars
+        "Plot twist: the server needs a quick reboot. Stay tuned.",
+        "Frankly, my dear, the server's having a moment. Back shortly.", // Gone with the Wind
+        "This is the part where our ops team saves the day. Hang tight.",
+        "The show isn't over — we're just resetting the stage.",
+    ];
+    let maintShown = false;
+    function showServerDownCurtain() {
+        if (maintShown || typeof document === "undefined" || !document.body) return;
+        maintShown = true;
+        document.body.classList.add("mk-maint-open");
+        const stage = document.createElement("div");
+        stage.className = "mk-maint";
+        stage.setAttribute("role", "alertdialog");
+        stage.setAttribute("aria-live", "assertive");
+        stage.setAttribute("aria-label", "Service temporarily unavailable");
+        // Build the structure; the random pun goes in via textContent (no HTML).
+        stage.innerHTML =
+            '<div class="mk-maint-curtain mk-maint-curtain--left"></div>' +
+            '<div class="mk-maint-curtain mk-maint-curtain--right"></div>' +
+            '<div class="mk-maint-valance"></div>' +
+            '<div class="mk-maint-content">' +
+            '<p class="mk-maint-eyebrow">Intermission</p>' +
+            '<h1 class="mk-maint-title">We’ll Be Back Soon</h1>' +
+            '<p class="mk-maint-copy"></p>' +
+            "</div>";
+        stage.querySelector(".mk-maint-copy").textContent =
+            MAINT_QUOTES[Math.floor(Math.random() * MAINT_QUOTES.length)];
+        document.body.appendChild(stage);
+    }
+
+    // ==========================================
     // 1. LOW-LEVEL REQUEST HELPER
     // ==========================================
     // One fetch wrapper so every call gets the same JSON parsing and error
@@ -124,7 +173,11 @@ window.MovieAPI = (function () {
                 ...options,
             });
         } catch {
-            // Server down / CORS / offline — give a clear, user-facing reason.
+            // Server down / CORS / offline — drop the full-screen "We'll Be Back
+            // Soon" maintenance curtain instead of a fleeting toast. Still throw so
+            // any in-flight caller stops its own loading state; the curtain covers
+            // the screen (and hides any toast) regardless.
+            try { showServerDownCurtain(); } catch (_) {}
             throw new Error("Can't reach the movie server. Is the backend running?");
         }
 

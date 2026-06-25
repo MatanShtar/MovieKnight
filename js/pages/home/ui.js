@@ -261,6 +261,9 @@ function attachClearButton(input, onClear) {
     btn.hidden = !input.value;
   };
   input.addEventListener("input", sync);
+  // Also reflect PROGRAMMATIC value changes (e.g. Surprise Me fills the box without
+  // firing `input`): a dispatched `change` shows the "X" without re-running search.
+  input.addEventListener("change", sync);
   sync();
 
   btn.addEventListener("click", () => {
