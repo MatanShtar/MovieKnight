@@ -16,7 +16,7 @@ window.toast = (function () {
       background: "linear-gradient(135deg, #8338ec, #c77dff)",
     },
     error: {
-      icon: "✕",
+      icon: "⚠",
       background: "linear-gradient(135deg, #c0392b, #e7503f)",
     },
     // "removed / undone" — an orange→red so a removal reads differently from a
