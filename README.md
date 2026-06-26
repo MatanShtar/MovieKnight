@@ -1,95 +1,96 @@
-# 🎬 MovieKnight: Current State (README)
-## 📖 Project Description
-MovieKnight is a web-based, gamified movie organizer and selection application designed to solve "decision paralysis" when choosing what to watch. It allows users to browse movies, organize them into collections, and use interactive tools like "Spin the Wheel" to randomly select a movie based on specific filters (genres, local streaming providers).
+# 🎬 MovieKnight — Client
 
-## 🛠️ Current Tech Stack
-**Frontend:** Vanilla HTML5, CSS3, JavaScript (ES6+).
+The frontend for [MovieKnight](https://movieknight.site): a gamified movie
+organizer that fights "what should we watch?" decision paralysis. Browse and
+filter movies, sort them into collections, and pick one with **Spin the Wheel**,
+the **Chopping Block**, or **Let AI Choose**.
 
-**Data Handling:** Asynchronous fetch API pulling from local JSON structures (movies.json, collections.json).
+A multi-page **vanilla** app — plain HTML, CSS, and ES6+ JavaScript. **No
+framework, no bundler, no build step, no `node_modules`.** It talks to the
+[MovieKnight server](https://github.com/niv1999/MovieKnight-server) for all data.
 
-**Storage:** Browser localStorage for session/auth mocking and state management.
+## Run locally
 
-## 🏗️ Core Architecture & Features Built
-### 1. App Shell & Layout (common.css, common.js)
+There's nothing to install — but the app **must be served over HTTP**, not opened
+as a `file://` URL (it uses `fetch` and `localStorage`).
 
-- Fully responsive layout with a sticky sidebar navigation and a mobile-friendly hamburger drawer.
+```bash
+# from this folder:
+python -m http.server 8000      # then open http://localhost:8000/index.html
+```
 
-- Shared authentication widget (mocked via localStorage) with a profile dropdown.
+Or use VS Code's **Live Server** on `index.html`.
 
-- Global modal system (e.g., Sign Out confirmation) and custom scrollbar styling.
+**Which backend it hits** is automatic (see [`js/core/api.js`](js/core/api.js)):
+on `localhost`/`127.0.0.1` it calls the local dev server at
+`http://localhost:3000` (run `npm run dev` in the server repo first); anywhere
+else it calls the deployed Render API. To force one, set `localStorage["mk:apiBase"]`.
 
-### 2. Home/Explore Interface (index.html, home.js)
+## Pages
 
-- Advanced filter UI for Release Year, Genres, Ratings, Actors, Directors, Age Rating, and Platforms.
+No router — each page is its own `*.html` at the root, pulling in its scripts and
+styles via `<script defer>` / `<link>`.
 
-- "Surprise Me" dice functionality and placeholder AI search mode.
+| Page | Purpose |
+| --- | --- |
+| `index.html` | Home / explore — the filterable movie feed. |
+| `movie.html` | Single-movie detail. |
+| `collection.html` | One collection's movies (grid + sorting). |
+| `profile.html` | User profile, bio/avatar, badges, and their collections. |
+| `picker.html` | Setup hub for the picker games (pick a collection + filters). |
+| `wheel.html` | Spin the Wheel (`<canvas>` roulette). |
+| `chopping.html` | Chopping Block — eliminate movies two at a time until one wins. |
+| `ai-suggestions.html` | "Let AI Choose" results. |
+| `login.html` · `signup.html` | Real auth (JWT). |
+| `about.html` · `coming-soon.html` · `404.html` | Static / fallback pages. |
 
-### 3. Profile & Collections (profile.html, profile.js)
+## Project structure
 
-- Asynchronous loading of user collections with CSS skeleton loading states.
+JS and CSS share the same three-tier layout under `js/` and `css/`:
 
-- Dynamic 3-dots context menu for collection management (Rename, Publish/Unpublish, Copy Link, Delete).
+```
+js/
+  core/          loaded on (almost) every page
+    api.js         window.MovieAPI — the ONLY place the app talks to the backend
+    common.js      shared shell: sidebar/nav, mobile drawer, header dropdown, auth state
+    toast.js       toast wrapper around the vendored Toastify
+  components/    reusable cross-page widgets
+    library-buttons.js          heart → Favorites / eye → Already Watched (optimistic toggle)
+    collection-modal.js         one movie → many lists
+    add-to-collection-modal.js  one list → many movies
+    enhance-modal.js            AI "enhance this collection" flow
+  pages/<page>/  page logic, split into cohesive files (home, profile, collection, picker, …)
 
-### 4. Movie Picker Hub (picker.html, picker.js, picker.css)
+css/             mirrors js/ — core/ (tokens, common, error) · components/ · pages/<page>/
+data/            filterMenuData.json — static dropdown options with no backend endpoint yet
+vendor/toastify/ the embedded notification library
+assets/          images, icons, fonts
+```
 
-- Generic configuration funnel for selection tools.
+**Globals & load order matter.** Files share state through `window.*` and bare
+top-level declarations rather than imports, so a script must not reference a
+global that a later-loaded file declares. Always load `api.js` (defer) **before**
+any page script that uses it.
 
-- Interactive genre grid with CSS-drawn state animations (turning + to ×).
+### `js/core/api.js` — the single backend boundary
 
-- Live-searchable provider list featuring custom SVG checkboxes and scrollable lists.
+Everything network-related lives here (`window.MovieAPI`):
 
-### 5. Spin The Wheel (wheel.html, wheel.js, wheel.css)
+- Picks the API base URL (local vs deployed) automatically.
+- Manages the **auth session** — stores the JWT + cached `currentUser` in `localStorage` and attaches `Authorization: Bearer` to requests.
+- Normalises raw TMDB objects into the app's shape (`{ title, rating, popularity, releaseYear, posterPath }`) and prefixes bare image paths with the TMDB CDN base.
+- Exposes the collections API (`getLibrary`, `listCollections`, `getCollection`, add/remove movie, create/rename/delete, …).
 
-- HTML5 <canvas> integration dynamically drawing roulette slices based on data.
+To point the whole app at a different backend, that's the one file to touch.
 
-- Physics-based spin animation using CSS transitions.
+## Conventions
 
-- Side-by-side editable movie list UI.
+- **No frameworks or build tools.** Don't add React/Vite/Bootstrap/TypeScript.
+- **Never use `alert` / `confirm` / `prompt`** — use toasts and in-page UI (a submission quality gate).
+- Keep it responsive (mobile + desktop), avoid inline `style=""` and unjustified `!important`, and ship with no console errors in normal use.
 
-### 6. Utility Modules (toast.js) * Custom, theme-matched notification system replacing default browser alerts.
+## Deploy
 
-## 🚀 Development Roadmap (TODO List)
-_This roadmap is broken down from immediate frontend polish to advanced backend integration._
-
-### 🔌 Phase 1: Wiring the Frontend Logic (Immediate Next Steps)
-_Currently, the UI looks great, but the pages don't talk to each other._
-
-- [ ] **Step 1: Pass Configuration Data:** In picker.js, when "GENERATE WHEEL" is clicked, save the selected genres and providers to sessionStorage or localStorage before redirecting to wheel.html.
-
-- [ ] **Step 2: Read Configuration Data:** In wheel.js, read that saved data and filter the movies.json fetch so the wheel only displays movies that match the user's selected genres and platforms.
-
-- [ ] **Step 3: Wheel Spin Resolution:** Update the setTimeout in wheel.js to calculate exactly which slice is at the top (the pointer) when the rotation stops, and trigger a toast.success announcing the winning movie.
-
-- [ ] **Step 4: Collection Menu Actions:** Wire up the stubs in profile.js so clicking "Delete Collection" actually removes the item from the DOM, and "Copy Link" copies a dummy URL to the user's clipboard.
-
-### ⚔️ Phase 2: Building the Missing Selection Tools
-- [ ] **Step 1: The Chopping Block (chopping.html):** Design and build the UI where users are presented with two movies at a time and must eliminate one until only a single winner remains.
-
-- [ ] **Step 2: Let AI Choose (ai.html):** Build a chat-like interface or a slot-machine-style generator where the user types a prompt ("I want a scary movie set in space") and the UI returns a specific recommendation.
-
-### 🗄️ Phase 3: Data Architecture & Backend Setup
-_To move beyond hardcoded JSON files, the app needs a real server._
-
-- [ ] **Step 1: Choose a Backend Framework:** Decide between Node.js (Express), Python (Django/Flask), or a BaaS like Firebase/Supabase.
-
-- [ ] **Step 2: Database Schema Design:** Map out the database tables/collections (e.g., Users, Movies, Collections, Collection_Movies).
-
-- [ ] **Step 3: Real Authentication:** Replace the fake localStorage login with secure JWT (JSON Web Tokens) or OAuth (Google/GitHub login).
-
-- [ ] **Step 4: Build RESTful APIs:** Create the backend endpoints for your frontend to consume (e.g., GET /api/collections, POST /api/collections/new).
-
-### 🌍 Phase 4: External API Integration
-Maintaining your own movie database is impossible; you need to pull live data.
-
-- [ ] **Step 1: TMDB/OMDB Integration:** Register for a free API key from The Movie Database (TMDB).
-
-- [ ] **Step 2: Dynamic Search:** Wire the search bar on the home page to query the TMDB API so users can search any movie in the world.
-
-- [ ] **Step 3: Provider API:** Use the TMDB "Watch Providers" endpoint to accurately show which streaming services currently have the movie in the user's specific region.
-
-### 🧠 Phase 5: AI Integration (The "Knight" in MovieKnight)
-- [ ] **Step 1: LLM Setup:** Connect your backend to an AI API (like Google Gemini or OpenAI).
-
-- [ ] **Step 2: Prompt Engineering:** Design the system prompts so the AI understands how to take a user's mood ("Feeling sad, want to laugh") and query your movie database to return 3 highly specific recommendations.
-
-- [ ] **Step 3: Connect to UI:** Wire the "AI Mode" button on the home page and the "Let AI Choose" tab to this new endpoint.
+Hosted on **GitHub Pages** at [`movieknight.site`](https://movieknight.site) (see
+`CNAME`). It's static — pushing to the default branch publishes. GitHub Pages
+auto-serves the root `404.html` for unknown paths.
