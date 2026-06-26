@@ -626,9 +626,12 @@
 .cb-coverflow.cb-dragging .carousel-inner * { cursor: grabbing !important; }
 /* No card easing while the user drags OR while the strip coasts on momentum — both
    drive `center` every frame and need the posters to track it instantly. The easing
-   comes back the moment it settles, for the smooth final snap onto a poster. */
+   comes back the moment it settles, for the smooth final snap onto a poster. These
+   selectors are (0,3,0), so they out-specify the base `.cb-card` (0,1,0) transition
+   without !important — and render() resets its per-frame inline transition to "" each
+   pass, so there's no inline value left to override here. */
 .cb-coverflow.cb-dragging .cb-card,
-.cb-coverflow.cb-coasting .cb-card { transition: none !important; }
+.cb-coverflow.cb-coasting .cb-card { transition: none; }
 
 /* A horizontal drag must not select the titles or start the browser's native
    image-drag (the ghost poster) — either one hijacks the pointer and makes the
@@ -1003,13 +1006,20 @@
     .picker-panel[data-panel="chopping"].active { max-width: 100%; }
 
     /* page bottom-padding is smaller here, so reserve a bit more for the fixed bar.
-       Left-align the whole setup (hub) on mobile instead of centring it. */
-    .cb-setup { padding-bottom: 80px; align-items: flex-start; }
+       Left-align the whole setup (hub) on mobile instead of centring it. The 56px
+       gap makes the count row sit one rhythm-step below the config block (see the
+       .cb-random margin-top:0 below) rather than being shoved to the bottom. */
+    .cb-setup { padding-bottom: 80px; align-items: flex-start; gap: 56px; }
 
     /* Keep the "Random Movies Selected" count in normal flow BELOW the fixed
        action bar's stacking layer (z-index 40), so on mobile it scrolls under the
-       START bar instead of floating statically over it / other elements. */
+       START bar instead of floating statically over it / other elements. Drop the
+       base margin-top:auto (a desktop-only "pin to the bottom" trick): on mobile the
+       page scrolls and START is a fixed bar, so the auto-margin just made the gap
+       above this row swell to fill leftover height — uneven vs the 56px row rhythm.
+       Letting .cb-setup's 56px gap govern keeps it in step with the rows above. */
     .cb-random { position: relative; z-index: 0; justify-content: flex-start; }
+    .cb-setup .cb-random { margin-top: 0; }
 
     /* The "+N more …" overflow dropdown is a fixed 240px wide and centred on the
        chip; on a narrow phone that spills past the screen edge. Cap it well inside
@@ -1025,7 +1035,7 @@
         align-items: flex-start;
         gap: 56px;             /* more breathing room between the stacked rows */
         margin-top: 24px;
-        margin-bottom: 24px;   /* count + .cb-setup padding now clear the fixed bar */
+        margin-bottom: 0;      /* the count row's gap is owned by .cb-setup's 56px gap */
     }
 
     .cb-col-left, .cb-col-right { align-items: flex-start; width: 100%; }

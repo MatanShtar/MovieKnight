@@ -103,7 +103,11 @@
 .input-group input:-webkit-autofill:focus,
 .input-group input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
-  /* !important: overrides the browser's user-agent autofill text color. */
+  /* Justified !important (no specificity alternative): Chrome paints the autofill
+     text colour via an internal user-agent style that a normal author rule can't
+     reach, so -webkit-text-fill-color must be !important or autofilled text renders
+     near-black on the pink field. (The 5000s background transition is the matching
+     trick that defers the yellow autofill background indefinitely.) */
   -webkit-text-fill-color: white !important;
   caret-color: white;
 }
@@ -188,13 +192,15 @@
 /* ==========================================
    4. FORM VALIDATION ERRORS
    ========================================== */
-/* !important: `.input-error` (0,1,0) is applied to the input element, but
-   `.input-group input` (0,1,1) sets these same three properties at higher
-   specificity, so the error styling needs !important to win. */
-.input-error {
-  border: 1px solid rgb(var(--danger-input)) !important;
-  box-shadow: 0 0 10px rgba(var(--danger-input), 0.3) !important;
-  background-color: rgba(var(--danger-input), 0.05) !important;
+/* Scoped as `.input-group input.input-error` (0,2,1) so it out-specifies the base
+   `.input-group input` (0,1,1) and ties `.input-group input:focus` (0,2,1) — winning
+   on source order (it's later) so the error styling shows even while the field is
+   focused, exactly as the old !important did. The class is only ever added to inputs
+   inside .input-group (see validation.js), so the scoping is always satisfied. */
+.input-group input.input-error {
+  border: 1px solid rgb(var(--danger-input));
+  box-shadow: 0 0 10px rgba(var(--danger-input), 0.3);
+  background-color: rgba(var(--danger-input), 0.05);
 }
 
 .error-message {

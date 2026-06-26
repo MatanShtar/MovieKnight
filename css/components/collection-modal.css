@@ -432,15 +432,25 @@
     flex: 1 1 auto;
     height: auto;
   }
-  .cm-item {
-    gap: 14px !important;
-    padding: 14px 16px !important;
-    border-right: none !important;
+  /* Single-column phone layout: equal full-width rows + full-width dividers. These
+     match the specificity of the base nth-child rules they override (0,2,0 / 0,3,0 /
+     0,2,1) so they win on source order — this block is later in the file — instead of
+     leaning on !important. */
+  .cm-item:nth-child(odd),
+  .cm-item:nth-child(even) {
+    gap: 14px;
+    padding: 14px 16px;
+  }
+  .cm-item:nth-child(odd):not(:last-child) {
+    border-right: none;
   }
   .cm-item::after {
-    left: 0 !important;
-    right: 0 !important;
     height: 1px;
+  }
+  .cm-item:nth-child(odd)::after,
+  .cm-item:nth-child(even)::after {
+    left: 0;
+    right: 0;
   }
   .cm-check {
     width: 26px;
