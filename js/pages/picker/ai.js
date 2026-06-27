@@ -475,11 +475,5 @@ const Confetti = (() => {
     return { start, stop };
 })();
 
-// ==========================================
-// 7. HELPERS
-// ==========================================
-function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, c => (
-        { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
-    ));
-}
+// escapeHtml() is the shared global from js/core/common.js (loaded before this script
+// on ai-suggestions.html), so this page reuses it rather than redefining its own copy.

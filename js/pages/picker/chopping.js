@@ -20,11 +20,8 @@ const POSTER_FALLBACK = "assets/images/poster-placeholder.svg";
 // ==========================================
 // 1. SHARED HELPERS
 // ==========================================
-function escapeHtml(str) {
-    return String(str).replace(/[&<>"']/g, c => (
-        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-    ));
-}
+// escapeHtml() is the shared global from js/core/common.js (loaded before this script
+// on chopping.html and picker.html), so we reuse it rather than redefining a copy.
 
 // At/below this width the game screen uses a native CSS scroll-snap strip instead
 // of the JS-driven 3D coverflow (must match the @media breakpoint in chopping.css).
