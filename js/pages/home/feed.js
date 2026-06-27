@@ -227,13 +227,24 @@ async function loadFeedBatch(token = feedToken) {
         break;
       }
 
+      // De-dupe by TMDB id, NOT title: distinct movies can share an identical
+      // title — an original and its same-named remake ("How to Train Your
+      // Dragon" 2010/2025, "I Know What You Did Last Summer" 1997/2025) have
+      // different ids. Keying on title collapsed them into ONE and dropped
+      // whichever TMDB ranked lower — usually the original, since the newer
+      // remake tends to out-rank it. That was the "original hidden" bug, and it
+      // silently overrode TMDB's native relevance order. Id de-dup still catches
+      // a genuine same-movie repeat across pages while preserving that order;
+      // entries without an id (rare) are always kept — they can't collide.
       const seen = new Set(
-        [...feedMovies, ...collected].map((m) => m.title.toLowerCase()),
+        [...feedMovies, ...collected]
+          .map((m) => m.id)
+          .filter((id) => id != null),
       );
       const fresh = results.filter((m) => {
-        const k = m.title.toLowerCase();
-        if (seen.has(k)) return false;
-        seen.add(k);
+        if (m.id == null) return true;
+        if (seen.has(m.id)) return false;
+        seen.add(m.id);
         return true;
       });
 

@@ -231,26 +231,20 @@ textarea, [contenteditable="true"] {
   background-color: var(--overlay-weak);
 }
 
-/* Pink active line down the left edge. It's pinned top-to-bottom of the WHOLE
-   container (toggle + submenu), so as the accordion's max-height animation grows
-   the submenu, the container — and this line with it — grows downward in lockstep,
-   then shrinks back up on close. The bar itself is the full height at all times;
-   we just fade it in/out with the open state. (Belt-and-braces: an explicit height
-   transition for any browser that lays the bar out at an intermediate height.) */
+/* Pink active accent. It spans the WHOLE container (toggle + submenu) and is a
+   border-left on a 12px-radius box, so the pink curves around the container's
+   top-left/bottom-left corners instead of cutting straight across them. Pinned
+   top-to-bottom, so as the submenu animates open the accent grows with the
+   container; we just fade it in/out with the open state. */
 .settings-container::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  border-radius: 3px;
-  background-color: rgba(var(--pink), 0.9);
+  inset: 0;
+  border-radius: 12px; /* match the container so the accent hugs its corners */
+  border-left: 3px solid rgba(var(--pink), 0.9);
   opacity: 0;
   pointer-events: none;
-  transition:
-    opacity var(--t-base) ease,
-    height 0.3s ease-in-out;
+  transition: opacity var(--t-base) ease;
 }
 
 .settings-container.open::before {
@@ -327,21 +321,24 @@ textarea, [contenteditable="true"] {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
+  /* Symmetric easing + a single shared duration so opening and closing feel the
+     same. The exact open height is set inline by the toggle handler (= the
+     submenu's real scrollHeight). Padding is NOT transitioned and is always
+     present (below), so scrollHeight measures the full padded height — otherwise
+     the bottom row is clipped by the padding that hadn't animated in yet. */
   transition:
-    max-height 0.8s ease-out,
-    opacity 0.7s ease,
-    padding 0.7s ease;
+    max-height 0.35s var(--ease-snap),
+    opacity 0.3s ease;
   display: flex;
   flex-direction: column;
   gap: 15px;
-  padding-left: 50px;
+  /* Always present; clipped to nothing while collapsed (max-height:0 + hidden). */
+  padding: 5px 0 20px 50px;
 }
 
 .settings-container.open .settings-submenu {
-  max-height: 200px;
+  max-height: 200px; /* fallback only; JS sets the exact px height inline */
   opacity: 1;
-  padding-top: 5px;
-  padding-bottom: 20px;
 }
 .about-link {
   margin-top: auto;

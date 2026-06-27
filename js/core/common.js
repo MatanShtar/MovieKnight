@@ -230,7 +230,16 @@ if (settingsToggleBtn && sidebarSettings && settingsSubmenu) {
   settingsToggleBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
+    const opening = !sidebarSettings.classList.contains("open");
     sidebarSettings.classList.toggle("open");
+    // Drive the accordion to the submenu's ACTUAL height (read after the .open
+    // class applies its padding) instead of the CSS fallback's fixed overshoot —
+    // that overshoot is what made the close stall before it visibly collapsed.
+    // Clearing it on close lets it fall back to the CSS max-height:0 and animate
+    // smoothly the other way.
+    settingsSubmenu.style.maxHeight = opening
+      ? `${settingsSubmenu.scrollHeight}px`
+      : "";
   });
 }
 

@@ -14,9 +14,10 @@ function collectQuery() {
   const term = searchEl ? searchEl.value.trim() : "";
   if (term) {
     // A real text search is PURE relevance: the backend ignores sort and EVERY
-    // filter for a text query (so the original ranks above its sequels and typos
-    // are tolerated). Send ONLY the query — adding filters/sort would have no
-    // effect, and the controls are dimmed to match (see updateSearchModeUI).
+    // filter for a text query (so the original ranks above its sequels). TMDB's
+    // text match isn't fuzzy, so misspellings return what TMDB returns. Send ONLY
+    // the query — adding filters/sort would have no effect, and the controls are
+    // dimmed to match (see updateSearchModeUI).
     return { q: term };
   }
 

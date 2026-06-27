@@ -35,7 +35,11 @@
    (linear handles run bottom-right #000 → top-left #666, i.e. 328deg). */
 .enhance-modal {
   position: relative;
-  width: min(1468px, 96vw);
+  /* 100% (of the overlay's padded flex box), NOT 96vw: a vw width ignores the
+     overlay's 24px padding and pushes the panel ~16px past each gutter on
+     mobile, which is the source of the horizontal scroll. 100% fits inside the
+     padding (box-sizing: border-box already accounts for the panel's own pad). */
+  width: min(1468px, 100%);
   max-height: 92dvh;
   overflow-y: auto;
   box-sizing: border-box;
@@ -70,6 +74,7 @@
   right: 36px;
   width: 40px;
   height: 40px;
+  z-index: 3; /* above the poster cards so a wrapped poster can never cover it */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -352,7 +357,9 @@
 
 @media (max-width: 720px) {
   .enhance-modal {
-    padding: 52px 22px 28px;
+    /* Top pad clears the close button (top:18px + 40px tall = 58px on mobile)
+       so the first poster row never tucks under the (x). */
+    padding: 70px 22px 28px;
     border-radius: 26px;
     gap: 24px;
   }
