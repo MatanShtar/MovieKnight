@@ -1,20 +1,9 @@
-/* profile/badges.css - the Progression Badges column: metallic shields, tier
-   fills, hover tooltips, and the empty/unearned state. Loaded by profile.html
-   after bio.css. */
-
-/* ==========================================
-   4. PROGRESSION BADGES
-   ========================================== */
 .profile-badges {
   flex: 2;
   min-height: 320px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* explicit gaps between header / shields / View-All so they breathe at every
-     width (flex-distribution collapsed them when the header stacks). The View-All
-     button is pushed to the bottom (margin-top:auto) so on desktop it lines up
-     with the New Collection button in the meta column. */
   gap: 20px;
 }
 
@@ -42,7 +31,6 @@
   stroke-linejoin: round;
 }
 
-/* FILLS: Links the specific classes to the gradient IDs in the HTML */
 .silver-shield {
   fill: url(#silver-gradient);
 }
@@ -62,8 +50,6 @@
   max-width: 132px;
   display: flex;
   justify-content: center;
-  /* Badges are display-only: keep the normal arrow, not the text I-beam, when
-     hovering over the title / tooltip text inside them. */
   cursor: default;
   transition:
     transform var(--t-base) var(--ease-pop),
@@ -99,7 +85,6 @@
   filter: drop-shadow(0 0 14px rgba(203, 149, 82, 0.8));
 }
 
-/* hover tooltip above the shield */
 .badge-tooltip {
   visibility: hidden;
   opacity: 0;
@@ -154,8 +139,7 @@
   text-transform: uppercase;
 }
 
-/* empty / unearned badge — a dashed WHITE shield outline, no metal fill, no label
-   (Figma "Profile Page - Just Created"). Shown when the user has no badges. */
+/* empty/unearned: dashed white outline, no fill */
 .badge-shield--empty .shield-path {
   fill: none;
   stroke: #ffffff;
@@ -176,13 +160,11 @@
   justify-content: center;
   align-items: center;
   width: 100%;
-  /* bottom-align with the New Collection button on desktop; harmless (no free
-     space) once the header stacks and the gap handles spacing */
+  /* bottom-align with the New Collection button on desktop */
   margin-top: auto;
 }
 
 .view-badges-btn {
-  /* Now an <a> linking to the Coming Soon page — keep the button look/sizing. */
   display: inline-block;
   box-sizing: border-box;
   text-align: center;

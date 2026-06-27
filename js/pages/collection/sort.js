@@ -1,12 +1,4 @@
-// collection/sort.js — Collection Page sort-by dropdown widget.
-//
-// The custom listbox under "Sort by": building the option rows, opening/closing
-// the menu, keyboard roving (aria-activedescendant), and committing a choice
-// (which re-sorts state.movies and repaints the grid). Attaches its functions
-// onto window.CollectionPage (CP) so main.js can wire the static controls.
-//
-// Depends on: collection/shared.js (CP.SORTS, CP.state, CP.sortMovies, CP.$) and
-//   collection/grid.js (CP.renderGrid). Load AFTER shared.js and grid.js.
+// load after shared.js and grid.js.
 
 (function () {
   const CP = (window.CollectionPage = window.CollectionPage || {});
@@ -14,12 +6,11 @@
   const state = CP.state;
   const SORTS = CP.SORTS;
 
-  // Reflect a sort key in the UI (closed-pill short label + menu selection) and
-  // state, WITHOUT re-sorting/persisting. Used on load to show the remembered sort.
+  // reflect a sort key in UI + state without re-sorting/persisting (used on load)
   CP.setSort = function setSort(key) {
     const opt = SORTS.find((o) => o.key === key) || SORTS[0];
     state.sort = opt.key;
-    $("colSortText").textContent = opt.short; // compact label in the closed pill
+    $("colSortText").textContent = opt.short;
     CP.buildSortMenu();
     return opt;
   };
@@ -30,7 +21,6 @@
     CP.closeSortMenu();
     CP.renderGrid();
     $("colSortBtn").focus();
-    // remember the choice for next visit (owner-only, real collections)
     if (persist && CP.persistSort) CP.persistSort(opt.key);
   };
 
@@ -45,13 +35,12 @@
       item.setAttribute("role", "option");
       item.setAttribute("aria-selected", selected ? "true" : "false");
       item.dataset.key = opt.key;
-      item.textContent = opt.label; // full label inside the open menu
+      item.textContent = opt.label;
       item.addEventListener("click", () => CP.applySort(opt.key));
       menu.appendChild(item);
     });
   };
 
-  // Roving "active" option for keyboard navigation (aria-activedescendant).
   function moveActiveOption(delta) {
     const menu = $("colSortMenu");
     const opts = Array.from(menu.querySelectorAll(".sort-option"));
@@ -99,7 +88,6 @@
     const menu = $("colSortMenu");
     menu.hidden = false;
     $("colSortBtn").setAttribute("aria-expanded", "true");
-    // Seed the active descendant on the current selection.
     const sel = menu.querySelector(".sort-option.is-selected");
     menu.querySelectorAll(".sort-option").forEach((o) =>
       o.classList.remove("is-active")

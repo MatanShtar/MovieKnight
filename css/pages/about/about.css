@@ -1,18 +1,10 @@
-/* about.css — About page.
-   Reuses the shared app shell (common.css / common.js); this file styles only
-   the About content. Laid out from the Figma frame "About Page" (node 92:258),
-   but COMPACTED to fit one screen: the Figma's 1084px height overflows real
-   browsers once chrome + OS scaling are subtracted, so vertical sizes and gaps
-   are smaller and partly viewport-height-relative (vh). The two dev cards stay
-   side by side across desktop widths and only stack on small screens. */
+/* about.css - About page content (reuses the shared app shell). */
 
-/* Anchor the corner-pinned TMDB logo to the whole page (so it can reach the
-   viewport's bottom-right corner, past the rail-bounded content column). */
+/* anchor the corner TMDB logo to the page so it can reach the viewport corner */
 .about-page .app-container {
   position: relative;
 }
 
-/* Hidden inline SVG sprite: each icon is defined once and referenced via <use>. */
 .svg-sprite {
   display: none;
 }
@@ -20,13 +12,11 @@
 .about-main {
   gap: 0;
   text-align: center;
-  /* Side gutters so text never runs edge-to-edge. min-height fills the viewport
-     so the footer sits at the bottom and short content leaves no gap. */
+  /* min-height fills the viewport so the footer pins to the bottom */
   padding: clamp(14px, 2vh, 28px) clamp(24px, 4vw, 80px) 20px;
   min-height: 100vh;
 }
 
-/* "ABOUT US" — compacted from the Figma 120px so the page fits one screen. */
 .about-title {
   font-family: "Lao Sangam MN", sans-serif;
   font-weight: 400;
@@ -37,21 +27,16 @@
   margin: 0;
 }
 
-/* Mission paragraph. */
 .about-intro {
   font-size: clamp(15px, 1.1vw, 20px);
   line-height: 1.5;
   color: var(--text);
   text-align: left;
-  /* Narrower column (was 1300px): the mission text wraps into more, shorter rows
-     for a tighter, more centered "block" of copy. Centred with auto side margins. */
   width: 100%;
   max-width: 760px;
   margin: clamp(8px, 1.2vh, 14px) auto 0;
 }
 
-/* Tagline — reuse the site font (the Figma uses Geologica); a hairline stroke
-   echoes its slightly heavier weight. */
 .about-tagline {
   font-family: "Lao Sangam MN", sans-serif;
   font-weight: 500;
@@ -63,42 +48,36 @@
   margin: clamp(14px, 2.4vh, 30px) 0 0;
 }
 
-/* ==========================================
-   DEVELOPER CARDS — two cards side by side. They stay on one row across desktop
-   widths (shrinking to fit, never wrapping) and only stack on small screens.
-   ========================================== */
+/* dev cards: side by side on desktop, stack on small screens */
 .dev-cards {
   display: flex;
   justify-content: center;
-  flex-wrap: nowrap; /* stay on one row — cards shrink instead of wrapping */
+  flex-wrap: nowrap; /* one row; cards shrink instead of wrapping */
   align-items: stretch;
   gap: clamp(24px, 5vw, 110px);
-  /* Pushed further down the page so the cards sit well below the (now narrower)
-     mission copy. Still leaves room for the avatars overflowing each card's top. */
   margin-top: clamp(120px, 16vh, 220px);
 }
 
 .dev-card {
   --avatar-size: 124px; /* single source for the coupled avatar/padding sizes */
   position: relative;
-  flex: 0 1 400px; /* up to 400px wide; shrinks to fit narrower screens */
+  flex: 0 1 400px;
   min-width: 0;
   min-height: clamp(220px, 28vh, 264px);
-  /* Design fill (#a68589) at 15% opacity via the shared token; rgba (not
-     `opacity`) so the avatar and text stay fully opaque. */
+  /* rgba (not opacity) so avatar/text stay fully opaque */
   background-color: rgba(var(--surface-card), 0.15);
   border-radius: 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Top room for the avatar's lower half (half its size + 2px). */
+  /* top room for the avatar's lower half */
   padding: calc(var(--avatar-size) / 2 + 2px) 16px 18px;
 }
 
-/* Avatar overlaps the card's top edge (half above, centered). */
+/* avatar overlaps the card's top edge, half above */
 .dev-avatar {
   position: absolute;
-  top: calc(var(--avatar-size) / -2); /* sits half above the card's top edge */
+  top: calc(var(--avatar-size) / -2);
   left: 50%;
   transform: translateX(-50%);
   width: var(--avatar-size);
@@ -126,7 +105,6 @@
   margin: 4px 0 0;
 }
 
-/* Social chips pinned toward the card bottom. */
 .dev-socials {
   display: flex;
   gap: 14px;
@@ -137,7 +115,7 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background-color: transparent; /* Figma: transparent chip, white outline only */
+  background-color: transparent;
   border: 3px solid var(--text);
   display: flex;
   align-items: center;
@@ -158,11 +136,7 @@
   fill: var(--text);
 }
 
-/* ==========================================
-   FOOTER — TMDB attribution (centered) + logo (corner). margin-top:auto keeps it
-   at the viewport bottom when content fits, and after the content when it
-   scrolls (never overlaying).
-   ========================================== */
+/* footer: TMDB attribution + logo. margin-top:auto pins it to the bottom */
 .about-footer {
   width: 100%;
   margin-top: auto;
@@ -181,8 +155,7 @@
   margin: 0;
 }
 
-/* Pinned to the page's bottom-right corner. Absolute vs .app-container, so it's
-   not boxed in by the content column and never overlays scrolled content. */
+/* bottom-right corner, absolute vs .app-container so it isn't boxed by the content column */
 .tmdb-logo {
   position: absolute;
   right: 24px;
@@ -192,12 +165,7 @@
   object-fit: contain;
 }
 
-/* ==========================================
-   RESPONSIVE
-   ========================================== */
-
-/* Shell switches to a hamburger at <=1024px; the footer flows in-content. Cards
-   stay side by side here (full width is available), so they don't stack yet. */
+/* footer flows in-content here; cards stay side by side */
 @media (max-width: 1024px) {
   .about-main {
     padding: 16px 20px 48px;
@@ -218,7 +186,6 @@
   }
 }
 
-/* Stack the two cards once they'd get cramped side by side. */
 @media (max-width: 768px) {
   .dev-cards {
     flex-direction: column;

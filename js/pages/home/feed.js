@@ -1,38 +1,21 @@
-// home/feed.js — the movie feed: init, fetching, render, infinite-scroll, the
-// default-list (Favorites/Watched) membership glue, and buildMovieCard.
-// Split out of the former monolithic js/home.js (behaviour unchanged). Loaded
-// FIRST of the home/* scripts. Depends on common.js (escapeHtml / preloadImages)
-// and api.js (MovieAPI) + library-buttons.js (LibraryButtons), all loaded earlier.
+// loaded FIRST of the home/* scripts.
 
-// ==========================================
-// 1. INITIALIZATION & FETCHING
-// ==========================================
-// --- Feed state. The home feed pages through TMDB on scroll (20/page), so you
-// can browse thousands of movies without loading them all at once. ---
-let feedMovies = [];   // everything loaded for the current query so far
-let feedQuery = {};    // { q, genres, yearFrom, yearTo, minRating, sort }
-let feedPage = 0;      // highest page loaded so far
+let feedMovies = [];
+let feedQuery = {};
+let feedPage = 0;
 let feedLoading = false;
-let feedDone = false;  // no more pages for this query
+let feedDone = false;
 let feedToken = 0;     // bumped on every new query so stale fetches are ignored
-let feedDupeStreak = 0; // consecutive pages that added no new (post-dedup) movies
-let feedObserver = null; // IntersectionObserver that pre-loads near the bottom
+let feedDupeStreak = 0;
+let feedObserver = null;
 
-// Each scroll trigger fetches this many TMDB pages back-to-back (20 movies each)
-// and appends them in one DOM write, so fast scrolling can't out-run the data.
 const PAGES_PER_BATCH = 2;
-// Pre-load distance: start fetching while the user is still this far (≈1–2 screen
-// heights) from the bottom, instead of waiting until they hit it.
 const PRELOAD_MARGIN_PX = 1000;
 
-// Guards the "Clear Filters" visibility check: the filter state vars/elements it
-// reads are declared further down, so the early (init-time) calls from render
-// helpers must no-op until everything is wired. Flipped true at end of init.
+// filter state read here is declared further down, so early calls must no-op
 let filtersReady = false;
 
-// How many filter categories are active (not sort). Release Year counts once
-// whether one or both bounds are set; each other category (genres, platforms,
-// rating, age rating, actor, director) counts once when set away from default.
+// Release Year counts once whether one or both bounds are set.
 function activeFilterCount() {
   const ageBtn = document.getElementById("ageRatingBtn");
   let n = 0;
@@ -51,13 +34,10 @@ function activeFilterCount() {
   return n;
 }
 
-// True when any filter (not sort) is set away from its default.
 function anyFilterActive() {
   return activeFilterCount() > 0;
 }
 
-// Show the "Clear Filters" button + the numeric badge on the Filters button only
-// when at least one filter is active; the badge shows the active-filter count.
 function updateClearFiltersVisibility() {
   if (!filtersReady) return;
   const count = activeFilterCount();
@@ -70,15 +50,13 @@ function updateClearFiltersVisibility() {
   }
 }
 
-// The persistent infinite-scroll sentinel (lives in index.html as the grid's
-// last child). All card/skeleton/message inserts go BEFORE it, and it is never
-// removed, so the IntersectionObserver attached to it stays valid for the life
-// of the page.
+// persistent sentinel: inserts go before it, it's never removed, so the
+// observer attached to it stays valid for the life of the page.
 function getSentinel() {
   return document.getElementById("infinite-scroll-sentinel");
 }
 
-// Remove only the cards / skeletons / message — never the sentinel.
+// never remove the sentinel
 function clearGridCards() {
   const grid = document.getElementById("movieGrid");
   if (!grid) return;
@@ -87,7 +65,6 @@ function clearGridCards() {
     .forEach((el) => el.remove());
 }
 
-// Insert a DocumentFragment (or node) just before the sentinel.
 function insertBeforeSentinel(node) {
   const grid = document.getElementById("movieGrid");
   if (!grid) return;
@@ -96,14 +73,12 @@ function insertBeforeSentinel(node) {
   else grid.appendChild(node);
 }
 
-// Build a DocumentFragment from an HTML string (off-DOM, one parse).
 function fragmentFromHTML(html) {
   const tpl = document.createElement("template");
   tpl.innerHTML = html;
   return tpl.content;
 }
 
-// Show a friendly full-width message in place of the card grid.
 function showGridMessage(text) {
   if (!document.getElementById("movieGrid")) return;
   clearGridCards();
@@ -113,11 +88,8 @@ function showGridMessage(text) {
   insertBeforeSentinel(p);
 }
 
-// The "no results" empty state. When filters are the likely culprit (the Browse
-// feed has at least one active filter), render a one-click "Clear Filters" button
-// beside the message that resets every filter and re-runs the search — leaving the
-// text query intact. A text search ignores filters entirely, so the button is
-// hidden there (clearing filters wouldn't change a thing).
+// "Clear Filters" shows only when filters are the likely culprit; a text search
+// ignores filters, so clearing them there would change nothing.
 function showEmptyState() {
   if (!document.getElementById("movieGrid")) return;
   clearGridCards();
@@ -141,7 +113,7 @@ function showEmptyState() {
     btn.className = "grid-clear-filters-btn";
     btn.textContent = "Clear Filters";
     btn.addEventListener("click", () => {
-      resetAllFilters({ includeSort: false }); // filters only — keep the sort
+      resetAllFilters({ includeSort: false });
       runSearch();
     });
     wrap.appendChild(btn);
@@ -150,8 +122,6 @@ function showEmptyState() {
   insertBeforeSentinel(wrap);
 }
 
-// Build cards for a list of movies, preload posters, then REPLACE the cards
-// (leaving the sentinel in place).
 async function renderMovieGrid(movies) {
   const grid = document.getElementById("movieGrid");
   if (!grid) return;
@@ -161,39 +131,26 @@ async function renderMovieGrid(movies) {
     return;
   }
 
-  await preloadImages(movies.map((m) => m.posterPath)); // wait for posters
+  // preload posters so the whole batch paints at once
+  await preloadImages(movies.map((m) => m.posterPath));
   clearGridCards();
   insertBeforeSentinel(fragmentFromHTML(movies.map(buildMovieCard).join("")));
-  // No client-side re-ordering — the backend already returns them sorted.
 }
 
-// Append cards for newly loaded movies without disturbing what's already shown.
-// If loading skeletons are currently pinned to the bottom, the real cards are
-// inserted ABOVE them (not after) so that clearing the skeletons afterwards
-// doesn't yank the freshly-added cards upward — that shift was the "jump".
+// insert real cards ABOVE the in-flight skeletons, so clearing the skeletons
+// afterwards doesn't yank the new cards upward
 function appendMovieCards(movies) {
   const grid = document.getElementById("movieGrid");
   if (!grid || !movies.length) return;
-  // Build the whole batch off-DOM in a DocumentFragment, then insert it in a
-  // single operation — one layout/paint instead of one per card.
   const fragment = fragmentFromHTML(movies.map(buildMovieCard).join(""));
-  // Insert ahead of the in-flight skeletons if present, otherwise just before
-  // the sentinel — always below the current viewport, so scroll anchoring keeps
-  // the view from jumping.
   const firstSkeleton = grid.querySelector(".feed-skeleton");
   if (firstSkeleton) grid.insertBefore(fragment, firstSkeleton);
   else insertBeforeSentinel(fragment);
 }
 
-// Load the next BATCH (PAGES_PER_BATCH pages) for the current query and append
-// it in one DOM write. `token` ties the request to the query that started it; if
-// a newer query begins while this is in flight, the stale result is dropped
-// instead of polluting the grid.
-//
-// `feedLoading` is the strict concurrency guard: it's flipped true up-front and
-// checked at the very top, so aggressive scrolling that fires the observer /
-// scroll handler many times can never launch two overlapping fetches (or fetch
-// the same pages twice) — extra triggers no-op until the in-flight batch lands.
+// `token` ties the request to the query that started it; a newer query bumps
+// feedToken and any stale in-flight result is dropped. feedLoading is the
+// concurrency guard so repeated observer triggers can't launch overlapping fetches.
 async function loadFeedBatch(token = feedToken) {
   if (token !== feedToken || feedLoading || feedDone) return;
   feedLoading = true;
@@ -201,8 +158,7 @@ async function loadFeedBatch(token = feedToken) {
   const grid = document.getElementById("movieGrid");
   const firstLoad = feedPage === 0;
 
-  // While the batch is in flight, show skeletons just before the sentinel (after
-  // page 1) so the area isn't blank during the round-trip.
+  // skeletons during the round-trip so the area isn't blank (after page 1)
   if (!firstLoad && grid) {
     insertBeforeSentinel(
       fragmentFromHTML(
@@ -211,31 +167,23 @@ async function loadFeedBatch(token = feedToken) {
     );
   }
 
-  // Fetch the pages of this batch sequentially, accumulating de-duped movies.
   const collected = [];
   try {
     for (let i = 0; i < PAGES_PER_BATCH && !feedDone; i++) {
       const page = feedPage + 1;
       const results = await MovieAPI.searchMovies({ ...feedQuery, page });
 
-      // A newer query superseded this one mid-batch — drop everything.
-      if (token !== feedToken) return;
+      if (token !== feedToken) return; // newer query superseded mid-batch
 
-      // Empty page = we've paged past the last result: the true end of the feed.
+      // empty page = paged past the last result
       if (!results.length) {
         feedDone = true;
         break;
       }
 
-      // De-dupe by TMDB id, NOT title: distinct movies can share an identical
-      // title — an original and its same-named remake ("How to Train Your
-      // Dragon" 2010/2025, "I Know What You Did Last Summer" 1997/2025) have
-      // different ids. Keying on title collapsed them into ONE and dropped
-      // whichever TMDB ranked lower — usually the original, since the newer
-      // remake tends to out-rank it. That was the "original hidden" bug, and it
-      // silently overrode TMDB's native relevance order. Id de-dup still catches
-      // a genuine same-movie repeat across pages while preserving that order;
-      // entries without an id (rare) are always kept — they can't collide.
+      // de-dupe by id, not title: distinct movies (original vs same-named
+      // remake) share a title but differ by id; keying on title would hide one.
+      // entries without an id are always kept.
       const seen = new Set(
         [...feedMovies, ...collected]
           .map((m) => m.id)
@@ -248,8 +196,7 @@ async function loadFeedBatch(token = feedToken) {
         return true;
       });
 
-      // Advance whether or not anything was fresh, so a fully-duplicate page is
-      // skipped rather than re-requested forever.
+      // advance even on a fully-duplicate page so it isn't re-requested forever
       feedPage = page;
       if (fresh.length) {
         collected.push(...fresh);
@@ -258,8 +205,7 @@ async function loadFeedBatch(token = feedToken) {
         feedDupeStreak++;
       }
 
-      // Safety stops: TMDB caps discover/search at page 500, and a backend that
-      // ignores `page` would otherwise feed duplicates indefinitely.
+      // hard page cap, plus bail-out if a backend ignoring `page` loops duplicates
       if (page >= 500 || feedDupeStreak >= 5) {
         feedDone = true;
         break;
@@ -279,35 +225,29 @@ async function loadFeedBatch(token = feedToken) {
     return;
   }
 
-  // A newer query superseded this one while it was fetching — drop the result.
-  if (token !== feedToken) return;
+  if (token !== feedToken) return; // newer query superseded while fetching
 
-  // Commit the whole batch to the grid in a single append.
   feedMovies.push(...collected);
   if (firstLoad) {
     if (collected.length) await renderMovieGrid(feedMovies);
     else showEmptyState();
   } else if (collected.length) {
-    appendMovieCards(collected); // real cards go in before the skeletons clear
+    appendMovieCards(collected);
   }
 
-  // Clear the loading skeletons once the real cards are in.
   if (grid) grid.querySelectorAll(".feed-skeleton").forEach((el) => el.remove());
   feedLoading = false;
 
-  // Keep loading until the page is tall enough that the threshold is no longer
-  // tripped (or we only got duplicates and need more pages to surface new
-  // movies), then wait for the user to scroll again.
+  // keep loading until the page is tall enough to stop tripping the threshold,
+  // or we only got duplicates and need more pages to surface new movies
   if (!feedDone && (collected.length === 0 || feedNearBottom())) {
     loadFeedBatch(token);
   }
 }
 
-// A one-shot geometric check (NOT a scroll listener) used only by the post-batch
-// fill-loop: true while the sentinel is still within the pre-load margin of the
-// viewport bottom. The observer can't re-fire on its own when the sentinel stays
-// continuously intersecting (e.g. a page too short to scroll), so this lets the
-// loader keep pulling pages until the sentinel is pushed out past the margin.
+// true while the sentinel is within the pre-load margin. the observer can't
+// re-fire while the sentinel stays continuously intersecting (page too short to
+// scroll), so the fill-loop uses this to keep pulling until it's pushed past.
 function feedNearBottom() {
   const sentinel = getSentinel();
   if (!sentinel) return false;
@@ -317,9 +257,7 @@ function feedNearBottom() {
   );
 }
 
-// Start a fresh query from page 1, then keep paginating on scroll. Everything
-// flows through here — the search box, the filters Apply button, and the sort
-// dropdown all end up calling runSearch().
+// fresh query from page 1; search box, filters Apply, and sort all flow here.
 function applyQuery(query) {
   feedQuery = query;
   feedMovies = [];
@@ -330,54 +268,41 @@ function applyQuery(query) {
   const token = ++feedToken; // invalidate any in-flight page load
   const grid = document.getElementById("movieGrid");
   if (grid) {
-    clearGridCards(); // drop old cards but keep the sentinel + observer intact
+    clearGridCards();
     insertBeforeSentinel(fragmentFromHTML(movieSkeletonMarkup(10)));
   }
   loadFeedBatch(token);
 }
 
-// Gather the live UI state into one query object and run it.
 function runSearch() {
   applyQuery(collectQuery());
 }
 
-// Load more BEFORE the user reaches the bottom. A bottom sentinel marks where
-// the grid ends; an IntersectionObserver with a tall bottom rootMargin fires the
-// next batch ~1–2 screens early (the pre-load threshold). This is the SOLE driver
-// — there is no window scroll listener — and the feedLoading guard makes repeated
-// observer callbacks during fast scrolling harmless. The post-batch fill-loop
-// (via feedNearBottom) covers the one case the observer can't: a page too short
-// to scroll, where the sentinel stays continuously intersecting.
+// sole pagination driver: a tall bottom rootMargin fires the next batch early.
+// no scroll listener; feedLoading makes repeated callbacks harmless.
 function setupInfiniteScroll() {
-  const sentinel = getSentinel(); // permanent element from index.html
+  const sentinel = getSentinel();
   if (!sentinel || !("IntersectionObserver" in window)) return;
 
   feedObserver = new IntersectionObserver(
     (entries) => {
       if (entries.some((e) => e.isIntersecting)) loadFeedBatch();
     },
-    // Grow the observed area downward so the sentinel "enters" the viewport a
-    // full 1000px (PRELOAD_MARGIN_PX) before it is actually visible.
+    // grow the observed area downward so the sentinel "enters" early
     { root: null, rootMargin: `0px 0px ${PRELOAD_MARGIN_PX}px 0px`, threshold: 0 },
   );
   feedObserver.observe(sentinel);
 }
 
-// Sentinel must exist before the first load so its fill-loop can chain.
-// Initial load is the default popular feed; we pass the query directly (rather
-// than via collectQuery) so this can run before the filter/sort state further
-// down is initialised — avoiding a temporal-dead-zone error.
+// pass the initial query directly (not collectQuery) so this runs before the
+// filter/sort state below is initialised, avoiding a TDZ error. matches the
+// empty-box branch of collectQuery().
 setupInfiniteScroll();
-// Matches the empty-box branch of collectQuery(): the first feed is the
-// popular, well-known English catalog (vote-count floor + English language).
 applyQuery({ sort: "popularity", minVotes: 500, language: "en" });
 
-// ==========================================
-// DEFAULT-LIST MEMBERSHIP (heart = Favorites, eye = Already Watched)
-// ==========================================
-// Shared add/remove + toast logic lives in js/library-buttons.js. Here we keep
-// only the home-feed glue: a synchronously-readable copy of the loaded library
-// (so buildMovieCard can paint cards at build time) and the per-card painters.
+// heart = Favorites, eye = Already Watched. add/remove lives in library-buttons.js;
+// here, a synchronously-readable library copy (so buildMovieCard can paint at
+// build time) plus the per-card painters.
 let library = null;
 
 function libBtn(card, which) {
@@ -390,7 +315,7 @@ function paintLibBtn(btn, which, on) {
   btn.classList.toggle("active", !!on);
   btn.title = LibraryButtons.title(which, on);
 }
-// Mark every card's heart/eye from the loaded library (for cards built before it).
+// paint hearts/eyes for cards built before the library loaded
 function markLibraryButtons(root = document) {
   if (!library) return;
   root.querySelectorAll(".movie-card").forEach((card) => {
@@ -399,14 +324,12 @@ function markLibraryButtons(root = document) {
     if (library.watched) paintLibBtn(libBtn(card, "watched"), "watched", library.watched.ids.has(id));
   });
 }
-// Load the library once (logged-in only), then paint any cards already on screen.
 LibraryButtons.load().then((lib) => {
   if (!lib) return;
   library = lib;
   markLibraryButtons();
 });
 
-// Generate skeleton placeholders
 function movieSkeletonMarkup(n) {
   return `<article class="movie-card movie-card--skeleton" aria-hidden="true"></article>`.repeat(
     n,
@@ -414,12 +337,10 @@ function movieSkeletonMarkup(n) {
 }
 
 function buildMovieCard(m) {
-  // Escape TMDB-supplied strings before they go into attributes / markup —
-  // a title containing a double-quote would otherwise break data-title / alt
-  // (and that corrupted value then flows into sessionStorage -> the movie page).
+  // escape before injecting into attributes: a title with a double-quote would
+  // break data-title/alt and corrupt the value flowing to the movie page.
   const title = escapeHtml(m.title);
   const poster = escapeHtml(m.posterPath);
-  // Heart = Favorites, eye = Already Watched — pressed if the movie is in them.
   const mid = Number(m.id);
   const favOn = !!(library && library.favorites && library.favorites.ids.has(mid));
   const watchedOn = !!(library && library.watched && library.watched.ids.has(mid));

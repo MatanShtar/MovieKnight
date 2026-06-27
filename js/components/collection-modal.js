@@ -1,33 +1,18 @@
-// collection-modal.js — reusable "Add to Collection" modal.
-//
-// Triggered from a home movie card's "+" action or the Movie Details page. Lists
-// the signed-in user's REAL collections (GET /api/collections) and, on submit,
-// adds the current movie to each selected list (POST /api/collections/:id/movies).
-// A "New Collection" field creates a list (POST /api/collections) and adds to it.
-//
-// Usage:
-//   CollectionModal.open(tmdbId, "Some Movie Title");
-//
-// The caller (home.js / movie.js) guards with requireAuth() first, so by the time
-// we open we have a logged-in session whose token MovieAPI attaches automatically.
-
+// one movie -> many of the user's lists
 window.CollectionModal = (function () {
 
-  // escapeHtml is the shared global from core/common.js (loaded before this module on
-  // every page that uses it — index and movie).
   const escapeHtml = window.escapeHtml;
 
-  let overlay = null; // built lazily on first open
+  let overlay = null;
   let nameInput = null;
-  let listEl = null; // the collection rows container
+  let listEl = null;
   let currentMovieId = null;
   let currentMovie = "This movie";
-  let collections = []; // live list fetched per open
-  let opener = null; // element focused before open, restored on close
-  const selected = new Set(); // ids the user has ticked this session
-  const initiallyIn = new Set(); // ids of lists that already contain the movie
+  let collections = [];
+  let opener = null;
+  const selected = new Set();
+  const initiallyIn = new Set();
 
-  // Build the modal DOM once and wire its interactions.
   function build() {
     overlay = document.createElement("div");
     overlay.className = "cm-overlay";
@@ -65,16 +50,15 @@ window.CollectionModal = (function () {
 
     nameInput = footer.querySelector("#cmNewName");
 
-    // --- interactions ---
     header.querySelector(".cm-close").addEventListener("click", close);
     overlay.addEventListener("click", (e) => {
-      if (e.target === overlay) close(); // click the dimmed backdrop
+      if (e.target === overlay) close();
     });
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && overlay.classList.contains("is-open")) close();
     });
 
-    // Trap Tab within the panel while the dialog is open.
+    // trap Tab within the panel while open
     overlay.addEventListener("keydown", (e) => {
       if (e.key !== "Tab" || !overlay.classList.contains("is-open")) return;
       const focusable = panel.querySelectorAll(
@@ -102,8 +86,6 @@ window.CollectionModal = (function () {
     });
   }
 
-  // A whole-cell toggle: square checkbox + name + 2×2 poster collage from the
-  // collection's first ≤4 movies.
   function buildItem(c) {
     const item = document.createElement("button");
     item.type = "button";
@@ -111,20 +93,16 @@ window.CollectionModal = (function () {
     item.dataset.id = c.id;
     item.setAttribute("role", "checkbox");
 
-    // Cover built with the shared helper (common.js). The modal tiles are pinned
-    // to 2:3 regardless of viewport, so pass responsive:false to keep the desktop
-    // (portrait) layout — 1 poster / 2-3 stacked backdrops / 2×2 — not the banner.
+    // tiles pinned to 2:3, so responsive:false keeps the portrait layout
     item.innerHTML = `
       <span class="cm-check" aria-hidden="true"></span>
       <span class="cm-name"></span>
       ${window.buildCollectionCover(c, { responsive: false })}`;
     const nameEl = item.querySelector(".cm-name");
     nameEl.textContent = c.name;
-    // Surface the full name on hover when it ellipsis-truncates.
     nameEl.title = c.name;
     item.setAttribute("aria-label", `${c.name} collection`);
 
-    // Pre-check lists the movie is already in (membership seeded in renderRows).
     const startsChecked = initiallyIn.has(c.id);
     if (startsChecked) {
       selected.add(c.id);
@@ -132,12 +110,10 @@ window.CollectionModal = (function () {
     }
     item.setAttribute("aria-checked", String(startsChecked));
 
-    // Ticking ADDS/REMOVES the movie immediately (optimistic) and toasts in the
-    // matching colour — green for added, orange/red for removed.
+    // optimistic add/remove, reverts on failure
     item.addEventListener("click", async () => {
       if (currentMovieId == null) return;
       const on = !selected.has(c.id);
-      // optimistic flip
       if (on) {
         selected.add(c.id);
         initiallyIn.add(c.id);
@@ -155,7 +131,6 @@ window.CollectionModal = (function () {
           else toast.warn(`${currentMovie} removed from ${c.name}`);
         }
       } catch (err) {
-        // revert the optimistic flip on failure
         if (on) {
           selected.delete(c.id);
           initiallyIn.delete(c.id);
@@ -184,9 +159,7 @@ window.CollectionModal = (function () {
     collections.forEach((c) => listEl.appendChild(buildItem(c)));
   }
 
-  // The "+" / Enter now ONLY creates a new collection and adds the movie to it
-  // (ticking handles existing lists immediately, above). The new list then shows
-  // in place, checked.
+  // "+"/Enter only creates a new collection and adds the movie to it
   async function submitAdd() {
     const name = (nameInput.value || "").trim();
     if (!name) {
@@ -206,7 +179,7 @@ window.CollectionModal = (function () {
       nameInput.value = "";
       initiallyIn.add(created.id);
       selected.add(created.id);
-      collections = await MovieAPI.listCollections(); // refresh covers + counts
+      collections = await MovieAPI.listCollections();
       renderRows();
       if (window.toast) toast.success(`${currentMovie} added to ${created.name}`);
     } catch (err) {
@@ -218,7 +191,6 @@ window.CollectionModal = (function () {
 
   async function open(movieId, movieTitle) {
     if (!overlay) build();
-    // Remember who opened us so focus can be restored on close.
     opener = document.activeElement;
     currentMovieId = movieId != null ? movieId : null;
     currentMovie = movieTitle || "This movie";
@@ -229,17 +201,14 @@ window.CollectionModal = (function () {
     overlay.classList.add("is-open");
     document.body.classList.add("cm-no-scroll");
 
-    // Move focus into the dialog (the close button) so Tab is trapped inside.
     const closeBtn = overlay.querySelector(".cm-close");
     if (closeBtn) closeBtn.focus();
 
-    // Load the user's real collections fresh each open.
     listEl.innerHTML = `<p class="cm-empty">Loading your collections…</p>`;
     try {
       collections = await MovieAPI.listCollections();
-      // Pre-check the lists this movie is already in. listCollections() carries
-      // no membership flag, so fetch each list's movies in parallel (only for
-      // the currently-open movie) and seed initiallyIn from the join.
+      // listCollections carries no membership flag, so fetch each list to
+      // pre-check the ones already containing this movie
       if (currentMovieId != null && collections.length) {
         const target = String(currentMovieId);
         const full = await Promise.all(
@@ -264,13 +233,11 @@ window.CollectionModal = (function () {
     }
   }
 
-  // The modal is a same-page overlay, so closing it simply hides it — it must NOT
-  // touch window.history (that used to break the page's own Back button).
+  // closing only hides it, must not touch window.history or the page Back button breaks
   function close() {
     if (!overlay) return;
     overlay.classList.remove("is-open");
     document.body.classList.remove("cm-no-scroll");
-    // Restore focus to whatever opened the dialog (ARIA dialog pattern).
     if (opener && typeof opener.focus === "function") {
       opener.focus();
     }

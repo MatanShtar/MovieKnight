@@ -1,10 +1,5 @@
-/* picker.css — Layout for the generic Movie Picker configuration hub */
+/* picker.css - Movie Picker configuration hub */
 
-/* ==========================================
-   1. HEADER & TABS
-   ========================================== */
-/* Match wheel.html's tighter top spacing so the bar sits at the exact same
-   height on both pages (only loaded on picker.html, so this is page-scoped). */
 .main-content {
     padding-top: 12px;
     gap: 12px;
@@ -36,8 +31,6 @@
 }
 
 .wheel-main-logo {
-    /* Scaled down from 228px: the oversized logo pushed the picker config + the
-       Chopping Block game's action buttons below the fold on desktop. */
     height: 150px;
     object-fit: contain;
 }
@@ -63,8 +56,7 @@
     color: var(--text-muted);
     padding: 12px clamp(6px, 1.2vw, 20px);
     border-radius: 0;
-    /* Scale the label with the viewport so the longest tab ("THE CHOPPING BLOCK")
-       still fits on one line at higher zoom / narrower widths. */
+    /* scale with the viewport so "THE CHOPPING BLOCK" stays on one line */
     font-size: clamp(15px, 1.9vw, 30px);
     font-weight: bold;
     white-space: nowrap;
@@ -96,9 +88,8 @@
     text-transform: uppercase;
 }
 
-/* --- "Generate wheel" transition: collapse the two other game options so the
-   active "Spin the Wheel" tab stretches to fill the whole bar, matching the
-   single-bar header on wheel.html, then we navigate. --- */
+/* "Generate wheel" transition: collapse the other two tabs so the active one
+   stretches to fill the bar (matching wheel.html), then navigate. */
 .feature-tabs.collapsing .tab-btn {
     transition:
         flex 0.55s var(--ease-snap),
@@ -116,24 +107,19 @@
     white-space: nowrap;
 }
 
-/* The lone surviving tab rounds into a full pill, exactly like the wheel-page bar */
 .feature-tabs.collapsing .tab-btn.active {
     border-radius: 50px;
 }
 
-/* ==========================================
-   2. CONFIGURATION LAYOUT
-   ========================================== */
 .picker-state-container {
     width: 100%;
     max-width: 1200px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex: 1;   /* fill the main content so a panel can bottom-anchor its own controls */
+    flex: 1;   /* fill the main content so a panel can bottom-anchor its controls */
 }
 
-/* Only the active game option's panel is shown; tabs switch between them. */
 .picker-panel {
     display: none;
     width: 100%;
@@ -146,24 +132,20 @@
     animation: panel-fade-in var(--t-base) ease;
 }
 
-/* Wheel hub: fill the container and reserve the fixed action bar's height
-   (error + GENERATE WHEEL) so the bottom-anchored "Movies on the Wheel" count
-   (.cb-random, margin-top:auto) stays just ABOVE the button instead of being
-   pushed down behind it when a tall provider list stretches the column.
-   Mirrors the Chopping Block's .cb-setup reservation. */
+/* reserve the fixed action bar's height so the bottom-anchored count
+   (.cb-random) stays above the button. mirrors .cb-setup. */
 .picker-panel[data-panel="wheel"].active {
     flex: 1;
     padding-bottom: 48px;
 }
 
-/* Opacity only — a transform here would become the containing block for the
-   fixed Generate/Send button and make it jump on every tab switch. */
+/* opacity only: a transform here would become the containing block for the fixed
+   Generate/Send button and make it jump on every tab switch. */
 @keyframes panel-fade-in {
     from { opacity: 0; }
     to   { opacity: 1; }
 }
 
-/* "Coming soon" placeholder (The Chopping Block) */
 .coming-soon {
     display: flex;
     flex-direction: column;
@@ -189,9 +171,7 @@
     margin: 0;
 }
 
-/* ==========================================
-   2b. LET AI CHOOSE (placeholder setup)
-   ========================================== */
+/* === LET AI CHOOSE setup === */
 .ai-config {
     width: 100%;
     max-width: 740px;
@@ -212,9 +192,7 @@
     margin-top: 28px;
 }
 
-/* "Amount of Suggestions" reuses the Chopping Block's liquid 1/2/3 control
-   (.cb-slider, styled in chopping.css). Its numbers hang BELOW the dots, so we
-   reserve room here before the "Prompt" heading. */
+/* reuses the .cb-slider control; its numbers hang below the dots, so reserve room */
 #aiCountSlider {
     margin: 26px 0 30px;
 }
@@ -246,7 +224,7 @@
 .config-layout {
     display: flex;
     width: 100%;
-    gap: 80px;            /* space between the genre + provider columns */
+    gap: 80px;
     margin-bottom: 40px;
 }
 
@@ -261,18 +239,15 @@
     font-weight: 300;
     font-size: 24px;
     color: var(--text-soft);
-    cursor: default; /* heading text — no I-beam cursor */
+    cursor: default;
 }
 
-/* Provider heading with its "Clear" reset stacked directly BELOW the title
-   (rather than awkwardly off to its right). */
 .provider-heading-row {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
 }
-/* Small pill button under the heading — clearer than the old underlined text. */
 .provider-clear-btn {
     background: rgba(var(--pink), 0.12);
     border: 1px solid rgba(var(--pink), 0.4);
@@ -294,26 +269,21 @@
     background: rgba(var(--pink), 0.22);
     border-color: rgba(var(--pink), 0.7);
 }
-/* Reserve the Clear button's slot even when it's hidden, so it can fade in/out
-   without dropping the provider box. We override the default [hidden] display:none
-   (keep it laid out) and just make it invisible + non-interactive instead. */
+/* keep the slot when hidden so it fades in/out without dropping the provider box;
+   overrides [hidden]{display:none} to stay laid out but invisible + inert. */
 .provider-clear-btn[hidden] {
     display: inline-block;
     visibility: hidden;
     pointer-events: none;
 }
 
-/* ==========================================
-   3. GENERATE BUTTON
-   ========================================== */
 .generate-wheel-btn {
     background: linear-gradient(90deg, rgb(var(--maroon)) 0%, rgb(var(--maroon-mid)) 45%, rgb(var(--maroon-bright)) 65%, rgb(var(--maroon-flare)) 100%);
     color: var(--text);
     border: none;
     position:fixed;
-    /* Above the config content (the cb-slider dots create a z-index:2 stacking
-       context, so without this their numbers paint OVER the fixed button as they
-       scroll past it) but below the mobile nav drawer (z-index 1000+). */
+    /* above the config content (the cb-slider dots' z-index:2 would paint over it)
+       but below the mobile nav drawer (z-index 1000+). */
     z-index: 10;
     width: 100%;
     max-width: 847px;
@@ -336,7 +306,7 @@
     transform: scale(0.98);
 }
 
-/* Safeguard state: no usable selection (e.g. no genres) — greyed + not-allowed */
+/* no usable selection (e.g. no genres): greyed + not-allowed */
 .generate-wheel-btn:disabled,
 .generate-wheel-btn--disabled {
     cursor: not-allowed;
@@ -352,9 +322,8 @@
     filter: grayscale(0.6) brightness(0.65);
 }
 
-/* "Any" / selected-providers summary shown under the provider column heading.
-   The wrapper carries spacing + the hover tooltip; the chip clips its own text
-   with an ellipsis, so the tooltip lives on the (un-clipped) wrapper. */
+/* providers summary under the heading. wrapper carries the hover tooltip; the
+   chip ellipsises its own text, so the tooltip lives on the un-clipped wrapper. */
 .provider-selection-box {
     position: relative;
     display: inline-flex;
@@ -376,11 +345,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    cursor: default; /* read-only summary — not interactive */
+    cursor: default;
 }
 
-/* Floating tooltip with the full provider list on hover — mirrors the wheel's
-   slice-title tooltip. */
+/* full provider list on hover, mirrors the wheel's slice-title tooltip */
 .provider-selection-tooltip {
     position: absolute;
     bottom: calc(100% + 8px);
@@ -413,9 +381,7 @@
     transform: translateX(-50%) translateY(0);
 }
 
-/* ==========================================
-   4. GENRE GRID (LEFT COLUMN)
-   ========================================== */
+/* === GENRE GRID (left column) === */
 .genre-grid {
     display: flex;
     flex-wrap: wrap;
@@ -481,9 +447,7 @@
     transform: rotate(135deg);  
 }
 
-/* ==========================================
-   5. PROVIDER LIST (RIGHT COLUMN)
-   ========================================== */
+/* === PROVIDER LIST (right column) === */
 .provider-box {
     display: flex;
     flex-direction: column;
@@ -527,13 +491,10 @@
 }
 
 
-/* --- 2. The Scrollable List --- */
 .provider-list {
-    /* Fill the remaining height of the fixed-size .provider-box and scroll INSIDE,
-       instead of sizing to content. Without flex:1 + min-height:0 the list grows to
-       its content height and the parent's overflow:hidden clips the last row — and
-       whether it clips depends on font size / zoom / device (the "cut in half on
-       another device" bug). This makes it scroll consistently everywhere. */
+    /* fill the fixed-size .provider-box and scroll inside. without flex:1 +
+       min-height:0 the list sizes to content and the parent's overflow:hidden
+       clips the last row (clipping varied by font/zoom/device). */
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -590,7 +551,7 @@
 }
 
 .provider-checkbox {
-    display: none; 
+    display: none;
 }
 
 .custom-check {
@@ -614,31 +575,24 @@
     background-repeat: no-repeat;
 }
 
-/* ==========================================
-   5b. SMART FILTER STATES (gray-out + "Any")
-   Genres/providers not present in the chosen collection are grayed out and
-   disabled (kept visible, not hidden). Providers also pin an "Any" escape hatch
-   to the top. Facets come from GET /api/collections/:id/wheel/filters.
-   ========================================== */
+/* === SMART FILTER STATES (gray-out + "Any") ===
+   genres/providers absent from the chosen collection are grayed out and disabled
+   (kept visible). facets come from GET /api/collections/:id/wheel/filters. */
 
-/* A genre absent from this collection: dimmed, not clickable, no hover wiggle. */
 .genre-btn--unavailable {
     opacity: 0.35;
     cursor: not-allowed;
     filter: grayscale(1);
 }
 .genre-btn--unavailable:hover {
-    transform: none;   /* cancel the playful scale/rotate on a disabled tile */
+    transform: none;
 }
-/* An unavailable genre can't be toggled, so drop the +/x corner affordance. */
 .genre-btn--unavailable .genre-icon {
     display: none;
 }
 
-/* Odometer roll for a count pill (Movies on the Wheel, Chopping's movie count, …).
-   The pill clips a vertical strip of numbers (.count-roll) that translateY's so the
-   value physically tumbles up/down; animateCount() in picker.js sets the pill's
-   position/overflow inline and drives the transform + a mid-roll motion blur. */
+/* odometer roll for a count pill. the pill clips a vertical strip (.count-roll)
+   that translateY's so the value tumbles; animateCount() in picker.js drives it. */
 .count-roll {
     position: absolute;
     left: 0;
@@ -655,25 +609,19 @@
     line-height: 1;
 }
 
-/* A provider not available in this collection: grayed, disabled cursor, no check. */
 .provider-item--unavailable {
     opacity: 0.4;
     cursor: not-allowed;
 }
 .provider-item--unavailable:hover {
-    opacity: 0.4;      /* cancel the row hover-fade so it stays visibly disabled */
+    opacity: 0.4;
 }
 .provider-item--unavailable .provider-checkbox,
 .provider-item--unavailable .custom-check {
-    pointer-events: none;  /* belt-and-braces with the input's disabled attribute */
+    pointer-events: none;
 }
 
-/* ==========================================
-   6. RESPONSIVE (mobile / tablet)
-   The two config columns (genres | providers) stack vertically, and the fixed
-   "Generate Wheel" button gets clearance below the content. Navigation here is
-   the same hamburger drawer used on the home screen (common.css).
-   ========================================== */
+/* === RESPONSIVE (mobile / tablet) === */
 @media (max-width: 1024px) {
     .main-content {
         padding-left: 16px;
@@ -684,8 +632,6 @@
         height: 120px;
     }
 
-    /* The track's 10px padding reads as a thick frame ("border") around the tabs on
-       a small screen — tighten it (and the gap) so the bar looks proportionate. */
     .feature-tabs {
         padding: 7px;
         gap: 6px;
@@ -703,9 +649,7 @@
         margin-bottom: 130px; /* clear the fixed Generate button */
     }
 
-    /* The AI panel's content needs the same clearance below the fixed SEND button,
-       so the full prompt box (plus the slider numbers above it) can be scrolled
-       into view instead of hiding behind / crowding the button. */
+    /* clearance below the fixed SEND button so the full prompt box scrolls clear */
     .ai-config {
         margin-bottom: 150px;
     }
@@ -724,9 +668,7 @@
         align-self: center;
     }
 
-    /* The wheel's "Movies on the Wheel :" count sits just above the fixed action bar;
-       when the inline error appears it would be covered by the error pill. Slide the
-       count up smoothly so the error fits in the gap between it and the button. */
+    /* slide the count up so the inline error fits between it and the button */
     .picker-panel[data-panel="wheel"] .cb-random {
         transition: transform var(--t-base) var(--ease-snap);
     }
@@ -740,10 +682,6 @@
         height: 88px;
     }
 
-    /* "THE CHOPPING BLOCK" is the longest label and overflowed its tab on narrow
-       phones. Scale the tab text down with the viewport (and trim the padding +
-       letter-spacing) so all three options stay on one line. */
-    /* Slightly thinner frame on phones so the three tabs get the most width. */
     .feature-tabs {
         padding: 6px;
         gap: 5px;
@@ -776,9 +714,7 @@
         padding: 16px 24px;
     }
 
-    /* Shrink the "Back" label on phones, but pad it back out so the tap target
-       stays comfortably large. Negative margins cancel the padding so the text
-       still sits in the top-left corner. */
+    /* shrink the label but pad the tap target; negative margins keep it in the corner */
     .back-btn {
         font-size: 14px;
         padding: 8px 12px;

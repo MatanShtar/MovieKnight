@@ -1,19 +1,10 @@
-// profile/bio-avatar.js — the editable-bio inline editor and the avatar-upload
-// flow. Two independent IIFEs, both persisting to the server via
-// MovieAPI.updateProfile (PATCH /api/users/me) with a localStorage fallback.
-// ==========================================
-// 4. EDITABLE BIO (persisted to the server via PATCH /api/users/me)
-// ==========================================
 (function () {
   const BIO_PLACEHOLDER = "Add bio";
-  const BIO_MAX = 200; // strict cap to keep the bio block from overflowing
+  const BIO_MAX = 200;
   const bioEl = document.querySelector(".profile-bio");
   const editBtn = document.querySelector(".bio-edit-btn");
   if (!bioEl) return;
 
-  // The bio lives on the user object. Saving persists to the server via
-  // MovieAPI.updateProfile (PATCH /api/users/me), which also refreshes the
-  // cached user; if the API isn't on the page we fall back to the local cache.
   const readUser = () => {
     try {
       return JSON.parse(localStorage.getItem("currentUser")) || {};
@@ -28,7 +19,6 @@
     localStorage.setItem("currentUser", JSON.stringify(u));
   };
 
-  // Show the bio (truncated past the BIO_MAX cap), or the "Add bio" placeholder.
   function applyBioText(text) {
     const t = (text || "").trim();
     if (t) {
@@ -47,16 +37,12 @@
     editing = true;
     const prev = getSavedBio();
 
-    // Swap the static bio for a textarea (multi-line input) seeded with the
-    // current text. Enter (⌘/Ctrl) or blur saves; Escape cancels.
-    // The editor is a textarea + a live "n/200" counter, grouped in one wrapper
-    // so they swap in/out of the layout as a single unit.
     const wrap = document.createElement("div");
     wrap.className = "bio-edit-wrap";
 
     const textarea = document.createElement("textarea");
     textarea.className = "profile-bio-input";
-    textarea.maxLength = BIO_MAX; // hard cap input at 200 characters
+    textarea.maxLength = BIO_MAX;
     textarea.value = prev;
     textarea.setAttribute("aria-label", "Edit bio");
 
@@ -64,7 +50,6 @@
     counter.className = "bio-counter";
     const updateCounter = () => {
       counter.textContent = `${textarea.value.length}/${BIO_MAX}`;
-      // Warn as the user approaches the cap.
       counter.classList.toggle("is-full", textarea.value.length >= BIO_MAX);
     };
     updateCounter();
@@ -80,7 +65,7 @@
     const finish = async (save) => {
       if (settled) return;
       settled = true;
-      const next = textarea.value.trim().slice(0, BIO_MAX); // enforce the cap
+      const next = textarea.value.trim().slice(0, BIO_MAX);
       wrap.replaceWith(bioEl);
       if (editBtn) editBtn.style.display = "";
       editing = false;
@@ -90,17 +75,17 @@
         return;
       }
 
-      applyBioText(next); // optimistic — show the new bio while it saves
+      applyBioText(next); // optimistic
 
       try {
         if (window.MovieAPI && MovieAPI.updateProfile) {
-          await MovieAPI.updateProfile({ bio: next }); // persist + refresh cache
+          await MovieAPI.updateProfile({ bio: next });
         } else {
-          saveBioLocal(next); // no API on the page — cache only
+          saveBioLocal(next);
         }
         if (window.toast) toast.success("Bio updated.");
       } catch (err) {
-        renderBio(); // cached user still holds the old bio -> reverts
+        renderBio(); // cached user still holds old bio, so this reverts
         if (window.toast) toast.error(err.message || "Couldn't save your bio.");
       }
     };
@@ -117,10 +102,9 @@
     textarea.addEventListener("blur", () => finish(true));
   }
 
-  // Clicking the bio text (or the pencil button) opens the editor.
   bioEl.addEventListener("click", startEditing);
   if (editBtn) {
-    editBtn.removeAttribute("data-toast"); // was a "Coming Soon" stub
+    editBtn.removeAttribute("data-toast");
     editBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       startEditing();
@@ -130,16 +114,11 @@
   renderBio();
 })();
 
-// ==========================================
-// 5. AVATAR UPLOAD (resize client-side -> data URL -> PATCH /api/users/me)
-// ==========================================
-// The camera button opens a file picker, downscales the chosen image to a
-// 256x256 square on a <canvas> (keeps the stored data URL tiny), then saves it
-// via MovieAPI.updateProfile. common.js then shows it on every page's header.
+// avatar upload: downscale to a 256x256 square so the stored data url stays tiny
 (function () {
   const camBtn = document.querySelector(".upload-new-pic");
   if (!camBtn) return;
-  camBtn.removeAttribute("data-toast"); // was a "Coming Soon" stub
+  camBtn.removeAttribute("data-toast");
   camBtn.style.cursor = "pointer";
 
   const input = document.createElement("input");
@@ -150,15 +129,13 @@
 
   camBtn.addEventListener("click", () => input.click());
 
-  // Clicking the big profile picture itself also opens the file picker (same as
-  // the camera badge) — a larger, more discoverable target.
   const bigAvatar = document.querySelector(".profile-avatar .avatar-pic");
   if (bigAvatar) {
     bigAvatar.style.cursor = "pointer";
     bigAvatar.addEventListener("click", () => input.click());
   }
 
-  // Draw the file to a square canvas (center-cropped) → JPEG data URL.
+  // center-crop to a square canvas, return a jpeg data url
   function toSquareDataUrl(file, size) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -175,7 +152,7 @@
         try {
           resolve(canvas.toDataURL("image/jpeg", 0.85));
         } catch (e) {
-          reject(e); // e.g. a tainted/odd source
+          reject(e);
         }
       };
       img.onerror = () => {
@@ -188,7 +165,7 @@
 
   input.addEventListener("change", async () => {
     const file = input.files && input.files[0];
-    input.value = ""; // reset so the same file can be re-picked later
+    input.value = ""; // reset so the same file can be re-picked
     if (!file) return;
     if (!file.type.startsWith("image/")) {
       if (window.toast) toast.error("Please choose an image file.");
@@ -207,14 +184,14 @@
       return;
     }
 
-    // Optimistically show the new picture; revert if the save fails.
+    // optimistic; revert if the save fails
     const imgs = [...document.querySelectorAll(".avatar-pic, .profile-pic")];
     const prev = imgs.map((im) => im.src);
     imgs.forEach((im) => (im.src = dataUrl));
 
     try {
       if (window.MovieAPI && MovieAPI.updateProfile) {
-        await MovieAPI.updateProfile({ avatarUrl: dataUrl }); // persist + refresh cache
+        await MovieAPI.updateProfile({ avatarUrl: dataUrl });
       } else {
         const u = JSON.parse(localStorage.getItem("currentUser") || "{}");
         u.avatarUrl = dataUrl;
@@ -222,7 +199,7 @@
       }
       if (window.toast) toast.success("Profile picture updated.");
     } catch (err) {
-      imgs.forEach((im, i) => (im.src = prev[i])); // revert
+      imgs.forEach((im, i) => (im.src = prev[i]));
       if (window.toast) toast.error(err.message || "Couldn't update your picture.");
     }
   });

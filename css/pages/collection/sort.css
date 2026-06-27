@@ -1,14 +1,10 @@
-/* collection/sort.css — Collection Page sort-by control + dropdown menu.
-   The controls row (sort left / actions right), the sort pill + caret, and the
-   custom listbox menu with its options. Load after header.css. */
+/* collection/sort.css - Collection Page sort-by control + dropdown menu.
+   Load after header.css. */
 
-/* ==========================================
-   2. SORT CONTROL
-   ========================================== */
 .collection-controls {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* sort on the left, action pills on the right (Figma y≈253) */
+  justify-content: space-between; /* sort left, action pills right */
   flex-wrap: wrap;
   gap: 14px 24px;
   margin: 22px 0 18px;
@@ -32,8 +28,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  /* compact now that the pill shows the SHORT label; the menu still widens to the
-     full option text when opened */
+  /* compact: pill shows the short label, menu widens to the full text when open */
   min-width: 180px;
   min-height: 52px;
   padding: 14px 20px;
@@ -69,7 +64,7 @@
   z-index: 60;
   min-width: 100%;
   padding: 8px;
-  background: rgba(132, 52, 63, 0.85); /* #84343f @0.85 — flat Figma dropdown surface */
+  background: rgba(132, 52, 63, 0.85);
   border: 0;
   border-radius: 14px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
@@ -104,7 +99,6 @@
   color: var(--text);
 }
 .sort-option.is-selected {
-  /* Figma distinguishes the selected row by fill #ffffff only — no background box. */
   color: var(--text);
   font-weight: 500;
 }

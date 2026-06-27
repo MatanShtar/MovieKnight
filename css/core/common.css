@@ -1,12 +1,5 @@
-/* common.css - base styles + shared app chrome (sidebar, header, auth widget).
-   Loaded by every page. */
-
-/* Design tokens (CSS variables) live in their own file. */
 @import "tokens.css";
 
-/* ==========================================
-   1. BASE STYLES & RESET
-   ========================================== */
 * {
   margin: 0;
   padding: 0;
@@ -31,34 +24,16 @@ body {
   outline-offset: 2px;
 }
 
-/* ==========================================
-   1b. CUSTOM CURSORS (white fill, thin #BC6676 border)
-   Arrow (default), arrow + click-lines (pointer), I-beam (text).
-   Justified !important (this whole block): the app sets `cursor:` on ~90 elements
-   across 30 page stylesheets (each at specificity >= 0,1,0). This is the single
-   global layer that paints the themed SVG cursor over all of them, so `* { cursor:
-   inherit }` MUST be !important to beat those local declarations — and once the base
-   is !important, the pointer/text/disabled refinements below must be too (only an
-   !important rule can override another). The alternative (auditing/removing all ~90
-   local cursor declarations) would be far more error-prone than this one documented
-   layer. (SVG cursors aren't supported in Safari — it falls back to the keyword after
-   the comma: default / pointer / text / not-allowed.)
-   ========================================== */
-/* The SVGs are inlined as data URIs (not url() to a file) so the custom cursor is
-   ready the instant this stylesheet applies — a separate file fetch would leave the
-   browser showing the OS fallback cursor for the first moments of every page load. */
+/* custom cursors. !important is load-bearing: the global layer must beat per-page
+   `cursor:` rules on ~90 elements. svg cursors fall back to the post-comma keyword in
+   Safari. inlined as data URIs so there's no file-fetch flash of the OS cursor. */
 :root {
   --cur-default: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2224%22%20height=%2224%22%20viewBox=%220%200%2024%2024%22%3E%20%3Cpath%20d=%22M4%204%2011.07%2021%2013.58%2013.61%2021%2011.07Z%22%20fill=%22%23ffffff%22%20stroke=%22%23BC6676%22%20stroke-width=%221.3%22%20stroke-linejoin=%22round%22/%3E%20%3C/svg%3E") 4 4, default;
   --cur-pointer: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2224%22%20height=%2224%22%20viewBox=%220%200%2024%2024%22%3E%20%3Cpath%20d=%22M8%2012%20V5.6%20a1.6%201.6%200%200%201%203.2%200%20V10%20h4.4%20a3.4%203.4%200%200%201%203.4%203.4%20v2.4%20a4%204%200%200%201%20-4%204%20h-4%20a4%204%200%200%201%20-3.35%20-1.8%20l-2.1%20-3.2%20a1.45%201.45%200%200%201%202.2%20-1.85%20L8%2013%20Z%22%20fill=%22%23ffffff%22%20stroke=%22%23BC6676%22%20stroke-width=%221.2%22%20stroke-linejoin=%22round%22/%3E%20%3C/svg%3E") 9 4, pointer;
   --cur-text: url("data:image/svg+xml,%3Csvg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2224%22%20height=%2224%22%20viewBox=%220%200%2024%2024%22%3E%20%3Cpath%20d=%22M9%204.5H15V6H13V18H15V19.5H9V18H11V6H9Z%22%20fill=%22%23ffffff%22%20stroke=%22%23BC6676%22%20stroke-width=%220.8%22%20stroke-linejoin=%22round%22/%3E%20%3C/svg%3E") 12 12, text;
 }
 
-/* The root holds the default arrow; EVERY element just inherits its parent's cursor
-   (overriding the pages' cursor:pointer/default keywords). Inheriting — rather than
-   forcing the arrow on `*` — is what makes a clickable element's children (e.g. an
-   <img> inside a button) keep the hand instead of reverting to the arrow. The
-   pointer/text/disabled rules below are more specific, so they set the cursor on
-   those roots and their children inherit it. */
+/* inherit (not force arrow on `*`) so a button's child <img> keeps the hand */
 html { cursor: var(--cur-default) !important; }
 * { cursor: inherit !important; }
 
@@ -80,8 +55,7 @@ textarea, [contenteditable="true"] {
   cursor: var(--cur-text) !important;
 }
 
-/* Disabled / unavailable keep the blocked affordance — placed AFTER the pointer rule
-   so it wins for elements that match both. */
+/* must follow the pointer rule so it wins for elements matching both */
 :disabled, [disabled], [aria-disabled="true"],
 .generate-wheel-btn--disabled, .save-btn--disabled,
 .genre-btn--unavailable, .provider-item--unavailable {
@@ -89,8 +63,7 @@ textarea, [contenteditable="true"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* !important is required here: this accessibility reset must override every
-     animation/transition declared elsewhere, regardless of selector specificity. */
+  /* !important needed to override every animation/transition regardless of specificity */
   *,
   *::before,
   *::after {
@@ -101,9 +74,6 @@ textarea, [contenteditable="true"] {
   }
 }
 
-/* ==========================================
-   2. ANIMATIONS & SCROLLBARS
-   ========================================== */
 @keyframes shimmer {
   0% {
     background-position: 200% 0;
@@ -127,33 +97,22 @@ textarea, [contenteditable="true"] {
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* ==========================================
-   3. TOAST NOTIFICATIONS
-   ========================================== */
 .toastify.mk-toast {
   width: -moz-fit-content;
   width: fit-content;
-  /* short messages stay on one line (fit-content shrinks to them); long ones
-     wrap inside max-width instead of overflowing/clipping off the edge */
   white-space: normal;
   overflow-wrap: break-word;
   max-width: 90vw;
   line-height: 1.35;
 }
 
-/* ==========================================
-   4. APP SHELL LAYOUT
-   ========================================== */
 .app-body {
   background-image: url("../../assets/images/movie-knight-gradient-bg.svg");
   background-size: cover;
   background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
-  /* NOTE: no `overflow-x: hidden` here. Clipping the page horizontally hid
-     content when the user zoomed in (notably on the wheel) with no way to
-     scroll across to it. Spin/confetti overflow is contained at the component
-     level instead (.wheel-visual-container clips its own canvas sweep). */
+  /* no overflow-x: hidden, it hid zoomed-in content (the wheel) with no way to scroll */
 }
 
 .app-container {
@@ -163,9 +122,7 @@ textarea, [contenteditable="true"] {
   align-items: stretch;
 }
 
-/* Feature pages (wheel / picker) keep their focused, standalone look on desktop:
-   no left rail there. The sidebar nav is reached on mobile via the hamburger,
-   exactly like the other pages (the responsive drawer rules below still apply). */
+/* feature pages drop the left rail on desktop; still reached on mobile via hamburger */
 @media (min-width: 1025px) {
   .feature-page .sidebar,
   .feature-page .user-rail {
@@ -173,9 +130,6 @@ textarea, [contenteditable="true"] {
   }
 }
 
-/* ==========================================
-   5. SIDEBAR NAVIGATION
-   ========================================== */
 .sidebar {
   width: var(--rail-width);
   display: flex;
@@ -185,9 +139,7 @@ textarea, [contenteditable="true"] {
   flex-shrink: 0;
   top: 0;
   height: 100vh;
-  /* 1. Hide scrollbar for Firefox */
   scrollbar-width: none;
-  /* 2. Hide scrollbar for IE and Edge */
   -ms-overflow-style: none;
 }
 
@@ -215,11 +167,8 @@ textarea, [contenteditable="true"] {
   flex-grow: 1;
 }
 
-/* ==========================================
-   6. SETTINGS MENU
-   ========================================== */
 .settings-container {
-  position: relative; /* anchors the pink active-indicator line (::before) */
+  position: relative; /* anchors the ::before active-indicator */
   display: flex;
   flex-direction: column;
   border-radius: 12px;
@@ -231,16 +180,11 @@ textarea, [contenteditable="true"] {
   background-color: var(--overlay-weak);
 }
 
-/* Pink active accent. It spans the WHOLE container (toggle + submenu) and is a
-   border-left on a 12px-radius box, so the pink curves around the container's
-   top-left/bottom-left corners instead of cutting straight across them. Pinned
-   top-to-bottom, so as the submenu animates open the accent grows with the
-   container; we just fade it in/out with the open state. */
 .settings-container::before {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 12px; /* match the container so the accent hugs its corners */
+  border-radius: 12px;
   border-left: 3px solid rgba(var(--pink), 0.9);
   opacity: 0;
   pointer-events: none;
@@ -257,9 +201,8 @@ textarea, [contenteditable="true"] {
   background-color: transparent;
 }
 
-/* While open, the full-height container line (::before) is the active indicator,
-   so suppress the toggle's own per-link hover line + 4px shift — otherwise the two
-   pink lines would sit 4px apart on the top row. */
+/* while open, ::before is the active indicator; kill the toggle's hover line so two
+   pink lines don't sit 4px apart */
 .settings-container.open #settingsToggleBtn:hover {
   transform: none;
   box-shadow: none;
@@ -321,23 +264,19 @@ textarea, [contenteditable="true"] {
   max-height: 0;
   opacity: 0;
   overflow: hidden;
-  /* Symmetric easing + a single shared duration so opening and closing feel the
-     same. The exact open height is set inline by the toggle handler (= the
-     submenu's real scrollHeight). Padding is NOT transitioned and is always
-     present (below), so scrollHeight measures the full padded height — otherwise
-     the bottom row is clipped by the padding that hadn't animated in yet. */
+  /* open height set inline (= scrollHeight). padding isn't transitioned and is always
+     present so scrollHeight measures the full padded height, else the bottom row clips. */
   transition:
     max-height 0.35s var(--ease-snap),
     opacity 0.3s ease;
   display: flex;
   flex-direction: column;
   gap: 15px;
-  /* Always present; clipped to nothing while collapsed (max-height:0 + hidden). */
   padding: 5px 0 20px 50px;
 }
 
 .settings-container.open .settings-submenu {
-  max-height: 200px; /* fallback only; JS sets the exact px height inline */
+  max-height: 200px; /* fallback; JS sets exact px height inline */
   opacity: 1;
 }
 .about-link {
@@ -354,7 +293,6 @@ textarea, [contenteditable="true"] {
   padding-left: 10px;
 }
 
-/* --- NAV LINKS --- */
 .nav-link {
   width: 194px;
   min-height: 50px;
@@ -398,9 +336,6 @@ textarea, [contenteditable="true"] {
   color: var(--text);
 }
 
-/* ==========================================
-   7. MAIN CONTENT WRAPPER
-   ========================================== */
 .main-content {
   --content-width: 1640px;
   flex: 1;
@@ -412,9 +347,6 @@ textarea, [contenteditable="true"] {
   gap: 20px;
 }
 
-/* ==========================================
-   8. TOP HEADER & USER RAIL
-   ========================================== */
 .top-header {
   margin-top: 42px;
   width: 100%;
@@ -435,9 +367,6 @@ textarea, [contenteditable="true"] {
   align-self: flex-start;
 }
 
-/* ==========================================
-   9. HEADER AUTHENTICATION WIDGET
-   ========================================== */
 .header-login-btn {
   appearance: none;
   border: 0px;
@@ -467,10 +396,9 @@ textarea, [contenteditable="true"] {
 
 .header-login-btn:active {
   background: rgba(var(--pink-alt), 0.7);
-  transform: scale(0.96); /* tactile press */
+  transform: scale(0.96);
 }
 
-/* --- LOGGED-IN USER WIDGET + DROPDOWN (shared header) --- */
 .user-profile-display {
   display: flex;
   align-items: center;
@@ -479,9 +407,7 @@ textarea, [contenteditable="true"] {
   position: relative;
 }
 
-/* Logged-out: common.js hides these auth-only widgets via the `hidden` attribute.
-   The `.x[hidden]` specificity is needed to beat the `display:flex` above (the UA
-   `[hidden]{display:none}` loses to it) — same pattern as the modal clear-buttons. */
+/* .x[hidden] specificity needed to beat the display:flex above; UA [hidden] loses to it */
 .user-profile-display[hidden],
 .settings-container[hidden] {
   display: none;
@@ -513,9 +439,7 @@ textarea, [contenteditable="true"] {
   align-items: center;
 }
 
-/* Suppress the button's own focus ring so it renders on .profile-pic instead (see
-   below). Scoping to :focus-visible (0,2,0) out-specifies the global :focus-visible
-   rule (0,1,0), so no !important is needed. */
+/* kill the button's focus ring so it renders on .profile-pic instead */
 .header-profile-btn:focus-visible {
   outline: none;
 }
@@ -538,12 +462,10 @@ textarea, [contenteditable="true"] {
   transform: scale(1.05);
 }
 
-/* keyboard focus shows the same ring (the button kills its own outline) */
 .header-profile-btn:focus-visible .profile-pic {
   box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
 }
 
-/* The Dropdown Menu Box */
 .header-dropdown {
   position: absolute;
   top: calc(100% + 10px);
@@ -567,14 +489,12 @@ textarea, [contenteditable="true"] {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
-/* The class JS adds to show the menu */
 .header-dropdown.show {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
 }
 
-/* Menu Links */
 .header-dropdown a {
   padding: 10px 20px;
   color: var(--text-muted);
@@ -590,10 +510,7 @@ textarea, [contenteditable="true"] {
   color: var(--text);
 }
 
-/* Scoped under `.header-dropdown a` so these out-specify the `.header-dropdown a`
-   (0,1,1) / `.header-dropdown a:hover` (0,2,1) rules above that would otherwise set
-   the sign-out link's color and hover background — `.header-dropdown a.danger-text`
-   is (0,2,1) and the :hover variant (0,3,1), so no !important is needed. */
+/* scoped under .header-dropdown a so it out-specifies the base link color/hover rules */
 .header-dropdown a.danger-text {
   color: rgb(var(--danger));
 }
@@ -601,9 +518,6 @@ textarea, [contenteditable="true"] {
   background-color: rgba(var(--danger), 0.1);
 }
 
-/* Logged-in header injected at the top of the dropdown by common.js: the username
-   (also the only place the handle shows on mobile, where the header text is hidden)
-   plus the daily AI-actions badge. Avatar isn't repeated — it's the trigger button. */
 .dropdown-user {
   display: flex;
   flex-direction: column;
@@ -618,9 +532,7 @@ textarea, [contenteditable="true"] {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* AI quota label. Colour escalates as it depletes: soft → amber → faded/muted.
-   The "out" state is intentionally NOT danger-red — Sign Out below owns that, and
-   should stay the most prominent thing in the menu. */
+/* "out" state stays muted, not danger-red; Sign Out below owns danger-red */
 .dropdown-ai-usage {
   font-size: 11px;
   line-height: 1.3;
@@ -630,17 +542,15 @@ textarea, [contenteditable="true"] {
   color: rgb(var(--warn));
 }
 .dropdown-ai-usage.is-out {
-  color: var(--text-muted); /* faded — communicates "empty", doesn't shout */
+  color: var(--text-muted);
 }
 
-/* The quota stat bar (under the label): a slim fill that shrinks as actions are
-   spent — at-a-glance, no percentages. Width is set inline by common.js; colour is
-   driven by the state class on the track (good → warn → faded-out). */
+/* quota bar; width set inline by common.js, color driven by state class on the track */
 .ai-bar {
   height: 5px;
   margin-top: 7px;
   border-radius: 999px;
-  background: var(--overlay); /* empty track */
+  background: var(--overlay);
   overflow: hidden;
 }
 .ai-bar-fill {
@@ -648,29 +558,24 @@ textarea, [contenteditable="true"] {
   height: 100%;
   width: 0;
   border-radius: inherit;
-  background: rgb(var(--pink)); /* good */
+  background: rgb(var(--pink));
   transition:
     width var(--t-base) ease,
     background-color var(--t-base) ease;
 }
 .ai-bar.is-low .ai-bar-fill {
-  background: rgb(var(--warn)); /* warning */
+  background: rgb(var(--warn));
 }
-/* Out: the fill is 0-width (nothing left), so the empty track carries the state —
-   a faint, faded wash rather than a bright alarm. */
+/* out: fill is 0-width so the empty track carries the faded state */
 .ai-bar.is-out {
   background: rgba(var(--warn), 0.1);
 }
-/* Thin separator between the injected user header and the menu links below it. */
 .dropdown-divider {
   height: 1px;
   margin: 4px 12px;
   background: rgba(255, 255, 255, 0.08);
 }
 
-/* ==========================================
-   10. GLOBAL MODALS
-   ========================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -762,9 +667,6 @@ textarea, [contenteditable="true"] {
   background: rgb(var(--danger));
 }
 
-/* ==========================================
-   11. MOBILE NAVIGATION TOPBAR
-   ========================================== */
 .mobile-topbar {
   display: none;
 }
@@ -775,16 +677,11 @@ textarea, [contenteditable="true"] {
   display: none;
 }
 
-/* ==========================================
-   12. RESPONSIVE DESIGN (MEDIA QUERIES)
-   ========================================== */
 @media (max-width: 1024px) {
-  /* The sidebar becomes a dropdown menu under the bar. */
   .app-container {
     flex-direction: column;
   }
 
-  /* --- Top app bar --- */
   .mobile-topbar {
     display: flex;
     align-items: center;
@@ -805,7 +702,7 @@ textarea, [contenteditable="true"] {
     gap: 10px;
     text-decoration: none;
     min-width: 0;
-    margin-right: auto; /* keep the auth widget pinned right */
+    margin-right: auto; /* keep auth widget pinned right */
   }
 
   .mobile-brand-knight {
@@ -821,7 +718,6 @@ textarea, [contenteditable="true"] {
     object-fit: contain;
   }
 
-  /* --- Hamburger --- */
   .mobile-nav-toggle {
     display: inline-flex;
     align-items: center;
@@ -852,7 +748,6 @@ textarea, [contenteditable="true"] {
     height: 22px;
   }
 
-  /* --- Sidebar becomes a dropdown menu that opens under the bar --- */
   .sidebar-logo {
     display: none;
   }
@@ -931,7 +826,7 @@ textarea, [contenteditable="true"] {
     margin-bottom: 4px;
   }
 
-  /* --- Backdrop: light dim that closes the menu on tap --- */
+  /* backdrop dim, closes the menu on tap */
   .nav-backdrop {
     display: block;
     position: fixed;
@@ -961,7 +856,6 @@ textarea, [contenteditable="true"] {
     margin-top: 0;
   }
 
-  /* --- Auth widget once relocated into the top bar --- */
   .mobile-topbar .user-welcome {
     text-align: right;
   }
@@ -987,7 +881,6 @@ textarea, [contenteditable="true"] {
   }
 }
 
-/* Phones: tighten the bar and drop the greeting line to save room. */
 @media (max-width: 560px) {
   .mobile-brand-knight {
     height: 32px;
@@ -1007,13 +900,9 @@ textarea, [contenteditable="true"] {
   }
 }
 
-/* ==========================================
-   COLLECTION COVER COLLAGE (shared: profile grid + Add-to-Collection modal)
-   Built by window.buildCollectionCover() in common.js.
-   ========================================== */
-/* ---- Auto-collage cover (first ≤4 movie posters) ----
-   The COVER is a fixed-aspect box (2:3) so EVERY card cover is the same height
-   regardless of poster count. Tiles fill that box; they never drive the height. */
+/* collection cover collage (profile grid + Add-to-Collection modal), built by
+   window.buildCollectionCover() in common.js.
+   fixed 2:3 box so every card cover is the same height; tiles fill it, never drive it */
 .collection-cover {
   display: grid;
   width: 100%;
@@ -1034,17 +923,13 @@ textarea, [contenteditable="true"] {
   min-height: 0;
   object-fit: cover;
   display: block;
-  background: #4f454b; /* fallback so a missing/broken poster is never a blank cell */
+  background: #4f454b; /* fallback so a broken poster is never a blank cell */
 }
-/* missing-poster placeholder tile */
 .cover-tile--empty {
   background: #4f454b;
 }
-/* Layouts — buildCollectionCover() (common.js) applies exactly ONE of these per
-   cover, matched to the movie count AND the card shape. Rows/columns are explicit
-   so tiles always stretch to fill the fixed-aspect box.
-   Desktop = portrait 2:3 box; mobile = the 5:2 banner (profile responsive.css). */
-/* Desktop: 1 poster / 2-3 stacked backdrops / 2×2 poster grid */
+/* buildCollectionCover() applies exactly one layout per cover, matched to movie count
+   and card shape. desktop = 2:3 box, mobile = 5:2 banner (profile responsive.css). */
 .cover-d1 {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
@@ -1061,7 +946,6 @@ textarea, [contenteditable="true"] {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
 }
-/* Mobile banner: a single row of N columns (1 backdrop / 2 backdrops / 3-4 posters) */
 .cover-m1 {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;
@@ -1079,25 +963,19 @@ textarea, [contenteditable="true"] {
   grid-template-rows: 1fr;
 }
 
-/* ---- Empty (0-movie) cover ----
-   The Figma placeholder: a light gray/white CHECKERBOARD with a centered circled
-   "+" (clicking it opens the Add-to-Collection modal). */
+/* empty (0-movie) cover: checkerboard with a centered circled "+" that opens the modal */
 .cover-empty {
   position: relative;
   display: grid;
   place-items: center;
-  /* light gray/white checkerboard (~22px squares) */
   background: repeating-conic-gradient(#e9e9e9 0% 25%, #ffffff 0% 50%) 0 0 / 44px 44px;
-  cursor: pointer; /* the empty cover / "+" is a shortcut to add movies */
+  cursor: pointer;
 }
-/* circled "+" — medium gray so it reads on the light checkerboard */
 .cover-empty__plus {
   content: "";
   width: 56px;
   height: 56px;
-  /* ONE colour drives both the ring (border) and the "+" (the two gradient bars)
-     via currentColor, so on hover they darken TOGETHER. Previously only
-     border-color changed and the "+" stayed pale — which read as "blurry". */
+  /* one color drives the ring + the "+" bars via currentColor so they darken together */
   color: rgba(0, 0, 0, 0.42);
   border: 4px solid currentColor;
   border-radius: 50%;
@@ -1110,34 +988,22 @@ textarea, [contenteditable="true"] {
   color: rgba(0, 0, 0, 0.62);
 }
 
-/* The empty cover paints a crisp CSS "+"; the card no longer scales (lift only,
-   above), and here we also cancel the empty cover's OWN zoom so the "+" gets
-   zero scale on hover and stays sharp. Poster covers still zoom. */
+/* cancel the empty cover's hover zoom so the CSS "+" stays sharp; poster covers zoom */
 .collection-card:hover .collection-cover.cover-empty {
   transform: none;
 }
 
-/* ==========================================
-   SERVER-DOWN MAINTENANCE CURTAIN (GLOBAL)
-   ==========================================
-   When api.js can't reach the backend at all (the fetch throws — server not
-   running / offline), common.js drops this full-screen cinematic curtain instead
-   of a fleeting toast. It reuses the Coming Soon page's red-velvet stage: the
-   curtains sweep CLOSED, hold, then part to reveal a "We'll Be Back Soon" message
-   with a random movie-flavoured maintenance pun. It's a terminal state (no back
-   button) — the app can't function without the server. Self-contained here so it's
-   available on every page that loads common.css, with no per-page markup. */
+/* server-down maintenance curtain. common.js drops this full-screen when api.js can't
+   reach the backend at all. terminal state, no back button. self-contained so it works
+   on every page that loads common.css with no per-page markup. */
 body.mk-maint-open { overflow: hidden; }
-/* The curtain owns the screen — hide any toast that fired underneath it (Toastify
-   pins its container to the max z-index, so we can't simply out-stack it). The
-   selector (0,2,1) already out-specifies Toastify's `.toastify` (0,1,0), and
-   Toastify only ever sets position (not display) inline, so no !important is needed. */
+/* hide any toast underneath; Toastify pins to max z-index so we can't out-stack it */
 body.mk-maint-open .toastify { display: none; }
 
 .mk-maint {
     position: fixed;
     inset: 0;
-    z-index: 2147483000;       /* above the app shell; the toast is hidden via the rule above */
+    z-index: 2147483000;
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -1147,8 +1013,7 @@ body.mk-maint-open .toastify { display: none; }
         radial-gradient(ellipse at 50% 42%, #3a2127 0%, #1c0f14 58%, #0a0608 100%);
 }
 
-/* THE CURTAINS — two velvet panels that sweep in to meet at the centre (closed),
-   pause, then settle back to a framed-open position that leaves the copy in the gap. */
+/* two velvet panels: sweep closed, pause, then settle open leaving copy in the gap */
 .mk-maint-curtain {
     position: absolute;
     top: 0;
@@ -1170,7 +1035,7 @@ body.mk-maint-open .toastify { display: none; }
     will-change: transform;
 }
 
-/* A soft diagonal stage-light gleam that sweeps across the closed velvet during the hold. */
+/* diagonal stage-light gleam sweeping across the closed velvet during the hold */
 .mk-maint-curtain::before {
     content: "";
     position: absolute;
@@ -1241,7 +1106,7 @@ body.mk-maint-open .toastify { display: none; }
     100% { transform: translateX(30vw) rotate(0deg) skewX(0deg); }
 }
 
-/* THE VALANCE — a draped, scalloped swag pinned across the top (never moves). */
+/* draped scalloped swag pinned across the top, never moves */
 .mk-maint-valance {
     position: absolute;
     top: 0;
@@ -1256,7 +1121,7 @@ body.mk-maint-open .toastify { display: none; }
     pointer-events: none;
 }
 
-/* THE COPY — revealed in the central gap as the curtains part. */
+/* revealed in the central gap as the curtains part */
 .mk-maint-content {
     position: relative;
     z-index: 2;
@@ -1321,7 +1186,7 @@ body.mk-maint-open .toastify { display: none; }
     }
 }
 
-/* Reduced motion: skip the sweep + gleam, land on the final revealed state. */
+/* reduced motion: skip sweep + gleam, land on the final revealed state */
 @media (prefers-reduced-motion: reduce) {
     .mk-maint-curtain--left  { animation: none; transform: translateX(-30vw); }
     .mk-maint-curtain--right { animation: none; transform: translateX(30vw); }

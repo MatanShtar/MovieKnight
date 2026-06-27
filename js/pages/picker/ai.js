@@ -1,24 +1,13 @@
-// ai.js — "Let AI Choose" results page (ai-suggestions.html).
-//
-// The picker (picker.js, AI tab) hands off the chosen collection + prompt + count
-// via sessionStorage "mk:aiGame", then navigates here. We fire POST /api/ai/picker
-// through MovieAPI.aiPicker(), show a pulsing loading state while the model thinks
-// (2–4s), then reveal the suggestions: posters first, sliding left ~0.5s later to
-// uncover each movie's AI "reason". "Try Again" re-runs the same request; a card's
-// "Select Winner" raises the shared winner overlay (confetti + "View Details").
+// "Let AI Choose" results page (ai-suggestions.html).
 
-// ==========================================
-// 1. STATE
-// ==========================================
-const REVEAL_DELAY_MS = 500;   // posters land, THEN slide to reveal the text
+const REVEAL_DELAY_MS = 500;
 
-let aiConfig = null;   // { collectionId, collectionName, prompt, count }
-let movies = [];       // the suggestions currently on screen
-let loading = false;   // guards Try Again against overlapping requests
-let rerollUsed = false; // "Try Again" is allowed ONCE per result set (reset on a
-                        // brand-new run); flips true after a successful reroll.
+let aiConfig = null;
+let movies = [];
+let loading = false;
+let rerollUsed = false; // try again is allowed once per result set
 
-// Circle-"i" info glyph (inline so it tints with the button text colour).
+// inline svg so it tints with currentColor
 const INFO_SVG = `
     <svg class="ai-info-icon" viewBox="0 0 24 24" fill="none"
          stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -30,8 +19,6 @@ const INFO_SVG = `
 document.addEventListener('DOMContentLoaded', () => {
     aiConfig = readConfig();
 
-    // A direct visit (no hand-off) has nothing to pick from — send the user back
-    // to the picker's AI tab to set one up.
     if (!aiConfig || aiConfig.collectionId == null) {
         if (window.toast) toast.info('Pick a collection and prompt first.');
         window.location.href = 'picker.html?panel=ai';
@@ -49,22 +36,14 @@ function readConfig() {
     try { cfg = JSON.parse(sessionStorage.getItem('mk:aiGame')); }
     catch { cfg = null; }
     if (!cfg || typeof cfg !== 'object') return null;
-    // Clamp the count to the 1–3 the stepper offers.
     cfg.count = Math.min(3, Math.max(1, Number(cfg.count) || 3));
     return cfg;
 }
 
-// Where the whole AI flow exits to: the picker's AI tab, carrying the collection.
 function pickerAiUrl() {
     return `picker.html?panel=ai&collection=${encodeURIComponent(aiConfig.collectionId)}`;
 }
 
-// "Back" returns to the picker's AI tab. We use the shared smartBack (data-back):
-// it goes history.back() when there's same-origin history — and because the picker
-// rewrote its own entry to ?panel=ai on SEND, that lands on the AI tab. Crucially
-// history.back() does NOT push a new entry, so the picker's own Back can't bounce
-// straight back here (the loop we used to have). Direct visits with no history fall
-// back to the data-back href.
 function wireBackLink() {
     const back = document.getElementById('aiBackBtn');
     if (!back) return;
@@ -73,17 +52,9 @@ function wireBackLink() {
     back.setAttribute('data-back', href);
 }
 
-// ==========================================
-// 2. RUN THE PICK (cache-aware initial load → fetch / error)
-// ==========================================
 const RESULTS_KEY = 'mk:aiResults';
 
-// Initial load: reuse the cached picks for THIS run if we have them — so a reload,
-// or coming back from a movie's "Info", shows the very same set instead of firing a
-// fresh (quota-spending) generation. The cache is keyed by the SEND token, so a new
-// SEND from the picker (new token) never matches and always generates instead.
-// localStorage holds the cache, so it survives a reload AND closing the tab; only a
-// "Try Again" reroll spends another AI action.
+// reuse cached picks for this run; keyed by send token so a new send regenerates
 function loadInitial() {
     const cached = readCachedResults();
     if (cached && aiConfig.token && cached.token === aiConfig.token &&
@@ -95,26 +66,19 @@ function loadInitial() {
         return;
     }
 
-    generate(); // no cached set for this run → generate once (no reload re-fires it)
+    generate();
 }
 
-// Fetch a fresh set from the AI (first generation, and every "Try Again").
-// `isReroll` distinguishes a "Try Again" press from the first generation: a reroll
-// sends the on-screen TMDB ids as a soft `exclude_ids` filter and, on success, is
-// consumed (Try Again then hides — one reroll per result set).
+// a reroll sends on-screen ids as a soft exclude_ids filter and is consumed on success
 async function generate(isReroll = false) {
     if (loading) return;
-    if (isReroll && rerollUsed) return; // already rerolled this result set
+    if (isReroll && rerollUsed) return;
     loading = true;
     setTryAgainBusy(true);
 
-    // Snapshot what's on screen so a FAILED attempt can leave it untouched. A
-    // rate-limit / error must not replace the suggestions with a wall of error
-    // text — we just toast and keep the current picks (see the catch below).
+    // snapshot so a failed attempt can restore current picks
     const prev = movies.slice();
-    // Reroll: ask the AI not to repeat what's already shown. This is a SOFT filter
-    // (#1) — the backend may still reuse some ids if it'd otherwise return <3, so
-    // the dedupeById() guard below still matters and a reappearing id is not an error.
+    // soft filter: backend may still reuse ids to fill the count, so dedupe below still matters
     const excludeIds = isReroll ? prev.map((m) => m && m.id) : [];
     movies = [];
     renderSkeletons(aiConfig.count);
@@ -130,24 +94,20 @@ async function generate(isReroll = false) {
         if (!results.length) {
             if (prev.length) {
                 movies = prev;
-                renderCards(movies); // keep the previous picks rather than blanking
+                renderCards(movies);
                 if (window.toast) toast.info("No new suggestions came back — keeping your current picks.");
             } else {
                 clearCachedResults();
                 renderEmpty("The AI didn't return any suggestions. Try a different prompt.");
             }
         } else {
-            // Safety-net dedup (#3): each TMDB id appears at most once on screen,
-            // even though the backend also dedupes — the guard for the soft reroll.
             movies = dedupeById(results);
-            if (isReroll) rerollUsed = true; // consume the one allowed reroll
-            cacheResults(movies); // persist to localStorage so a reload restores it
+            if (isReroll) rerollUsed = true;
+            cacheResults(movies);
             renderCards(movies);
             updateTryAgainVisibility();
         }
     } catch (err) {
-        // Only a short, friendly toast — never the raw upstream error. Keep the
-        // screen as it was: restore the previous picks if we had any.
         if (window.toast) toast.error(aiErrorMessage(err));
         if (prev.length) {
             movies = prev;
@@ -158,14 +118,11 @@ async function generate(isReroll = false) {
     } finally {
         loading = false;
         setTryAgainBusy(false);
-        // Re-show Try Again if this reroll DIDN'T consume it (a failed/empty reroll
-        // leaves rerollUsed false); a successful one keeps it hidden.
         updateTryAgainVisibility();
     }
 }
 
-// Keep each TMDB id at most once, preserving order. Entries with no id (null) are
-// kept as-is — they can't collide and shouldn't be silently dropped.
+// dedupe by id, preserving order; id-less entries are kept
 function dedupeById(list) {
     const seen = new Set();
     return (Array.isArray(list) ? list : []).filter((m) => {
@@ -176,9 +133,7 @@ function dedupeById(list) {
     });
 }
 
-// Per-run result cache (localStorage), keyed by the SEND token so a reload or back
-// navigation restores the same picks while a new SEND / Try Again replaces them.
-// localStorage (not sessionStorage) so the picks survive a reload and a tab close.
+// localStorage (not session) so picks survive a reload and tab close
 function readCachedResults() {
     try { return JSON.parse(localStorage.getItem(RESULTS_KEY)); }
     catch { return null; }
@@ -188,19 +143,15 @@ function cacheResults(list) {
         localStorage.setItem(RESULTS_KEY, JSON.stringify({
             token: aiConfig.token, movies: list, rerollUsed,
         }));
-    } catch (_) { /* storage full / disabled — just skip caching */ }
+    } catch (_) { /* storage full or disabled, skip */ }
 }
 function clearCachedResults() {
     try { localStorage.removeItem(RESULTS_KEY); } catch (_) {}
 }
 
-// A SHORT, friendly message for a failed pick — never the raw upstream error
-// (Gemini's free-tier rate-limit replies are a huge wall of text). Branches on the
-// status the envelope handler attaches (api.js): 400 bad input, 401 auth, 404
-// collection gone, 429/503 busy (rate limit), 502 bad AI data, 504 timeout.
+// friendly message keyed off the status api.js attaches; never the raw upstream error
 function aiErrorMessage(err) {
-    // Quota exhausted is a 429 too, but distinguished by the backend's error code —
-    // surface its specific message instead of the generic "AI is busy" line.
+    // quota exhausted is also a 429 but flagged by a distinct code; surface its message
     if (err && err.code === MovieAPI.AI_LIMIT_CODE) return err.message;
     switch (err && err.status) {
         case 400: return (err.message && err.message.length <= 100)
@@ -215,14 +166,10 @@ function aiErrorMessage(err) {
     }
 }
 
-// ==========================================
-// 3. RENDERING
-// ==========================================
 function getResults() {
     return document.getElementById('aiResults');
 }
 
-// Pulsing poster placeholders for the duration of the AI call.
 function renderSkeletons(count) {
     const wrap = getResults();
     if (!wrap) return;
@@ -272,11 +219,9 @@ function renderCards(list) {
             </div>`;
     }).join('');
 
-    // Posters land visible first; flip to the revealed state one frame later so
-    // the transition runs, after the requested ~0.5s beat.
+    // posters land visible, then flip to revealed a frame later so the transition runs (staggered)
     setTimeout(() => {
         wrap.querySelectorAll('.ai-card').forEach((card, i) => {
-            // A small per-card stagger keeps the reveal feeling smooth, not abrupt.
             setTimeout(() => card.classList.add('is-revealed'), i * 90);
         });
     }, REVEAL_DELAY_MS);
@@ -287,7 +232,7 @@ function renderCards(list) {
 function wireCardActions() {
     const wrap = getResults();
     if (!wrap || wrap.dataset.wired === '1') return;
-    wrap.dataset.wired = '1';   // delegate once; survives re-renders
+    wrap.dataset.wired = '1';   // delegate once, survives re-renders
     wrap.addEventListener('click', (e) => {
         const btn = e.target.closest('[data-action]');
         if (!btn) return;
@@ -298,43 +243,31 @@ function wireCardActions() {
     });
 }
 
-// Info (browsing a suggestion before a winner is chosen) returns HERE to the
-// suggestions — its movie-page Back uses normal history, and our results are
-// restored from cache so they don't regenerate. The winner's View Details instead
-// exits the whole flow, pinning the movie-page Back to the picker's AI tab.
+// backToPicker (winner) pins the movie page Back to the AI tab; Info uses from=ai
 function openDetails(movie, { backToPicker = false } = {}) {
     if (movie.id == null) {
         if (window.toast) toast.info('No details available for this title.');
         return;
     }
-    // backToPicker (winner): pin the movie Back to the picker's AI tab. Otherwise
-    // (Info): leave Back to history so it returns here to the suggestions, but mark
-    // from=ai so the movie page renders Back in the aligned feature style either way.
     let url = `movie.html?id=${encodeURIComponent(movie.id)}`;
     url += backToPicker ? `&back=${encodeURIComponent(pickerAiUrl())}` : '&from=ai';
-    // Opened from the AI suggestions flow (not Home) → open details in a new tab
-    // so the suggestions stay put behind it.
+    // new tab so the suggestions stay put behind it
     window.open(url, "_blank", "noopener");
 }
 
-// ==========================================
-// 4. TRY AGAIN
-// ==========================================
 function setupTryAgain() {
     const btn = document.getElementById('aiTryAgain');
     if (!btn) return;
     btn.addEventListener('click', () => {
-        if (loading || rerollUsed) return; // one reroll per result set
-        // A reroll spends another AI action — stop here (with the right message) if
-        // the daily quota is already spent, rather than firing a doomed request.
+        if (loading || rerollUsed) return;
+        // a reroll spends an AI action; stop if the daily quota is gone
         if (window.MovieAPI && MovieAPI.aiActionsRemaining() <= 0) {
             if (window.toast) toast.warn(MovieAPI.aiLimitReachedMessage());
             return;
         }
-        // Vanish on press — don't wait for the new picks to load, and don't just
-        // grey it out. A reroll that FAILS brings it back (generate()'s finally).
+        // generate()'s finally brings it back if the reroll fails
         btn.hidden = true;
-        generate(true); // a Try Again is a reroll: excludes the current picks
+        generate(true);
     });
 }
 
@@ -343,8 +276,6 @@ function setTryAgainBusy(busy) {
     if (btn) btn.disabled = busy || rerollUsed;
 }
 
-// Hide "Try Again" once the single allowed reroll has been used (#2); show it again
-// for a fresh result set. Hidden rather than just disabled so it reads as "done".
 function updateTryAgainVisibility() {
     const btn = document.getElementById('aiTryAgain');
     if (!btn) return;
@@ -352,9 +283,6 @@ function updateTryAgainVisibility() {
     btn.disabled = rerollUsed;
 }
 
-// ==========================================
-// 5. WINNER POPUP
-// ==========================================
 let currentWinner = null;
 
 function setupWinnerControls() {
@@ -367,9 +295,6 @@ function setupWinnerControls() {
     if (view) view.addEventListener('click', () => {
         if (currentWinner) openDetails(currentWinner, { backToPicker: true });
     });
-    // "Back to Collection" → the collection these picks came from (same as Chopping
-    // Block). aiConfig.collectionId is guaranteed set here (the page redirects on a
-    // direct visit without it).
     if (back && aiConfig && aiConfig.collectionId != null) {
         back.setAttribute('href',
             `collection.html?id=${encodeURIComponent(aiConfig.collectionId)}`);
@@ -395,9 +320,7 @@ function closeWinner() {
     Confetti.stop();
 }
 
-// ==========================================
-// 6. CONFETTI  (same effect as wheel.js / chopping.js)
-// ==========================================
+// confetti, same effect as wheel.js / chopping.js
 const Confetti = (() => {
     const colors = ['#e8453c', '#3b6fd4', '#3cae5b', '#f4d03f',
                     '#f1a0c0', '#ffffff', '#f39c12', '#9b59b6', '#86d0e0'];
@@ -475,5 +398,4 @@ const Confetti = (() => {
     return { start, stop };
 })();
 
-// escapeHtml() is the shared global from js/core/common.js (loaded before this script
-// on ai-suggestions.html), so this page reuses it rather than redefining its own copy.
+// escapeHtml() is a shared global from js/core/common.js

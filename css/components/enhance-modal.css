@@ -1,15 +1,6 @@
-/* enhance-modal.css — "Enhance My Collection" modal (Figma "Enhance My Collection
-   Window", node 92:178). A dark-gradient window overlaid on the (blurred)
-   collection page: the AI recommends 3 movies NOT yet in the list, each shown as a
-   poster + a one-line reason + an "Add to Collection" button, with a shared
-   TRY AGAIN reroll beneath. Reuses css/components/ai-tryagain.css for that button.
+/* "Enhance My Collection" modal: AI recommends 3 movies not yet in the list,
+   each a poster + reason + "Add to Collection". reuses ai-tryagain.css. */
 
-   Geometry mirrors the Figma frame (panel 1468×829 centred; cards 262 wide; poster
-   262×379; pills/buttons radius 15) and scales down responsively. */
-
-/* ==========================================
-   1. OVERLAY + PANEL
-   ========================================== */
 .enhance-overlay {
   position: fixed;
   inset: 0;
@@ -31,14 +22,10 @@
   visibility: visible;
 }
 
-/* The window itself: Figma 1468×829, centred, dark diagonal gradient
-   (linear handles run bottom-right #000 → top-left #666, i.e. 328deg). */
 .enhance-modal {
   position: relative;
-  /* 100% (of the overlay's padded flex box), NOT 96vw: a vw width ignores the
-     overlay's 24px padding and pushes the panel ~16px past each gutter on
-     mobile, which is the source of the horizontal scroll. 100% fits inside the
-     padding (box-sizing: border-box already accounts for the panel's own pad). */
+  /* 100%, not vw: vw ignores the overlay's 24px padding and pushes past the
+     gutter on mobile (horizontal scroll). */
   width: min(1468px, 100%);
   max-height: 92dvh;
   overflow-y: auto;
@@ -67,14 +54,13 @@
   transform: none;
 }
 
-/* Top-right close (Figma X instance, thin #f3f3f3 stroke). */
 .enhance-close {
   position: absolute;
   top: 28px;
   right: 36px;
   width: 40px;
   height: 40px;
-  z-index: 3; /* above the poster cards so a wrapped poster can never cover it */
+  z-index: 3; /* above the cards so a wrapped poster can't cover it */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,16 +79,8 @@
   transform: scale(1.12);
 }
 
-/* ==========================================
-   2. CARDS ROW
-   3 × 262 cards (poster + button + reason) spread evenly across the panel width,
-   wrapping on narrow viewports. `justify-content: space-evenly` puts equal space
-   between AND around the cards — they fill the width instead of clustering in the
-   centre, and when only 2 fit on the top row the lone 3rd still centres beneath
-   them. NOT space-between (that jammed the cards to the panel edges when the third
-   wrapped). The small column-gap is only a MINIMUM so cards never touch; space-evenly
-   distributes the rest.
-   ========================================== */
+/* space-evenly (not space-between): cards fill the width and a lone wrapped 3rd
+   still centres beneath the top two. the column-gap is just a minimum. */
 .enhance-cards {
   width: 100%;
   display: flex;
@@ -118,7 +96,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* fade + rise reveal (staggered in JS via .is-revealed) */
+  /* fade + rise reveal, staggered in JS via .is-revealed */
   opacity: 0;
   transform: translateY(12px);
   transition: opacity 0.5s ease, transform 0.5s var(--ease-pop);
@@ -129,9 +107,6 @@
   transform: none;
 }
 
-/* Poster box — styled like the app's other movie cards (collection grid): a rose
-   border + rounded corners, lifting with a soft shadow on hover while the poster
-   itself zooms slightly. Sizing stays the Figma 262×379. */
 .enhance-poster-wrap {
   position: relative;
   width: 100%;
@@ -165,7 +140,6 @@
   transform: scale(1.05);
 }
 
-/* Title caption pill, sunk near the poster's bottom edge (Figma: 12px up). */
 .enhance-card-title {
   position: absolute;
   left: 50%;
@@ -186,9 +160,6 @@
   text-overflow: ellipsis;
 }
 
-/* "i" info badge on each poster — mirrors the chopping carousel / add-to-collection
-   modal (round dark chip, italic serif "i", fades in on hover/focus, pink on hover).
-   Opens the movie's details page in a new tab. */
 .enhance-info {
   position: absolute;
   top: 6px;
@@ -219,14 +190,13 @@
 .enhance-info:hover {
   background: rgba(var(--pink), 0.9);
 }
-/* Touch devices can't hover, so keep the badge visible there (like .cb-info). */
+/* touch can't hover, keep the badge visible */
 @media (hover: none) {
   .enhance-info {
     opacity: 0.92;
   }
 }
 
-/* "Add to Collection" CTA (Figma: 262×52, #bc6676, radius 15, label/icon @0.9). */
 .enhance-add {
   width: 100%;
   height: 52px;
@@ -260,9 +230,7 @@
   flex: 0 0 auto;
 }
 
-/* Added state: drop to a pink outline + pink label — the same "added" accent the
-   Add-to-Collection modal uses (pink ✓ / pink border), so it reads as done and
-   stays on-brand (no off-palette green). */
+/* added: pink outline + label, matching the Add-to-Collection modal */
 .enhance-add.is-added {
   background-color: transparent;
   color: rgb(var(--pink));
@@ -280,11 +248,10 @@
   cursor: progress;
 }
 
-/* One-line AI reason (Figma: 16px / lh 21, white @0.9, left aligned). */
 .enhance-reason {
   width: 100%;
   margin: 17px 0 0;
-  min-height: 63px; /* keeps short reasons from collapsing the airy Figma layout */
+  min-height: 63px; /* keep short reasons from collapsing the layout */
   font-family: "Lao Sangam MN", sans-serif;
   font-size: 16px;
   line-height: 21px;
@@ -292,16 +259,13 @@
   text-align: left;
 }
 
-/* ==========================================
-   3. LOADING SKELETON (pulsing posters while the AI thinks)
-   ========================================== */
+/* loading skeleton: pulsing posters while the AI thinks */
 .enhance-card--skeleton {
   opacity: 1;
   transform: none;
 }
 
-/* While loading: dim the rose border (matches the home/collection skeletons) and
-   don't lift — just shimmer the poster fill. */
+/* loading: dim the border, don't lift, just shimmer the fill */
 .enhance-card--skeleton .enhance-poster-wrap {
   border-color: rgba(var(--rose), 0.35);
 }
@@ -330,9 +294,6 @@
   100% { background-position: -200% 0; }
 }
 
-/* ==========================================
-   4. EMPTY / ERROR STATE
-   ========================================== */
 .enhance-empty {
   width: 100%;
   min-height: 240px;
@@ -345,9 +306,6 @@
   color: var(--text-soft);
 }
 
-/* ==========================================
-   5. RESPONSIVE
-   ========================================== */
 @media (max-width: 1024px) {
   .enhance-close {
     top: 18px;
@@ -357,8 +315,7 @@
 
 @media (max-width: 720px) {
   .enhance-modal {
-    /* Top pad clears the close button (top:18px + 40px tall = 58px on mobile)
-       so the first poster row never tucks under the (x). */
+    /* top pad clears the close button so the first row doesn't tuck under it */
     padding: 70px 22px 28px;
     border-radius: 26px;
     gap: 24px;

@@ -1,15 +1,12 @@
-/* auth.css - login & signup pages only. Loaded by login.html and signup.html. */
+/* auth.css - login & signup pages. */
 
-/* ==========================================
-   1. LOGIN PAGE BACKGROUND
-   ========================================== */
 .login-body {
   background-image: url("../../../assets/images/movie-knight-gradient-bg.svg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 
-  /* Fallback color just in case the image loads slowly */
+  /* fallback while the image loads */
   background-color: rgb(var(--ink));
   min-height: 100vh;
   display: flex;
@@ -34,7 +31,6 @@
   animation: authEnter 0.5s var(--ease-snap) backwards;
 }
 
-/* gentle fade-up as the form arrives */
 @keyframes authEnter {
   from {
     opacity: 0;
@@ -46,9 +42,6 @@
   }
 }
 
-/* ==========================================
-   2. LOGIN FORM & INPUTS
-   ========================================== */
 .login-box {
   background-color: rgba(var(--pink), 0.13);
   width: 540px;
@@ -69,8 +62,6 @@
   margin-bottom: 10px;
   font-weight: 300;
 }
-
-/* Input Fields */
 
 .input-group input::placeholder {
   color: var(--text-muted);
@@ -103,18 +94,13 @@
 .input-group input:-webkit-autofill:focus,
 .input-group input:-webkit-autofill:active {
   transition: background-color 5000s ease-in-out 0s;
-  /* Justified !important (no specificity alternative): Chrome paints the autofill
-     text colour via an internal user-agent style that a normal author rule can't
-     reach, so -webkit-text-fill-color must be !important or autofilled text renders
-     near-black on the pink field. (The 5000s background transition is the matching
-     trick that defers the yellow autofill background indefinitely.) */
+  /* justified !important: chrome's autofill text colour is a UA style a normal
+     rule can't reach, so without it autofilled text renders near-black. the 5000s
+     transition is the matching trick that defers the yellow autofill background. */
   -webkit-text-fill-color: white !important;
   caret-color: white;
 }
 
-/* ==========================================
-   3. SUBMIT BUTTON & LINKS
-   ========================================== */
 .submit-btn {
   width: 133px;
   height: 47px;
@@ -141,7 +127,6 @@
   transform: scale(0.96);
 }
 
-/* Loading state: greyed out + unclickable, with no hover lift or press scale. */
 .submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -156,7 +141,6 @@
   transform: none;
 }
 
-/* Status line shown BENEATH the submit button while a request is in flight. */
 .form-loading {
   color: var(--text-muted);
   font-size: 14px;
@@ -172,7 +156,6 @@
   opacity: 1;
 }
 
-/* Bottom Links */
 .form-links p {
   color: var(--text);
   font-size: 16px;
@@ -189,14 +172,8 @@
   color: rgb(var(--pink));
 }
 
-/* ==========================================
-   4. FORM VALIDATION ERRORS
-   ========================================== */
-/* Scoped as `.input-group input.input-error` (0,2,1) so it out-specifies the base
-   `.input-group input` (0,1,1) and ties `.input-group input:focus` (0,2,1) — winning
-   on source order (it's later) so the error styling shows even while the field is
-   focused, exactly as the old !important did. The class is only ever added to inputs
-   inside .input-group (see validation.js), so the scoping is always satisfied. */
+/* scoped to .input-group input.input-error so it out-specifies the base rule and
+   ties :focus, winning on source order, so errors show even while focused (no !important) */
 .input-group input.input-error {
   border: 1px solid rgb(var(--danger-input));
   box-shadow: 0 0 10px rgba(var(--danger-input), 0.3);
@@ -221,15 +198,12 @@
   opacity: 1;
 }
 
-/* ==========================================
-   5. SIGNUP PAGE LAYOUT
-   ========================================== */
 .signup-body {
   background-image: url("../../../assets/images/movie-knight-gradient-bg.svg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  /* Fallback color just in case the image loads slowly */
+  /* fallback while the image loads */
   background-color: rgb(var(--ink));
 
   min-height: 100vh;
@@ -268,8 +242,7 @@
   font-weight: 300;
 }
 
-/* Date Field (desktop only — on touch devices the field is swapped to a plain
-   text input with a DD / MM / YYYY mask; see setupMobileDob in validation.js). */
+/* date field (desktop only; touch swaps to a masked text input, see validation.js) */
 .input-group input[type="date"] {
   color: var(--text-muted);
   font-weight: 300;
@@ -283,9 +256,6 @@
   display: none;
 }
 
-/* ==========================================
-   6. RESPONSIVE DESIGN
-   ========================================== */
 @media (max-width: 600px) {
   .login-wrapper,
   .signup-wrapper {

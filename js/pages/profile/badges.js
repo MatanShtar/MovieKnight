@@ -1,14 +1,3 @@
-// profile/badges.js — renders the user's progression badges as metallic shields
-// (gold/silver/bronze), or three empty dashed shields when they have none.
-// Self-contained IIFE; refreshes from the server after the cached-first paint.
-// ==========================================
-// 6. PROGRESSION BADGES (data-driven from the user's `badges`)
-// ==========================================
-// Earned badges render as metallic shields coloured by tier (gold/silver/bronze).
-// A user with no badges shows three empty DASHED shields (Figma "just created").
-// Badges are a cosmetic mock for now: the Yuviverse7 demo user is seeded with
-// three; every other account has an empty array → the dashed state. "View All
-// Badges" stays a Coming-Soon stub for everyone (the full badges page is deferred).
 (function () {
   const display = document.getElementById("badgesDisplay");
   if (!display) return;
@@ -53,8 +42,7 @@
     }
   }
 
-  // Render from the cached user first (instant), then refresh from the server so
-  // badges stay current even for a session cached before badges were assigned.
+  // render cached first, then refresh so a stale session still picks up new badges
   render(badges);
   if (window.MovieAPI && MovieAPI.me) {
     MovieAPI.me()

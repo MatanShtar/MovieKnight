@@ -1,49 +1,25 @@
-// wheel.js — Drawing, physics, add/remove/rename items, and the winner popup.
-
-// ==========================================
-// 1. STATE
-// ==========================================
-// The free-form title cap shared by "add" and "rename".
 const MAX_TITLE_LEN = 20;
 
-// Per-collection sessionStorage key for the unsaved WORKING DRAFT. This is what lets a
-// generated/edited wheel survive a page RELOAD — it is NEVER auto-saved to the server
-// (the user still saves explicitly). Kept in sessionStorage so it's scoped to this tab
-// and cleared automatically when the tab closes — a throwaway working copy. Keyed by
-// collection so switching collections can't show the wrong draft; standalone uses ":none".
+// sessionStorage draft so an edited wheel survives reload without auto-saving to server.
+// keyed by collection (standalone uses ":none").
 const WHEEL_DRAFT_PREFIX = "mk:wheelDraft:";
 
-// On initial load the wheel shows two editable placeholder items. When the user
-// arrives from the picker these are replaced by their chosen collection's filtered
-// titles (the "mk:wheelGame" hand-off); otherwise the saved wheel is loaded from
-// the server (GET /api/collections/:id/wheel — see initWheelData).
 let movies = ["Movie 1", "Movie 2"];
 
-// --- server-backed persistence state (per collection) ---
-// The collection whose wheel we load/save, resolved from ?collection=<id> (or the
-// last one the picker remembered). null → a standalone wheel with no server wheel.
 let wheelCollectionId = null;
-// Whether the signed-in user OWNS that collection (from GET /api/collections/:id).
-// Only owners may PUT; a visitor on a public collection gets a read-only wheel.
+// only owners may PUT; a visitor on a public collection gets a read-only wheel.
 let wheelIsOwner = false;
-// The last array we know the server holds, used to gate the Save button and avoid
-// redundant PUTs. null until the first successful load/save.
+// last array the server holds; gates the Save button. null until first load/save.
 let serverWheel = null;
-let savingWheel = false;       // guards overlapping PUTs
+let savingWheel = false;
 
-let currentWinnerIdx = -1; // index in `movies` of the movie shown in the popup
+let currentWinnerIdx = -1;
 
-// Client-side filter applied to the editable list only (NOT the wheel itself).
-// Holds the raw trimmed query; the list is matched case-insensitively against it.
 let wheelFilter = "";
 
-// True while the server-backed wheel is still loading — drives the skeleton
-// placeholder (a spinning, label-less coloured wheel + shimmer list rows) and
-// blocks spinning until the real movies are in.
 let wheelLoading = false;
 let skeletonRaf = null;
 
-// Circled-plus glyph for the empty "add a movie" rows.
 const PLUS_SVG = `
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
          stroke="#cfcfcf" stroke-width="1.6" stroke-linecap="round">
@@ -53,43 +29,27 @@ const PLUS_SVG = `
     </svg>`;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Wire the (static) UI immediately, paint placeholders, then hydrate the real
-    // wheel from the server in the background.
     setupSpinPhysics();
     setupListInteractions();
     setupWinnerControls();
     setupWheelHover();
     setupSaveLoad();
     setupSearch();
-    // If there's a collection to hydrate from the server, show a loading skeleton
-    // instead of the editable placeholders (which read as real "Movie 1 / Movie 2"
-    // titles); otherwise paint immediately. initWheelData() swaps in the real wheel.
     if (resolveWheelCollectionId()) showWheelLoading();
     else rerender();
     initWheelData();
 });
 
-// ==========================================
-// 1c. CLIENT-SIDE SEARCH (filters the editable list only)
-// ==========================================
-// Instantly narrows the displayed edit/remove list as the user types. Pure
-// client-side: re-renders only the list from the already-loaded `movies` array
-// (the wheel canvas is left untouched so what you spin still matches what's saved).
 function setupSearch() {
     const search = document.getElementById('wheelSearch');
     if (!search) return;
     search.addEventListener('input', () => {
         wheelFilter = search.value.trim();
-        renderMovieList(movies);   // list only — does NOT redraw the wheel
+        renderMovieList(movies);   // list only, not the wheel
     });
 }
 
-// ==========================================
-// 1b. LOAD / HYDRATE THE WHEEL (server-backed, per collection)
-// ==========================================
-// The picker hands off the freshly genre/provider-filtered titles under
-// "mk:wheelGame" (consumed once). Read it here so a fresh "Generate Wheel" shows
-// those movies; null if the page was opened directly / on a refresh.
+// picker hands off filtered titles under "mk:wheelGame" (consumed once).
 function readWheelHandoff() {
     let game;
     try { game = JSON.parse(sessionStorage.getItem('mk:wheelGame')); }
@@ -99,8 +59,7 @@ function readWheelHandoff() {
     return game.movies.filter(Boolean);
 }
 
-// The collection whose wheel we read/write: the ?collection=<id> URL param wins,
-// else the last one the picker remembered (ActiveCollection's "mk:activeCollection").
+// ?collection=<id> wins, else the last one the picker remembered.
 function resolveWheelCollectionId() {
     const fromUrl = new URLSearchParams(location.search).get('collection');
     if (fromUrl) return fromUrl;
@@ -110,8 +69,6 @@ function resolveWheelCollectionId() {
     } catch (_) { return null; }
 }
 
-// Parse a stored JSON array of titles → a blanks-filtered array, or null if the key is
-// absent/empty/not an array. Used by the working-draft reader (readWheelDraft).
 function readStoredArray(storage, key) {
     try {
         const parsed = JSON.parse(storage.getItem(key));
@@ -119,16 +76,9 @@ function readStoredArray(storage, key) {
     } catch { return null; }
 }
 
-// ---- working draft (sessionStorage) ----
-// Saved after every edit; restored on load if present, so the wheel survives a page
-// RELOAD. sessionStorage means it's tab-scoped and dropped automatically when the tab
-// closes — so there's nothing to clean up. A fresh picker hand-off overwrites it (see
-// initWheelData). Keyed by collection (resolved in initWheelData before these run).
 function wheelDraftKey() {
     return WHEEL_DRAFT_PREFIX + (wheelCollectionId || "none");
 }
-// Persist the on-screen wheel so a reload can restore it. Best-effort (storage may be
-// full/blocked); called after every edit and after a successful save.
 function saveWheelDraft() {
     try { sessionStorage.setItem(wheelDraftKey(), JSON.stringify(movies)); } catch (_) {}
 }
@@ -136,34 +86,25 @@ function readWheelDraft() {
     return readStoredArray(sessionStorage, wheelDraftKey());
 }
 
-// Resolve ownership + the saved wheel from the server, then hydrate. We ALWAYS
-// fetch the collection's saved wheel first so `serverWheel` is the correct baseline
-// for gating Save/Load — then decide what to SHOW on top of it:
-//   • a fresh picker hand-off (the user just chose filters) — shown but NOT saved;
-//   • else the working draft from before a reload (sessionStorage), also unsaved;
-//   • else the server's saved wheel;
-//   • else the two editable placeholders.
-// Nothing is ever persisted here — saving happens ONLY when the user clicks Save.
+// Resolve ownership + the saved wheel, then hydrate. fetch the saved wheel first so
+// serverWheel is the Save/Load baseline; then show, in priority: picker hand-off, else
+// pre-reload draft, else saved wheel, else placeholders. nothing persists until Save.
 async function initWheelData() {
     const handoff = readWheelHandoff();
     wheelCollectionId = resolveWheelCollectionId();
-    wireWheelBack(); // point Back's fallback at the hub for THIS collection
+    wireWheelBack();
 
     const draft = readWheelDraft();
 
-    // Paint immediately to clear the skeleton: a fresh hand-off wins, else the restored
-    // draft. The server load below still runs to set the Save/Load baseline.
     if (handoff) { movies = handoff; currentRotation = 0; saveWheelDraft(); rerender(); }
     else if (draft) { movies = draft; currentRotation = 0; rerender(); }
 
-    // No collection in context: a standalone wheel. The draft/hand-off (if any) is
-    // shown above; otherwise the placeholders already painted stay. Nothing server-side.
     if (!wheelCollectionId) {
         updateButtonStates();
         return;
     }
 
-    // Ownership + existence/visibility. A 404 here means private-and-not-yours.
+    // 404 here means private-and-not-yours.
     try {
         const collection = await MovieAPI.getCollection(wheelCollectionId);
         wheelIsOwner = !!(collection && collection.isOwner);
@@ -172,17 +113,11 @@ async function initWheelData() {
         return;
     }
 
-    // Always read the saved wheel so the buttons can be gated against it, even when
-    // a fresh hand-off is about to be shown on top (so Load can pull the saved set
-    // back, and Save lights up because the hand-off differs from what's stored).
+    // read saved wheel to gate buttons even when a hand-off is shown on top.
     try {
         const wc = await MovieAPI.getWheel(wheelCollectionId);
         serverWheel = wc.slice();
 
-        // A fresh picker hand-off or a restored draft is already on screen (set in the
-        // early paint above) — keep it; serverWheel is now just the Save/Load baseline.
-        // Only when there's neither do we fall back to this collection's saved wheel
-        // (else the editable placeholders already on screen stay).
         if (!handoff && !draft && wc.length) {
             movies = wc;
             currentRotation = 0;
@@ -193,10 +128,8 @@ async function initWheelData() {
     }
 }
 
-// 401 → re-auth; 404 → no-access state; anything else → keep the current wheel and
-// surface a transient toast (the editable placeholders still work in-memory).
 function handleWheelLoadError(err) {
-    stopWheelLoading();   // never leave the skeleton spinning on an error
+    stopWheelLoading();
     if (err && err.status === 401) { window.location.replace('login.html'); return; }
     if (err && err.status === 404) {
         showWheelMessage("Wheel unavailable",
@@ -204,10 +137,9 @@ function handleWheelLoadError(err) {
         return;
     }
     if (window.toast) toast.error("Couldn’t load the saved wheel. You can still spin this one.");
-    rerender();   // fall back to the editable placeholders so the page is usable
+    rerender();
 }
 
-// Replace the wheel stage with a simple message (no-access / error states).
 function showWheelMessage(title, detail) {
     const stage = document.querySelector('.wheel-stage');
     if (!stage) return;
@@ -220,17 +152,13 @@ function showWheelMessage(title, detail) {
 }
 
 function rerender() {
-    stopWheelLoading();   // real content is about to paint — drop any skeleton
+    stopWheelLoading();
     renderMovieList(movies);
     drawWheel(movies);
-    updateButtonStates(); // keep "Save" enabled only when there are unsaved changes
+    updateButtonStates();
 }
 
-// ==========================================
-// 1d. LOADING SKELETON (while the server wheel hydrates)
-// ==========================================
-// Draw a label-less wheel of equal coloured slices — the "skeleton" the user sees
-// before the real titles arrive. `rotationDeg` lets it turn gently for a loading cue.
+// label-less wheel of equal slices, shown while real titles load.
 function drawSkeletonWheel(rotationDeg, colors) {
     const canvas = document.getElementById('rouletteWheel');
     if (!canvas) return;
@@ -253,7 +181,6 @@ function drawSkeletonWheel(rotationDeg, colors) {
 function showWheelLoading() {
     wheelLoading = true;
 
-    // Shimmer rows in the list box (no real titles to read).
     const listContainer = document.getElementById('wheelMovieList');
     if (listContainer) {
         listContainer.innerHTML = Array.from({ length: 6 })
@@ -263,14 +190,13 @@ function showWheelLoading() {
     const countEl = document.getElementById('wheelCount');
     if (countEl) countEl.textContent = 'Loading your wheel…';
 
-    // Dim + softly pulse the wheel, and gently rotate the coloured skeleton.
     const container = document.querySelector('.wheel-visual-container');
     if (container) container.classList.add('is-loading');
 
     const colors = getWheelSliceColors();
     if (skeletonRaf) cancelAnimationFrame(skeletonRaf);
 
-    // Honour reduced-motion: draw the coloured skeleton once, no rotation.
+    // reduced-motion: draw once, no rotation.
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         drawSkeletonWheel(0, colors);
         updateButtonStates();
@@ -281,7 +207,7 @@ function showWheelLoading() {
     const tick = () => {
         const canvas = document.getElementById('rouletteWheel');
         if (!canvas || !wheelLoading) { skeletonRaf = null; return; }
-        deg = (deg + 0.35) % 360;            // slow, calming turn
+        deg = (deg + 0.35) % 360;
         drawSkeletonWheel(deg, colors);
         skeletonRaf = requestAnimationFrame(tick);
     };
@@ -297,10 +223,7 @@ function stopWheelLoading() {
     if (container) container.classList.remove('is-loading');
 }
 
-// Back returns to the hub (picker). smartBack uses history.back() when there's
-// in-app history — which lands on the hub with the user's filter selections intact
-// (bfcache) — and only falls back to this href on a direct visit. Carry the
-// collection id so even that fallback re-opens the hub for the right collection.
+// carry the collection id so the direct-visit href fallback reopens the right hub.
 function wireWheelBack() {
     const back = document.querySelector('.back-btn');
     if (!back) return;
@@ -311,15 +234,11 @@ function wireWheelBack() {
     back.setAttribute('data-back', url);
 }
 
-// ==========================================
-// 2. LIST RENDERING
-// ==========================================
 function renderMovieList(titles) {
     const listContainer = document.getElementById('wheelMovieList');
     if (!listContainer) return;
 
-    // Filter client-side, but keep each row's ORIGINAL index in data-index so the
-    // edit/delete handlers still target the right entry in `movies`.
+    // keep each row's original index in data-index so edit/delete target the right entry.
     const q = wheelFilter.toLowerCase();
     const matched = titles
         .map((title, i) => ({ title, i }))
@@ -341,9 +260,6 @@ function renderMovieList(titles) {
         ? matched.map(rowFor).join("")
         : `<div class="wheel-list-empty">No movies match &ldquo;${escapeHtml(wheelFilter)}&rdquo;.</div>`;
 
-    // A single free-text field for adding to the wheel, pinned to the top. It
-    // accepts any text up to 20 chars — a movie title, or your own idea like
-    // "Do nothing tonight" — submitted with Enter or the + button.
     const addRow = `
         <div class="wheel-add-row">
             <div class="wheel-add-field">
@@ -356,27 +272,20 @@ function renderMovieList(titles) {
 
     listContainer.innerHTML = addRow + rows;
 
-    // The count reflects the WHOLE wheel (titles is always the full `movies`
-    // array), so it stays correct even while the search filters the visible rows.
+    // count the whole wheel, not the filtered rows.
     updateWheelCount(titles.length);
 }
 
-// Show how many movies are currently on the wheel (caption above the list).
 function updateWheelCount(n) {
     const el = document.getElementById('wheelCount');
     if (!el) return;
     el.textContent = `${n} ${n === 1 ? 'movie' : 'movies'} on the wheel`;
 }
 
-// ==========================================
-// 3. ADD / REMOVE INTERACTIONS
-// ==========================================
 function setupListInteractions() {
     const listContainer = document.getElementById('wheelMovieList');
     if (!listContainer) return;
 
-    // Enter submits whatever is typed as free-form text. maxlength on the input
-    // already caps it at 20 characters.
     listContainer.addEventListener('keydown', (e) => {
         if (e.target.classList.contains('wheel-add-input') && e.key === 'Enter') {
             e.preventDefault();
@@ -406,13 +315,11 @@ function addMovie(title) {
     }
     movies.push(title);
     renderMovieList(movies);
-    updateButtonStates();   // enables "Save" — the user clicks it to persist
-    saveWheelDraft();       // keep the reload-survival draft in sync
+    updateButtonStates();
+    saveWheelDraft();
 
-    // Wheel: the new slice emerges from between its two neighbouring slots.
     animateSlice(movies.length - 1, 'add');
 
-    // List: slide the newly added (last) row in from the left.
     const rows = document.querySelectorAll('#wheelMovieList .wheel-list-item');
     const newRow = rows[rows.length - 1];
     if (newRow) {
@@ -421,8 +328,7 @@ function addMovie(title) {
             () => newRow.classList.remove('is-entering'), { once: true });
     }
 
-    // renderMovieList() rebuilt the add-row, so the input is a fresh element —
-    // return focus to it so the user can type the next title without clicking.
+    // renderMovieList rebuilt the add-row, so refocus the fresh input.
     const addInput = document.querySelector('#wheelMovieList .wheel-add-input');
     if (addInput) addInput.focus();
 }
@@ -434,27 +340,20 @@ function removeMovie(index) {
         return;
     }
 
-    // List row slides out to the left; the wheel slice shrinks away in parallel.
     const row = document.querySelector(
         `#wheelMovieList .wheel-list-item[data-index="${index}"]`);
     if (row && row.classList.contains('is-leaving')) return; // already removing
     if (row) row.classList.add('is-leaving');
 
-    // Shrink the slice out, then commit the removal and redraw at rest.
     animateSlice(index, 'remove', () => {
         movies.splice(index, 1);
         renderMovieList(movies);
-        updateButtonStates();   // enables "Save"; animateSlice repaints + fades labels
-        saveWheelDraft();       // keep the reload-survival draft in sync
+        updateButtonStates();
+        saveWheelDraft();
     });
 }
 
-// ==========================================
-// 3b. RENAME AN EXISTING ITEM
-// ==========================================
-// Clicking a row's rename (pencil) icon swaps its title for an inline input,
-// capped at 20 characters like the add field. Enter / blur commits, Escape
-// cancels. The wheel and Save-button state refresh once the new name settles.
+// Enter/blur commits, Escape cancels.
 function startRename(index) {
     if (index < 0 || index >= movies.length) return;
     const row = document.querySelector(
@@ -484,10 +383,10 @@ function startRename(index) {
                 if (window.toast) toast.info(`"${next}" is already on the wheel.`);
             } else {
                 movies[index] = next;
-                saveWheelDraft();   // keep the reload-survival draft in sync
+                saveWheelDraft();
             }
         }
-        rerender(); // restores the title span (and refreshes the wheel + save state)
+        rerender();
     };
     const cancel = () => {
         if (settled) return;
@@ -503,21 +402,10 @@ function startRename(index) {
     input.addEventListener('blur', commit);
 }
 
-// ==========================================
-// 3c. SAVE / LOAD (server: GET/PUT /api/collections/:id/wheel)
-// ==========================================
-// The current wheel exactly equals what the server holds (same titles, order)?
 function wheelMatchesSaved() {
     return serverWheel !== null && JSON.stringify(serverWheel) === JSON.stringify(movies);
 }
 
-// Gate both action buttons:
-//  • Save  — only when there's a collection, the user OWNS it, AND the on-screen
-//    wheel differs from what the server holds (i.e. there are unsaved changes).
-//  • Load  — only when the server actually has a saved wheel for this collection
-//    AND loading it would change the current set (otherwise it's a no-op).
-// In every other case the button is greyed out and unclickable (a visitor's wheel
-// is read-only; a standalone wheel has no server state at all).
 function updateButtonStates() {
     const saveBtn = document.querySelector('.save-current-btn');
     if (saveBtn) {
@@ -535,31 +423,29 @@ function updateButtonStates() {
     }
 }
 
-// PUT the current wheel for the active collection. Owner-only; the server returns
-// the normalised (trimmed/capped) list, which becomes our source of truth.
+// owner-only PUT; server returns the normalised list, which becomes source of truth.
 async function persistWheel({ silent = false } = {}) {
     if (!wheelCollectionId || !wheelIsOwner) {
         if (!silent && window.toast) toast.info('Open a collection to save its wheel.');
         return;
     }
-    if (savingWheel) return;   // a save is already in flight
+    if (savingWheel) return;
     savingWheel = true;
     try {
         const saved = await MovieAPI.saveWheel(wheelCollectionId, movies);
         serverWheel = saved.slice();
-        // Adopt the server's normalised list (it may have trimmed/capped entries),
-        // but never yank the board out from under an in-progress spin.
+        // adopt the server's list, but don't yank the board mid-spin.
         if (!isSpinning && JSON.stringify(saved) !== JSON.stringify(movies)) {
             movies = saved.slice();
             rerender();
         } else {
             updateButtonStates();
         }
-        saveWheelDraft();   // draft now matches the server (until the next edit)
+        saveWheelDraft();
         if (!silent && window.toast) toast.success('Wheel saved.');
     } catch (err) {
         if (err && err.status === 401) { window.location.replace('login.html'); return; }
-        // 404 here means we don't actually own it (or it's gone) — stop offering save.
+        // 404 means we don't own it (or it's gone), stop offering save.
         if (err && err.status === 404) {
             wheelIsOwner = false;
             updateButtonStates();
@@ -599,9 +485,9 @@ function setupSaveLoad() {
                     return;
                 }
                 movies = saved.slice();
-                currentRotation = 0; // reset the spin orientation for the loaded set
+                currentRotation = 0;
                 rerender();
-                saveWheelDraft();    // the loaded wheel is now the working draft
+                saveWheelDraft();
                 if (window.toast) toast.success('Loaded the saved wheel.');
             } catch (err) {
                 if (err && err.status === 401) { window.location.replace('login.html'); return; }
@@ -613,12 +499,7 @@ function setupSaveLoad() {
     updateButtonStates();
 }
 
-// ==========================================
-// 4. CANVAS DRAWING LOGIC
-// ==========================================
-
-// Pull the 8 wheel slice colors out of the CSS design tokens so the palette
-// stays defined in one place (tokens.css) rather than hard-coded here.
+// slice colors come from CSS tokens (tokens.css).
 function getWheelSliceColors() {
     const styles = getComputedStyle(document.documentElement);
     return [1, 2, 3, 4, 5, 6, 7, 8]
@@ -626,17 +507,13 @@ function getWheelSliceColors() {
         .filter(Boolean);
 }
 
-// Each movie keeps a STABLE colour for the life of the wheel (keyed by title —
-// titles are unique on a wheel), so removing one slice never re-colours the
-// others (no colour "jump"). Returns one palette index per title.
+// each title keeps a stable palette index so removing a slice never recolours the rest.
 let colorByTitle = new Map();
 function assignSliceColors(titles, paletteLen) {
     const n = titles.length;
     if (paletteLen < 1) return titles.map(() => 0);
-    // Start from each slice's remembered colour (or -1 = "needs one").
-    const colors = titles.map(t => (colorByTitle.has(t) ? colorByTitle.get(t) : -1));
-    // Lowest palette index (starting the search at i, for variety) that avoids
-    // both neighbours' current colours.
+    const colors = titles.map(t => (colorByTitle.has(t) ? colorByTitle.get(t) : -1)); // -1 = needs one
+    // lowest index from i that avoids both neighbours.
     const pick = (avoidA, avoidB, i) => {
         for (let k = 0; k < paletteLen; k++) {
             const c = (i + k) % paletteLen;
@@ -644,14 +521,12 @@ function assignSliceColors(titles, paletteLen) {
         }
         return i % paletteLen;
     };
-    // Settle the cycle: assign unknowns and repair any slice that matches a
-    // neighbour (including the wrap-around seam between the last and first slice).
-    // A few passes converge with an 8-colour palette.
+    // assign unknowns and repair any slice matching a neighbour, including the wrap seam.
     for (let pass = 0; pass < 4; pass++) {
         let changed = false;
         for (let i = 0; i < n; i++) {
             const prev = n > 1 ? colors[(i - 1 + n) % n] : -1;
-            const next = n > 2 ? colors[(i + 1) % n] : -1; // n===2: the other slice is already `prev`
+            const next = n > 2 ? colors[(i + 1) % n] : -1; // n===2: other slice is already prev
             if (colors[i] === -1 || colors[i] === prev || colors[i] === next) {
                 const c = pick(prev, next, i);
                 if (c !== colors[i]) { colors[i] = c; changed = true; }
@@ -663,17 +538,14 @@ function assignSliceColors(titles, paletteLen) {
     return colors;
 }
 
-// Draw the wheel. `weights` (one per slice, default all 1) lets a single slice
-// grow in / shrink out for the add/remove animation, while the rest share the
-// remaining arc — so a new title appears to emerge from between its neighbours.
+// `weights` (one per slice, default 1) lets a single slice grow/shrink for the
+// add/remove animation while the rest share the remaining arc.
 function drawWheel(titles, weights, opts) {
     const canvas = document.getElementById('rouletteWheel');
     if (!canvas || titles.length === 0) return;
     const ctx = canvas.getContext('2d');
 
-    // Labels are re-fitted (measureText + ellipsis) per slice, so re-running that every
-    // frame while slices resize makes the text jiggle. add/remove pass skipLabels for
-    // the in-between frames and only draw labels on the final, settled frame.
+    // labels are re-fitted per slice, so skip them mid-resize to avoid jiggle.
     const skipLabels = !!(opts && opts.skipLabels);
     const labelAlpha = opts && opts.labelAlpha != null ? opts.labelAlpha : 1;
     const n = titles.length;
@@ -684,41 +556,31 @@ function drawWheel(titles, weights, opts) {
     const centerY = canvas.height / 2;
     const radius = canvas.width / 2;
     const sliceColors = getWheelSliceColors();
-    // Stable, no-adjacent-duplicate colour index per slice (keyed by title).
     const colorIdx = assignSliceColors(titles, sliceColors.length);
 
-    // 10 or fewer titles read horizontally; more than 10 all switch to vertical
-    // so every label is consistent and legible in the narrower wedges.
+    // >10 titles switch to vertical labels to fit the narrower wedges.
     const vertical = n > 10;
 
-    // The whole wheel is drawn rotated by currentRotation (the spin angle), so
-    // labels can be kept screen-upright while the slices turn underneath them.
     const rotationRad = currentRotation * Math.PI / 180;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Slice 0's LEADING edge is anchored at the top, then everything turns by
-    // rotationRad. This anchor is independent of the slice count, so adding /
-    // removing a movie can't make the wheel snap to re-centre a slice under the
-    // pointer — the absolute rotation is preserved and the arrow simply lands
-    // wherever it lands (off-centre or on a seam is fine).
+    // slice 0's leading edge anchored at the top, count-independent, so add/remove can't
+    // snap a slice under the pointer.
     let startAngle = -Math.PI / 2 + rotationRad;
 
     titles.forEach((title, i) => {
         const sliceAngle = (w[i] / total) * 2 * Math.PI;
         const endAngle = startAngle + sliceAngle;
 
-        // Stable per-movie colour (no jump on remove) with no two adjacent slices
-        // — including the wrap-around seam — sharing a colour.
         ctx.fillStyle = sliceColors[colorIdx[i]];
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, startAngle, endAngle);
         ctx.fill();
 
-        // Skip labels mid-animation (skipLabels) and on slivers — they'd just jiggle.
         if (!skipLabels && sliceAngle > 0.05) {
-            if (labelAlpha < 1) ctx.globalAlpha = labelAlpha;   // fade labels in at settle
+            if (labelAlpha < 1) ctx.globalAlpha = labelAlpha;
             drawSliceLabel(ctx, title, centerX, centerY, radius, startAngle, sliceAngle, vertical);
             if (labelAlpha < 1) ctx.globalAlpha = 1;
         }
@@ -726,10 +588,7 @@ function drawWheel(titles, weights, opts) {
     });
 }
 
-// Draw one slice's label. `vertical` picks the orientation for the whole wheel.
-// In both orientations the text is shrunk (20→11px) and, if still too long,
-// ellipsis-truncated to the space that actually fits inside the slice — bounded
-// by the wedge edges AND the circular rim — so it's never clipped.
+// shrink the text, then ellipsis-truncate to what fits inside the wedge and rim.
 function drawSliceLabel(ctx, title, cx, cy, radius, startAngle, sliceAngle, vertical) {
     const FONT_MAX = 20, FONT_MIN = 11;
     const font = s => `${s}px 'Lao Sangam MN', sans-serif`;
@@ -748,10 +607,8 @@ function drawSliceLabel(ctx, title, cx, cy, radius, startAngle, sliceAngle, vert
     ctx.fillStyle = "#ffffff";
 
     if (!vertical) {
-        // HORIZONTAL — upright, screen-horizontal text centred on the slice's
-        // bisector. The width is bounded by the slice chord and the circle at
-        // this radius, so it never spills past the slice edges or the round rim.
-        const r = radius * 0.6; // far enough out to clear the centre SPIN button
+        // horizontal: upright text on the bisector, width bounded by chord and rim.
+        const r = radius * 0.6; // clears the centre spin button
         const px = cx + r * Math.cos(bisector);
         const py = cy + r * Math.sin(bisector);
         const circleW = 2 * Math.sqrt(Math.max(1, radius * radius - r * r));
@@ -765,9 +622,8 @@ function drawSliceLabel(ctx, title, cx, cy, radius, startAngle, sliceAngle, vert
         return;
     }
 
-    // VERTICAL (radial), reading along the spoke. Length is along the radius; the
-    // font is capped by how thick the wedge is at the text's mid-radius. rInner
-    // starts past the centre SPIN button so labels never run underneath it.
+    // vertical (radial) along the spoke; font capped by wedge thickness at mid-radius.
+    // rInner starts past the centre spin button.
     const rInner = radius * 0.36;
     const rOuter = radius * 0.95;
     const rMid = (rInner + rOuter) / 2;
@@ -779,9 +635,7 @@ function drawSliceLabel(ctx, title, cx, cy, radius, startAngle, sliceAngle, vert
     while (!fits(title, radLen) && size > FONT_MIN) { size--; ctx.font = font(size); }
     const label = ellipsize(title, radLen);
 
-    // Drawn along the spoke (radial). It turns with the wheel, so whichever slice
-    // lands under the top pointer reads exactly vertically. No flipping — that
-    // would snap mid-spin — so far-side labels simply radiate outward.
+    // no flipping (would snap mid-spin), so far-side labels radiate outward.
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(bisector);
@@ -789,15 +643,10 @@ function drawSliceLabel(ctx, title, cx, cy, radius, startAngle, sliceAngle, vert
     ctx.restore();
 }
 
-// Animate a slice growing in (add) or shrinking out (remove): its neighbours
-// resize to open / close the gap, so the new title emerges from between the two
-// slots it sits between. `done` runs once the tween settles.
 let wheelAnim = null;
 let labelFadeRaf = null;
 
-// Fade the slice labels in over the settled wheel (slices already drawn). Avoids the
-// abrupt "pop" of every label appearing at once when a resize finishes — most visible
-// with many (vertical) labels on a crowded wheel.
+// fade labels in over the settled wheel to avoid every label popping at once.
 function fadeInLabels() {
     if (labelFadeRaf) cancelAnimationFrame(labelFadeRaf);
     const dur = 180;
@@ -818,27 +667,27 @@ function animateSlice(index, mode, done) {
 
     const duration = 360;
     const start = performance.now();
-    // easeInOutCubic — eases in and out so the resize glides instead of snapping.
+    // easeInOutCubic
     const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
     const step = (now) => {
         const t = Math.min(1, (now - start) / duration);
         const e = ease(t);
         const grow = mode === 'add' ? e : 1 - e; // add 0→1, remove 1→0
         const weights = movies.map((_, i) => (i === index ? grow : 1));
-        drawWheel(movies, weights, { skipLabels: true }); // no label jiggle mid-roll
+        drawWheel(movies, weights, { skipLabels: true });
         if (t < 1) {
             wheelAnim = requestAnimationFrame(step);
         } else {
             wheelAnim = null;
-            if (done) done();                          // remove: splice + re-list
-            drawWheel(movies, null, { skipLabels: true }); // settle the slices, no labels
-            fadeInLabels();                            // then ease the labels in (no pop)
+            if (done) done();
+            drawWheel(movies, null, { skipLabels: true });
+            fadeInLabels();
         }
     };
     wheelAnim = requestAnimationFrame(step);
 }
 
-// Hover a slice to see its full (possibly truncated) title.
+// hover a slice to see its full title.
 function setupWheelHover() {
     const canvas = document.getElementById('rouletteWheel');
     if (!canvas) return;
@@ -861,8 +710,8 @@ function setupWheelHover() {
 
         const n = movies.length;
         const sliceAngle = (2 * Math.PI) / n;
-        // Slice 0's leading edge sits at the top (matches drawWheel's anchor).
-        const startOffset = -Math.PI / 2;
+        const startOffset = -Math.PI / 2; // matches drawWheel's anchor
+
         const rot = currentRotation * Math.PI / 180;
         let a = Math.atan2(dy, dx) - rot - startOffset;
         a = ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
@@ -877,9 +726,6 @@ function setupWheelHover() {
     canvas.addEventListener('mouseleave', () => tip.classList.remove('show'));
 }
 
-// ==========================================
-// 5. SPIN PHYSICS + WINNER
-// ==========================================
 let currentRotation = 0;
 let isSpinning = false;
 
@@ -894,14 +740,13 @@ function setupSpinPhysics() {
         isSpinning = true;
         spinBtn.classList.add('spinning');
 
-        // Spin at least 10 full turns, then stop at a random angle. We drive the
-        // rotation ourselves (redrawing the canvas each frame) instead of a CSS
-        // transform, so the labels can be kept upright as the slices turn.
+        // 10 full turns then a random angle; we drive rotation per-frame (not CSS) so
+        // labels stay upright as slices turn.
         const startRot = currentRotation;
         const target = currentRotation + 3600 + Math.floor(Math.random() * 360);
         const duration = 5000;
         const t0 = performance.now();
-        const easeOut = p => 1 - Math.pow(1 - p, 4); // long, weighted settle
+        const easeOut = p => 1 - Math.pow(1 - p, 4);
 
         const step = (now) => {
             const p = Math.min(1, (now - t0) / duration);
@@ -921,9 +766,7 @@ function setupSpinPhysics() {
     });
 }
 
-// Which slice sits under the top pointer after the current rotation?
-// Slice 0's leading edge is anchored at the top (see drawWheel), so the pointer
-// falls *inside* a slice — floor() of the angle picks whichever wedge contains it.
+// which slice sits under the top pointer after the current rotation.
 function getWinningIndex() {
     const n = movies.length;
     const sliceDeg = 360 / n;
@@ -938,7 +781,6 @@ function setupWinnerControls() {
     const keep = document.getElementById('winnerKeep');
 
     if (close) close.addEventListener('click', closeWinner);
-    // "Keep in the Wheel" just dismisses the popup — the movie stays on the wheel.
     if (keep) keep.addEventListener('click', closeWinner);
     if (remove) remove.addEventListener('click', () => {
         if (currentWinnerIdx >= 0) removeMovie(currentWinnerIdx);
@@ -966,9 +808,6 @@ function closeWinner() {
     Confetti.stop();
 }
 
-// ==========================================
-// 6. CONFETTI
-// ==========================================
 const Confetti = (() => {
     const colors = ['#e8453c', '#3b6fd4', '#3cae5b', '#f4d03f',
                     '#f1a0c0', '#ffffff', '#f39c12', '#9b59b6', '#86d0e0'];
@@ -1032,7 +871,7 @@ const Confetti = (() => {
         spawning = true;
         spawn(90);
         if (!raf) raf = requestAnimationFrame(frame);
-        setTimeout(() => { spawning = false; }, 3500); // then let them fall out
+        setTimeout(() => { spawning = false; }, 3500);
     }
 
     function stop() {
@@ -1046,5 +885,4 @@ const Confetti = (() => {
     return { start, stop };
 })();
 
-// escapeHtml() is the shared global from js/core/common.js (loaded before this script
-// on wheel.html), so this page reuses it rather than redefining its own copy.
+// escapeHtml() is the shared global from js/core/common.js, loaded before this script.

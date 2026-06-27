@@ -1,29 +1,16 @@
-// profile/collections.js — the collections grid (live API): 2×2 cover collages,
-// the 3-dots context menu (rename / publish / copy-link / delete), New
-// Collection creation, the Add-to-Collection modal wiring, and a reusable
-// confirm modal. The biggest, self-contained block of the profile page.
-// ==========================================
-// 1–3. COLLECTIONS — real data, 2×2 covers, and the 3-dots menu (real actions)
-// ==========================================
-// The profile grid is now backed by the live API (GET /api/collections). Each
-// card's cover is an auto-generated collage of the first ≤4 movie posters
-// (FR-4.6.6): 0 → a gray placeholder, 1 → that poster, 2–3 → the first two side
-// by side, 4+ → a 2×2 grid (a 1×4 row on phones). The 3-dots menu performs real
-// rename / publish-unpublish / copy-link / delete against the backend.
 (function () {
   const row = document.querySelector(".collections-row");
   const menu = document.getElementById("collectionMenu");
   const countEl = document.getElementById("collectionCount");
   if (!row) return;
 
-  const ACCENT_DEFAULT = "#D4AF37"; // gold for the 3 default lists
-  const ACCENT_CUSTOM = "#BC6676"; // rose for user lists
+  const ACCENT_DEFAULT = "#D4AF37";
+  const ACCENT_CUSTOM = "#BC6676";
   const collectionUrl = (id) => `collection.html?id=${encodeURIComponent(id)}`;
 
-  let collections = []; // the live, normalised list (kept in sync with the DOM)
+  let collections = [];
   const byId = (id) => collections.find((c) => c.id === id);
 
-  // ---- skeletons ----
   function skeletonMarkup(n) {
     const card = `
       <article class="collection-card collection-card--skeleton" aria-hidden="true">
@@ -34,18 +21,12 @@
     return card.repeat(n);
   }
 
-  // ---- cover collage ----
-  // Shared with the Add-to-Collection modal via common.js (buildCollectionCover)
-  // so the layout rules (0 → placeholder, 1 → single, 2-3 → two, 4+ → 2×2) live
-  // in exactly one place.
   const buildCover = (c) => window.buildCollectionCover(c);
 
-  // Abbreviate large counts (e.g. 1240 → "1.2k") so 4–5 digit values don't
-  // crowd/overflow the stats row on a narrow card.
+  // abbreviate large counts so they don't overflow the stats row, e.g. 1240 -> "1.2k"
   const fmt = (n) =>
     n >= 1000 ? (n / 1000).toFixed(n >= 10000 ? 0 : 1).replace(/\.0$/, "") + "k" : n;
 
-  // ---- one card ----
   function buildCard(c) {
     const accent = c.isDefault ? ACCENT_DEFAULT : ACCENT_CUSTOM;
     const visibilityIcon = c.isPublic ? "globus" : "lock";
@@ -55,8 +36,6 @@
       return `<span class="stat-icon" aria-hidden="true" style="-webkit-mask-image: url('${url}'); mask-image: url('${url}');"></span>`;
     };
 
-    // Movie count is ALWAYS first (left); likes + saves follow only on public
-    // collections.
     let stats = `<div class="movie-count" aria-label="${fmt(c.movieCount)} movies">${icon("movie-clap")}<span>${fmt(c.movieCount)}</span></div>`;
     if (c.isPublic) {
       stats += `<div class="likes-count" aria-label="${fmt(c.likesCount)} likes">${icon("heart")}<span>${fmt(c.likesCount)}</span></div>
@@ -81,7 +60,7 @@
 
   function setCount(n) {
     if (!countEl) return;
-    // A non-number (e.g. "Collections") is used as a bare label while loading.
+    // non-number is used as a bare label while loading
     countEl.textContent =
       typeof n === "number" ? `${n} ${n === 1 ? "Collection" : "Collections"}` : n;
   }
@@ -111,14 +90,12 @@
     return row.querySelector(`.collection-card[data-id="${CSS.escape(id)}"]`);
   }
 
-  // ---- initial fetch ----
   (async () => {
     row.innerHTML = skeletonMarkup(4);
-    setCount("Collections"); // label placeholder (avoids a lone "…" glyph)
+    setCount("Collections");
     try {
       collections = await MovieAPI.listCollections();
-      // preload a few cover images (poster + backdrop) so the grid doesn't pop in
-      // piecemeal — whichever the layout picks for the current viewport is warm.
+      // warm both poster + backdrop so the grid doesn't pop in piecemeal
       await preloadImages(
         collections
           .flatMap((c) => (c.covers || []).flatMap((x) => [x.poster, x.backdrop]))
@@ -129,14 +106,11 @@
     } catch (err) {
       console.error("Could not load collections:", err);
       collections = [];
-      renderCards(); // shows the friendly empty state rather than dead space
+      renderCards();
       if (window.toast) toast.error(err.message || "Couldn't load your collections.");
     }
   })();
 
-  // ==========================================
-  // Navigation: click a card body → its collection page
-  // ==========================================
   const openCard = (card) => {
     if (!card || !card.dataset.id) return;
     if (card.classList.contains("collection-card--skeleton")) return;
@@ -147,8 +121,7 @@
   row.addEventListener("click", (e) => {
     if (e.target.closest(".collection-menu-button")) return; // menu handled below
     const card = e.target.closest(".collection-card");
-    // ONLY the "+" itself opens the Add-to-Collection modal; clicking anywhere else on
-    // the (empty) cover opens the collection page like a normal card.
+    // only the "+" opens the add-to-collection modal; rest of the cover opens the card
     if (e.target.closest(".cover-empty__plus")) {
       if (card && card.dataset.id) {
         const nameEl = card.querySelector(".collection-name");
@@ -159,7 +132,6 @@
     openCard(card);
   });
 
-  // The card is role="link" + tabindex=0, so Enter/Space must activate it.
   row.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
     const card = e.target.closest(".collection-card");
@@ -168,14 +140,9 @@
     openCard(card);
   });
 
-  // ==========================================
-  // 3-dots menu — rename / publish / copy-link / delete (real backend)
-  // ==========================================
   let activeBtn = null;
 
   const MENU_ITEMS = [
-    // Always first, for every collection (incl. defaults) — opens the
-    // Add-to-Collection modal overlaid on the profile.
     { action: "add", icon: "plus", label: "Add to Collection" },
     { action: "rename", icon: "rename", label: "Rename", defaultHidden: true },
     { toggle: true },
@@ -189,8 +156,6 @@
     },
   ];
 
-  // Open the shared Add-to-Collection modal overlaid on the profile, then refresh
-  // the affected card (count + cover) when a movie is added/removed.
   function openAddFor(id, name) {
     if (!window.AddToCollectionModal) {
       if (window.toast) toast.soon("Add to Collection — Coming Soon!");
@@ -203,7 +168,7 @@
       collections = await MovieAPI.listCollections();
       renderCards();
     } catch (_) {
-      /* keep the current grid on a refresh hiccup */
+      /* keep current grid on refresh failure */
     }
   }
 
@@ -244,7 +209,7 @@
     if (!card) return;
     menu.dataset.id = card.dataset.id;
     renderMenu(card.dataset.default === "true", card.dataset.public === "true");
-    menu.hidden = false; // reveal first so we can measure its width
+    menu.hidden = false; // reveal first so offsetWidth is measurable
 
     const r = button.getBoundingClientRect();
     menu.style.top = `${r.bottom + 6}px`;
@@ -253,7 +218,6 @@
     activeBtn = button;
     button.classList.add("collection-menu-button--active");
     button.setAttribute("aria-expanded", "true");
-    // Move focus into the menu (native disclosure-menu pattern).
     const first = menuItemEls()[0];
     if (first) first.focus();
   }
@@ -301,10 +265,9 @@
       if (menu.hidden) return;
       if (e.key === "Escape") {
         e.preventDefault();
-        closeMenu(true); // restore focus to the trigger
+        closeMenu(true);
         return;
       }
-      // Arrow / Home / End navigation between menu items.
       const items = menuItemEls();
       if (!items.length) return;
       const i = items.indexOf(document.activeElement);
@@ -325,14 +288,13 @@
     window.addEventListener("scroll", () => { if (!menu.hidden) closeMenu(); }, true);
   }
 
-  // ---- menu actions ----
   async function togglePublish(c) {
     const next = !c.isPublic;
     try {
       const updated = await MovieAPI.updateCollection(c.id, { isPublic: next });
       Object.assign(c, updated);
       const card = cardEl(c.id);
-      if (card) card.replaceWith(buildCardEl(c)); // repaint icon + likes/saves stats
+      if (card) card.replaceWith(buildCardEl(c));
       if (window.toast) {
         toast.success(c.isPublic ? "Collection published." : "Collection unpublished.");
       }
@@ -406,7 +368,7 @@
       await MovieAPI.deleteCollection(c.id);
       collections = collections.filter((x) => x.id !== c.id);
       if (collections.length === 0) {
-        renderCards(); // surface the friendly empty state, not a blank grid
+        renderCards();
       } else {
         const card = cardEl(c.id);
         if (card) card.remove();
@@ -418,19 +380,13 @@
     }
   }
 
-  // Build a card as a DOM element (for in-place replacement).
   function buildCardEl(c) {
     const tpl = document.createElement("template");
     tpl.innerHTML = buildCard(c).trim();
     return tpl.content.firstElementChild;
   }
 
-  // ==========================================
-  // New Collection — create then jump to it
-  // ==========================================
-  // Shared by the "New Collection" button and the empty-state CTA. While the
-  // request is in flight the triggering button shows "Creating…" and stays
-  // disabled (it never re-enables — on success we navigate away).
+  // button never re-enables on success since we navigate away
   let creating = false;
   async function createCollection(e) {
     if (creating) return;
@@ -444,7 +400,7 @@
       span.textContent = "Creating…";
     }
     try {
-      const created = await MovieAPI.createCollection(); // server auto-names it
+      const created = await MovieAPI.createCollection();
       window.location.href = collectionUrl(created.id);
     } catch (err) {
       creating = false;
@@ -459,11 +415,10 @@
 
   const newBtn = document.querySelector(".new-collection-btn");
   if (newBtn) {
-    newBtn.removeAttribute("data-toast"); // was a "Coming Soon" stub (still in HTML)
+    newBtn.removeAttribute("data-toast");
     newBtn.addEventListener("click", createCollection);
   }
 
-  // ---- reusable confirm modal (shares the sign-out modal styling) ----
   function confirmModal({ title, text, confirmLabel = "Confirm" }) {
     return new Promise((resolve) => {
       const overlay = document.createElement("div");

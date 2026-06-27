@@ -1,15 +1,7 @@
-/* home/responsive.css — all the home-page media queries (≤1024px tablet/mobile
-   chrome + filter panel, ≤768px grid/card tuning, ≤389px icon-only controls).
-   Split out of the former monolithic css/home.css (section 10, verbatim).
-   Loaded LAST of the home/* stylesheets so these overrides win, exactly as in
-   the original single file. */
+/* home-page media queries. loaded last of the home/* stylesheets so these win. */
 
-/* ==========================================
-   10. RESPONSIVE DESIGN (MEDIA QUERIES)
-   ========================================== */
 @media (max-width: 1024px) {
-  /* Hamburger now lives in the top bar (like every other page), so the search bar
-     takes the entire row on its own and Surprise Me wraps to the line below. */
+  /* search bar takes the whole row, Surprise Me wraps below */
   .header-left-group {
     gap: 10px;
     align-items: center;
@@ -69,11 +61,8 @@
     padding-right: 24px;
   }
 
-  /* The Sort By panel is anchored to the RIGHT edge of its button (which lives at
-     the right end of the controls bar), so it opens leftward and stays on-screen.
-     The desktop 250px floor would push past the left edge on a narrow phone, so we
-     drop the floor and cap the panel to the viewport instead. overflow-x:hidden
-     stops any long option from widening it past that cap. */
+  /* Sort By panel anchors right and opens leftward; drop the desktop 250px floor
+     and cap to the viewport so it stays on-screen on a narrow phone. */
   .sort-custom-menu {
     right: 0;
     left: auto;
@@ -200,8 +189,7 @@
   }
 }
 
-/* Tiny screens: collapse Filters + Surprise to just their icons so the controls
-   row always stays on a single line. */
+/* tiny screens: collapse Filters + Surprise to icons so the row stays one line */
 @media (max-width: 389px) {
   .filter-btn {
     width: 40px;

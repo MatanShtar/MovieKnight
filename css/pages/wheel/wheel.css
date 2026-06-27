@@ -1,8 +1,5 @@
-/* wheel.css — Layout for the active Spin The Wheel page */
+/* wheel.css - the active Spin The Wheel page */
 
-/* ==========================================
-   1. HEADER (Back + logo)
-   ========================================== */
 .wheel-page {
     min-height: 100vh;
     padding-top: 12px;
@@ -36,14 +33,10 @@
 }
 
 .wheel-main-logo {
-    /* Matches the picker page logo size (picker.css) — scaled down from 228px. */
     height: 150px;
     object-fit: contain;
 }
 
-/* ==========================================
-   2. FEATURE TAB BAR
-   ========================================== */
 .feature-tabs {
     display: flex;
     width: 100%;
@@ -56,7 +49,6 @@
     margin-bottom: 10px;
 }
 
-/* Mirrors picker.css .tab-btn exactly so the bar is seamless across pages */
 .feature-tabs p {
     display: flex;
     flex: 1;
@@ -75,17 +67,15 @@
     text-transform: uppercase;
 }
 
-/* ==========================================
-   3. STAGE LAYOUT (wheel | divider | panel)
-   ========================================== */
+/* === STAGE LAYOUT (wheel | divider | panel) === */
 .wheel-stage {
     width: 100%;
     max-width: 1642px;
-    flex: 1;                 /* fill the rest of the viewport height */
+    flex: 1;
     display: flex;
     align-items: stretch;
-    /* Entrance once the page loads: the header bar is already identical to the
-       picker's collapsed bar, so only the stage glides in — seamless hand-off. */
+    /* header bar already matches the picker's collapsed bar, so only the stage
+       glides in for a seamless hand-off. */
     animation: wheel-stage-in 0.55s var(--ease-snap) both;
     position: relative;
 }
@@ -95,8 +85,7 @@
     to   { opacity: 1; transform: translateY(0); }
 }
 
-/* No-access / error state shown in place of the wheel (e.g. a private collection
-   you don't own, or a failed load). */
+/* no-access / error state shown in place of the wheel */
 .wheel-message {
     flex: 1;
     display: flex;
@@ -135,25 +124,22 @@
     flex: 1;
     display: flex;
     justify-content: center;
-    align-items: flex-start;   /* anchor the wheel to the top (near the top bar) */
+    align-items: flex-start;   /* anchor the wheel to the top */
 }
 
-/* ==========================================
-   4. THE WHEEL (canvas, pointer, spin button)
-   ========================================== */
+/* === THE WHEEL (canvas, pointer, spin button) === */
 .wheel-visual-container {
     position: relative;
-    /* 584px at the design size, but scales down on short viewports so the
-       whole page always fits one screen. */
+    /* scales down on short viewports so the page always fits one screen */
     width: min(584px, 60vh);
     height: min(584px, 60vh);
     flex-shrink: 0;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-top: 8px;         /* sit near the top bar (anchored to the top) */
-    /* Clip the transparent corners the square canvas sweeps out while spinning,
-       so the rotation never grows the page's scroll area (no shaking). */
+    margin-top: 8px;
+    /* clip the transparent corners the square canvas sweeps while spinning, so
+       the rotation never grows the page scroll area (no shaking). */
     overflow: hidden;
 }
 
@@ -161,14 +147,11 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    /* Long, weighted ease-out so the spin feels physical and alive */
+    /* long weighted ease-out so the spin feels physical */
     transition: transform 5s cubic-bezier(0.12, 0.74, 0.04, 1);
 }
 
-/* ---- Loading skeleton: while the server wheel hydrates, the canvas shows a
-   label-less, gently-rotating coloured wheel (drawn by wheel.js). Soften it with
-   a calm pulse + a faint blur so it reads as a placeholder, and mute the SPIN
-   button so it's clearly not ready yet. */
+/* loading skeleton: pulse + faint blur while the wheel hydrates */
 .wheel-visual-container.is-loading #rouletteWheel {
     animation: wheel-skeleton-pulse 1.5s ease-in-out infinite;
     filter: saturate(0.7) blur(1px);
@@ -184,7 +167,7 @@
     50%      { opacity: 0.9; }
 }
 
-/* Shimmer rows that stand in for the movie list while it loads. */
+/* shimmer rows standing in for the movie list while it loads */
 .wheel-skeleton-row {
     height: 38px;
     margin: 10px 6px;
@@ -208,7 +191,6 @@
     .wheel-skeleton-row { animation: none; }
 }
 
-/* Downward pointer at the top: 20W x 23H, #212121 @ 90% */
 .wheel-pointer {
     position: absolute;
     top: 0;
@@ -223,7 +205,6 @@
     filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.4));
 }
 
-/* SPIN button: 187W x 93H, #591E26, 3px-spread black shadow @ 25% */
 .spin-btn {
     position: absolute;
     width: 187px;
@@ -254,7 +235,7 @@
     transform: scale(0.92);
 }
 
-/* Lively breathing pulse while the wheel is spinning */
+/* breathing pulse while spinning */
 .spin-btn.spinning {
     animation: spin-pulse 0.9s var(--ease-snap) infinite alternate;
     cursor: default;
@@ -271,9 +252,7 @@
     }
 }
 
-/* ==========================================
-   5. THE MOVIE PANEL (list box + side buttons)
-   ========================================== */
+/* === THE MOVIE PANEL (list box + side buttons) === */
 .wheel-panel {
     flex: 1;
     display: flex;
@@ -281,17 +260,13 @@
     justify-content: center;
     gap: 56px;
     padding-top: 30px;
-    /* Size to its content (the list column) and stay anchored to the top of the
-       stage, instead of stretching to the full viewport height. That way the
-       save/load buttons bottom-align to the LIST BOX rather than dropping to the
-       bottom of the screen when the page is zoomed out. */
+    /* size to the list column and anchor to the top, so the save/load buttons
+       bottom-align to the LIST BOX, not the bottom of a zoomed-out screen. */
     align-self: flex-start;
 }
 
-/* The dark translucent box: 390W wide, radius 40, #212121 @ 30%. Height scales
-   with the viewport and the list scrolls inside; we subtract the search bar above
-   it (≈64px incl. gap) so the search + box column still fits one screen — fewer
-   names show before it becomes scrollable rather than pushing the page taller. */
+/* height scales with the viewport and the list scrolls inside; subtract the
+   search bar above (~64px) so the column still fits one screen. */
 .movie-list-box {
     width: 390px;
     height: min(556px, calc(64vh - 64px));
@@ -301,7 +276,7 @@
     padding: 15px 22.5px;    /* leaves a 345px-wide content column */
     overflow-y: auto;
     overflow-x: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);   /* slick drop shadow (matches the provider box) */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
 .movie-list {
@@ -309,8 +284,7 @@
     flex-direction: column;
 }
 
-/* Column wrapper so the search bar sits ABOVE the scrolling list box while the
-   wheel-panel itself stays a row (list column | save controls). */
+/* search bar sits above the scrolling list box; wheel-panel stays a row */
 .wheel-list-col {
     display: flex;
     flex-direction: column;
@@ -319,8 +293,6 @@
     flex-shrink: 0;
 }
 
-/* Running total of how many movies are on the wheel — a quiet caption that sits
-   between the search bar and the list box. */
 .wheel-count {
     align-self: flex-start;
     padding-left: 6px;
@@ -330,7 +302,6 @@
     letter-spacing: 0.3px;
 }
 
-/* Client-side filter for the loaded movies — pill input with a leading icon. */
 .wheel-search {
     position: relative;
     width: 100%;
@@ -345,7 +316,7 @@
     height: 18px;
     opacity: 0.5;
     pointer-events: none;
-    filter: brightness(0) invert(1);   /* white to match the dark panel */
+    filter: brightness(0) invert(1);
 }
 
 .wheel-search-input {
@@ -359,7 +330,7 @@
     font-size: 18px;
     padding: 0 20px 0 46px;            /* leave room for the icon */
     outline: none;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);    /* slick drop shadow (matches the provider box) */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     transition: background-color var(--t-base) ease, box-shadow var(--t-base) ease;
 }
 
@@ -370,7 +341,6 @@
     box-shadow: 0 0 0 2px rgba(var(--pink), 0.3), 0 10px 30px rgba(0, 0, 0, 0.3);
 }
 
-/* Shown inside the list when a filter matches nothing. */
 .wheel-list-empty {
     padding: 26px 8px;
     text-align: center;
@@ -378,15 +348,13 @@
     font-size: 18px;
 }
 
-/* Each row is 59px tall, so its separator sits 59px from the next */
 .wheel-list-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     height: 59px;
     border-bottom: 1px solid rgb(var(--wheel-sep));
-    /* Drives the removal animation: slide out to the left while the row's
-       height collapses, so the rows below glide up to fill the gap. */
+    /* removal: slide left while the height collapses so rows below glide up */
     transition:
         transform 0.3s var(--ease-snap),
         opacity 0.3s ease,
@@ -395,7 +363,6 @@
         border-width 0.3s ease;
 }
 
-/* A freshly added title slides in from the left and pops into view */
 @keyframes wheel-row-slide-in {
     0%   { transform: translateX(-100%); opacity: 0; }
     60%  { opacity: 1; }
@@ -406,7 +373,6 @@
     animation: wheel-row-slide-in 0.38s var(--ease-pop) both;
 }
 
-/* A removed title slides back out to the left and collapses away */
 .wheel-list-item.is-leaving {
     transform: translateX(-100%);
     opacity: 0;
@@ -418,16 +384,15 @@
 }
 
 .wheel-list-item .movie-title {
-    color: var(--text);      /* pure white */
+    color: var(--text);
     font-size: 20px;
-    /* Long titles get an ellipsis here; hover shows the full name (title attr) */
+    /* ellipsis here; hover shows the full name via title attr */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 270px;
 }
 
-/* Inline rename field shown when a row's pencil icon is clicked */
 .wheel-rename-input {
     flex: 1;
     min-width: 0;
@@ -470,7 +435,6 @@
     transform: scale(1.2) rotate(-4deg);
 }
 
-/* Empty "add a movie" rows */
 .wheel-add-row {
     display: flex;
     align-items: center;
@@ -478,13 +442,12 @@
     height: 59px;
 }
 
-/* Wraps the input + its search dropdown so the dropdown can anchor to it */
+/* wraps the input + its search dropdown so the dropdown can anchor to it */
 .wheel-add-field {
     position: relative;
     width: 279px;
 }
 
-/* The empty pill: 279W x 43H, #898989 @ 15%, radius 100 */
 .wheel-add-input {
     width: 100%;
     height: 43px;
@@ -522,15 +485,12 @@
     transform: scale(1.18) rotate(90deg);
 }
 
-/* ==========================================
-   6. SIDE BUTTONS (Load / Save)
-   ========================================== */
+/* === SIDE BUTTONS (Load / Save) === */
 .wheel-save-controls {
     display: flex;
     flex-direction: column;
     gap: 18px;
-    /* Bottom-align to the list box (the panel is now sized to that column, not the
-       whole stage), so the buttons sit just inside the box's bottom edge. */
+    /* bottom-align to the list box so the buttons sit inside its bottom edge */
     align-self: flex-end;
     margin-bottom: 0;
 }
@@ -568,8 +528,7 @@
     transform: translateY(0) scale(0.96);
 }
 
-/* Disabled "Save Current Wheel" — shown when the wheel already matches what's
-   saved, so there's nothing to save. Greyed out and inert to hover/active. */
+/* disabled when the wheel already matches the saved one */
 .save-btn:disabled,
 .save-btn--disabled {
     cursor: not-allowed;
@@ -586,7 +545,7 @@
     box-shadow: none;
 }
 
-/* Floating tooltip showing a slice's full title on hover */
+/* a slice's full title on hover */
 .wheel-tooltip {
     position: fixed;
     z-index: 1400;
@@ -607,16 +566,14 @@
     transform: translateY(0);
 }
 
-/* ==========================================
-   8. WINNER POPUP + CONFETTI
-   ========================================== */
+/* === WINNER POPUP + CONFETTI === */
 .confetti-canvas {
     position: fixed;
     inset: 0;
     width: 100vw;
     height: 100vh;
     pointer-events: none;
-    z-index: 3000;            /* rains over everything, including the popup */
+    z-index: 3000;            /* over everything, including the popup */
 }
 
 .winner-overlay {
@@ -626,7 +583,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.8);   /* dim everything except the popup box */
+    background: rgba(0, 0, 0, 0.8);
     opacity: 0;
     visibility: hidden;
     transition:
@@ -639,7 +596,6 @@
     visibility: visible;
 }
 
-/* The popup: 468W x 364H, radius 50, #D7D7D7 @ 20% */
 .winner-box {
     pointer-events: auto;
     position: relative;
@@ -663,7 +619,6 @@
     transform: scale(1);
 }
 
-/* Header band sits on top: #596D73 fill, white text */
 .winner-header {
     width: 100%;
     text-align: center;
@@ -684,7 +639,6 @@
     color: var(--text);
 }
 
-/* Two side-by-side choices after a win: Keep (positive) | Remove (destructive). */
 .winner-actions {
     display: flex;
     gap: 14px;
@@ -696,7 +650,7 @@
 
 .winner-action {
     flex: 1 1 0;
-    min-width: 0;            /* let the long labels shrink/wrap instead of overflowing */
+    min-width: 0;            /* let long labels shrink/wrap instead of overflowing */
     height: 80px;
     padding: 0 12px;
     border: none;
@@ -711,11 +665,9 @@
         filter var(--t-base) ease;
 }
 
-/* Match the Chopping Block winner screen exactly: destructive red on the LEFT,
-   the calmer "green" (#596d73 — the same hex the Chopping Block winner uses for
-   its secondary button) on the RIGHT. */
-.winner-remove { background-color: rgb(var(--maroon-light)); } /* red — drop it (left) */
-.winner-keep   { background-color: #596d73; }                  /* green — keep it (right) */
+/* matches the Chopping Block winner: destructive red left, calm green right */
+.winner-remove { background-color: rgb(var(--maroon-light)); } /* drop it (left) */
+.winner-keep   { background-color: #596d73; }                  /* keep it (right) */
 
 .winner-action:hover {
     filter: brightness(1.12);
@@ -753,12 +705,7 @@
     transform: scale(1.12) rotate(90deg);
 }
 
-/* ==========================================
-   9. RESPONSIVE (mobile / tablet)
-   The stage stacks vertically: wheel on top, then the list + Save/Load below,
-   so everything fits a narrow screen. The hamburger nav (common.css) provides
-   navigation here just like on the home screen.
-   ========================================== */
+/* === RESPONSIVE (mobile / tablet): stack the stage vertically === */
 @media (max-width: 1024px) {
     .wheel-page {
         padding-top: 0;
@@ -835,15 +782,12 @@
         font-size: 30px;
     }
 
-    /* Smaller "Back" label on phones, padded to keep an easy tap target. */
     .back-btn {
         font-size: 14px;
         padding: 8px 12px;
         margin: -8px 0 0 -12px;
     }
 
-    /* Scale the winner popup down so the whole thing fits a phone screen without
-       scrolling or clipping — smaller box, header, title and action buttons. */
     .winner-box {
         width: min(380px, 90vw);
         height: auto;

@@ -1,24 +1,18 @@
-/* collection/grid.css — Collection Page movie grid (cards, badges, remove,
-   skeletons, empty state). The poster mosaic and everything inside a card.
-   Load after sort.css. */
+/* collection/grid.css - Collection Page movie grid (cards, badges, remove,
+   skeletons, empty state). Load after sort.css. */
 
-/* ==========================================
-   3. MOVIE GRID
-   ========================================== */
 .collection-grid {
   display: grid;
-  /* Figma: 7 columns of ~200px posters with a near-flush 4px column gap and
-     ~11px row gap (a dense poster mosaic), not an airy grid. */
+  /* dense poster mosaic, near-flush column gap */
   grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 13vw, 200px), 1fr));
   gap: 11px 4px;
   width: 100%;
   max-width: var(--content-width);
-  /* room so the last row clears the sticky toolbar */
-  padding-bottom: 150px;
+  padding-bottom: 150px;   /* clear the sticky toolbar */
   align-content: start;
   flex: 1;
 }
-/* when the grid holds only the empty-state block, centre it vertically */
+/* centre the empty-state block vertically when it's all the grid holds */
 .collection-grid:has(.collection-empty) {
   align-content: center;
 }
@@ -28,7 +22,7 @@
   aspect-ratio: 200 / 289;
   border-radius: 6px;
   overflow: hidden;
-  border: 2px solid rgb(var(--rose)); /* #bc6676 */
+  border: 2px solid rgb(var(--rose));
   background: rgba(0, 0, 0, 0.4);
   cursor: pointer;
   transition:
@@ -69,7 +63,7 @@
   opacity: 1;
 }
 
-/* rating badge — top-left dark pill (Figma: #5b5b5b @55%, gold star) */
+/* rating badge */
 .card-rating {
   position: absolute;
   top: 4px;
@@ -89,15 +83,13 @@
   width: 11px;
   height: 11px;
 }
-/* Desktop owner/visitor frames show no rating badge; the mobile frame does.
-   So hide it at desktop widths, keep it on phones/tablets. */
+/* badge shows on mobile only */
 @media (min-width: 1024px) {
   .card-rating {
     display: none;
   }
 }
 
-/* always-visible title bar at the bottom of the poster */
 .card-title {
   position: absolute;
   left: 0;
@@ -117,7 +109,7 @@
   overflow: hidden;
 }
 
-/* owner-only remove (trash) — top-right, appears on hover */
+/* owner-only remove (trash), appears on hover */
 .card-remove {
   position: absolute;
   top: 7px;
@@ -159,7 +151,7 @@
 .card-remove:hover {
   background: rgba(var(--danger), 0.85);
 }
-/* Touch devices have no hover — keep the remove control visible and >=44px. */
+/* no hover on touch, so keep the remove control visible and >=44px */
 @media (hover: none) {
   .card-remove {
     opacity: 1;
@@ -180,7 +172,6 @@
   }
 }
 
-/* skeleton + empty state */
 .collection-card--skeleton {
   cursor: default;
   pointer-events: none;
@@ -207,7 +198,6 @@
   align-items: center;
   justify-content: center;
   gap: 16px;
-  /* sit in the optical centre of the free space, not hugging the top */
   min-height: 48vh;
   margin: auto 0;
   padding: 64px 24px;
@@ -225,7 +215,6 @@
   line-height: 1.5;
   color: rgba(255, 255, 255, 0.78);
 }
-/* keep the primary action breathing room inside the empty state */
 .collection-empty .action-pill {
   margin-top: 8px;
 }

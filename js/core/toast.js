@@ -1,6 +1,3 @@
-// ==========================================
-// 1. TOAST CONFIGURATION & SETUP
-// ==========================================
 window.toast = (function () {
   const TYPES = {
     success: {
@@ -19,25 +16,17 @@ window.toast = (function () {
       icon: "⚠",
       background: "linear-gradient(135deg, #c0392b, #e7503f)",
     },
-    // "removed / undone" — an orange→red so a removal reads differently from a
-    // green "added" success.
     warn: {
       icon: "✓",
       background: "linear-gradient(135deg, #e8743b, #e7503f)",
     },
   };
 
-  // phones get top-center toasts; wider screens get bottom-right
   const isPhone = () => window.matchMedia("(max-width: 1024px)").matches;
 
-  // Currently-visible toasts, keyed by type+message. Lets us de-dupe: an identical
-  // toast that's still on screen is REPLACED rather than stacked, so a burst of the
-  // same error (e.g. repeated "AI is busy" rate-limit hits) shows just one toast.
+  // keyed by type+message so a repeat replaces the one on screen instead of stacking
   const activeToasts = new Map();
 
-  // ==========================================
-  // 2. TOAST DISPLAY LOGIC
-  // ==========================================
   function show(message, type = "info", options = {}) {
     if (typeof Toastify !== "function") {
       console.warn("[toast] Toastify not loaded - message was:", message);
@@ -45,8 +34,6 @@ window.toast = (function () {
     }
     const typeStyle = TYPES[type] || TYPES.info;
 
-    // If the same message+type is already showing, dismiss it first so we end up
-    // with a single, fresh toast (its auto-dismiss timer resets) instead of a stack.
     const key = `${type}:${message}`;
     const existing = activeToasts.get(key);
     if (existing) {
@@ -57,13 +44,12 @@ window.toast = (function () {
     const instance = Toastify({
       text: `${typeStyle.icon}  ${message}`,
       duration: options.duration ?? 3000,
-      gravity: options.gravity ?? (isPhone() ? "top" : "bottom"), // phone: top, desktop: bottom
-      position: options.position ?? (isPhone() ? "center" : "right"), // phone: center, desktop: right
+      gravity: options.gravity ?? (isPhone() ? "top" : "bottom"),
+      position: options.position ?? (isPhone() ? "center" : "right"),
       close: options.close ?? true,
-      stopOnFocus: true, // pause the auto-dismiss while hovered
+      stopOnFocus: true,
       className: "mk-toast",
-      // Drop it from the registry once it disappears (only if it's still the one
-      // we tracked — a later replace may have already taken this key).
+      // only clear if still the tracked instance, a replace may own this key now
       callback: () => {
         if (activeToasts.get(key) === instance) activeToasts.delete(key);
       },
@@ -81,9 +67,6 @@ window.toast = (function () {
     instance.showToast();
   }
 
-  // ==========================================
-  // 3. DECLARATIVE HTML HOOKS
-  // ==========================================
   document.addEventListener("click", (e) => {
     const el = e.target.closest("[data-toast]");
     if (!el) return;
@@ -99,8 +82,8 @@ window.toast = (function () {
   return {
     success: (m, o) => show(m, "success", o),
     info: (m, o) => show(m, "info", o),
-    soon: (m = "Coming Soon!", o) => show(m, "soon", o), // toast.soon() defaults to "Coming Soon!"
+    soon: (m = "Coming Soon!", o) => show(m, "soon", o),
     error: (m, o) => show(m, "error", o),
-    warn: (m, o) => show(m, "warn", o), // removals / undone actions (orange→red)
+    warn: (m, o) => show(m, "warn", o),
   };
 })();

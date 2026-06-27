@@ -1,21 +1,14 @@
-/* profile/responsive.css - the profile page's media queries (header stacking,
-   tablet/phone tweaks, phone-banner collection covers). MUST load LAST in the
-   profile cascade so these overrides win. Loaded by profile.html. */
+/* profile/responsive.css - MUST load last in the profile cascade so it wins. */
 
-/* ==========================================
-   8. RESPONSIVE DESIGN (MEDIA QUERIES)
-   ========================================== */
-/* Below 1440 the header stacks — and when it stacks EVERYTHING centers (avatar,
-   name, bio, badges, collections meta) so it never reads half-right/half-centre.
-   `display: contents` flattens the info wrappers so the children can be reordered
-   into one centred column: avatar -> name -> bio -> badges -> collections meta. */
+/* below 1440 the header stacks into one centred column; display:contents
+   flattens the info wrappers so children reorder via `order` */
 @media (max-width: 1440px) {
   .profile-header {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    /* explicit margins per block below — `gap` mis-spaces here because `order` +
-       display:contents make the visually-adjacent badges/meta non-DOM-adjacent */
+    /* per-block margins below; gap mis-spaces because order + display:contents
+       make the visually-adjacent badges/meta non-DOM-adjacent */
     gap: 0;
   }
 
@@ -26,8 +19,7 @@
     display: contents;
   }
 
-  /* These carry desktop flex-grow (1/2/3/5). In the stacked column that growth
-     made them expand vertically and collide — reset to content height. */
+  /* reset desktop flex-grow so stacked blocks don't expand vertically and collide */
   .profile-avatar-container,
   .profile-username,
   .bio-edit,
@@ -69,8 +61,8 @@
     order: 4;
     align-items: center;
     min-height: 0;
-    gap: 18px; /* keep the count clear of the New Collection button */
-    margin-top: 44px; /* clear of the badges block above */
+    gap: 18px;
+    margin-top: 44px;
   }
   .profile-meta > p {
     text-align: center;
@@ -78,7 +70,7 @@
   }
 
   .view-badges-container {
-    margin-top: 0; /* stacked: rely on the badges-block gap, not the bottom-push */
+    margin-top: 0;
   }
 }
 
@@ -113,7 +105,6 @@
     font-size: 28px;
   }
 
-  /* bigger breathing room between the header, the shields and View All Badges */
   .profile-badges {
     gap: 30px;
   }
@@ -150,18 +141,11 @@
   }
 }
 
-/* Phone (≤600): condense the profile HEADER so it stops reading as one tall
-   single-file column. The avatar sits in a ROW beside the name + bio (compact
-   "identity block", Instagram-style — saves vertical space when the avatar is
-   small and the bio is short), the badges shrink into a slim band, and the meta
-   row leads straight into the collections grid. The collections layout itself is
-   intentionally left untouched (see the block below). */
+/* condense the header into a compact identity block: avatar beside name+bio on
+   row 1, badges + meta full-width below. wrappers stay display:contents (from the
+   <=1440 rule) so children place by grid area; the right-hand text column is
+   restored to a real box so name + bio stack inside it. */
 @media (max-width: 1440px) {
-  /* 2-column grid: [avatar | name+bio] on row 1, then badges + meta full-width.
-     The .profile-info / left-col wrappers stay display:contents (from the ≤1440
-     rule) so their children lift up as direct grid items we can place by area —
-     except the right-hand text column, which we restore to a real box so the
-     name + bio stack inside it. */
   .profile-header {
     display: grid;
     grid-template-columns: auto 1fr;
@@ -169,7 +153,7 @@
       "avatar identity"
       "badges badges"
       "meta meta";
-    align-items: start; /* username sits at the TOP of the avatar circle */
+    align-items: start;
     column-gap: 16px;
     row-gap: 22px;
     text-align: left;
@@ -182,7 +166,6 @@
   .profile-avatar {
     width: 92px;
   }
-  /* thinner ring + a tucked-in corner camera badge read better this small */
   .avatar-pic {
     border-width: 4px;
   }
@@ -192,7 +175,6 @@
     right: -2px;
   }
 
-  /* name + bio: restore the column as a real box, left-aligned beside the avatar */
   .profile-info-right-col {
     grid-area: identity;
     display: flex;
@@ -204,7 +186,7 @@
     min-width: 0;
   }
   .profile-username {
-    order: 0; /* neutralise the stacked-column order from the ≤1440 rule */
+    order: 0;
     margin-top: 0;
     min-height: 0;
     text-align: left;
@@ -220,10 +202,8 @@
     margin-top: 0;
     text-align: left;
     font-size: 15px;
-    /* keep the base 10-row cap on phone too (no shorter clamp here) */
-    padding-right: 32px; /* keep bio text clear of the edit button top-right */
+    padding-right: 32px; /* clear of the edit button top-right */
   }
-  /* small edit button (was a chunky 44px on touch), aligned to the bio box top */
   .bio-edit-btn {
     width: 28px;
     height: 28px;
@@ -236,9 +216,7 @@
     height: 14px;
   }
 
-  /* Badges: a left-aligned band. Its own grid so "View All Badges" rides in the
-     SAME row as the "Progression Badges" heading; the shields sit on row 2.
-     col1 = heading (shrinks/wraps if squeezed), col2 = the button. */
+  /* badges band: own grid so View All rides the heading's row, shields on row 2 */
   .profile-badges {
     grid-area: badges;
     display: grid;
@@ -255,44 +233,41 @@
     justify-content: flex-start;
     text-align: left;
     white-space: normal;
-    font-size: 22px; /* match the username (req: same size as username) */
+    font-size: 22px; /* match the username */
   }
   .view-badges-container {
     grid-column: 2;
     grid-row: 1;
-    justify-content: flex-end; /* View All Badges hugs the right edge */
+    justify-content: flex-end;
     width: auto;
     margin-top: 0;
   }
-  /* shields spread across the whole row with equal space around each one */
   .badges-display {
     grid-column: 1 / -1;
     grid-row: 2;
     justify-content: space-evenly;
     gap: 0;
   }
-  /* the 0×0 gradient-defs svg is also a grid child — park it on a 0-height row */
+  /* the 0x0 gradient-defs svg is also a grid child; park it on a 0-height row */
   .badge-gradient-defs {
     grid-column: 1;
     grid-row: 3;
   }
   .badge-shield {
-    flex: 0 0 92px; /* fixed size so space-evenly can space them out */
+    flex: 0 0 92px; /* fixed size so space-evenly can spread them */
     width: 92px;
     max-width: 92px;
   }
   .badge-shield svg {
     max-width: 92px;
   }
-  /* shrink the label so it no longer spills past the shield edges */
   .badge-title {
     font-size: 8px;
     line-height: 1.2;
     letter-spacing: 0.2px;
-    width: 76%; /* narrow enough that two-word titles wrap inside the shield */
+    width: 76%;
   }
 
-  /* Meta row: collection count (left) + New Collection (right) on ONE line. */
   .profile-meta {
     grid-area: meta;
     display: flex;
@@ -308,8 +283,7 @@
     font-size: 18px;
   }
 
-  /* View All Badges + New Collection: an identical button pair — same font, same
-     padding and the SAME fixed width (border-box so the icon button matches). */
+  /* identical button pair: same font/padding/width (border-box) */
   .view-badges-btn,
   .new-collection-btn {
     box-sizing: border-box;
@@ -321,20 +295,18 @@
   }
   .new-collection-btn {
     gap: 6px;
-    justify-content: center; /* centre icon+label like the text-only button */
+    justify-content: center;
   }
   .new-collection-btn img {
     width: 14px;
     height: 14px;
   }
   .new-collection-btn span {
-    flex: 0 0 auto; /* don't stretch the label — keep it centred in the button */
+    flex: 0 0 auto;
   }
 }
 
-/* Phone: ONE full-width card per row, but with a HORIZONTAL cover (the first ≤4
-   posters in a wide banner) so a single card never absorbs the whole screen.
-   Every width ABOVE this keeps ≥2 columns via the min() track on .collections-row. */
+/* phone: one full-width card per row with a horizontal banner cover */
 @media (max-width: 600px) {
   .collections-row {
     grid-template-columns: 1fr;
@@ -346,9 +318,7 @@
     margin-bottom: 0;
   }
 
-  /* Phone: the cover becomes a wide banner (not a screen-tall 2:3 portrait). The
-     layout CLASS itself is swapped by buildCollectionCover (1 backdrop / 2 backdrops
-     / 3-4 posters in columns), so here we only reshape the box. */
+  /* buildCollectionCover swaps the layout class; here we only reshape the box */
   .collection-cover {
     aspect-ratio: 5 / 2;
   }

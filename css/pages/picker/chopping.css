@@ -1,34 +1,28 @@
-/* chopping.css — The Chopping Block: the setup panel (inside picker.html) and
-   the standalone game screen (chopping.html). Exact sizes/colours come from the
-   Figma frames. Reuses tokens.css + the shared shell. The game screen also loads
-   Bootstrap (carousel shell), which this file enhances into a 3D coverflow. */
+/* chopping.css - The Chopping Block: setup panel (in picker.html) + standalone
+   game screen (chopping.html). Game screen enhances Bootstrap's carousel into a
+   3D coverflow. */
 
-/* ==========================================================================
-   PART A — SETUP PANEL  (rendered inside picker.html's .picker-panel)
-   ========================================================================== */
+/* === PART A - SETUP PANEL (inside picker.html's .picker-panel) === */
 
-/* The setup form is wider than the picker's default 1200px column. */
 .picker-panel[data-panel="chopping"].active {
     width: 100%;
     max-width: 1540px;
-    flex: 1;   /* fill the state container so .cb-setup can push its count to the bottom */
+    flex: 1;
 }
 
 .cb-setup {
     width: 100%;
-    flex: 1;                 /* fill the panel so the count can bottom-anchor */
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 16px;
-    /* Reserve the height of the fixed action bar (error + START) so the bottom-
-       anchored movie count sits just ABOVE it instead of under it. */
+    /* reserve the fixed action bar's height so the bottom-anchored count sits above it */
     padding-bottom: 48px;
 }
 
-/* Two columns: [Add Player + tags]   [eliminations / totals / random order].
-   Fixed height so a long player list overflows downward (on the left, clear of
-   everything else) instead of shoving the centred "Random Movies" block down. */
+/* fixed height so a long player list overflows downward (left, clear of the
+   centred "Random Movies" block) instead of shoving it down. */
 .cb-config {
     width: 100%;
     height: 260px;
@@ -36,7 +30,7 @@
     justify-content: center;
     align-items: flex-start;
     gap: 120px;
-    margin-top: 24px;    /* tightened so the default form fits without scrolling */
+    margin-top: 24px;
 }
 
 .cb-col-left,
@@ -45,7 +39,6 @@
     flex-direction: column;
 }
 
-/* shared label look: Lao Sangam MN 24px, white @ 70% */
 .cb-label {
     font-family: "Lao Sangam MN", sans-serif;
     font-size: 24px;
@@ -54,7 +47,6 @@
     white-space: nowrap;
 }
 
-/* --- Add Player row: label + input pill + circular "+" --- */
 .cb-add-row {
     display: flex;
     align-items: center;
@@ -95,19 +87,18 @@
 }
 
 .cb-add-btn img { width: 35px; height: 35px; }
-/* A slight grow + brighten on hover (no spin), matching the app's other buttons. */
 .cb-add-btn:hover { opacity: 1; transform: scale(1.1); filter: brightness(1.15); }
 .cb-add-btn:active { transform: scale(0.96); }
 
-/* --- Player tags: fill the first column, then wrap into a second column --- */
+/* player tags fill the first column, then wrap into a second */
 .cb-players {
     display: flex;
     flex-direction: column;
     flex-wrap: wrap;
     align-content: flex-start;
     align-items: flex-start;
-    max-height: 272px;          /* 4 tags (56) + 3 gaps (16) → 4 per column */
-    gap: 16px 28px;             /* row-gap / column-gap */
+    max-height: 272px;          /* 4 tags (56) + 3 gaps (16) -> 4 per column */
+    gap: 16px 28px;
     padding-left: 156px;        /* line the tags up under the input, past the label */
 }
 
@@ -164,31 +155,25 @@
 .cb-tag.is-entering { animation: cb-tag-in 0.32s var(--ease-pop) both; }
 .cb-tag.is-leaving { opacity: 0; transform: scale(0.85); }
 
-/* "+N …" overflow chip — a button that opens a dropdown of the hidden players */
 .cb-tag-more {
     cursor: default;
     color: var(--text);
     background: rgba(var(--maroon-light), 0.55);
     font-size: 18px;
-    white-space: nowrap;   /* keep "+N more …" on one line so it never wraps inside the pill */
+    white-space: nowrap;
 }
 
-/* The "+N" chip is now a button that opens a dropdown of the overflow players —
-   same dark scrollable box as the picker's provider list, with an inline ✕ per row
-   for quick removal of players past the visible slots. The label + caret are laid
-   out as in-flow flex siblings with a gap (NOT an absolute caret), so the caret can
-   never overlap the "…" no matter how narrow the chip is squeezed. */
+/* "+N more" chip: opens a dropdown of the overflow players. label + caret are
+   in-flow flex siblings (not an absolute caret) so the caret can't overlap the
+   "..." however narrow the chip gets. */
 .cb-tag-more {
     cursor: pointer;
     gap: 8px;
-    /* It only ever holds a short "+N more …" label — let it size to that content and
-       ignore the player-tag width floor/cap so the text isn't forced to overflow. */
     width: auto;
     min-width: 0;
     max-width: none;
 }
 
-/* A little ▾ after the label so the chip reads as openable; flips to ▴ open. */
 .cb-more-caret {
     flex: 0 0 auto;
     width: 13px;
@@ -249,7 +234,7 @@
     text-overflow: ellipsis;
 }
 
-/* Inline ✕ in the dropdown — overrides the floating-corner placement of .cb-tag-remove. */
+/* inline x in the dropdown, overrides the floating-corner .cb-tag-remove */
 .cb-overflow-x {
     position: static;
     flex: 0 0 auto;
@@ -258,8 +243,6 @@
     background: rgba(0, 0, 0, 0.55);
 }
 
-/* --- Right column: three stat rows. Pitch tightened to keep the setup on one
-   screen while still leaving room for the slider's numbers below row 1. --- */
 .cb-col-right { gap: 64px; }
 
 .cb-stat-row {
@@ -274,7 +257,7 @@
     text-align: right;
 }
 
-/* dark value pill (Total players / Random movies): 84×43, black @ 60% — read-only */
+/* read-only value pill (Total players / Random movies) */
 .cb-pill {
     min-width: 84px;
     height: 43px;
@@ -286,16 +269,14 @@
     border-radius: 100px;
     font-size: 24px;
     color: var(--text-soft);
-    cursor: default;            /* read-only — no I-beam/pointer */
-    /* Inner shadow so the count pill reads as a recessed, "caved in" well —
-       used by both the Wheel and Chopping Block hub counters. */
-    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.65);
+    cursor: default;
+    box-shadow: inset 0 3px 7px rgba(0, 0, 0, 0.65);   /* recessed "caved in" well */
     transition: transform var(--t-base) var(--ease-pop);
 }
 
 .cb-pill.bump { transform: scale(1.16); }
 
-/* --- The 1 / 2 / 3 eliminations slider: grey track + smoothly-growing red fill --- */
+/* 1/2/3 eliminations slider: grey track + growing red fill */
 .cb-slider {
     position: relative;
     width: 328px;
@@ -315,8 +296,8 @@
     z-index: 0;
 }
 
-/* The red liquid lives in its own goo-filtered layer so the two blobs merge into
-   each other (and only the red is gooed — the grey track/dots stay crisp). */
+/* red blobs live in their own goo-filtered layer so they merge into each other
+   (only the red is gooed; the grey track/dots stay crisp) */
 .cb-slider-liquid {
     position: absolute;
     inset: 0;
@@ -325,12 +306,12 @@
     filter: url(#cb-goo);
 }
 
-/* the chain of red blobs (sizes + per-blob lag are set inline by the JS) */
+/* sizes + per-blob lag are set inline by the JS */
 .cb-slider-blob {
     position: absolute;
     border-radius: 50%;
     background: rgb(var(--maroon-light));
-    transition: left 0.45s cubic-bezier(0.45, 0, 0.55, 1);   /* even ease → steady spacing */
+    transition: left 0.45s cubic-bezier(0.45, 0, 0.55, 1);
 }
 
 .cb-slider-dot {
@@ -368,7 +349,6 @@
 
 .cb-slider-dot.active .cb-slider-num { color: var(--text); }
 
-/* --- Random Order toggle: grey when off, maroon when on --- */
 .cb-toggle {
     position: relative;
     width: 71px;
@@ -383,11 +363,11 @@
     position: absolute;
     inset: 0;
     border-radius: 100px;
-    background: rgba(255, 255, 255, 0.22);       /* inactive */
+    background: rgba(255, 255, 255, 0.22);
     transition: background-color var(--t-base) ease;
 }
 
-.cb-toggle input:checked ~ .cb-toggle-track { background: #591e26; }  /* active */
+.cb-toggle input:checked ~ .cb-toggle-track { background: #591e26; }
 
 .cb-toggle-handle {
     position: absolute;
@@ -402,24 +382,20 @@
 
 .cb-toggle input:checked ~ .cb-toggle-handle { left: calc(100% - 28px); }
 
-/* --- Random Movies Selected — sits in the normal page flow at the bottom of the
-   setup content (NOT in the fixed bar), so it scrolls with the page instead of
-   staying stuck to the floating START button. Compact horizontal row. --- */
+/* in normal page flow (not the fixed bar) so it scrolls with the page */
 .cb-random {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     gap: 16px;
-    margin-top: auto;   /* push to the bottom of .cb-setup, just above the fixed START bar */
+    margin-top: auto;   /* push to the bottom of .cb-setup, above the fixed START bar */
 }
 
 .cb-random .cb-label { text-align: center; }
 
-/* ==========================================================================
-   PART A2 — ACTION BAR (error + START), fixed directly above the bottom
-   so the error message is ALWAYS visible regardless of player-list height.
-   ========================================================================== */
+/* === PART A2 - ACTION BAR (error + START), fixed to the bottom so the error is
+   always visible regardless of player-list height === */
 .cb-actionbar {
     position: fixed;
     left: 0;
@@ -434,10 +410,8 @@
 
 .cb-actionbar > * { pointer-events: auto; }
 
-/* Validation message. Sits in a fixed bar over the scrolling setup content, so
-   when shown it gets a SOLID red pill background (+ shadow + z-index) to cleanly
-   cover whatever is underneath rather than clashing with the text behind it. The
-   constant padding/min-height is a reserved slot so START never shifts on toggle. */
+/* validation message. constant padding/min-height reserve the slot so START
+   never shifts when it toggles; the solid pill (in .show) covers content behind. */
 .cb-error {
     display: inline-flex;
     align-items: center;
@@ -457,29 +431,26 @@
 
 .cb-error.show {
     opacity: 1;
-    z-index: 41;                 /* above the action bar's other content + the page */
-    background: #c0202f;          /* solid red pill — covers anything behind it */
+    z-index: 41;
+    background: #c0202f;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 
-/* START reuses .generate-wheel-btn but lives INSIDE the action bar now */
+/* START reuses .generate-wheel-btn but lives inside the action bar */
 .cb-start.generate-wheel-btn {
     position: static;
     letter-spacing: 4px;
 }
 
-/* ==========================================================================
-   PART B — GAME SCREEN  (chopping.html)
-   ========================================================================== */
+/* === PART B - GAME SCREEN (chopping.html) === */
 .cb-game {
     min-height: 100vh;
     padding-top: 12px;
     padding-bottom: 0;
-    gap: 12px;                   /* tightened so the game is vertically static on PC */
+    gap: 12px;
     overflow-x: clip;            /* the full-bleed carousel must not add scroll */
 }
 
-/* header (Back + MOVIE KNIGHT logo) — mirrors wheel/picker */
 .cb-page-header {
     width: 100%;
     display: flex;
@@ -502,13 +473,10 @@
 }
 
 .cb-page-header .back-btn:hover { opacity: 0.75; }
-/* Scaled down from 228px so the game's posters + Eliminate buttons sit above the
-   fold on desktop (no vertical scroll — only the horizontal card scroll). */
 .cb-page-header .wheel-main-logo { height: 132px; object-fit: contain; }
 
-/* single-bar header that "expands" on entry, echoing the wheel hand-off.
-   Scoped to .cb-game so these never touch the picker's 3-tab bar (chopping.css
-   is loaded on picker.html too). */
+/* single-bar header that expands on entry, echoing the wheel hand-off. scoped to
+   .cb-game so it never touches the picker's 3-tab bar (loaded on picker.html too). */
 .cb-game .feature-tabs {
     display: flex;
     width: 100%;
@@ -543,7 +511,6 @@
 @keyframes cb-bar-expand { from { transform: scaleX(0.25); } to { transform: scaleX(1); } }
 @keyframes cb-text-in   { from { opacity: 0; }            to { opacity: 1; } }
 
-/* whose turn it is (hidden in single-player via inline style) */
 .cb-turn {
     font-family: "Lao Sangam MN", sans-serif;
     font-size: 32px;
@@ -556,10 +523,9 @@
 
 .cb-turn.is-swapping { opacity: 0; transform: translateY(8px); }
 
-/* ------- The coverflow carousel (Bootstrap carousel shell + 3D depth) ------- */
+/* coverflow carousel (Bootstrap shell + 3D depth) */
 .cb-stage {
-    width: 100vw;               /* full-bleed: break out of the content padding so the
-                                   far posters barely peek at the screen edges */
+    width: 100vw;               /* full-bleed so the far posters peek at the edges */
     flex: 1;
     display: flex;
     align-items: center;
@@ -575,37 +541,27 @@
 .cb-coverflow {
     position: relative;
     width: 100%;
-    max-width: none;            /* span the full viewport width */
+    max-width: none;
     margin: 0 auto;
 }
 
-/* the viewport: clips the cards that fan out to the edges */
 .cb-coverflow .carousel-inner {
     position: relative;
-    height: 510px;              /* trimmed so the cards + buttons clear the fold on PC */
+    height: 510px;
     overflow: hidden;
 }
 
-/* Click-and-drag (desktop): grab the strip and pull it sideways. While dragging,
-   show the grabbing hand and kill the per-card easing so every poster tracks the
-   cursor 1:1 (this overrides the inline transition render() leaves on each card).
-   The !important on the cursor is needed to beat common.css's global custom-cursor
-   rule (`* { cursor: inherit !important }`); the themed arrow stays put at rest, so
-   the native hand only appears during the deliberate drag gesture. */
+/* drag: grabbing hand, and kill per-card easing so posters track the cursor 1:1.
+   !important beats common.css's global `* { cursor: inherit !important }`. */
 .cb-coverflow.cb-dragging .carousel-inner,
 .cb-coverflow.cb-dragging .carousel-inner * { cursor: grabbing !important; }
-/* No card easing while the user drags OR while the strip coasts on momentum — both
-   drive `center` every frame and need the posters to track it instantly. The easing
-   comes back the moment it settles, for the smooth final snap onto a poster. These
-   selectors are (0,3,0), so they out-specify the base `.cb-card` (0,1,0) transition
-   without !important — and render() resets its per-frame inline transition to "" each
-   pass, so there's no inline value left to override here. */
+/* no card easing while dragging OR coasting on momentum (both drive `center` every
+   frame); easing returns once it settles, for the final snap onto a poster. */
 .cb-coverflow.cb-dragging .cb-card,
 .cb-coverflow.cb-coasting .cb-card { transition: none; }
 
-/* A horizontal drag must not select the titles or start the browser's native
-   image-drag (the ghost poster) — either one hijacks the pointer and makes the
-   strip "stick". Block text selection across the strip and disable image dragging. */
+/* a horizontal drag must not select titles or start the native image-drag (the
+   ghost poster); either hijacks the pointer and makes the strip "stick". */
 .cb-coverflow .carousel-inner {
     user-select: none;
     -webkit-user-select: none;
@@ -615,8 +571,8 @@
     user-drag: none;
 }
 
-/* every card is absolutely centred; JS drives a transform per card, and these
-   transitions animate both the rotation and the graveyard re-sort (FLIP-style). */
+/* every card is absolutely centred; JS drives a transform per card. transitions
+   animate both the rotation and the graveyard re-sort (FLIP-style). */
 .cb-card {
     position: absolute;
     top: 50%;
@@ -636,8 +592,7 @@
         opacity 0.45s ease;
 }
 
-/* title ABOVE the poster — wraps to at most 2 lines and is kept narrower than the
-   poster so neighbouring titles never collide in the coverflow. */
+/* kept narrower than the poster so neighbouring titles never collide */
 .cb-card-title {
     margin: 0 0 10px;
     max-width: 220px;
@@ -668,8 +623,7 @@
 
 .cb-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* "i" info badge on each poster — mirrors the add-to-collection modal's .am-info
-   (round dark chip, italic serif "i", fades in on hover/focus, pink on hover). */
+/* info badge, mirrors the add-to-collection modal's .am-info */
 .cb-info {
     position: absolute;
     top: 6px;
@@ -696,7 +650,7 @@
 .cb-card:focus-within .cb-info,
 .cb-info:focus-visible { opacity: 1; }
 .cb-info:hover { background: rgba(var(--pink), 0.9); }
-/* Touch devices can't hover, so keep the badge visible there (like .am-info). */
+/* no hover on touch, so keep the badge visible there */
 @media (hover: none) {
     .cb-info { opacity: 0.92; }
 }
@@ -716,7 +670,7 @@
     line-height: 36px;
     letter-spacing: 1px;
     cursor: pointer;
-    pointer-events: none;          /* only the five in-window posters are pressable */
+    pointer-events: none;          /* only the in-window posters are pressable */
     transition: filter var(--t-base) ease, transform var(--t-fast) var(--ease-snap), opacity var(--t-slow) ease;
 }
 
@@ -725,18 +679,13 @@
 .cb-card.in-window .cb-eliminate:hover { filter: brightness(1.18); transform: scale(1.03); }
 .cb-card.in-window .cb-eliminate:active { transform: scale(0.97); }
 
-/* Grayscale is reserved for ELIMINATED cards ONLY — a strong, unambiguous
-   "chopped" cue (full desaturation on top of the reduced opacity render() sets).
-   Valid/peeking posters stay in full colour; their smaller scale + lower opacity
-   (set by render()) is enough to read them as "up next" without making an active,
-   not-yet-eliminated movie look chopped. */
+/* grayscale is for eliminated cards only - a clear "chopped" cue. valid/peeking
+   posters stay in colour so an active movie never looks chopped. */
 .cb-card.eliminated { cursor: default; }
 .cb-card.eliminated .cb-poster { filter: grayscale(100%); }
 .cb-card.eliminated .cb-eliminate { opacity: 0.5; cursor: default; filter: none; transform: none; pointer-events: none; }
 
-/* Minimal soft-triangle arrows: no background, and only the small triangle area
-   is clickable (Bootstrap's control spans the full height by default — we shrink
-   it to a snug box centred vertically). */
+/* soft-triangle arrows; shrink Bootstrap's full-height control to a snug box */
 .cb-coverflow .carousel-control-prev,
 .cb-coverflow .carousel-control-next {
     top: 50%;
@@ -744,7 +693,7 @@
     transform: translateY(-50%);
     width: 44px;
     height: 48px;
-    z-index: 200;            /* above the posters (which reach z-index 100) */
+    z-index: 200;            /* above the posters (z-index 100) */
     opacity: 0.7;
     transition: opacity var(--t-base) ease, transform var(--t-base) var(--ease-pop);
 }
@@ -758,14 +707,14 @@
 .cb-coverflow .carousel-control-prev:active { transform: translateY(-50%) scale(0.88); }
 .cb-coverflow .carousel-control-next:active { transform: translateY(-50%) scale(0.88); }
 
-/* the triangle itself (replaces Bootstrap's icon image — no background) */
+/* the triangle (replaces Bootstrap's icon image) */
 .cb-coverflow .carousel-control-prev-icon,
 .cb-coverflow .carousel-control-next-icon {
     width: 0;
     height: 0;
     background: none;
     border-style: solid;
-    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.8));   /* readable on any poster */
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.8));
 }
 .cb-coverflow .carousel-control-prev-icon {
     border-width: 13px 17px 13px 0;
@@ -776,16 +725,14 @@
     border-color: transparent transparent transparent rgba(255, 255, 255, 0.9);
 }
 
-/* hidden at the scroll bounds — nothing more to reveal that way */
+/* hidden at the scroll bounds */
 .cb-coverflow .carousel-control-prev.cb-nav-off,
 .cb-coverflow .carousel-control-next.cb-nav-off {
     opacity: 0;
     pointer-events: none;
 }
 
-/* ==========================================================================
-   PART C — WINNER OVERLAY + CONFETTI  (matches Spin the Wheel exactly)
-   ========================================================================== */
+/* === PART C - WINNER OVERLAY + CONFETTI (matches Spin the Wheel) === */
 .confetti-canvas {
     position: fixed;
     inset: 0;
@@ -810,7 +757,6 @@
 
 .winner-overlay.show { opacity: 1; visibility: visible; }
 
-/* 468×364, radius 50, #D7D7D7 @ 20% — identical to wheel.css */
 .winner-box {
     pointer-events: auto;
     position: relative;
@@ -852,8 +798,6 @@
     color: var(--text);
 }
 
-/* Two buttons side by side (Play Again + Back to Collection) at the foot of the
-   winner card. Wraps to a stack only if the box gets very narrow. */
 .winner-actions {
     display: flex;
     flex-wrap: wrap;
@@ -875,7 +819,7 @@
     font-family: inherit;
     font-size: 22px;
     cursor: pointer;
-    /* an <a> + a <button> sit on this class — keep both centred + un-underlined */
+    /* an <a> + a <button> sit on this class - keep both centred + un-underlined */
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -885,8 +829,6 @@
     transition: transform var(--t-base) var(--ease-pop), filter var(--t-base) ease;
 }
 
-/* Back to Collection — a distinct secondary tone so it doesn't read as the
-   primary action. */
 .winner-secondary {
     background-color: #596d73;
 }
@@ -894,9 +836,7 @@
 .winner-remove:hover { filter: brightness(1.12); transform: scale(1.04); }
 .winner-remove:active { transform: scale(0.96); }
 
-/* ==========================================================================
-   GAME-STAGE STATUS (loading spinner / empty / error)
-   ========================================================================== */
+/* game-stage status (loading spinner / empty / error) */
 .cb-status {
     width: 100%;
     min-height: 360px;
@@ -969,31 +909,20 @@
 
 .winner-close:hover { opacity: 1; transform: scale(1.12) rotate(90deg); }
 
-/* ==========================================================================
-   PART D — RESPONSIVE
-   ========================================================================== */
+/* === PART D - RESPONSIVE === */
 @media (max-width: 1024px) {
     .picker-panel[data-panel="chopping"].active { max-width: 100%; }
 
-    /* page bottom-padding is smaller here, so reserve a bit more for the fixed bar.
-       Left-align the whole setup (hub) on mobile instead of centring it. The 56px
-       gap makes the count row sit one rhythm-step below the config block (see the
-       .cb-random margin-top:0 below) rather than being shoved to the bottom. */
+    /* left-align the hub on mobile. the 56px gap drops margin-top:auto below. */
     .cb-setup { padding-bottom: 80px; align-items: flex-start; gap: 56px; }
 
-    /* Keep the "Random Movies Selected" count in normal flow BELOW the fixed
-       action bar's stacking layer (z-index 40), so on mobile it scrolls under the
-       START bar instead of floating statically over it / other elements. Drop the
-       base margin-top:auto (a desktop-only "pin to the bottom" trick): on mobile the
-       page scrolls and START is a fixed bar, so the auto-margin just made the gap
-       above this row swell to fill leftover height — uneven vs the 56px row rhythm.
-       Letting .cb-setup's 56px gap govern keeps it in step with the rows above. */
+    /* keep the count in normal flow so it scrolls under the fixed START bar (z 40).
+       drop the desktop margin-top:auto so the gap above it stays the 56px rhythm. */
     .cb-random { position: relative; z-index: 0; justify-content: flex-start; }
     .cb-setup .cb-random { margin-top: 0; }
 
-    /* The "+N more …" overflow dropdown is a fixed 240px wide and centred on the
-       chip; on a narrow phone that spills past the screen edge. Cap it well inside
-       the viewport (clampOverflowBox() then nudges it back from either edge). */
+    /* cap the centred overflow dropdown inside the viewport (JS clampOverflowBox()
+       then nudges it back from either edge). */
     .cb-overflow-box {
         width: min(220px, 84vw);
         max-width: calc(100vw - 16px);
@@ -1003,26 +932,22 @@
         height: auto;
         flex-direction: column;
         align-items: flex-start;
-        gap: 56px;             /* more breathing room between the stacked rows */
+        gap: 56px;
         margin-top: 24px;
-        margin-bottom: 0;      /* the count row's gap is owned by .cb-setup's 56px gap */
+        margin-bottom: 0;
     }
 
     .cb-col-left, .cb-col-right { align-items: flex-start; width: 100%; }
     .cb-col-left { gap: 28px; }
     .cb-col-right { gap: 56px; }
 
-    /* "Add Player :" stays on its own line; the input + button share the full-width
-       row below it — input flush to the left, + flush to the right. The label's
-       100% flex-basis forces the input/button to wrap onto the next line. */
+    /* label's 100% flex-basis forces the input + button onto the row below it */
     .cb-add-row { flex-wrap: wrap; justify-content: flex-start; width: 100%; }
     .cb-add-row .cb-label { flex: 0 0 100%; }
     .cb-input-pill { flex: 1 1 auto; width: auto; min-width: 0; }
 
-    /* Keep the player pills on a SINGLE row that never wraps: the surplus collapses
-       into the "+N more" chip (maxTagSlots in chopping.js), and the visible pills
-       shrink to fit (min-width:0 + the name's ellipsis) rather than pushing onto a
-       second line. This is the fix for the wrapping in the bug report. */
+    /* single row, never wraps: surplus collapses into the "+N more" chip and the
+       visible pills shrink to fit (min-width:0 + the name's ellipsis). */
     .cb-players {
         flex-direction: row;
         flex-wrap: nowrap;
@@ -1031,23 +956,21 @@
         max-height: none;
         max-width: 100%;
         gap: 10px;
-        padding: 8px 6px 0;   /* top room for the pills' floating ✕; side room from the edge */
+        padding: 8px 6px 0;   /* top room for the pills' floating x */
     }
 
     .cb-tag {
         flex: 0 1 auto;       /* may shrink to share the row; never grows */
         width: auto;
-        min-width: 0;         /* let the name ellipsis engage instead of forcing a wider row */
+        min-width: 0;
         max-width: 40vw;
         height: 46px;
         padding: 0 16px;
     }
 
-    /* The name fills its (shrinkable) pill and ellipsises when there isn't room. */
     .cb-tag-name { font-size: 16px; min-width: 0; }
 
-    /* The "+N more …" chip keeps its full label (caret is an in-flow sibling, so the
-       text and the ▾ never collide) and never shrinks — only the name pills do. */
+    /* the chip keeps its full label and never shrinks; only the name pills do */
     .cb-tag-more {
         flex: 0 0 auto;
         font-size: 13px;
@@ -1071,8 +994,7 @@
 @media (max-width: 600px) {
     .cb-label { font-size: 20px; }
 
-    /* Total-Players and Random-Order: label pinned left, the value (count pill /
-       toggle) pushed to the right edge of the full-width row. */
+    /* label pinned left, value pushed to the right edge of the full-width row */
     .cb-stat-row {
         flex-direction: row;
         justify-content: space-between;
@@ -1083,24 +1005,18 @@
     }
     .cb-stat-row .cb-label { text-align: left; white-space: normal; }
 
-    /* The eliminations slider stacks under its label and spans the FULL width, so the
-       1 / 2 / 3 spread across the whole screen. The slider's numbers are absolutely
-       positioned and hang ~45px BELOW its box (no layout height), which would eat into
-       the gap before the next row — reserve that space so all the row gaps read even. */
+    /* slider stacks under its label, full width. its numbers hang ~45px below with
+       no layout height, so reserve that space to keep the row gaps even. */
     .cb-stat-row--stack { flex-direction: column; align-items: stretch; gap: 18px; padding-bottom: 45px; }
     .cb-stat-row--stack .cb-label { text-align: left; }
     .cb-slider { width: 100%; }
 
-    /* "Random Movies Selected :" — label left, count pill pushed to the right, to
-       match the player-count / random-order rows above. */
     .cb-setup .cb-random {
         width: 100%;
         justify-content: space-between;
     }
 
-    /* Size the Random Order toggle to match the count pills (.cb-pill is 84×43) so
-       all three right-hand controls share the same footprint. The handle scales up
-       to stay proportionate in the taller track. */
+    /* match the toggle to the count pills (84x43) so the three right controls align */
     .cb-toggle { width: 84px; height: 43px; }
     .cb-toggle-handle { width: 35px; height: 35px; }
     .cb-toggle input:checked ~ .cb-toggle-handle { left: calc(100% - 39px); }
@@ -1117,15 +1033,12 @@
     .cb-poster { width: 186px; height: 268px; }
     .cb-eliminate { width: 190px; height: 48px; font-size: 20px; }
 
-    /* Scale the winner popup down so it fits a phone screen comfortably without
-       scrolling/clipping — smaller box, header, title and action buttons. */
     .winner-box { width: min(380px, 90vw); height: auto; border-radius: 36px; padding-bottom: 18px; }
     .winner-header { font-size: 24px; padding: 14px 46px; } /* padded clear of the close X */
     .winner-title { font-size: 26px; padding: 26px 16px; }
     .winner-actions { gap: 12px; padding: 0 18px 4px; }
     .winner-remove { height: 60px; font-size: 18px; min-width: 130px; }
 
-    /* Smaller "Back" label on phones, padded to keep an easy tap target. */
     .cb-page-header .back-btn {
         font-size: 14px;
         padding: 8px 12px;
@@ -1133,17 +1046,12 @@
     }
 }
 
-/* ---- Touch carousel (≤1024px): a native CSS scroll-snap strip ---------------
-   The desktop coverflow is a JS-driven 3D filmstrip steered by mouse-wheel /
-   touchpad + arrow buttons — none of which works on a touchscreen (the arrows
-   are awkward and a finger-swipe can't move it). At/below 1024px (the app-wide
-   "mobile" cutoff) chopping.js stops applying its per-card transform layout (it
-   just keeps the cards in DOM order) and this block lays them out as a horizontal
-   scroll-snap row: two full posters fit, with the next one peeking in to advertise
-   the swipe. This block sits last so it overrides the fixed card/poster sizes. */
+/* === Touch carousel (<=1024px): native CSS scroll-snap strip ===
+   the desktop coverflow is JS-driven and can't be swiped on a touchscreen. below
+   1024px chopping.js stops its per-card transform layout and this block lays the
+   cards out as a horizontal scroll-snap row. last so it overrides the card sizes. */
 @media (max-width: 1024px) {
-    /* Keep the stage INSIDE the padded content (the desktop full-bleed 100vw broke
-       out of .cb-game and got clipped, which is why the strip couldn't scroll). */
+    /* keep the stage inside the padded content; desktop full-bleed 100vw got clipped */
     .cb-stage {
         width: 100%;
         position: relative;
@@ -1152,11 +1060,9 @@
     }
     .cb-coverflow { width: 100%; }
 
-    /* The strip itself is the horizontal scroller. The 15vw side padding (matched by
-       scroll-padding-left) is what reveals a peeking poster on BOTH sides: each snap
-       lands a card 15vw in from the edge, so the previous card shows in that gutter
-       and the next one peeks past the far edge — two full posters framed by two
-       greyed peeks, exactly like a coverflow but driven by a native swipe. */
+    /* 15vw side padding (+ scroll-padding-left) reveals a peeking poster on both
+       sides: each snap lands a card 15vw in, so the prev shows in that gutter and
+       the next peeks past the far edge. */
     .cb-coverflow .carousel-inner {
         height: auto;
         display: flex;
@@ -1169,12 +1075,11 @@
         -webkit-overflow-scrolling: touch;
         overscroll-behavior-x: contain;  /* don't chain the swipe to page back-nav */
         padding: 8px 15vw 20px;
-        scrollbar-width: none;          /* Firefox */
+        scrollbar-width: none;
     }
     .cb-coverflow .carousel-inner::-webkit-scrollbar { display: none; }
 
-    /* Cancel the absolute 3D layout: cards flow in a row and snap to start. 33vw →
-       two full posters sit centred (~66vw) with the 15vw gutters peeking either side. */
+    /* cancel the 3D layout: cards flow in a row and snap to start */
     .cb-card {
         position: static;
         top: auto;
@@ -1195,17 +1100,13 @@
         transition: filter var(--t-base) ease, transform var(--t-base) ease;
     }
 
-    /* Peeking (partially visible) cards stay in FULL COLOUR — only dimmed and
-       shrunk a touch so the two centred posters stand out without an active movie
-       ever looking "chopped" (grayscale is reserved for eliminated cards). chopping.js
-       adds .cb-peek to any card that isn't fully inside the scroll viewport. */
+    /* peeking cards stay in colour, just dimmed + shrunk (grayscale is for
+       eliminated only). chopping.js adds .cb-peek to any not fully in the viewport. */
     .cb-card.cb-peek { opacity: 0.55; }
     .cb-card.cb-peek .cb-poster {
         transform: scale(0.9);
     }
 
-    /* Eliminated cards: greyscale AND the strongest dim, so a chopped movie reads
-       as clearly "out" even while it sits in the strip. */
     .cb-card.eliminated { opacity: 0.3; }
     .cb-card.eliminated .cb-poster { filter: grayscale(100%); }
 
@@ -1213,7 +1114,7 @@
         max-width: 100%;
         font-size: 15px;
         line-height: 19px;
-        min-height: 38px;          /* room for up to two wrapped lines */
+        min-height: 38px;
     }
 
     .cb-eliminate {
@@ -1223,12 +1124,11 @@
         font-size: 18px;
     }
 
-    /* native scrolling replaces the arrow controls entirely */
+    /* native scrolling replaces the arrow controls */
     .cb-coverflow .carousel-control-prev,
     .cb-coverflow .carousel-control-next { display: none; }
 
-    /* Keep the turn / title header in its own stacking layer ABOVE the strip so it
-       never collides with a card as the row scrolls. */
+    /* header above the strip so it never collides with a scrolling card */
     .cb-page-header,
     .cb-game .feature-tabs,
     .cb-turn {

@@ -1,12 +1,6 @@
-/* movie.css — Movie Details page.
-   Full-bleed screen (no app shell, matching the Figma frame): a blurred backdrop
-   of the movie itself, the poster + quick actions on the left, and the title,
-   synopsis, trailer and metadata on the right. Pixel values follow the 1920×1084
-   Figma frame; the layout reflows to a single column on narrow screens. */
+/* movie.css - Movie Details page (full-bleed, no app shell). */
 
 .movie-details-body {
-  /* Keeps the shared brand gradient background (from .app-body) — the same
-     full-frame backdrop the Figma uses for this screen. */
   overflow-x: hidden;
 }
 
@@ -17,7 +11,6 @@
   isolation: isolate;
 }
 
-/* ---- Back link (top-left) ---- */
 .md-back {
   position: absolute;
   top: 27px;
@@ -33,10 +26,7 @@
   opacity: 0.75;
 }
 
-/* When reached from a feature flow (AI Info / winner → View Details), match the
-   feature pages' shared .back-btn EXACTLY — size, weight and position — so the
-   Back control doesn't shift when navigating between those pages and this one.
-   (Feature pages put .back-btn at the main-content padding origin: 40px / 12px.) */
+/* from a feature flow: match the feature pages' .back-btn (40px/12px) so it doesn't shift */
 .md-back--feature {
   top: 12px;
   left: 40px;
@@ -44,7 +34,6 @@
   font-weight: 100;
 }
 
-/* ---- Two-column layout ---- */
 .md-layout {
   position: relative;
   z-index: 1;
@@ -54,14 +43,11 @@
   padding: 139px 100px 80px 207px;
 }
 
-/* ---- Poster column ---- */
 .md-poster-col {
   flex: 0 0 511px;
   width: 511px;
 }
 
-/* Poster "opens" — expands and settles into place as the page loads, echoing
-   the card the user clicked on the home feed. */
 @keyframes mdPosterOpen {
   from {
     opacity: 0;
@@ -115,7 +101,6 @@
   display: block;
 }
 
-/* Three circular actions spread across the poster width. */
 .md-actions {
   display: flex;
   justify-content: space-between;
@@ -153,7 +138,6 @@
   background: rgb(var(--rose));
 }
 
-/* Hover tooltip above an action (the "Add to Already Watched" label in Figma). */
 .md-action[data-tip]::after {
   content: attr(data-tip);
   position: absolute;
@@ -178,13 +162,11 @@
   transform: translateX(-50%) translateY(0);
 }
 
-/* ---- Info column ---- */
 .md-info {
   flex: 1;
   min-width: 0;
   max-width: 820px;
-  /* Matches the poster + actions height so cast/genres sit at the bottom,
-     level with the action row (Figma). */
+  /* matches poster + actions height so cast/genres sit level with the action row */
   min-height: 843px;
   display: flex;
   flex-direction: column;
@@ -218,7 +200,6 @@
   opacity: 0.7;
 }
 
-/* ---- Read more (collapses a long synopsis so the page stays one screen) ---- */
 .md-overview-wrap {
   max-width: 811px;
 }
@@ -228,9 +209,7 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-/* Expanded state — forcibly defeats the line-clamp at EVERY breakpoint (incl. the
-   short-viewport / mobile overrides below that re-clamp to 3 lines), so tapping
-   "Read more" always reveals the full synopsis on phones. */
+/* defeat the line-clamp at every breakpoint (incl. the 3-line mobile re-clamps below) */
 .md-overview.is-expanded,
 .md-overview.is-expanded.is-clamped {
   display: block;
@@ -255,7 +234,6 @@
   opacity: 1;
 }
 
-/* ---- Trailer (YouTube embed) — enlarged and pushed lower down the column ---- */
 .md-trailer {
   width: 640px;
   max-width: 100%;
@@ -272,7 +250,6 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 }
 
-/* ---- Cast + genres, pinned to the bottom of the info column ---- */
 .md-meta {
   margin-top: auto;
   padding-top: 28px;
@@ -291,11 +268,7 @@
   font-weight: 400;
 }
 
-/* ==========================================================================
-   SHORT VIEWPORTS — scale the layout to the available height so the page stays
-   a single screen (no scroll) on typical laptop heights. Above the design
-   height (1084) the fixed Figma values apply unchanged.
-   ========================================================================== */
+/* short viewports: scale to available height so the page stays one screen */
 @media (max-height: 1065px) {
   .md-layout {
     padding-top: clamp(44px, 7vh, 96px);
@@ -360,9 +333,7 @@
   }
 }
 
-/* ==========================================================================
-   RESPONSIVE — reflow to a single column; never overflow.
-   ========================================================================== */
+/* responsive: reflow to a single column */
 @media (max-width: 1180px) {
   .md-layout {
     gap: 56px;
@@ -430,9 +401,6 @@
     left: 16px;
     font-size: 17px;
   }
-  /* Feature-flow Back keeps the feature pages' 16px/24px on mobile too (their
-     Back sits below the mobile topbar, which this page doesn't have, so we leave
-     it near the top — left + size match, which is what reads as "aligned"). */
   .md-back--feature {
     left: 16px;
     font-size: 24px;

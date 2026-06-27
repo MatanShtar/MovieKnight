@@ -1,11 +1,5 @@
-/* home/layout.css — page layout/header, search bar + AI mode, and the
-   "Surprise Me" button. Split out of the former monolithic css/home.css
-   (sections 1–3, verbatim). Loaded FIRST of the home/* stylesheets so the
-   cascade order matches the original single file. */
-
-/* ==========================================
-   1. LAYOUT & HEADER
-   ========================================== */
+/* page layout/header, search bar + AI mode, and the "Surprise Me" button.
+   loaded first of the home/* stylesheets. */
 
 .header-left-group {
   display: flex;
@@ -44,9 +38,6 @@
   }
 }
 
-/* ==========================================
-   2. SEARCH BAR & AI MODE
-   ========================================== */
 .search-container {
   display: flex;
   align-items: center;
@@ -61,9 +52,7 @@
     border-color var(--t-base) ease,
     box-shadow var(--t-base) ease;
   border: 5px solid transparent;
-  /* Make the bar a query container so the AI hint below can size its font to the
-     bar's actual width (cqi units) — robust whatever the layout makes the bar
-     (full-row on mobile, squeezed beside Surprise Me in the 1024–1140px range). */
+  /* query container so the AI hint below can size its font to the bar width (cqi) */
   container-type: inline-size;
 }
 
@@ -77,9 +66,6 @@
   outline: none;
 }
 
-/* The search input is wrapped (for its inline "X"); the wrapper grows to fill the
-   bar between the icon and the AI-mode button, and the input leaves room for the
-   button on its right edge. */
 .search-container .input-clear-wrap {
   flex: 1 1 auto;
   min-width: 0;
@@ -94,11 +80,8 @@
   font-size: 18px;
 }
 
-/* AI-mode hint ("Describe a movie, press Enter…") is long and the AI-mode button
-   eats part of the bar, so on a narrow bar it would clip. Scale ITS font with the
-   bar width (1cqi = 1% of the bar) — clamped readable — so it shrinks to fit instead
-   of cropping, at any width. Scoped to .ai-glow so the normal short placeholder and
-   the text you type keep their full size. */
+/* the AI-mode hint is long, scale its font with the bar width so it shrinks to
+   fit instead of clipping. scoped to .ai-glow so normal text stays full size. */
 .search-container.ai-glow input::placeholder {
   font-size: clamp(9px, 3.4cqi, 18px);
 }
@@ -163,9 +146,6 @@
   background: rgba(var(--pink-alt), 0.3);
 }
 
-/* ==========================================
-   3. SURPRISE ME BUTTON
-   ========================================== */
 .surprise-container {
   display: flex;
   flex-direction: column;
@@ -275,9 +255,8 @@
   transform-origin: center center;
 }
 
-/* Hover "wind-up": the dice rock gently, as if being shaken in hand, ready for the
-   throw. The actual toss (roll-left/right, added on click) takes over — the :not()
-   guards drop the shake the instant a throw starts so the two never fight. */
+/* hover wind-up: the dice rock gently. the :not() guards drop the shake the
+   instant a click-toss (roll-left/right) starts so the two never fight. */
 @keyframes diceReadyLeft {
   0%, 100% { transform: translate(0, 0) rotate(0deg); }
   25%      { transform: translate(-1.5px, -1px) rotate(-7deg); }

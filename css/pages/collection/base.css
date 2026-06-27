@@ -1,20 +1,15 @@
-/* collection/base.css — Collection Page layout shell + [hidden] override.
-   Built from the Figma frames "Collection Page - Owner View" (92:50) and
-   "Collection Page - Visitor View" (92:66); mobile from "Mobile - collection page"
-   (367:2814). Reuses the shared shell (common.css) + tokens (tokens.css).
+/* collection/base.css - Collection Page layout shell + [hidden] override.
    Load FIRST among collection/*. */
 
 .collection-main {
-  padding: 56px 50px 0; /* bottom padding lives on the grid so the sticky toolbar can hug the floor */
+  padding: 56px 50px 0; /* bottom padding lives on the grid so the toolbar can hug the floor */
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* These elements carry an explicit `display`, which would otherwise defeat the
-   `hidden` attribute (UA `[hidden]{display:none}` loses on specificity). The
-   attribute selector restores it, so JS toggling `.hidden` actually hides them —
-   used to switch owner vs visitor chrome (rename pencil, actions, toolbar). */
+/* these carry an explicit `display`, which beats UA `[hidden]{display:none}` on
+   specificity; restore it so JS toggling owner vs visitor chrome actually hides them. */
 .collection-rename-btn[hidden],
 .collection-actions[hidden],
 .collection-toolbar[hidden] {

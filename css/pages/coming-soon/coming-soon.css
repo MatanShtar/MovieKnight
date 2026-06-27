@@ -1,8 +1,5 @@
-/* coming-soon.css — the cinematic "Coming Soon" placeholder shared by the
-   Explore and Settings screens. A pair of red velvet curtains sweeps
-   CLOSED, holds for a beat, then draws back OPEN to reveal the copy framed on a
-   dark stage (matching the reference still). One-shot animations (fill: forwards)
-   so prefers-reduced-motion simply lands on the final, fully-revealed state. */
+/* coming-soon.css - red velvet curtains sweep closed, hold, then draw open to
+   reveal the copy. one-shot (fill: forwards) so reduced-motion lands on the end state. */
 
 .cs-stage {
     position: fixed;
@@ -11,39 +8,25 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Default arrow everywhere on the placeholder; only the "Go Back" button
-       gets the pointer (see .cs-back). */
     cursor: default;
-    /* the dark back wall behind the curtains */
     background:
         radial-gradient(ellipse at 50% 42%, #3a2127 0%, #1c0f14 58%, #0a0608 100%);
 }
 
-/* ----------------------------------------------------------------------------
-   THE CURTAINS — two velvet panels with vertical pleats. They start off-stage
-   (open), sweep in to meet at the centre (closed), pause, then settle back to a
-   framed-open position that leaves the copy in the central gap.
-   ---------------------------------------------------------------------------- */
 .cs-curtain {
     position: absolute;
     top: 0;
-    /* Overgrown well past the viewport bottom (clipped by .cs-stage). Pivoting from
-       the top, the rotate/skew of the open animation lifts the hem — a 100vh panel
-       would expose the dark stage under its bottom edge mid-swing. The extra length
-       keeps the floor covered through the whole rotation. */
+    /* overgrown past the viewport (clipped by .cs-stage); the top-pivot rotate lifts
+       the hem, so a 100vh panel would expose the stage under its bottom edge mid-swing */
     height: 145vh;
-    /* Wider than half the screen, with the OUTER edge pushed off-screen (see the
-       --left/--right offsets). The inner edge still meets at the centre, so the
-       closed seam + the final parted gap are unchanged — but the rotate/skew can
-       no longer swing a side edge into view and expose the dark stage beside it. */
+    /* wider than half-screen with the outer edge off-screen, so the rotate/skew can't
+       swing a side edge into view; the inner edge still meets at the centre */
     width: 76vw;
     z-index: 3;
-    overflow: hidden;          /* clip the travelling sheen highlight (::before) */
-    /* Pivot from the top: the panels rotate around their top edge so the BOTTOM
-       hem swings aside first (heavy-fabric drag) before the whole panel clears. */
+    overflow: hidden;          /* clip the travelling sheen (::before) */
+    /* top pivot: the bottom hem swings aside first (heavy-fabric drag) */
     transform-origin: top center;
     background-color: #7d1820;
-    /* sheen pleats over a left→right velvet body */
     background-image:
         repeating-linear-gradient(90deg,
             rgba(0, 0, 0, 0.5) 0px,
@@ -56,9 +39,7 @@
     will-change: transform;
 }
 
-/* A soft diagonal stage-light gleam that sweeps across the closed velvet during
-   the hold — keeps the fabric feeling lit and alive instead of a flat red panel.
-   Its own transform is independent of the panel's open animation. */
+/* diagonal stage-light gleam sweeping across the velvet during the hold */
 .cs-curtain::before {
     content: "";
     position: absolute;
@@ -81,8 +62,7 @@
     100% { opacity: 0;    transform: translateX(240%); }
 }
 
-/* Mirror the gleam on the right panel so the light reads as spilling outward from
-   the centre seam rather than both panels sweeping the same way. */
+/* mirror the gleam so light spills outward from the centre seam */
 .cs-curtain--right::before {
     left: auto;
     right: -40%;
@@ -100,32 +80,27 @@
 }
 
 .cs-curtain--left {
-    left: -22vw;               /* outer edge off-screen; inner edge still at centre */
-    /* darker, shadowed leading (inner) edge for depth */
+    left: -22vw;               /* outer edge off-screen; inner edge at centre */
     box-shadow: inset -34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
-    /* a weightier ease so the fabric feels like it's being dragged, not snapped */
     animation: cs-curtain-left 3.2s cubic-bezier(0.62, 0.02, 0.2, 1) forwards;
 }
 
 .cs-curtain--right {
-    right: -22vw;              /* outer edge off-screen; inner edge still at centre */
+    right: -22vw;
     box-shadow: inset 34px 0 55px rgba(0, 0, 0, 0.5), inset 0 0 90px rgba(0, 0, 0, 0.45);
     animation: cs-curtain-right 3.2s cubic-bezier(0.62, 0.02, 0.2, 1) forwards;
 }
 
-/* Start CLOSED (curtains meet at the centre), hold the beat, then DRAG open in a
-   weighted, multi-phase swing. With transform-origin at the top the bottom hem
-   leads (the panel rotates open from its base), the body sweeps aside, then it
-   settles with a small pendulum overshoot + counter-skew so heavy velvet "lands"
-   instead of snapping to a stop. The skew adds a bit of fabric drape mid-swing. */
+/* closed, hold, then a weighted multi-phase drag-open: hem leads (top pivot), body
+   sweeps aside, then settles with a small overshoot + counter-skew so it "lands" */
 @keyframes cs-curtain-left {
     0%   { transform: translateX(0) rotate(0deg) skewX(0deg); }          /* closed */
-    16%  { transform: translateX(0) rotate(0deg) skewX(0deg); }          /* hold — the beat */
-    34%  { transform: translateX(-3vw) rotate(-11deg) skewX(3deg); }     /* bottom hem leads */
-    62%  { transform: translateX(-24vw) rotate(-5deg) skewX(1.5deg); }   /* sweeping aside */
-    84%  { transform: translateX(-32vw) rotate(2.5deg) skewX(-1.5deg); } /* overshoot + sway back */
-    93%  { transform: translateX(-29vw) rotate(-1deg) skewX(0.6deg); }   /* settle bounce */
-    100% { transform: translateX(-30vw) rotate(0deg) skewX(0deg); }      /* rest, cleared */
+    16%  { transform: translateX(0) rotate(0deg) skewX(0deg); }          /* hold */
+    34%  { transform: translateX(-3vw) rotate(-11deg) skewX(3deg); }     /* hem leads */
+    62%  { transform: translateX(-24vw) rotate(-5deg) skewX(1.5deg); }   /* sweep aside */
+    84%  { transform: translateX(-32vw) rotate(2.5deg) skewX(-1.5deg); } /* overshoot */
+    93%  { transform: translateX(-29vw) rotate(-1deg) skewX(0.6deg); }   /* settle */
+    100% { transform: translateX(-30vw) rotate(0deg) skewX(0deg); }      /* rest */
 }
 
 @keyframes cs-curtain-right {
@@ -138,10 +113,7 @@
     100% { transform: translateX(30vw) rotate(0deg) skewX(0deg); }
 }
 
-/* ----------------------------------------------------------------------------
-   THE VALANCE — a draped, scalloped swag pinned across the top. Drawn as an SVG
-   so the festoon edge is crisp; it sits above the curtains and never moves.
-   ---------------------------------------------------------------------------- */
+/* valance: a scalloped swag pinned across the top (SVG), above the curtains */
 .cs-valance {
     position: absolute;
     top: 0;
@@ -156,12 +128,9 @@
     pointer-events: none;
 }
 
-/* ----------------------------------------------------------------------------
-   THE COPY — revealed in the central gap as the curtains part.
-   ---------------------------------------------------------------------------- */
 .cs-content {
     position: relative;
-    z-index: 2;            /* behind the curtains, so it's hidden while closed */
+    z-index: 2;            /* behind the curtains, hidden while closed */
     max-width: min(560px, 86vw);
     padding: 0 24px;
     text-align: center;
@@ -208,7 +177,7 @@
     color: #2a0f17;
     font-size: 20px;
     text-decoration: none;
-    cursor: pointer;   /* the one interactive element on the stage */
+    cursor: pointer;
     box-shadow: 0 10px 30px rgba(var(--pink-alt), 0.35);
     transition: transform var(--t-base) var(--ease-pop), filter var(--t-base) ease;
 }
@@ -225,17 +194,11 @@
 .cs-back:hover .cs-back-arrow { transform: translateX(-4px); }
 
 @media (max-width: 600px) {
-    /* Wider again on phones (outer edge still off-screen via the -22vw offset), so
-       the inner edge keeps meeting near the centre while the sides stay covered. */
     .cs-curtain { width: 84vw; }
 
-    /* On phones the parted gap is narrower, so the copy was ending up tucked
-       BEHIND the curtain edges. Lift it clearly in front (above the curtains and
-       valance) — it only fades in after the panels have begun opening anyway. */
+    /* narrow parted gap on phones: lift the copy in front of the curtains */
     .cs-content { z-index: 6; }
 
-    /* Scale the copy down further so it sits comfortably inside the narrow parted
-       gap between the curtains (smaller headline + body on phones). */
     .cs-content { max-width: 78vw; padding: 0 14px; }
     .cs-eyebrow { font-size: 11px; letter-spacing: 2.5px; margin-bottom: 7px; }
     .cs-title   { font-size: clamp(24px, 8.2vw, 38px); }
@@ -243,7 +206,7 @@
     .cs-back    { font-size: 14px; padding: 10px 22px; }
     .cs-back-arrow { font-size: 16px; }
 
-    /* Same weighted, multi-phase open as desktop, but a wider final gap for phones. */
+    /* same open as desktop, wider final gap for phones */
     @keyframes cs-curtain-left {
         0%, 16% { transform: translateX(0) rotate(0deg) skewX(0deg); }
         34%     { transform: translateX(-4vw) rotate(-11deg) skewX(3deg); }
@@ -262,8 +225,7 @@
     }
 }
 
-/* Respect reduced-motion: skip the sweep + gleam and land on the final, fully
-   revealed state (curtains parted, copy visible). */
+/* reduced-motion: skip the sweep, land on the parted/revealed end state */
 @media (prefers-reduced-motion: reduce) {
     .cs-curtain--left  { animation: none; transform: translateX(-30vw); }
     .cs-curtain--right { animation: none; transform: translateX(30vw); }

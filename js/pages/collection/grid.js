@@ -1,21 +1,10 @@
-// collection/grid.js — Collection Page movie grid + action pills + add/remove.
-//
-// Builds the poster cards and the grid (incl. skeletons + empty states), the
-// header action pills (owner: Add to Collection / Publish-Unpublish · visitor:
-// Like / Save), the Add-to-Collection modal hook, and the per-card remove flow
-// (confirm modal → API). Attaches its functions onto window.CollectionPage
-// (CP) so sort.js and main.js can call renderGrid / openAddModal / renderActions.
-//
-// Depends on: collection/shared.js (CP.state, CP.metaLine, CP.sortMovies,
-//   CP.confirmModal, CP.$), MovieAPI, AddToCollectionModal, window.requireAuth,
-//   window.toast. Load AFTER shared.js.
+// load after shared.js.
 
 (function () {
   const CP = (window.CollectionPage = window.CollectionPage || {});
   const $ = CP.$;
   const state = CP.state;
 
-  // A masked-icon span that takes the surrounding text color.
   function pillIcon(name) {
     const span = document.createElement("span");
     span.className = "pill-icon";
@@ -25,11 +14,6 @@
     return span;
   }
 
-  // actionPill(label) → text-only pill.
-  // actionPill(label, iconName) → label THEN icon (visitor Like/Save, icon after
-  //   the text per Figma 92:66).
-  // actionPill(label, iconName, extraClass, "before") → icon BEFORE the label
-  //   (the owner's "+ Add to Collection").
   function actionPill(label, iconName, extraClass, iconPos) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -49,8 +33,6 @@
     wrap.hidden = false;
 
     if (isOwner) {
-      // "+ Add to Collection" — opens the in-page Add-to-Collection modal.
-      // A shorter "Add Movies" label swaps in on phones (CSS) so it fits.
       const add = actionPill("Add to Collection", "plus", "action-pill--add", "before");
       const shortLabel = document.createElement("span");
       shortLabel.className = "pill-label-short";
@@ -67,7 +49,6 @@
 
       wrap.append(add, pub);
     } else {
-      // Counts live in the meta line only (Figma keeps the pills bare).
       let isLiked = false;
       const like = actionPill("Like", "heart", "action-pill--like");
       like.setAttribute("aria-pressed", String(isLiked));
@@ -87,10 +68,6 @@
     }
   };
 
-  // ---- Add-to-Collection modal (owner) ----------------------------------------
-  // Opens the shared modal (js/add-to-collection-modal.js) overlaid on this
-  // page. The modal owns search + add/remove against the API; we just hand it
-  // this collection's id/name and current movie ids, and refresh on change.
   CP.openAddModal = function openAddModal() {
     if (!window.AddToCollectionModal) return;
     AddToCollectionModal.open(
@@ -108,7 +85,6 @@
     );
   };
 
-  // ---- grid -------------------------------------------------------------------
   function buildCard(m, isOwner) {
     const card = document.createElement("article");
     card.className = "collection-card";
@@ -154,7 +130,7 @@
       card.appendChild(remove);
     }
 
-    // Card body → movie details (stash basics so it paints instantly).
+    // stash basics so movie page paints instantly on arrival
     const openMovie = () => {
       if (!m.id) return;
       sessionStorage.setItem(
@@ -167,9 +143,6 @@
           posterPath: m.posterPath,
         })
       );
-      // Navigate in the SAME tab (matches Home) — smartBack returns to the
-      // collection. The mk:lastMovie stash above makes the details page paint
-      // instantly on arrival.
       window.location.href = `movie.html?id=${encodeURIComponent(m.id)}`;
     };
     card.addEventListener("click", openMovie);
@@ -195,7 +168,6 @@
         empty.innerHTML = `
           <h2>No movies yet</h2>
           <p>Use the button below to start filling this list with movies you love.</p>`;
-        // Big in-body primary CTA mirroring the profile empty-state affordance.
         const cta = document.createElement("button");
         cta.type = "button";
         cta.className = "action-pill collection-empty-cta";
@@ -233,7 +205,6 @@
     }
   };
 
-  // ---- remove movie -----------------------------------------------------------
   async function onRemoveMovie(m) {
     const ok = await CP.confirmModal({
       title: "Remove movie?",

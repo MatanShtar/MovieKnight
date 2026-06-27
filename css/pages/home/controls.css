@@ -1,11 +1,5 @@
-/* home/controls.css — the controls bar (Filters button + filter dropdown panel,
-   Clear/Apply actions) and the release-year dropdowns + shared scrollbar styling.
-   Split out of the former monolithic css/home.css (sections 4–5, verbatim).
-   Loaded after home/layout.css to preserve the original cascade order. */
+/* controls bar (Filters button + dropdown panel) and the year dropdowns */
 
-/* ==========================================
-   4. CONTROLS BAR (FILTERS & SORT)
-   ========================================== */
 .controls-bar {
   display: flex;
   flex-direction: row;
@@ -15,11 +9,8 @@
   max-width: var(--content-width);
 }
 
-/* During an active text search the backend ignores sort + every filter (pure
-   relevance), so those controls are disabled — the user never sees their
-   selections silently ignored mid-search. The buttons are pointer-events:none
-   so a hover lands on their (still-interactive) wrapper, which shows a tooltip
-   explaining why they're inert. */
+/* during a text search the backend ignores sort + filters, so disable them.
+   buttons are pointer-events:none so the hover lands on the wrapper's tooltip. */
 .controls-bar--searching .filter-btn,
 .controls-bar--searching .sort-custom-btn {
   opacity: 0.4;
@@ -34,8 +25,7 @@
   cursor: not-allowed;
 }
 
-/* "Unavailable while searching" tooltip on the disabled Filters / Sort controls.
-   Black bubble matching the pill tooltips; shown on hover of the wrapper. */
+/* "Unavailable while searching" tooltip on the disabled controls */
 .controls-bar--searching .filter-wrapper::after,
 .controls-bar--searching .sort-custom-wrapper::after {
   content: "Unavailable while searching";
@@ -67,7 +57,7 @@
 }
 
 .filter-btn {
-  position: relative; /* anchors the active-filter count badge */
+  position: relative; /* anchors the count badge */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,8 +75,7 @@
     transform var(--t-fast) var(--ease-snap);
 }
 
-/* Small circular badge showing how many filters are active. Hidden (the [hidden]
-   attribute) when none are set; shown with the count otherwise. */
+/* count of active filters; [hidden] when none */
 .filter-count-badge {
   position: absolute;
   top: -6px;
@@ -157,10 +146,6 @@
   transform: translateY(0);
 }
 
-/* Apply button - statically anchored to the bottom-right of the filter panel at
-   all times; closes the panel (selections persist). "Clear Filters" (shown only
-   when a filter is active) is pushed to the far left via margin-right:auto, so
-   Apply never shifts position whether or not Clear is present. */
 .filter-actions {
   display: flex;
   align-items: center;
@@ -169,8 +154,6 @@
   margin-top: 4px;
 }
 
-/* Clear + Apply share the same button styling; Clear is just pushed to the far
-   left (margin-right:auto) so Apply stays anchored bottom-right. */
 .filter-clear-btn,
 .filter-apply-btn {
   margin-top: 0;
@@ -188,7 +171,7 @@
     transform var(--t-fast) var(--ease-snap);
 }
 .filter-clear-btn {
-  margin-right: auto; /* keeps Apply pinned right regardless of Clear's presence */
+  margin-right: auto; /* keeps Apply pinned right whether or not Clear shows */
 }
 .filter-clear-btn:hover,
 .filter-apply-btn:hover {
@@ -199,9 +182,6 @@
   transform: scale(0.96);
 }
 
-/* ==========================================
-   5. YEAR DROPDOWNS
-   ========================================== */
 .year-filter {
   display: flex;
   flex-direction: row;

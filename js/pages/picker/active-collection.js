@@ -1,28 +1,18 @@
-// active-collection.js — resolves the ONE collection the games play from.
-//
-// The collection is chosen on the collection page, which links to
-// picker.html?collection=<id>. There's no in-app dropdown: the picker simply
-// plays from whichever collection sent the user here. We read that id (and keep
-// the last one in sessionStorage so returning from a game — whose Back / Play
-// Again links don't carry the param — still works), fetch the full collection
-// once, and share it with whichever game setup needs it (wheel + chopping both
-// run on picker.html, so this avoids a duplicate GET /api/collections/:id).
+// resolves the one collection the games play from, fetched once and shared so wheel
+// + chopping avoid a duplicate GET /api/collections/:id.
 
 window.ActiveCollection = (function () {
   const SS_KEY = "mk:activeCollection";
   let promise = null;
 
-  // Remember the chosen collection in BOTH session- and localStorage. Session
-  // covers in-tab hops (Back / Play Again links that drop the ?collection param);
-  // local covers a fresh tab or a direct visit to the picker/wheel afterwards, so
-  // the games don't wrongly report "Open a collection…" once one has been picked.
+  // session covers in-tab hops (Back drops the ?collection param); local covers a
+  // fresh tab / direct visit afterwards.
   function remember(id) {
     try { sessionStorage.setItem(SS_KEY, id); } catch (_) {}
     try { localStorage.setItem(SS_KEY, id); } catch (_) {}
   }
 
-  // The active collection id: the ?collection= param wins (and is remembered);
-  // otherwise fall back to the last one we played (this tab, then any tab).
+  // ?collection= wins (and is remembered); else last played (session then local)
   function getId() {
     const fromUrl = new URLSearchParams(location.search).get("collection");
     if (fromUrl) {
@@ -36,8 +26,7 @@ window.ActiveCollection = (function () {
     }
   }
 
-  // Fetch the full collection (with movies) once; resolves null when there's no
-  // collection to play from. A 401 bounces to login like the rest of the app.
+  // fetch once; resolves null when there's none to play, 401 bounces to login
   function load() {
     if (promise) return promise;
     const id = getId();

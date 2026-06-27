@@ -1,30 +1,13 @@
-// enhance-modal.js — "Enhance My Collection" modal (window.EnhanceModal).
-//
-// Opened from the collection page's gold "ENHANCE MY COLLECTION" toolbar button.
-// Overlaid on the (blurred) collection page, it asks the AI for 3 movies the user
-// would enjoy that are NOT already in the list (POST /api/ai/enhance/:id via
-// MovieAPI.aiEnhance), shows a pulsing loading state, then reveals the picks as
-// poster + one-line reason + an "Add to Collection" button.
-//
-// "Try Again" rerolls (sending the on-screen ids so the new trio is fresh). It is
-// UNLIMITED — but each reroll, like the first generation, spends one daily AI
-// action, so before firing we surface the SAME "out of daily actions" toast the
-// rest of the app uses (MovieAPI.aiLimitReachedMessage) when the quota is gone.
-//
+// asks the AI for 3 movies not already in the list
 //   EnhanceModal.open(collectionId, {
-//     name: "Must Watch Classics",      // collection name, for toasts
-//     onChange: () => reloadGrid(),      // called once on close IF a movie was added
+//     name: "Must Watch Classics",
+//     onChange: () => reloadGrid(),   // called once on close if a movie was added
 //   });
-//
-// Reuses: MovieAPI (aiEnhance + quota helpers), window.toast, the shared
-// .ai-tryagain button (css/components/ai-tryagain.css), and the modal conventions
-// from add-to-collection-modal.js (.is-open / cm-no-scroll / Escape to close).
 window.EnhanceModal = (function () {
-  const REVEAL_DELAY_MS = 120; // brief beat before the staggered card reveal
+  const REVEAL_DELAY_MS = 120;
   const esc = (s) => (window.escapeHtml ? window.escapeHtml(s) : String(s ?? ""));
 
-  // Refresh "cw" arrows — identical markup to ai-suggestions.html so the shared
-  // .ai-tryagain styling animates it the same way.
+  // markup matches ai-suggestions.html so shared .ai-tryagain styling animates it
   const TRYAGAIN_ARROWS = `
     <svg class="ai-tryagain-arrows" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-8.49-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -43,13 +26,10 @@ window.EnhanceModal = (function () {
     </svg>`;
 
   let overlay = null, modal = null, cardsEl = null, tryAgainBtn = null;
-  let ctx = null;        // { id, name, onChange, mutated }
-  let movies = [];       // the recommendations currently on screen
-  let loading = false;   // guards Try Again / close against overlapping requests
+  let ctx = null;
+  let movies = [];
+  let loading = false;   // guards Try Again/close against overlapping requests
 
-  // ==========================================
-  // 1. BUILD (once) + open/close
-  // ==========================================
   function build() {
     overlay = document.createElement("div");
     overlay.className = "enhance-overlay";
@@ -79,8 +59,7 @@ window.EnhanceModal = (function () {
     });
 
     setupTryAgain();
-    // Delegate the per-card actions once; survives re-renders. The poster's "i"
-    // badge opens details in a new tab (modal stays put); the button adds the movie.
+    // delegate per-card actions once so they survive re-renders
     cardsEl.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-action]");
       if (!btn) return;
@@ -100,34 +79,30 @@ window.EnhanceModal = (function () {
       mutated: false,
     };
     movies = [];
-    clearOffered(); // fresh session — start avoiding repeats from zero
+    clearOffered();
     overlay.classList.add("is-open");
     document.body.classList.add("cm-no-scroll");
     setTimeout(() => { try { overlay.querySelector(".enhance-close").focus(); } catch (_) {} }, 50);
-    generate(); // first generation (spends one AI action on success)
+    generate();
   }
 
   function close() {
     if (!overlay) return;
     overlay.classList.remove("is-open");
     document.body.classList.remove("cm-no-scroll");
-    // Tell the collection page to refresh ONLY if the user actually added something.
+    // refresh the collection page only if something was added
     if (ctx && ctx.mutated && ctx.onChange) ctx.onChange();
   }
 
-  // ==========================================
-  // 2. GENERATE (initial + every Try Again reroll)
-  // ==========================================
   async function generate() {
     if (loading || !ctx) return;
     loading = true;
     setTryAgainBusy(true);
 
-    // Snapshot so a FAILED attempt leaves the screen untouched (toast + keep prev).
+    // snapshot so a failed attempt leaves the screen untouched
     const prev = movies.slice();
-    // Send EVERYTHING offered this modal session (not just the trio on screen): ids
-    // for the backend's hard filter, and titles so the AI itself avoids them. The
-    // list grows with every press, so a reroll never repeats an earlier movie.
+    // send everything offered this session: ids for the backend filter, titles for
+    // the AI to avoid. grows per press so a reroll never repeats.
     const offered = readOffered();
     const excludeIds = offered.map((o) => o.id);
     const excludeTitles = offered.map((o) => (o.year ? `${o.title} (${o.year})` : o.title));
@@ -149,7 +124,7 @@ window.EnhanceModal = (function () {
         }
       } else {
         movies = dedupeById(results);
-        addOffered(movies); // accumulate so future rerolls never repeat these
+        addOffered(movies);
         renderCards(movies);
       }
     } catch (err) {
@@ -166,7 +141,7 @@ window.EnhanceModal = (function () {
     }
   }
 
-  // Keep each TMDB id at most once, preserving order (mirrors ai.js).
+  // keep each id at most once, preserving order
   function dedupeById(list) {
     const seen = new Set();
     return (Array.isArray(list) ? list : []).filter((m) => {
@@ -177,11 +152,8 @@ window.EnhanceModal = (function () {
     });
   }
 
-  // ---- offered-movies accumulator (sessionStorage, per collection) -------------
-  // Every movie shown this session is remembered as { id, title, year } so each
-  // request can send the FULL list — ids (hard filter) + titles (prompt avoidance).
-  // That's what makes "Try Again" never repeat. Cleared when the modal is (re)opened,
-  // so it accumulates only "as long as you don't exit".
+  // per-collection sessionStorage list of every movie shown this session, so each
+  // request can send the full {id,title,year} set and "Try Again" never repeats
   function offeredKey() { return `mk:enhanceOffered:${ctx.id}`; }
   function readOffered() {
     try {
@@ -196,7 +168,7 @@ window.EnhanceModal = (function () {
         byId.set(m.id, { id: m.id, title: m.title || "", year: m.releaseYear || null });
       }
     });
-    // Cap so the array (and request body) can't grow without bound on long sessions.
+    // cap so the array/request body can't grow unbounded
     const capped = [...byId.values()].slice(-300);
     try { sessionStorage.setItem(offeredKey(), JSON.stringify(capped)); } catch (_) {}
   }
@@ -204,9 +176,8 @@ window.EnhanceModal = (function () {
     try { sessionStorage.removeItem(offeredKey()); } catch (_) {}
   }
 
-  // A SHORT, friendly message for a failed request — never the raw upstream error.
-  // The quota-exhausted 429 is told apart by the backend's error code so it shows
-  // its specific "out of daily actions" line, not the generic "AI is busy".
+  // friendly message for a failed request, never the raw upstream error.
+  // quota-exhausted is matched by error code (not status) for its specific line.
   function aiErrorMessage(err) {
     if (err && err.code === MovieAPI.AI_LIMIT_CODE) return err.message;
     switch (err && err.status) {
@@ -222,9 +193,6 @@ window.EnhanceModal = (function () {
     }
   }
 
-  // ==========================================
-  // 3. RENDERING
-  // ==========================================
   function renderSkeletons() {
     if (!cardsEl) return;
     cardsEl.innerHTML = Array.from({ length: 3 }, () => `
@@ -262,7 +230,7 @@ window.EnhanceModal = (function () {
         </div>`;
     }).join("");
 
-    // Staggered fade/rise reveal once the posters are in the DOM.
+    // staggered fade/rise reveal once posters are in the DOM
     setTimeout(() => {
       cardsEl.querySelectorAll(".enhance-card").forEach((card, i) => {
         setTimeout(() => card.classList.add("is-revealed"), i * 90);
@@ -270,12 +238,7 @@ window.EnhanceModal = (function () {
     }, REVEAL_DELAY_MS);
   }
 
-  // ==========================================
-  // 4. CARD ACTIONS
-  // ==========================================
-  // The poster's "i" badge → the movie's details page in a NEW tab, so the enhance
-  // modal (and the rest of this session's picks) stays put behind it. Same behaviour
-  // as the chopping carousel's "i" badge.
+  // open details in a new tab so the modal and this session's picks stay put
   function openDetails(movie) {
     if (!movie || movie.id == null) {
       if (window.toast) toast.info("No details available for this title.");
@@ -303,21 +266,16 @@ window.EnhanceModal = (function () {
     }
   }
 
-  // ==========================================
-  // 5. TRY AGAIN (unlimited; gated only by the daily AI quota)
-  // ==========================================
   function setupTryAgain() {
     tryAgainBtn.addEventListener("click", () => {
       if (loading) return;
-      // A reroll spends another AI action — stop here with the SAME "out of daily
-      // actions" toast the rest of the app uses, rather than firing a doomed request.
+      // a reroll spends an AI action, so stop with the quota toast if none left
       if (window.MovieAPI && MovieAPI.aiActionsRemaining() <= 0) {
         if (window.toast) toast.warn(MovieAPI.aiLimitReachedMessage());
         return;
       }
-      // Spin the arrows once per press (restart the CSS animation cleanly).
       tryAgainBtn.classList.remove("is-spinning");
-      void tryAgainBtn.offsetWidth; // reflow so the animation can replay
+      void tryAgainBtn.offsetWidth; // reflow so the spin can replay
       tryAgainBtn.classList.add("is-spinning");
       tryAgainBtn.addEventListener(
         "animationend",

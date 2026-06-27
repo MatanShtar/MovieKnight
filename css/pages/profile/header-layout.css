@@ -1,9 +1,3 @@
-/* profile/header-layout.css - profile grid/header layout + avatar & metadata.
-   First in the profile cascade. Loaded by profile.html. */
-
-/* ==========================================
-   1. PROFILE GRID & HEADER LAYOUT
-   ========================================== */
 .profile-main {
   padding: 72px 50px 100px 50px;
 }
@@ -27,9 +21,6 @@
   flex-direction: column;
 }
 
-/* ==========================================
-   2. AVATAR & PROFILE METADATA
-   ========================================== */
 .profile-avatar-container {
   flex: 2;
   display: flex;
@@ -149,17 +140,15 @@
   font-size: 40px;
   letter-spacing: 3%;
   font-weight: 300;
-  /* keep the line box reserved before JS hydrates the name */
+  /* reserve the line box before JS hydrates the name */
   min-height: 56px;
-  /* never overflow the viewport / collide with the badges column */
   min-width: 0;
   max-width: 100%;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-/* on laptop/desktop, bound the name to its column with a single-line ellipsis
-   so a long username can't bleed into the Progression Badges region */
+/* desktop: ellipsis so a long username can't bleed into the badges region */
 @media (min-width: 1441px) {
   .profile-username {
     white-space: nowrap;

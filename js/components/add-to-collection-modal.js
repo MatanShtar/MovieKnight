@@ -1,24 +1,16 @@
-// add-to-collection-modal.js — shared "Add to <Collection>" modal.
-//
-// Used by BOTH the collection page and the profile page: search movies and
-// toggle them in/out of one specific collection, overlaid on the current page.
-//
+// search movies and toggle them in/out of one collection
 //   AddToCollectionModal.open(collectionId, "Favorites", {
-//     initialMovieIds: [123, 456],   // pre-flag movies already in the list (optional)
-//     onChange: (action, movie, updatedCollection) => {},  // after add/remove
+//     initialMovieIds: [123, 456],
+//     onChange: (action, movie, updatedCollection) => {},
 //   });
-//
-// Each result: click the poster to ADD/REMOVE (toggles "+" ⇄ "✓"); the small
-// "i" button opens that movie's details page in a new tab (so the add session
-// isn't lost). Shows the top 12 matches so the grid stays full.
 window.AddToCollectionModal = (function () {
-  const MAX_RESULTS = 12; // a full grid (6×2 desktop, 4×3 tablet, 3×4 phone)
+  const MAX_RESULTS = 12;
   const PLACEHOLDER = "assets/images/poster-placeholder.svg";
   const esc = (s) => (window.escapeHtml ? window.escapeHtml(s) : String(s ?? ""));
 
   let overlay = null, titleEl = null, input = null, results = null, clearBtn = null;
   let debounce = null, seq = 0;
-  let ctx = null; // { id, name, inCollection:Set, onChange }
+  let ctx = null;
 
   function build() {
     overlay = document.createElement("div");
@@ -59,13 +51,12 @@ window.AddToCollectionModal = (function () {
     clearBtn.addEventListener("click", () => {
       input.value = "";
       toggleClear();
-      seq++; // invalidate any in-flight search so its late results don't land
+      seq++; // invalidate any in-flight search
       hint("Start typing to search for movies to add.");
       input.focus();
     });
   }
 
-  // Show the clear "×" only when the box has text to clear.
   function toggleClear() {
     if (clearBtn) clearBtn.hidden = !input.value;
   }
@@ -83,10 +74,8 @@ window.AddToCollectionModal = (function () {
     const s = ++seq;
     hint("Searching…");
     try {
-      // The search API serves 20 per page — one page is plenty to fill the
-      // 12-card grid (6×2 desktop / 4×3 tablet / 3×4 phone).
       const page1 = await MovieAPI.searchMovies({ q });
-      if (s !== seq) return; // a newer search superseded this one
+      if (s !== seq) return; // superseded by a newer search
       renderResults(page1.slice(0, MAX_RESULTS));
     } catch (err) {
       if (s === seq) hint(err.message || "Search failed.");
@@ -121,9 +110,9 @@ window.AddToCollectionModal = (function () {
         }
       });
       cell.querySelector(".am-info").addEventListener("click", (e) => {
-        e.stopPropagation(); // don't toggle add/remove — just open details
+        e.stopPropagation();
         try {
-          sessionStorage.setItem("mk:lastMovie", JSON.stringify(m)); // instant paint
+          sessionStorage.setItem("mk:lastMovie", JSON.stringify(m)); // instant paint on details page
         } catch (_) {}
         window.open("movie.html?id=" + encodeURIComponent(m.id), "_blank", "noopener");
       });
@@ -133,8 +122,6 @@ window.AddToCollectionModal = (function () {
   }
 
   function setCell(cell, added) {
-    // No "+" badge: the bare poster is the add affordance; a "✓" badge (shown via
-    // CSS on .is-added) marks the ones already in the list.
     cell.classList.toggle("is-added", added);
     cell.setAttribute("aria-pressed", String(added));
     cell.setAttribute("aria-label", `${added ? "Remove" : "Add"} ${cell.querySelector("img").alt}`);
@@ -155,7 +142,7 @@ window.AddToCollectionModal = (function () {
         else toast.warn(`Removed “${m.title}”.`);
       }
     } catch (err) {
-      setCell(cell, !adding); // revert on failure
+      setCell(cell, !adding); // revert
       if (window.toast) toast.error(err.message || "Something went wrong.");
     }
   }
@@ -176,17 +163,13 @@ window.AddToCollectionModal = (function () {
     document.body.classList.add("cm-no-scroll");
     setTimeout(() => input.focus(), 50);
 
-    // When the caller didn't hand us the current movie ids (e.g. the profile,
-    // whose cards only carry the cover posters), fetch them so already-added
-    // movies show a "✓" instead of a "+".
+    // no ids handed in (e.g. profile): fetch them so already-added movies show "✓"
     if (!opts.initialMovieIds && id) {
       try {
         const c = await MovieAPI.getCollection(id);
         (c.movies || []).forEach((mv) => ctx.inCollection.add(mv.id));
         if (overlay.classList.contains("is-open") && input.value.trim()) runSearch();
-      } catch (_) {
-        /* leave everything unflagged */
-      }
+      } catch (_) {}
     }
   }
 

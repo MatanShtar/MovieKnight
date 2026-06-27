@@ -1,14 +1,8 @@
-/* collection/toolbar.css — Collection Page owner bottom toolbar + error heading.
-   The Movie Picker + Enhance pair is a FIXED bar pinned to the viewport floor.
-   Each button is a full pill whose lower half is sunk below the floor, so only a
-   rounded top "peeks" up: it can't be scrolled past, a hover lift reveals more
-   button (never a gap), and because the bar is fixed it adds no page scroll. A
-   full-width upward fade behind it (feathered at the sides so it never meets the
-   rails in a hard line) reads as one continuous shadow. Load after grid.css. */
+/* collection/toolbar.css - owner bottom toolbar + error heading. Movie Picker +
+   Enhance are a FIXED bar; each button is a full pill whose lower half is sunk
+   below the floor, so only a rounded top peeks up. Load after grid.css. */
 
-/* ==========================================
-   4. BOTTOM TOOLBAR (owner): Movie Picker + Enhance
-   ========================================== */
+/* === BOTTOM TOOLBAR (owner): Movie Picker + Enhance === */
 .collection-toolbar {
   position: fixed;
   left: 0;
@@ -17,15 +11,14 @@
   z-index: 40;
   display: flex;
   align-items: flex-end;
-  justify-content: center; /* centre the pair over the content column */
+  justify-content: center;
   gap: clamp(10px, 3vw, 40px);
-  /* pad by the rail width so the buttons sit over the content column (the side
-     rails are equal width, so this keeps the pair centred on screen too) */
+  /* pad by the (equal) rail width to centre the pair over the content column */
   padding: clamp(60px, 8vw, 130px) var(--rail-width) 0;
   pointer-events: none; /* only the buttons take clicks; posters show through the fade */
 }
-/* the fade lives on a pseudo-element so it can span the FULL width yet feather its
-   left/right edges to nothing — that kills the hard vertical seam at the rails. */
+/* fade on a pseudo-element so it spans full width yet feathers its edges to
+   nothing, killing the hard vertical seam at the rails. */
 .collection-toolbar::before {
   content: "";
   position: absolute;
@@ -41,14 +34,13 @@
   mask: linear-gradient(to right, transparent 0, #000 12%, #000 88%, transparent 100%);
 }
 .toolbar-btn {
-  /* a full pill; its lower (--sink) is parked below the floor so only --peek shows.
-     padding-bottom = --sink re-centres the label inside the visible peek. */
+  /* lower --sink is parked below the floor so only --peek shows; padding-bottom
+     = --sink re-centres the label inside the visible peek. */
   --btn-h: clamp(108px, 12vw, 168px);
   --peek: clamp(52px, 6.4vw, 100px);
   --sink: calc(var(--btn-h) - var(--peek));
-  /* the two buttons are ALWAYS identical in size (flex:1 + min-width:0); the label
-     and icons scale to the button width (container units) so they shrink to fit
-     instead of one button growing wider than the other. */
+  /* both buttons stay identical (flex:1 + min-width:0); label + icons use
+     container units so they shrink to fit instead of one growing wider. */
   container-type: inline-size;
   position: relative; /* anchor for the edge-pinned icons */
   flex: 1 1 0;
@@ -57,12 +49,11 @@
   pointer-events: auto;
   display: inline-flex;
   align-items: center;
-  justify-content: center; /* label centres on its own — icons are positioned out of flow */
+  justify-content: center;
   height: var(--btn-h);
   padding-bottom: var(--sink);
   border: 0;
-  /* rounded top, but NOT a full pill — a full-pill corner curves in so far it
-     clips the edge icons; 0.32×height keeps the corner clear of them */
+  /* not a full pill: 0.32xheight keeps the corner clear of the edge icons */
   border-radius: calc(var(--btn-h) * 0.32);
   font-family: Impact, "Haettenschweiler", "Arial Narrow Bold", sans-serif;
   cursor: pointer;
@@ -72,15 +63,14 @@
     transform var(--t-fast) var(--ease-snap),
     filter var(--t-base) ease;
 }
-/* label scales with the button width so the longest one ("ENHANCE MY COLLECTION")
-   always fits the equal-width button — text just gets smaller on narrow screens */
+/* scales with the button width so "ENHANCE MY COLLECTION" always fits */
 .toolbar-label {
   font-size: clamp(8px, 5cqi, 33px);
   letter-spacing: clamp(0.3px, 0.7cqi, 3px);
   white-space: nowrap;
 }
 .toolbar-btn:hover {
-  /* rise 4px → 4px MORE of the (same-coloured) button shows, never a dark gap */
+  /* rise 4px so more of the same-coloured button shows, never a dark gap */
   transform: translateY(calc(var(--sink) - 4px));
   filter: brightness(1.08);
 }
@@ -96,15 +86,13 @@
   color: #000;
 }
 
-/* flanking glyphs — real SVG assets so the shapes match Figma exactly.
-   Picker: white-stroked clapperboard (reads on maroon). Enhance: black 4-point
-   sparkle (reads on gold). They're pinned to the button edges and vertically
-   centred inside the visible peek, so the label can never knock them off-centre. */
+/* flanking glyphs, pinned to the edges and centred inside the visible peek so the
+   label can't knock them off-centre. */
 .toolbar-clap,
 .toolbar-star {
   position: absolute;
   top: 0;
-  bottom: var(--sink); /* box spans the visible peek; margin auto centres within it */
+  bottom: var(--sink); /* box spans the peek; margin auto centres within it */
   margin-block: auto;
   object-fit: contain;
 }
@@ -123,7 +111,7 @@
   height: clamp(15px, 8.5cqi, 46px);
 }
 
-/* error state heading is danger-tinted to distinguish it from the benign empty state */
+/* danger-tinted to distinguish the error heading from the benign empty state */
 .collection-error h2 {
   color: rgb(var(--danger));
 }

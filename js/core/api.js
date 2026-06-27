@@ -1,24 +1,7 @@
-// api.js — the single place the frontend talks to the live backend.
-//
-// Everything that used to read from data/movies.json now goes through
-// window.MovieAPI instead. Load this file (defer) BEFORE the page script
-// that uses it, the same way toast.js exposes window.toast:
-//
-//   <script src="js/core/api.js" defer></script>
-//   <script src="js/pages/home/main.js" defer></script>
-//
-// The backend is expected to proxy TMDB. These functions normalise whatever
-// the backend returns into the shape the rest of the app already uses:
-//   { title, rating, popularity, releaseYear, posterPath }
-// so the page scripts need almost no other changes.
+// window.MovieAPI - the only place the frontend talks to the backend; load (defer) before page scripts that use it.
 
 window.MovieAPI = (function () {
-    // The backend base URL, chosen by where the client is being served from:
-    //   • localhost / 127.0.0.1 / file:// (local dev)  → the local dev server on
-    //     :3000, so un-deployed server changes (e.g. new endpoints) are visible
-    //     while developing — run `npm run dev` in server/ first.
-    //   • anything else (the deployed site)            → the deployed Render API.
-    // To force one, set localStorage "mk:apiBase" to a URL (cleared = auto).
+    // override via localStorage "mk:apiBase"
     const DEPLOYED_API = "https://movieknight-server-7d8h.onrender.com";
     const LOCAL_API = "http://localhost:3000";
     const API_BASE =
@@ -27,22 +10,12 @@ window.MovieAPI = (function () {
             ? LOCAL_API
             : DEPLOYED_API);
 
-    // All endpoints live under the /api prefix per the API contract
-    // (e.g. /api/movies/search, /api/movies/random).
     const API_PREFIX = "/api";
 
-    // The backend returns bare TMDB paths (poster_path / logo_path) like
-    // "/abc.jpg"; images must be prefixed with this CDN base + size to load.
+    // backend returns bare TMDB paths; prefix with CDN base + size to load
     const TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
-    // Backdrops are wider stills — pull them at a larger width than posters.
     const TMDB_BACKDROP_BASE = "https://image.tmdb.org/t/p/w1280";
 
-    // ==========================================
-    // 0. AUTH SESSION (token + cached user in localStorage)
-    // ==========================================
-    // The JWT returned by /api/auth/(login|signup) is stored here and sent as a
-    // Bearer token on every request. `currentUser` is the cached safe user object
-    // the shared shell (common.js) reads to toggle the logged-in UI.
     const TOKEN_KEY = "authToken";
     const USER_KEY = "currentUser";
 
@@ -63,20 +36,14 @@ window.MovieAPI = (function () {
     function clearSession() {
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
-        // Also drop the cached AI Picker results — they live in localStorage now
-        // (so they survive a reload), so logout must clear them rather than letting
-        // one user's picks linger for the next person on this browser.
+        // drop cached AI picks so they don't linger for the next user
         localStorage.removeItem("mk:aiResults");
     }
     function isLoggedIn() {
         return !!getToken();
     }
 
-    // Keep user-facing error text SHORT. The backend already sanitises (its central
-    // handler turns unexpected bugs into a generic "Server error" and never forwards
-    // a raw TMDB/Gemini body), so a clean, brief message passes through untouched.
-    // This is the hard guarantee the UI never shows a "full detail" wall of text: a
-    // long or multi-line message is swapped for a brief, status-based line instead.
+    // swap a long/multi-line message for a brief status-based line so the UI never shows a wall of text
     const SHORT_ERROR_MAX = 120;
     function shortError(raw, status) {
         const msg = typeof raw === "string" ? raw.trim() : "";
@@ -89,27 +56,18 @@ window.MovieAPI = (function () {
         return `Request failed (HTTP ${status}).`;
     }
 
-    // ==========================================
-    // 0c. SERVER-DOWN MAINTENANCE CURTAIN
-    // ==========================================
-    // When a request can't reach the backend at all (the fetch throws — server not
-    // running / offline), we drop a full-screen cinematic "We'll Be Back Soon"
-    // curtain (the same red-velvet stage as the Coming Soon page, styled in
-    // common.css) with a random movie-flavoured maintenance pun — mirroring how the
-    // 404 page randomises its one-liner. This replaces the old fleeting toast; it's a
-    // terminal state (no back button), since the app can't function without the
-    // server. Lives here (not common.js) so it also covers the login/signup pages,
-    // which load api.js but not the shared shell. Shown at most once per page.
+    // full-screen "server down" curtain when fetch can't reach the backend. lives here
+    // (not common.js) so it also covers login/signup, which skip the shared shell.
     const MAINT_QUOTES = [
-        "We'll be back. — our server took that line a little too literally.", // The Terminator
+        "We'll be back. — our server took that line a little too literally.",
         "Intermission! Grab some popcorn while we change the reel.",
-        "Houston, the server has a problem. We're working the checklist.", // Apollo 13
+        "Houston, the server has a problem. We're working the checklist.",
         "The projector jammed mid-reel. Our crew is splicing it back together.",
-        "The server's sleeping with the fishes. We're reviving it now.", // The Godfather
-        "Roads? Where we're going, we just need the server back online.", // Back to the Future
-        "Our server wandered off to the dark side. We're restoring balance.", // Star Wars
+        "The server's sleeping with the fishes. We're reviving it now.",
+        "Roads? Where we're going, we just need the server back online.",
+        "Our server wandered off to the dark side. We're restoring balance.",
         "Plot twist: the server needs a quick reboot. Stay tuned.",
-        "Frankly, my dear, the server's having a moment. Back shortly.", // Gone with the Wind
+        "Frankly, my dear, the server's having a moment. Back shortly.",
         "This is the part where our ops team saves the day. Hang tight.",
         "The show isn't over — we're just resetting the stage.",
     ];
@@ -123,7 +81,6 @@ window.MovieAPI = (function () {
         stage.setAttribute("role", "alertdialog");
         stage.setAttribute("aria-live", "assertive");
         stage.setAttribute("aria-label", "Service temporarily unavailable");
-        // Build the structure; the random pun goes in via textContent (no HTML).
         stage.innerHTML =
             '<div class="mk-maint-curtain mk-maint-curtain--left"></div>' +
             '<div class="mk-maint-curtain mk-maint-curtain--right"></div>' +
@@ -138,13 +95,7 @@ window.MovieAPI = (function () {
         document.body.appendChild(stage);
     }
 
-    // ==========================================
-    // 1. LOW-LEVEL REQUEST HELPER
-    // ==========================================
-    // One fetch wrapper so every call gets the same JSON parsing and error
-    // handling. `path` is relative to API_BASE, e.g. "/movies/search".
-    // Any non-2xx is treated as a failure; the backend's { error: "..." }
-    // body is surfaced (shortened via shortError) as the thrown message.
+    // single fetch wrapper; any non-2xx throws, backend { error } surfaced via shortError
     async function request(path, { params, body, headers, returnEnvelope, ...options } = {}) {
         const url = new URL(API_BASE + API_PREFIX + path);
         if (params) {
@@ -155,9 +106,6 @@ window.MovieAPI = (function () {
             });
         }
 
-        // Always accept JSON; attach the Bearer token when we have one (harmless
-        // on public routes, required on protected ones); serialise a JSON body
-        // and set Content-Type when one is supplied (POST/PUT/PATCH).
         const finalHeaders = { Accept: "application/json", ...(headers || {}) };
         const token = getToken();
         if (token) finalHeaders.Authorization = `Bearer ${token}`;
@@ -173,10 +121,7 @@ window.MovieAPI = (function () {
                 ...options,
             });
         } catch {
-            // Server down / CORS / offline — drop the full-screen "We'll Be Back
-            // Soon" maintenance curtain instead of a fleeting toast. Still throw so
-            // any in-flight caller stops its own loading state; the curtain covers
-            // the screen (and hides any toast) regardless.
+            // still throw so in-flight callers stop their own loading state
             try { showServerDownCurtain(); } catch (_) {}
             throw new Error("Can't reach the movie server. Is the backend running?");
         }
@@ -185,65 +130,48 @@ window.MovieAPI = (function () {
             let rawMessage = "";
             let rawCode = "";
             try {
-                // Named `errorBody` to avoid shadowing the request `body` param.
                 const errorBody = await res.json();
-                // contract error shape: { ok: false, error, code? }
                 if (errorBody && errorBody.error) rawMessage = String(errorBody.error);
                 if (errorBody && errorBody.code) rawCode = String(errorBody.code);
             } catch {
-                /* non-JSON error body — shortError falls back to a status line */
+                /* non-JSON body - shortError falls back to a status line */
             }
-            // Attach the HTTP status so callers can branch on it (e.g. a 404 from
-            // GET /collections/:id means "private or missing" → redirect to 404.html).
+            // expose status + code so callers can branch (e.g. 404 = private/missing,
+            // or tell a quota 429 apart from an upstream rate-limit 429)
             const err = new Error(shortError(rawMessage, res.status));
             err.status = res.status;
-            // …and the machine-readable code when present, so callers can tell apart
-            // same-status cases (e.g. a quota 429 vs an upstream rate-limit 429).
             if (rawCode) err.code = rawCode;
             throw err;
         }
 
         const json = await res.json();
-        // Success responses (2xx) always use the { ok: true, data } envelope — error
-        // statuses already threw above. Unwrap to the inner `data` for the normalisers;
-        // `returnEnvelope` keeps the whole object for the few endpoints with sibling
-        // fields beyond `data` (e.g. AI actions return `aiUsage`).
+        // unwrap the { ok, data } envelope; returnEnvelope keeps the whole object for
+        // endpoints with sibling fields (e.g. AI actions return aiUsage)
         if (!json.ok) {
             throw new Error(shortError(json.error, res.status));
         }
         return returnEnvelope ? json : json.data;
     }
 
-    // ==========================================
-    // 2. NORMALISERS
-    // ==========================================
-    // Accepts either the app's existing shape OR a raw TMDB movie and always
-    // returns the app's shape. This makes the frontend resilient to whether
-    // the backend pre-formats the data or just forwards TMDB.
+    // accepts the app's shape OR a raw TMDB movie, always returns the app's shape
     function normalizeMovie(m) {
         if (!m) return null;
 
-        // posterPath: use it as-is if already a URL/path; otherwise build one
-        // from TMDB's poster_path.
         let posterPath = m.posterPath;
         if (!posterPath && m.poster_path) {
             posterPath = TMDB_IMAGE_BASE + m.poster_path;
         }
 
-        // releaseYear: prefer an explicit year, else slice TMDB's release_date.
         let releaseYear = m.releaseYear;
         if (!releaseYear && m.release_date) {
             releaseYear = Number(String(m.release_date).slice(0, 4));
         }
 
-        // Genres — kept so the client can filter a fixed movie pool by genre (e.g.
-        // the Spin-the-Wheel picker). These arrive in different shapes depending on
-        // the source: TMDB list payloads use numeric `genre_ids`; the TMDB details
-        // shape uses `genres: [{ id, name }]`; and OUR backend's movie cache stores
-        // `genres: ["Action", "Drama"]` (plain name strings). Capture whichever of
-        // ids / names we can so a filter can match on either vocabulary.
+        // genres arrive 3 ways: TMDB lists use numeric genre_ids, details use
+        // [{id,name}], our cache stores name strings. capture ids and names so a
+        // filter can match on either.
         const genreIds = [];
-        const genres = []; // names (lower-cased downstream as needed)
+        const genres = [];
         const rawGenres = Array.isArray(m.genre_ids)
             ? m.genre_ids
             : Array.isArray(m.genreIds)
@@ -259,24 +187,20 @@ window.MovieAPI = (function () {
             } else if (typeof g === "number") {
                 genreIds.push(g);
             } else {
-                // A string: either a numeric id as text, or a genre name.
+                // a string: numeric id as text, or a genre name
                 const n = Number(g);
                 if (Number.isFinite(n) && String(g).trim() === String(n)) genreIds.push(n);
                 else genres.push(String(g));
             }
         });
 
-        // Provider ids — US flatrate (streaming) watch-provider ids. The backend
-        // embeds these (and genre_ids) on each collection item, hydrated from TMDB
-        // at add-time, so the wheel/chopping picker can filter a collection by
-        // streaming service. Items added before that change read as [] until re-added.
+        // US flatrate provider ids, so the wheel/chopping picker can filter by service
         let providerIds = [];
         if (Array.isArray(m.provider_ids)) providerIds = m.provider_ids;
         else if (Array.isArray(m.providerIds)) providerIds = m.providerIds;
         providerIds = providerIds.filter((x) => x != null).map(Number);
 
         return {
-            // id is kept so a movie card can link to its details page.
             id: m.id ?? null,
             title: m.title || m.name || "",
             rating: m.rating ?? m.vote_average ?? 0,
@@ -289,9 +213,6 @@ window.MovieAPI = (function () {
         };
     }
 
-    // The Movie Details page payload from GET /api/movies/:id. Builds full image
-    // URLs and a year, and passes through the richer fields (overview, genres,
-    // director, cast, trailer) the details screen renders.
     function normalizeDetails(d) {
         if (!d) return null;
         let posterPath = d.posterPath;
@@ -319,7 +240,7 @@ window.MovieAPI = (function () {
         };
     }
 
-    // The backend may answer with either a bare array or { movies: [...] }.
+    // backend may answer with a bare array or { movies: [...] }
     function extractList(data, key) {
         if (Array.isArray(data)) return data;
         if (data && Array.isArray(data[key])) return data[key];
@@ -327,25 +248,8 @@ window.MovieAPI = (function () {
         return [];
     }
 
-    // ==========================================
-    // 3. PUBLIC API
-    // ==========================================
-
-    // The home grid's single source of truth: text search + filters + sort all
-    // go through GET /api/movies/search. Accepts a query object built from the UI
-    // state; a bare string is still accepted as just the text query.
-    //
-    //   params = {
-    //     q:         "dune",        // text query        -> q
-    //     genres:    [28, 12],      // genre ids         -> genre (comma)
-    //     yearFrom:  2000,          // -> yearFrom
-    //     yearTo:    2024,          // -> yearTo
-    //     minRating: 7,             // 0-10              -> minRating
-    //     sort:      "rating_desc", // semantic sort intent -> sortBy (canonical)
-    //     page:      2,             // -> page
-    //     providers: [8, 9],        // TMDB provider ids -> providers (comma)
-    //     certification: "PG-13",   // TMDB age rating   -> certification
-    //   }
+    // home grid: text search + filters + sort all go through /movies/search.
+    // a bare string is treated as just the text query.
     async function searchMovies(params = {}) {
         if (typeof params === "string") params = { q: params };
         const {
@@ -360,29 +264,21 @@ window.MovieAPI = (function () {
         if (yearFrom) qp.yearFrom = yearFrom;
         if (yearTo) qp.yearTo = yearTo;
         if (minRating) qp.minRating = minRating;
-        // The backend's canonical sort param is `sortBy` (a semantic intent name
-        // like "popularity"/"trending" — NOT a TMDB sort string; the server owns
-        // the mapping). It still accepts legacy `sort`, but `sortBy` is what we send.
+        // sortBy is a semantic intent name, NOT a TMDB sort string; server owns the mapping
         if (sort) qp.sortBy = sort;
         if (page) qp.page = page;
-        // Person filtering: cast for actors, crew for everyone else.
         if (with_cast) qp.with_cast = with_cast;
         if (with_crew) qp.with_crew = with_crew;
-        // Streaming-provider filter: comma-separated numeric TMDB provider ids
-        // (OR semantics, e.g. providers=8,9). Same vocabulary the wheel uses.
         if (Array.isArray(providers) && providers.length) {
             const pids = providers.map(Number).filter(Number.isFinite);
             if (pids.length) qp.providers = pids.join(",");
         }
-        // Age-rating filter: a single TMDB certification (e.g. "PG-13", "R").
-        // TMDB ignores `certification` unless a country is given too, so always
-        // pair it with the US certification system the values come from.
+        // TMDB ignores certification without a country, so pair it with US
         if (certification) {
             qp.certification = certification;
             qp.certification_country = "US";
         }
-        // Default-feed quality guards (vote count floor + language); only the
-        // empty-query feed sets these, so a real text search stays unrestricted.
+        // default-feed quality guards; only the empty-query feed sets these
         if (minVotes) qp.minVotes = minVotes;
         if (language) qp.language = language;
 
@@ -390,14 +286,11 @@ window.MovieAPI = (function () {
         return extractList(data, "movies").map(normalizeMovie).filter(Boolean);
     }
 
-    // Full details for one movie (GET /api/movies/:id) for the details page.
     async function getMovieDetails(id) {
         const data = await request(`/movies/${encodeURIComponent(id)}`);
         return normalizeDetails(data);
     }
 
-    // People autocomplete for the Actor / Director filter. Returns
-    // { id, name, department } where department is TMDB's known_for_department.
     function normalizePerson(p) {
         if (!p) return null;
         const id = p.id ?? p.person_id ?? null;
@@ -415,20 +308,13 @@ window.MovieAPI = (function () {
         return extractList(data, "people").map(normalizePerson).filter(Boolean);
     }
 
-    // The "most popular" people used to seed the actor/director dropdowns before
-    // the user types (the dropdown then live-searches via searchPeople()).
+    // seeds the actor/director dropdowns before the user types
     async function getPopularPeople() {
         const data = await request("/people/popular");
         return extractList(data, "people").map(normalizePerson).filter(Boolean);
     }
 
-    // A single random movie, used by the home "Surprise Me" button. The SERVER owns
-    // the randomization now — it returns a random title from a random page of the
-    // popular, well-voted feed. Optional `pages` caps how many pages to randomize
-    // from; omitted for now (server uses its default), later derived from a user
-    // setting (movies-to-randomize-from ÷ 20). The backend may answer with a bare
-    // movie object, { movie: {...} }, or a one-item list — all are accepted and
-    // normalised to the app's movie shape.
+    // server owns the randomization; backend may answer with a bare movie, { movie }, or a one-item list
     async function getRandomMovie(pages) {
         const data = await request("/movies/random", { params: { pages } });
         const list = extractList(data, "movies");
@@ -436,7 +322,6 @@ window.MovieAPI = (function () {
         return normalizeMovie(raw);
     }
 
-    // Genres as { id, name }. The id is needed to filter movies by genre.
     async function getGenres() {
         const data = await request("/genres");
         const list = extractList(data, "genres");
@@ -449,8 +334,6 @@ window.MovieAPI = (function () {
             .filter((g) => g.name);
     }
 
-    // Watch providers as { id, name, logo }. The id (TMDB provider_id) is
-    // needed to filter movies by streaming provider.
     async function getProviders() {
         const data = await request("/providers");
         const list = extractList(data, "providers");
@@ -461,7 +344,6 @@ window.MovieAPI = (function () {
                     : {
                           id: p.id ?? p.provider_id ?? null,
                           name: p.name || p.provider_name || "",
-                          // logo_path is the bare TMDB path; prefix it for display.
                           logo:
                               p.logo ||
                               (p.logo_path ? TMDB_IMAGE_BASE + p.logo_path : ""),
@@ -470,12 +352,6 @@ window.MovieAPI = (function () {
             .filter((p) => p.name);
     }
 
-    // ==========================================
-    // 4. AUTH (signup / login / me / logout)
-    // ==========================================
-    // signup/login store the returned token + user and resolve with the user.
-    // On failure they throw with the server's message (e.g. "An account with that
-    // email already exists", "Invalid credentials") for the form to display.
     async function signup({ name, email, username, password, dateOfBirth }) {
         const data = await request("/auth/signup", {
             method: "POST",
@@ -494,8 +370,6 @@ window.MovieAPI = (function () {
         return data.user;
     }
 
-    // Re-fetch the current user from the stored token (refreshes the cached copy).
-    // Resolves null if there's no/invalid token.
     async function me() {
         const data = await request("/auth/me");
         if (data && data.user) setSession(null, data.user);
@@ -506,27 +380,19 @@ window.MovieAPI = (function () {
         clearSession();
     }
 
-    // Update the signed-in user's own profile (e.g. bio). Persists via
-    // PATCH /api/users/me and refreshes the cached user. Throws on failure.
     async function updateProfile(fields) {
         const data = await request("/users/me", { method: "PATCH", body: fields });
         if (data && data.user) setSession(null, data.user);
         return data ? data.user : null;
     }
 
-    // ==========================================
-    // 5. COLLECTIONS (CRUD + add/remove movie)
-    // ==========================================
-    // Backend stores BARE TMDB poster paths (e.g. "/abc.jpg"); the cover collage and
-    // grid need full URLs. A custom cover (posterUrl) or an already-absolute/data URL
-    // is passed through untouched.
+    // backend stores BARE TMDB paths; absolute/data URLs pass through untouched
     function toPosterUrl(path) {
         if (!path) return "";
         if (/^(https?:)?\/\//i.test(path) || /^data:/i.test(path)) return path;
         return TMDB_IMAGE_BASE + path;
     }
-    // Backdrops for cover tiles are small — pull a lighter width than the full
-    // movie-page backdrop (w1280) since these render at thumbnail size.
+    // lighter width for thumbnail-size cover backdrops
     const TMDB_COVER_BACKDROP_BASE = "https://image.tmdb.org/t/p/w780";
     function toCoverBackdropUrl(path) {
         if (!path) return "";
@@ -534,8 +400,6 @@ window.MovieAPI = (function () {
         return TMDB_COVER_BACKDROP_BASE + path;
     }
 
-    // A collection "card" (profile grid): identity + visibility + up to 4 cover
-    // posters (as full URLs) + counts. Likes/saves are deferred (always 0).
     function normalizeCollectionCard(c) {
         if (!c) return null;
         return {
@@ -546,9 +410,7 @@ window.MovieAPI = (function () {
             posterUrl: c.posterUrl ? toPosterUrl(c.posterUrl) : null,
             sort: c.sort || "added_desc",
             movieCount: c.movieCount || 0,
-            // First ≤4 movies, each with BOTH image URLs so the cover generator can
-            // pick poster or backdrop per layout/viewport (see buildCollectionCover).
-            // This is the sole source for the cover — the backend always returns it.
+            // both image URLs per cover so buildCollectionCover can pick poster or backdrop per layout
             covers: (c.covers || []).map((x) => ({
                 poster: toPosterUrl(x && x.poster),
                 backdrop: toCoverBackdropUrl(x && x.backdrop),
@@ -560,8 +422,7 @@ window.MovieAPI = (function () {
         };
     }
 
-    // The full collection-page payload: the card meta + the joined movie objects
-    // (each normalised to the app shape, keeping addedAt/sortOrder for client sorts).
+    // card meta + joined movies, each keeping addedAt/sortOrder for client sorts
     function normalizeCollectionFull(c) {
         if (!c) return null;
         return {
@@ -588,22 +449,19 @@ window.MovieAPI = (function () {
         };
     }
 
-    // GET /api/collections — the signed-in user's own collections (profile grid).
     async function listCollections() {
         const data = await request("/collections");
         const list = Array.isArray(data) ? data : extractList(data, "collections");
         return list.map(normalizeCollectionCard).filter(Boolean);
     }
 
-    // GET /api/collections/:id — one collection + its movies. Works for a guest on a
-    // PUBLIC collection (visitor mode). A 404 (missing OR private-and-not-yours) is
-    // thrown with err.status === 404 so the page can redirect to 404.html.
+    // 404 (missing OR private-and-not-yours) throws err.status === 404 for the page to redirect
     async function getCollection(id) {
         const data = await request(`/collections/${encodeURIComponent(id)}`);
         return normalizeCollectionFull(data);
     }
 
-    // POST /api/collections — create a list. With no name the server auto-names it.
+    // with no name the server auto-names it
     async function createCollection(name) {
         const data = await request("/collections", {
             method: "POST",
@@ -612,7 +470,6 @@ window.MovieAPI = (function () {
         return normalizeCollectionCard(data);
     }
 
-    // PATCH /api/collections/:id — rename and/or publish-toggle. Owner only.
     async function updateCollection(id, fields) {
         const data = await request(`/collections/${encodeURIComponent(id)}`, {
             method: "PATCH",
@@ -621,13 +478,12 @@ window.MovieAPI = (function () {
         return normalizeCollectionCard(data);
     }
 
-    // DELETE /api/collections/:id — owner only; defaults are undeletable (400).
+    // defaults are undeletable (400)
     async function deleteCollection(id) {
         return request(`/collections/${encodeURIComponent(id)}`, { method: "DELETE" });
     }
 
-    // POST /api/collections/:id/movies — add a movie (idempotent). Returns the full
-    // collection so the caller can repaint the grid + count.
+    // idempotent add; returns the full collection
     async function addMovieToCollection(id, tmdbId) {
         const data = await request(`/collections/${encodeURIComponent(id)}/movies`, {
             method: "POST",
@@ -636,8 +492,6 @@ window.MovieAPI = (function () {
         return normalizeCollectionFull(data);
     }
 
-    // DELETE /api/collections/:id/movies/:tmdbId — remove a movie. Returns the full
-    // collection.
     async function removeMovieFromCollection(id, tmdbId) {
         const data = await request(
             `/collections/${encodeURIComponent(id)}/movies/${encodeURIComponent(tmdbId)}`,
@@ -646,10 +500,8 @@ window.MovieAPI = (function () {
         return normalizeCollectionFull(data);
     }
 
-    // ---- Library (default lists) for the heart / eye buttons --------------------
-    // The user's Favorites / Already Watched / Watchlist with their member tmdb-id
-    // Sets, fetched ONCE (?isDefault=true) and cached. The Sets are live — toggling
-    // a movie mutates them in place so every card stays in sync without a refetch.
+    // Favorites / Already Watched / Watchlist with member tmdb-id Sets, fetched once
+    // and cached. the Sets are live - toggling mutates them in place so cards stay in sync.
     let _library = null;
     async function getLibrary({ refresh = false } = {}) {
         if (refresh) _library = null;
@@ -673,16 +525,7 @@ window.MovieAPI = (function () {
         return _library;
     }
 
-    // ==========================================
-    // 7. AI (Gemini-backed picker + search)
-    // ==========================================
-    // Both go through the standard envelope: request() returns the inner `data`
-    // on success and throws an Error (with err.status set) on { ok:false } / a
-    // non-2xx, so callers can branch on 400/404/502/504 for tailored toasts.
-
-    // Coerce a list of TMDB ids (movies, numbers, strings) into a clean array of
-    // unique integers for the AI `exclude_ids` soft filter. Drops anything
-    // non-numeric so the backend always receives integers (not strings/objects).
+    // coerce mixed ids (movies/numbers/strings) into unique ints for the AI exclude_ids filter
     function toExcludeIds(ids) {
         if (!Array.isArray(ids)) return [];
         const out = [];
@@ -697,20 +540,13 @@ window.MovieAPI = (function () {
         return out;
     }
 
-    // POST /api/ai/picker — "Let AI Choose". Body { collectionId, prompt, count,
-    // exclude_ids? }. `exclude_ids` is a soft "don't repeat these" filter for a
-    // reroll (an array of integer TMDB ids); the backend may still reuse some if
-    // it would otherwise return fewer than 3, so callers must still dedupe.
-    // `data` is [{ id, title, poster_path, reason... }]: TMDB-shaped movies with an
-    // extra AI `reason`. Normalise to the app's movie shape but preserve `reason`.
+    // exclude_ids is a SOFT reroll filter; backend may still reuse some to reach 3, so callers dedupe
     async function aiPicker({ collectionId, prompt, count, exclude_ids } = {}) {
         const body = { collectionId, prompt, count };
         const exclude = toExcludeIds(exclude_ids);
         if (exclude.length) body.exclude_ids = exclude;
         try {
-            // returnEnvelope: read the `aiUsage` the endpoint already sends back (the
-            // action it just spent) and update the badge from it — no separate
-            // /ai/usage round-trip.
+            // returnEnvelope to read aiUsage for the badge, no separate round-trip
             const env = await request("/ai/picker", { method: "POST", body, returnEnvelope: true });
             if (env) cacheAiUsage(env.aiUsage);
             return extractList(env && env.data, "movies")
@@ -720,42 +556,29 @@ window.MovieAPI = (function () {
                 })
                 .filter(Boolean);
         } catch (err) {
-            // A 429 body carries no usage (it threw before spending), so on the rare
-            // cache desync that lets one through, fetch the authoritative count.
+            // a 429 body carries no usage, so resync the authoritative count
             if (err && err.status === 429) refreshAiUsage();
             throw err;
         }
     }
 
-    // POST /api/ai/search — natural-language search. Body { query, exclude_ids? }.
-    // `exclude_ids` is the same soft reroll filter as aiPicker (integer TMDB ids).
-    // `data` is an array of standard TMDB movie objects → normalise to the app's
-    // movie shape so the existing card UI can render them unchanged.
     async function aiSearch(query, { exclude_ids } = {}) {
         const body = { query };
         const exclude = toExcludeIds(exclude_ids);
         if (exclude.length) body.exclude_ids = exclude;
         try {
-            // returnEnvelope: read the `aiUsage` the endpoint already sends back and
-            // update the badge from it — no separate /ai/usage round-trip.
             const env = await request("/ai/search", { method: "POST", body, returnEnvelope: true });
             if (env) cacheAiUsage(env.aiUsage);
             return extractList(env && env.data, "movies").map(normalizeMovie).filter(Boolean);
         } catch (err) {
-            // A 429 body carries no usage (it threw before spending), so on the rare
-            // cache desync that lets one through, fetch the authoritative count.
+            // a 429 body carries no usage, so resync the authoritative count
             if (err && err.status === 429) refreshAiUsage();
             throw err;
         }
     }
 
-    // POST /api/ai/enhance/:id — "Enhance Collection". Recommends up to 3 movies
-    // NOT already in the collection that fit its taste, each with an AI `reason`.
-    // For a "Try Again" reroll the caller passes everything shown so far:
-    //   • exclude_ids    — integer TMDB ids, the HARD filter (never returned again).
-    //   • exclude_titles — the titles, fed into the prompt so the model itself avoids
-    //     them (Gemini deals in titles, not ids, so this is what truly stops repeats).
-    // `data` is TMDB-shaped movies + `reason`; normalise but keep `reason`.
+    // reroll passes both: exclude_ids (HARD, never returned) and exclude_titles (fed
+    // into the prompt; the model deals in titles, so this is what truly stops repeats)
     async function aiEnhance(collectionId, { exclude_ids, exclude_titles } = {}) {
         const body = {};
         const exclude = toExcludeIds(exclude_ids);
@@ -765,8 +588,6 @@ window.MovieAPI = (function () {
             if (titles.length) body.exclude_titles = titles;
         }
         try {
-            // returnEnvelope: read the `aiUsage` the endpoint already sends back (the
-            // action it just spent) and update the badge from it — no extra round-trip.
             const env = await request(`/ai/enhance/${encodeURIComponent(collectionId)}`, {
                 method: "POST", body, returnEnvelope: true,
             });
@@ -778,35 +599,25 @@ window.MovieAPI = (function () {
                 })
                 .filter(Boolean);
         } catch (err) {
-            // A 429 body carries no usage (it threw before spending), so on the rare
-            // cache desync that lets one through, fetch the authoritative count.
+            // a 429 body carries no usage, so resync the authoritative count
             if (err && err.status === 429) refreshAiUsage();
             throw err;
         }
     }
 
-    // ---- AI daily quota ---------------------------------------------------------
-    // The header menu shows "AI Actions: N of LIMIT left". The BACKEND owns the limit
-    // (services/aiQuota.js → DAILY_AI_LIMIT) and is the real guard (it 429s the
-    // over-limit request); the client never hard-codes the number — it reads both the
-    // count and the limit from the `aiUsage` payload the backend delivers (carried on
-    // the cached currentUser via login/signup/me, refreshed from /ai/usage). So
-    // changing the limit server-side updates everything here with no client change.
+    // backend owns the AI daily limit and is the real guard; client reads count + limit
+    // from aiUsage and never hard-codes the number.
 
-    // Error code the backend sends with the quota-exhausted 429 (services/aiQuota.js)
-    // so the UI can tell it apart from an upstream rate-limit 429 of the same status.
+    // code on the quota-exhausted 429 so the UI tells it apart from an upstream rate-limit 429
     const AI_LIMIT_CODE = "AI_LIMIT_REACHED";
 
-    // The cached usage object { used, remaining, limit }, or null if we've never seen
-    // one (logged out, or a session cached before this feature shipped).
     function aiUsage() {
         const user = getCurrentUser();
         const u = user && user.aiUsage;
         return u && typeof u === "object" ? u : null;
     }
 
-    // Store the latest usage on the cached currentUser and notify the shell so the
-    // header badge updates live (common.js listens for "mk:ai-usage").
+    // cache usage on currentUser + fire mk:ai-usage so common.js updates the badge live
     function cacheAiUsage(usage) {
         if (!usage || typeof usage !== "object") return usage;
         const user = getCurrentUser();
@@ -816,27 +627,24 @@ window.MovieAPI = (function () {
         }
         try {
             window.dispatchEvent(new CustomEvent("mk:ai-usage", { detail: usage }));
-        } catch (_) { /* CustomEvent unsupported — badge just won't live-update */ }
+        } catch (_) { /* CustomEvent unsupported - badge just won't live-update */ }
         return usage;
     }
 
-    // Actions left today from the CACHED user (no network). Unknown → Infinity so we
-    // never wrongly block before the first refresh — the backend 429 is the real stop.
+    // from the cached user, no network. unknown -> Infinity so we never block before
+    // the first refresh; the backend 429 is the real stop.
     function aiActionsRemaining() {
         const u = aiUsage();
         return u && Number.isFinite(u.remaining) ? u.remaining : Infinity;
     }
 
-    // The daily limit as reported by the backend, or null until we've seen a usage
-    // payload. Callers that display it must tolerate null (show no number).
+    // null until we've seen a usage payload; callers must tolerate null
     function aiActionsLimit() {
         const u = aiUsage();
         return u && Number.isFinite(u.limit) ? u.limit : null;
     }
 
-    // The single, shared "you're out of actions" message for the instant client-side
-    // pre-check. Mirrors the backend's 429 wording; folds in the backend-provided
-    // limit when known so the number is never hard-coded.
+    // shared "out of actions" message for the client-side pre-check; mirrors the 429 wording
     function aiLimitReachedMessage() {
         const limit = aiActionsLimit();
         return limit
@@ -844,44 +652,29 @@ window.MovieAPI = (function () {
             : "You've used all your daily AI actions. They reset at midnight Pacific time.";
     }
 
-    // GET /api/ai/usage → { used, remaining, limit }. Refreshes the cache + badge.
-    // Resolves null when logged out. Throws are the caller's to ignore (badge stale).
+    // resolves null when logged out
     async function getAiUsage() {
         if (!isLoggedIn()) return null;
         const data = await request("/ai/usage");
         return cacheAiUsage(data);
     }
 
-    // Fire-and-forget badge resync (used after an AI action); never rejects.
+    // fire-and-forget badge resync; never rejects
     function refreshAiUsage() {
         getAiUsage().catch(() => {});
     }
 
-    // (AI Picker session persistence was removed — the picker results page now caches
-    // its picks in localStorage instead of a server-side session.)
+    // wheel is an ordered array of strings (titles / free-form entries), server-backed per collection
 
-    // ==========================================
-    // 8. SPIN-THE-WHEEL PERSISTENCE (per collection, server-backed)
-    // ==========================================
-    // The wheel for a collection is stored on the server as an ordered array of
-    // strings (movie titles / free-form entries). Both calls require auth (the
-    // Bearer token request() already attaches). request() unwraps the { ok, data }
-    // envelope and throws an Error with .status set, so callers branch on 401/404/5xx.
-
-    // Pull the array of strings out of whichever key the server used (GET returns
-    // `wheelConfig`; PUT returns the normalised list as `wheelConfig`/`saved`).
+    // server uses wheelConfig (GET) or wheelConfig/saved (PUT)
     function extractWheel(data) {
         const list = data && (data.wheelConfig || data.saved);
         return Array.isArray(list) ? list.filter((s) => typeof s === "string") : [];
     }
 
-    // GET /api/collections/:id/wheel/filters — the distinct genre + provider TMDB
-    // ids that ACTUALLY appear across this collection's movies, so the wheel's filter
-    // menu can offer (and highlight) only what matches something. Envelope uses `ok`
-    // (request() unwraps it); data is
-    // { availableGenres: number[], availableProviders: number[] }. Provider ids are
-    // US-flatrate only, so a collection of non-streaming titles legitimately returns
-    // availableProviders: []. Always resolves clean integer arrays.
+    // distinct genre + provider ids that actually appear in this collection, so the
+    // filter menu offers only matching options. providers are US-flatrate only, so a
+    // non-streaming collection legitimately returns availableProviders: [].
     async function getWheelFilters(collectionId) {
         const data = await request(`/collections/${encodeURIComponent(collectionId)}/wheel/filters`);
         const toIds = (arr) =>
@@ -892,17 +685,14 @@ window.MovieAPI = (function () {
         };
     }
 
-    // GET /api/collections/:id/wheel — the saved wheel (or [] if never saved).
-    // Owner sees theirs; a PUBLIC collection's wheel is readable by any logged-in
-    // user; a PRIVATE collection you don't own throws err.status === 404.
+    // [] if never saved; a private wheel you don't own throws err.status === 404
     async function getWheel(collectionId) {
         const data = await request(`/collections/${encodeURIComponent(collectionId)}/wheel`);
         return extractWheel(data);
     }
 
-    // PUT /api/collections/:id/wheel — save/overwrite the wheel (owner only; a
-    // non-owner gets 404). Sends a cleaned list (trim, drop blanks, cap at 100) to
-    // match the server's own coercion, and returns the server's normalised array.
+    // owner only (non-owner gets 404). cleans the list (trim, drop blanks, cap 100) to
+    // match the server's own coercion.
     async function saveWheel(collectionId, wheelConfig) {
         const clean = (Array.isArray(wheelConfig) ? wheelConfig : [])
             .map((s) => String(s).trim())
@@ -935,7 +725,6 @@ window.MovieAPI = (function () {
         getRandomMovie,
         getGenres,
         getProviders,
-        // auth
         signup,
         login,
         me,
@@ -943,7 +732,6 @@ window.MovieAPI = (function () {
         updateProfile,
         isLoggedIn,
         getCurrentUser,
-        // collections
         listCollections,
         getCollection,
         createCollection,

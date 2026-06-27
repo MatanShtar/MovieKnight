@@ -1,16 +1,7 @@
-/* profile/collections.css - the collections grid: cards, covers, the 3-dots
-   context menu, the empty state, and loading skeletons. Loaded by profile.html
-   after badges.css. */
-
-/* ==========================================
-   5. COLLECTIONS CARDS
-   ========================================== */
 .collections-row {
   padding-top: 24px;
   display: grid;
-  /* Cards target 253px (Figma) but the track is capped at ~half the row so there
-     are ALWAYS at least 2 columns — a single 253px portrait card can never take a
-     whole row at any width above the phone breakpoint (where it goes 1-up + wide). */
+  /* track capped at ~half the row so there are always >=2 columns above the phone breakpoint */
   grid-template-columns: repeat(auto-fill, minmax(min(253px, calc(50% - 31px)), 1fr));
   column-gap: 61px;
   row-gap: 20px;
@@ -27,15 +18,13 @@
 }
 
 .collection-card:hover {
-  /* lift only — a hover SCALE rasterises the empty cover's CSS-painted "+" and
-     blurs it; poster covers still get their own zoom via the rules below */
+  /* lift only; scale would blur the empty cover's painted "+". poster covers zoom via rules below */
   transform: translateY(-3px);
 }
 
 .collection-name {
   text-align: center;
   margin-bottom: 8px;
-  /* single-line ellipsis so a long name never wraps and de-aligns the row */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -43,7 +32,6 @@
   transition: color var(--t-base) ease;
 }
 
-/* on hover, tint the name with the card's accent (--card-accent is set per card in profile.js) */
 .collection-card:hover .collection-name {
   color: var(--card-accent, rgb(var(--pink)));
 }
@@ -51,10 +39,8 @@
 .collection-poster-container {
   position: relative;
   overflow: hidden;
-  /* accent frame (gold for default / rose for custom) — --card-accent is set
-     inline on the .collection-card and inherits down to here */
   border: 2px solid var(--card-accent, rgb(var(--rose)));
-  border-radius: 2px; /* near-square corners (Figma), not a rounded card */
+  border-radius: 2px;
   transition: box-shadow var(--t-base) var(--ease-snap);
 }
 
@@ -62,7 +48,6 @@
   box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
 }
 
-/* keyboard focus ring on the navigable card */
 .collection-card:focus-visible {
   outline: 2px solid var(--card-accent, rgb(var(--pink)));
   outline-offset: 4px;
@@ -83,7 +68,6 @@
 }
 
 
-/* inline rename editor on a card's name */
 .collection-name-input {
   width: 100%;
   text-align: center;
@@ -120,7 +104,7 @@
     opacity var(--t-fast) ease;
 }
 
-/* keep the 18px visual chip but extend the clickable region to >=44px (Fitts/WCAG 2.5.5) */
+/* extend the clickable region to >=44px (WCAG 2.5.5) without growing the chip */
 .collection-menu-button::before {
   content: "";
   position: absolute;
@@ -143,7 +127,6 @@
   height: 20px;
   vertical-align: middle;
   background-color: currentColor;
-  /* the paint = inherited color */
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
@@ -158,7 +141,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 4px;
-  margin-top: auto; /* pin the stats row to the card bottom for cross-card alignment */
+  margin-top: auto; /* pin to card bottom for cross-card alignment */
   min-height: 24px;
   font-size: 16px;
   font-weight: 500;
@@ -180,9 +163,7 @@
   gap: 4px;
 }
 
-/* ==========================================
-   6. COLLECTION CONTEXT MENU
-   ========================================== */
+/* context menu */
 .collection-menu-button--active {
   opacity: 1;
 }
@@ -227,7 +208,6 @@
   transition: background-color 0.15s ease;
 }
 
-/* 1px hairline divider between every item (Figma #6a6a6a) */
 .collection-menu-item + .collection-menu-item {
   border-top: 1px solid #6a6a6a;
 }
@@ -252,8 +232,7 @@
   flex-shrink: 0;
 }
 
-/* footnote shown only for default collections (built in renderMenu), explaining
-   why Rename + Delete are missing - an italic system note under a divider */
+/* footnote on default collections explaining the missing Rename/Delete */
 .collection-menu-note {
   margin-top: 4px;
   padding: 8px 20px 2px;
@@ -264,12 +243,7 @@
   white-space: nowrap;
 }
 
-/* ==========================================
-   6b. EMPTY STATE (0 collections)
-   ========================================== */
-/* First-run empty state injected into .collections-row when the user has no
-   collections — spans the full grid so it isn't a lone column, and replaces the
-   old reserved dead band (the row no longer has a min-height). */
+/* empty state, spans the full grid so it isn't a lone column */
 .collections-empty {
   grid-column: 1 / -1;
   display: flex;
@@ -320,9 +294,6 @@
   outline-offset: 2px;
 }
 
-/* ==========================================
-   7. LOADING SKELETONS & ANIMATIONS
-   ========================================== */
 @keyframes collectionEnter {
   from {
     opacity: 0;
@@ -363,13 +334,12 @@
   animation-delay: 0.35s;
 }
 
-/* skeleton placeholders shown while collections load */
 .collection-card--skeleton {
   cursor: default;
   pointer-events: none;
 }
 
-/* @keyframes shimmer lives in common.css (shared with the home movie grid) */
+/* @keyframes shimmer lives in common.css */
 .skeleton {
   background: linear-gradient(
     90deg,

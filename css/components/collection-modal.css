@@ -1,17 +1,10 @@
-/* collection-modal.css — reusable "Add to Collection" modal.
-   Built/owned by js/collection-modal.js. Every measurement is taken straight
-   from the Figma frame "Add to Collection - from movie page" (211:905), whose
-   panel is 1468x829. The panel is a container, and all of its inner geometry is
-   expressed in `--u` units where 1u == 1 Figma px, so the whole modal scales
-   proportionally (pixel-exact at full size, fluid below it). */
+/* reusable "Add to Collection" modal. inner geometry is in `--u` units where
+   1u == 1 Figma px so the whole modal scales proportionally. */
 
 .cm-no-scroll {
   overflow: hidden;
 }
 
-/* ---- Overlay ----
-   The Figma frame blurs the page behind the modal (LAYER_BLUR 60) rather than
-   blacking it out, so the dim is light and the work is done by backdrop-filter. */
 .cm-overlay {
   position: fixed;
   inset: 0;
@@ -20,8 +13,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  /* Figma only blurs the page behind the modal — no dark dim — so keep this
-     barely-there and let backdrop-filter do the work. */
+  /* barely-there dim, the blur does the work */
   background: rgba(0, 0, 0, 0.04);
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
@@ -36,24 +28,17 @@
   visibility: visible;
 }
 
-/* ---- Panel ----
-   Figma "Subtract" fill: an opaque linear gradient running from #666 at the
-   top-left to #000 at the bottom-right (handles 0.81,1.0 -> 0.19,0.0 ≈ 328deg).
-   No stroke. */
 .cm-panel {
-  --u: 0.0681198cqw; /* 100/1468 cqw — one Figma px of the 1468-wide panel */
-  --line: #afafaf; /* #afafaf divider rules + checkbox outline */
+  --u: 0.0681198cqw; /* one Figma px of the 1468-wide panel */
+  --line: #afafaf; /* divider rules + checkbox outline */
   container-type: inline-size;
   width: min(1468px, calc(100vw - 48px));
-  /* No fixed aspect ratio: the panel sizes to header + (up to 4) rows + footer,
-     capped to the viewport (the list scrolls past 4 rows). The column flexbox
-     pins header/footer while .cm-list absorbs any shrink on short screens. */
+  /* sizes to header + (up to 4) rows + footer, capped to viewport; list scrolls
+     past 4 rows. */
   max-height: calc(100dvh - 48px);
   display: flex;
   flex-direction: column;
-  /* Frosted translucent tint — the overlay blurs the page behind, and the panel
-     lets that blurred page (the bright poster on the left) bleed through, tinted
-     by this grey gradient. Opacity baked into each stop. */
+  /* frosted translucent tint, lets the blurred page bleed through */
   background: linear-gradient(
     347deg,
     rgba(0, 0, 0, 0.62) 0%,
@@ -74,10 +59,9 @@
   transform: none;
 }
 
-/* ---- Header ---- */
 .cm-header {
   position: relative;
-  flex: 0 0 calc(127 * var(--u)); /* Line 18 sits 127px down */
+  flex: 0 0 calc(127 * var(--u));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,14 +69,13 @@
 }
 .cm-title {
   margin: 0;
-  font-weight: 400; /* Lao Sangam MN 400, 55px (inherited family) */
+  font-weight: 400;
   font-size: calc(55 * var(--u));
   line-height: 1;
   color: #f0f0f0;
-  /* nudge to the Figma baseline — the font centres a touch high in its line box */
+  /* the font centres a touch high, nudge to baseline */
   transform: translateY(calc(6 * var(--u)));
 }
-/* "X" — a 23x23 icon, 2.5px #f3f3f3 strokes, 46px from the right / 37px down. */
 .cm-close {
   position: absolute;
   top: calc(37 * var(--u));
@@ -115,7 +98,7 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: calc(32 * var(--u)); /* arm length so the X fills the 23px box */
+  width: calc(32 * var(--u));
   height: calc(2.5 * var(--u));
   background: #f3f3f3;
   border-radius: 2px;
@@ -127,15 +110,10 @@
   transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-/* ---- Collection list ----
-   Two collections per row. Left column is 776px wide (the centre rule, Line 16,
-   sits at x=776 — not dead centre). Rows are 182px tall. The centre vertical
-   rule and the inset horizontal rules between rows are drawn here; the full-width
-   rules above the first row / below the last are the header & footer borders. */
+/* two collections per row; centre rule sits at x=776, not dead centre */
 .cm-list {
-  /* Show up to 4 rows. The rows STRETCH to fill the block (116u is the floor,
-     then 1fr distributes the remaining height) so the grid lines reach the
-     bottom edge instead of stopping short. Scrolls past 4 rows. */
+  /* up to 4 rows; rows stretch (116u floor + 1fr) so grid lines reach the
+     bottom edge. scrolls past 4 rows. */
   flex: 0 1 auto;
   height: calc(4 * 116 * var(--u));
   min-height: 0;
@@ -146,7 +124,6 @@
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--pink), 0.18) rgba(0, 0, 0, 0.25);
 }
-/* Custom scrollbar — thumb matches the "New Collection" input fill. */
 .cm-list::-webkit-scrollbar {
   width: 14px;
 }
@@ -165,7 +142,6 @@
   background: rgba(var(--pink), 0.26);
 }
 
-/* Loading / empty / error notice shown in place of the rows. */
 .cm-empty {
   grid-column: 1 / -1;
   padding: 40px 32px;
@@ -174,7 +150,6 @@
   font-size: clamp(16px, calc(28 * var(--u)), 28px);
 }
 
-/* The whole cell is one toggle (square checkbox + name + 2x2 collage). */
 .cm-item {
   position: relative;
   display: flex;
@@ -191,7 +166,7 @@
   transition: background-color var(--t-base) ease;
 }
 .cm-item:nth-child(odd):not(:last-child) {
-  border-right: calc(2 * var(--u)) solid var(--line); /* centre vertical rule */
+  border-right: calc(2 * var(--u)) solid var(--line);
 }
 .cm-item:nth-child(even) {
   gap: calc(33 * var(--u));
@@ -201,9 +176,8 @@
 .cm-item:hover {
   background: rgba(255, 255, 255, 0.04);
 }
-/* Inset horizontal rule between rows (Line 11 / Line 12 — 17px inset on the
-   outer edge, meeting the centre rule). The last row drops it: the footer's
-   full-width top border draws the rule above the footer instead. */
+/* inset horizontal rule between rows; last row drops it (footer's top border
+   draws that line instead). */
 .cm-item::after {
   content: "";
   position: absolute;
@@ -220,10 +194,8 @@
   left: 0;
   right: calc(17 * var(--u));
 }
-/* The last item never has a bottom divider — the footer's top border draws that
-   line. In the TWO-COLUMN layout the second-to-last shares the last row when the
-   count is EVEN, so drop its divider then too. The single-column phone layout
-   keeps every divider except the very last one. */
+/* last item has no bottom divider. in two-column layout the second-to-last
+   shares the last row when the count is even, so drop its divider too. */
 .cm-item:nth-last-child(1)::after {
   display: none;
 }
@@ -234,15 +206,13 @@
 }
 
 
-/* Square checkbox — 40x40, #afafaf 3px outline. Empty = transparent; checked =
-   white fill with a grey (#afafaf) tick. */
 .cm-check {
   flex: 0 0 auto;
   width: calc(40 * var(--u));
   height: calc(40 * var(--u));
-  border-radius: 0; /* Figma Rectangle 16-19: square corners, no rounding */
+  border-radius: 0;
   border: calc(3 * var(--u)) solid var(--line);
-  background: rgba(217, 217, 217, 0.1); /* faint #d9d9d9 @ 10% fill */
+  background: rgba(217, 217, 217, 0.1);
   position: relative;
   transition:
     background-color var(--t-fast) ease,
@@ -256,9 +226,7 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  /* A regular checkmark: the box is taller than wide so the right border is the
-     long up-stroke and the bottom border the short down-stroke (the old
-     wider-than-tall box read as a mirrored/odd tick). */
+  /* taller than wide: right border is the long up-stroke, bottom the short one */
   width: calc(12 * var(--u));
   height: calc(22 * var(--u));
   border: solid #afafaf;
@@ -268,7 +236,7 @@
 .cm-name {
   flex: 0 1 auto;
   min-width: 0;
-  font-size: calc(40 * var(--u)); /* Lao Sangam MN 40px */
+  font-size: calc(40 * var(--u));
   line-height: 1.05;
   color: #f0f0f0;
   white-space: nowrap;
@@ -276,8 +244,7 @@
   text-overflow: ellipsis;
 }
 
-/* Cover — the shared profile-style collage (.collection-cover), right-aligned and
-   sized by HEIGHT to the (shorter) row so its 2:3 aspect stays intact. */
+/* shared profile-style collage, sized by height so its 2:3 aspect stays intact */
 .cm-item .collection-cover {
   flex: 0 0 auto;
   margin-left: auto;
@@ -286,14 +253,12 @@
   aspect-ratio: 2 / 3;
   border-radius: calc(3 * var(--u));
 }
-/* #1: empty (0-movie) cover shows just the gray/white checkerboard here — no "+"
-   (that affordance is profile-only). */
+/* empty cover shows just the checkerboard here, the "+" is profile-only */
 .cm-item .cover-empty__plus {
   display: none;
 }
 
-/* #3: odd number of lists — centre the lone last one across the full width,
-   keeping the same check↔name↔cover gaps (two-column layout only). */
+/* odd count: centre the lone last one across the full width (two-column only) */
 @media (min-width: 761px) {
   .cm-item:nth-child(odd):nth-last-child(1) {
     grid-column: 1 / -1;
@@ -307,9 +272,6 @@
   }
 }
 
-/* ---- Footer: new collection ----
-   156px tall, full-width top rule (Line 17). Pieces are placed at their exact
-   Figma x: label at 146, input field 463 (700x70), "+" circle at 1188 (48x48). */
 .cm-footer {
   position: relative;
   flex: 0 0 calc(156 * var(--u));
@@ -332,8 +294,6 @@
   width: calc(700 * var(--u));
   height: calc(70 * var(--u));
 }
-/* Input — a dark reddish/purple field: pink (#ff88b3) at 18% over the near-black
-   bottom-right of the panel gradient. No border, lightly rounded. */
 .cm-input {
   width: 100%;
   height: 100%;
@@ -353,7 +313,6 @@
 .cm-input:focus {
   background: rgba(255, 136, 179, 0.26);
 }
-/* "+" — a 48px circle outlined in #f3f3f3 with a #f3f3f3 plus inside. */
 .cm-add {
   position: absolute;
   left: calc(1188 * var(--u));
@@ -396,7 +355,7 @@
   transform: translate(-50%, -50%);
 }
 
-/* ---- Phone: drop the fixed Figma geometry for a readable stacked layout ---- */
+/* phone: drop the fixed geometry for a stacked layout */
 @media (max-width: 760px) {
   .cm-panel {
     container-type: normal;
@@ -427,15 +386,12 @@
   .cm-list {
     grid-template-columns: 1fr;
     grid-auto-rows: auto;
-    /* phone: single column fills the screen and scrolls (the desktop 4-row fixed
-       height would collapse here, where cqw/--u resolve tiny). */
+    /* single column fills the screen and scrolls (cqw/--u resolve tiny here) */
     flex: 1 1 auto;
     height: auto;
   }
-  /* Single-column phone layout: equal full-width rows + full-width dividers. These
-     match the specificity of the base nth-child rules they override (0,2,0 / 0,3,0 /
-     0,2,1) so they win on source order — this block is later in the file — instead of
-     leaning on !important. */
+  /* equal full-width rows + dividers; match the base nth-child specificity so
+     these win on source order instead of needing !important. */
   .cm-item:nth-child(odd),
   .cm-item:nth-child(even) {
     gap: 14px;
@@ -456,7 +412,7 @@
     width: 26px;
     height: 26px;
     border-width: 2px;
-    border-radius: 0; /* square corners, match Figma */
+    border-radius: 0;
     background: rgba(217, 217, 217, 0.1);
   }
   .cm-item.is-selected .cm-check::after {
@@ -485,7 +441,7 @@
     position: static;
     transform: none;
   }
-  /* keep relative so the "+" pseudo-elements stay anchored to the button */
+  /* relative so the "+" pseudo-elements stay anchored to the button */
   .cm-add {
     position: relative;
     top: auto;
@@ -529,8 +485,8 @@
   }
 }
 
-/* The sticky mobile header (.mobile-topbar, z-index 1100) sits above this overlay
-   on ≤1024px, so drop the modal below it instead of letting it hide the top. */
+/* the sticky mobile topbar (z-index 1100) sits above this overlay, so drop the
+   modal below it on ≤1024px. */
 @media (max-width: 1024px) {
   .cm-overlay {
     align-items: flex-start;

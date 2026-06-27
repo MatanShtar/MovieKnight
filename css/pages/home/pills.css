@@ -1,12 +1,5 @@
-/* home/pills.css — the pill-based filter UI (genre/actor/director/platform pills,
-   dropdowns, tooltips, add/clear buttons), the star-rating control, and the
-   Sort By menu. Split out of the former monolithic css/home.css
-   (sections 6–8, verbatim). Loaded after home/controls.css to preserve the
-   original cascade order. */
+/* pill filter UI (genre/actor/director/platform), star rating, and Sort By menu */
 
-/* ==========================================
-   6. PILL UI (GENRES, ACTORS, ETC)
-   ========================================== */
 .pill-selector-row {
   width: 100%;
   display: flex;
@@ -42,11 +35,11 @@
 .pill-list {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap; /* pills stay side-by-side on one row */
+  flex-wrap: nowrap;
   align-items: center;
   gap: 8px;
   flex: 1 1 auto;
-  min-width: 0; /* allow the list to shrink so the +/Clear stay in the box */
+  min-width: 0; /* let the list shrink so the +/Clear stay in the box */
 }
 
 .pill-list:empty {
@@ -66,7 +59,7 @@
   position: relative;
   white-space: nowrap;
   flex: 0 1 auto;
-  min-width: 0; /* let pills shrink (and names truncate) to stay on one row */
+  min-width: 0; /* let pills shrink and names truncate to stay on one row */
   animation: pillPop 0.25s var(--ease-pop) both;
 }
 
@@ -81,8 +74,7 @@
   }
 }
 
-/* Long names (e.g. actors) truncate with an ellipsis; the full name shows in a
-   hover tooltip (see .pill-tooltip). Keeps both pills on one row. */
+/* long names truncate; full name shows in the hover tooltip */
 .pill-name {
   display: inline-block;
   flex: 0 1 auto;
@@ -92,7 +84,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
-  cursor: default; /* no text/I-beam cursor over the name */
+  cursor: default;
 }
 
 .pill-item .pill-remove {
@@ -105,11 +97,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto; /* fixed size — never shrinks or shifts */
+  flex: 0 0 auto;
   transition: opacity var(--t-fast) ease;
 }
 
-/* Brighten on hover only — no scaling, so the × stays put. */
 .pill-item .pill-remove:hover {
   opacity: 1;
 }
@@ -135,7 +126,7 @@
   bottom: 120%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(20, 20, 20, 0.95); /* black, matching the wheel tooltip */
+  background-color: rgba(20, 20, 20, 0.95);
   color: white;
   text-shadow: none;
   line-height: 1;
@@ -161,7 +152,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0; /* the +/Clear buttons are never squeezed out of the row */
+  flex-shrink: 0; /* +/Clear never squeezed out of the row */
 }
 
 .pill-add-btn {
@@ -196,7 +187,6 @@
   box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
 }
 
-/* 6. The Dropdown Menu */
 .pill-dropdown {
   opacity: 0;
   visibility: hidden;
@@ -250,8 +240,7 @@
   width: 90px;
 }
 
-/* Pinned to the top of the (scrolling) dropdown so it stays visible while the
-   list scrolls underneath. The solid background hides names passing behind it. */
+/* sticky atop the scrolling dropdown; solid bg hides names passing behind it */
 .dropdown-search {
   position: sticky;
   top: 0;
@@ -279,8 +268,7 @@
   border-bottom-color: rgba(var(--pink), 0.8);
 }
 
-/* ---- Inline "X" clear button for text inputs ------------------------------- */
-/* The input is wrapped so the "X" can sit at its right edge. */
+/* inline "X" clear for text inputs; input is wrapped so the "X" sits at its edge */
 .input-clear-wrap {
   position: relative;
   display: flex;
@@ -321,14 +309,13 @@
   box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
 }
 
-/* [hidden] must win over the flex display above. */
+/* beat the flex display above so [hidden] hides it */
 .input-clear-btn[hidden] {
   display: none;
 }
 
-/* Inside a dropdown the wrapper takes over the sticky role (so the "X" rides
-   along with the search box as the list scrolls underneath it), and the input
-   reserves room on the right for the button. */
+/* inside a dropdown the wrapper takes over the sticky role so the "X" rides with
+   the search box; the input reserves room on the right. */
 .pill-dropdown .input-clear-wrap {
   position: sticky;
   top: 0;
@@ -341,7 +328,7 @@
 }
 
 
-/* Non-interactive "No people found" row in the actor/director dropdowns */
+/* non-interactive "No people found" row */
 .pill-option--empty,
 .pill-option--empty:hover {
   color: rgba(255, 255, 255, 0.6);
@@ -349,9 +336,6 @@
   cursor: default;
 }
 
-/* ==========================================
-   7. STAR RATING SYSTEM
-   ========================================== */
 .star-rating {
   display: flex;
   gap: 8px;
@@ -369,10 +353,6 @@
   transform: scale(1.25) rotate(-6deg);
 }
 
-/* ==========================================
-   8. SORT BY MENU
-   ========================================== */
-/* Container Layout */
 .sort-dropdown {
   display: flex;
   flex-direction: row;
@@ -386,16 +366,13 @@
   color: var(--text-soft);
 }
 
-/* Wrapper for the custom dropdown */
 .sort-custom-wrapper {
   position: relative;
 }
 
 .sort-custom-btn {
-  /* Auto width with the original 97.83px as a floor: short labels (Rating ↓, …)
-     keep their original look, while the longer popularity labels ("Popular
-     All-Time" / "Popular This Week") grow the button instead of clipping. The
-     ≤1024px override swaps in the short labels + a smaller min width. */
+  /* auto width, 97.83px floor: short labels keep their look, longer popularity
+     labels grow the button instead of clipping. */
   width: auto;
   min-width: 97.83px;
   white-space: nowrap;

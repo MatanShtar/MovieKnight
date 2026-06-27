@@ -1,15 +1,5 @@
-/* ai-tryagain.css — the shared "TRY AGAIN" button for the Gemini-backed AI
-   features. Single source of truth so the button looks IDENTICAL everywhere it
-   appears: the "Let AI Choose" results page (ai-suggestions.html) and the
-   "Enhance My Collection" modal (collection.html). A maroon pill in Impact with a
-   refresh glyph that spins on hover (gentle) and on press / reload (full turn).
-
-   Markup it expects:
-     <button class="ai-tryagain" type="button">
-       TRY AGAIN
-       <svg class="ai-tryagain-arrows" viewBox="0 0 24 24" aria-hidden="true">…</svg>
-     </button>
-   Add `.is-spinning` for one full-turn spin (drop it on animationend to replay). */
+/* shared "TRY AGAIN" button for the AI features. add .is-spinning for one
+   full-turn spin (drop it on animationend to replay). */
 
 .ai-tryagain {
     display: inline-flex;
@@ -49,9 +39,7 @@
     filter: none;
 }
 
-/* When a caller hides the button via the `hidden` attribute, the base rule's
-   display:inline-flex would otherwise win over the UA `[hidden]{display:none}` —
-   so make it explicit: gone, not greyed. */
+/* beat the display:inline-flex above so [hidden] hides it */
 .ai-tryagain[hidden] {
     display: none;
 }
@@ -64,12 +52,10 @@
     transition: transform 0.6s var(--ease-snap);
 }
 
-/* Arrows do a gentle spin on hover... */
 .ai-tryagain:hover .ai-tryagain-arrows {
     transform: rotate(180deg);
 }
 
-/* ...and a full, faster spin on click / while reloading. */
 .ai-tryagain.is-spinning .ai-tryagain-arrows {
     animation: ai-spin 0.8s var(--ease-snap);
 }

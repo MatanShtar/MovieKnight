@@ -1,11 +1,5 @@
-/* ai.css — "Let AI Choose" results page (ai-suggestions.html).
-   Reuses the shared shell from common.css; everything here is page-scoped.
-   The header + single "LET AI CHOOSE" bar mirror wheel.css / picker.css so the
-   bar lands at the exact same size and position as the other two games. */
+/* ai.css - "Let AI Choose" results page */
 
-/* ==========================================
-   1. HEADER & SINGLE-BAR TABS  (mirrors wheel.css)
-   ========================================== */
 .ai-page {
     padding-top: 12px;
     gap: 12px;
@@ -53,8 +47,6 @@
     margin-bottom: 24px;
 }
 
-/* The lone "LET AI CHOOSE" pill — identical to wheel.css .feature-tabs p so the
-   bar is seamless across pages. */
 .feature-tabs p {
     display: flex;
     flex: 1;
@@ -73,9 +65,6 @@
     text-transform: uppercase;
 }
 
-/* ==========================================
-   2. RESULTS STAGE
-   ========================================== */
 .ai-stage {
     width: 100%;
     max-width: 1680px;
@@ -85,8 +74,6 @@
     gap: 36px;
 }
 
-/* Three suggestions (3 × 530 + 2 × 24 gap = 1638) sit on one row at desktop,
-   matching the design; narrower viewports wrap with the larger row-gap. */
 .ai-results {
     width: 100%;
     display: flex;
@@ -97,12 +84,10 @@
     row-gap: 36px;
 }
 
-/* One suggestion = poster (262×379) + reason box (262×379) side by side, with a
-   shared Info / Select Winner action pill pinned beneath the pair. */
 .ai-card {
     display: flex;
     flex-direction: column;
-    width: calc(262px + 6px + 262px);   /* poster + gap + reason */
+    width: calc(262px + 6px + 262px);
 }
 
 .ai-card-body {
@@ -151,12 +136,8 @@
     overflow-y: auto;
 }
 
-/* ==========================================
-   3. REVEAL ANIMATION
-   The card lands showing ONLY its poster (centred over the pair's footprint, the
-   reason box fully transparent). ~0.5s later .is-revealed slides the poster left
-   into place and fades the reason in to its right.
-   ========================================== */
+/* reveal: card lands poster-only (centred over the pair); .is-revealed then
+   slides the poster left into place and fades the reason in beside it. */
 .ai-card .ai-poster,
 .ai-card .ai-reason {
     transition:
@@ -165,7 +146,7 @@
 }
 
 .ai-card:not(.is-revealed) .ai-poster {
-    transform: translateX(134px);   /* (262 + 6) / 2 — centres the poster */
+    transform: translateX(134px);   /* (262 + 6) / 2 to centre the poster */
 }
 
 .ai-card:not(.is-revealed) .ai-reason {
@@ -179,7 +160,6 @@
     opacity: 1;
 }
 
-/* The action pill fades up once the text is revealed. */
 .ai-actions {
     margin-top: 16px;
     display: flex;
@@ -242,12 +222,7 @@
     filter: brightness(0.95);
 }
 
-/* ==========================================
-   4. LOADING SKELETON (pulsing posters while the AI thinks, 2–4s)
-   ========================================== */
-/* While the AI thinks, show ONLY a placeholder where the poster will land —
-   centred over the card's footprint, matching the poster's pre-slide position
-   (the reason box isn't hinted at until the reveal). */
+/* loading skeleton: placeholder centred where the poster will land (pre-slide) */
 .ai-card--skeleton .ai-card-body {
     justify-content: center;
 }
@@ -271,17 +246,8 @@
     100% { background-position: -200% 0; }
 }
 
-/* ==========================================
-   5. TRY AGAIN
-   ----------------------------------------
-   Moved to the shared css/components/ai-tryagain.css (single source of truth so
-   the "Enhance My Collection" modal's Try Again matches this one exactly). This
-   page links that file; nothing button-specific lives here anymore.
-   ========================================== */
+/* Try Again button lives in the shared css/components/ai-tryagain.css. */
 
-/* ==========================================
-   6. EMPTY / ERROR STATE
-   ========================================== */
 .ai-empty {
     width: 100%;
     min-height: 300px;
@@ -294,9 +260,7 @@
     color: var(--text-soft);
 }
 
-/* ==========================================
-   7. WINNER POPUP + CONFETTI  (mirrors wheel.css §8)
-   ========================================== */
+/* winner popup + confetti (mirrors wheel.css) */
 .confetti-canvas {
     position: fixed;
     inset: 0;
@@ -330,7 +294,7 @@
     pointer-events: auto;
     position: relative;
     width: 468px;
-    max-width: 92vw; /* never overflow a narrow screen */
+    max-width: 92vw;
     height: 364px;
     border-radius: 50px;
     background-color: rgba(215, 215, 215, 0.2);
@@ -369,9 +333,6 @@
     color: var(--text);
 }
 
-/* Two buttons side by side (View Details + Back to Collection) — same layout,
-   colours and order as the Chopping Block winner. Wraps to a stack only if the
-   box gets very narrow. */
 .winner-actions {
     display: flex;
     flex-wrap: wrap;
@@ -393,7 +354,7 @@
     font-family: inherit;
     font-size: 22px;
     cursor: pointer;
-    /* an <a> + a <button> share this class — keep both centred + un-underlined */
+    /* an <a> + a <button> share this class - keep both centred + un-underlined */
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -405,7 +366,6 @@
         filter var(--t-base) ease;
 }
 
-/* Back to Collection — distinct secondary tone (matches Chopping Block). */
 .winner-secondary {
     background-color: #596d73;
 }
@@ -446,9 +406,6 @@
     transform: scale(1.12) rotate(90deg);
 }
 
-/* ==========================================
-   8. RESPONSIVE
-   ========================================== */
 @media (max-width: 1024px) {
     .wheel-main-logo {
         height: 120px;
@@ -472,13 +429,11 @@
         gap: 6px;
     }
 
-    /* Stretch the Info / Select Winner pill to the full card width so it lines up
-       with the poster (262px) instead of shrinking to its text. */
     .ai-actions {
         width: 100%;
     }
 
-    /* On a narrow screen the side-by-side slide doesn't fit, so reveal in place. */
+    /* narrow screen: side-by-side slide doesn't fit, reveal in place */
     .ai-card:not(.is-revealed) .ai-poster {
         transform: translateX(0);
     }
@@ -488,7 +443,6 @@
         min-height: 220px;
     }
 
-    /* Smaller "Back" label on phones, padded to keep an easy tap target. */
     .back-btn {
         font-size: 14px;
         padding: 8px 12px;
@@ -496,9 +450,6 @@
     }
 }
 
-/* Scale the winner popup down for phones — same treatment as Wheel / Chopping Block:
-   a smaller, inset box (not full-width), a smaller header padded clear of the close
-   X, and two action buttons that still sit side by side. */
 @media (max-width: 600px) {
     .winner-box {
         width: min(380px, 90vw);

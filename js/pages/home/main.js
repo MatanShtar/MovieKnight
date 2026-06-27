@@ -1,21 +1,11 @@
-// home/main.js — the orchestrator wiring the home page together: card-grid click
-// handling (heart/eye -> LibraryButtons.toggle, "+" -> CollectionModal, card body
-// -> movie page), the AI-mode toggle, the live debounced text search, and the
-// "Surprise Me" randomizer. Split out of the former monolithic js/home.js
-// (behaviour unchanged). Loaded LAST of the home/* scripts, so every global it
-// touches (feed state + helpers, runSearch, paintLibBtn, ...) is already declared.
+// load LAST of home/* so every global it touches is already declared
 
-// ==========================================
-// 13. CARD INTERACTIONS (LIKE / WATCHED)
-// ==========================================
 const movieGridEl = document.getElementById("movieGrid");
 if (movieGridEl) {
   movieGridEl.addEventListener("click", (e) => {
     const btn = e.target.closest(".icon-btn");
     if (!btn) {
-      // A click anywhere else on a card opens its details page. The basic
-      // fields are stashed so the details page can paint instantly while it
-      // fetches the full record (overview, cast, trailer) in the background.
+      // stash basic fields so movie.html paints instantly while fetching the full record
       const card = e.target.closest(".movie-card");
       if (!card || !card.dataset.id) return;
       sessionStorage.setItem(
@@ -34,8 +24,7 @@ if (movieGridEl) {
     e.stopPropagation();
     const label = btn.querySelector("img")?.alt || "";
 
-    // Add to Collection / Like / Watched all require an account — block guests
-    // with a toast before doing anything (shared guard from common.js).
+    // collection / like / watched all require an account
     if (window.requireAuth && !window.requireAuth()) return;
 
     if (label === "Add to collection") {
@@ -47,7 +36,6 @@ if (movieGridEl) {
       return;
     }
 
-    // Like → Favorites, Mark watched → Already Watched: real add/remove.
     const which =
       label === "Like" ? "favorites" : label === "Mark watched" ? "watched" : null;
     if (which) {
@@ -59,9 +47,6 @@ if (movieGridEl) {
   });
 }
 
-// ==========================================
-// 14. AI MODE TOGGLE
-// ==========================================
 const aiModeBtn = document.querySelector(".ai-mode-btn");
 const searchContainer = document.querySelector(".search-container");
 const searchInput = document.getElementById("movieSearch");
@@ -70,28 +55,18 @@ function aiModeOn() {
   return !!(aiModeBtn && aiModeBtn.classList.contains("pressed"));
 }
 
-// Whether AI results currently OWN the grid. Only then does leaving AI mode need to
-// restore the catalog feed — toggling AI on and back off without ever searching
-// should be a no-op, not a needless full-feed refresh.
+// whether AI results own the grid; only then does leaving AI mode restore the catalog
 let aiResultsShowing = false;
 
 if (aiModeBtn && searchContainer && searchInput) {
   aiModeBtn.addEventListener("click", () => {
-    // AI features are logged-in only. A guest clicking AI mode gets the same
-    // "must be logged in" toast as the heart/eye actions, and the mode stays off.
-    // (Only gate turning it ON — turning it back off must always work.)
+    // gate turning AI on (logged-in only); turning it off must always work
     if (!aiModeOn() && window.requireAuth && !requireAuth()) return;
     aiModeBtn.classList.toggle("pressed");
     searchContainer.classList.toggle("ai-glow");
     if (aiModeOn()) {
-      // AI mode is deliberate, not live: typing won't fire a (slow, costly) AI call —
-      // the user submits with Enter, which the hint reflects. The hint's FONT scales
-      // with the search-bar width (CSS, scoped to .ai-glow) so it never clips, on any
-      // screen or layout — see css/pages/home/layout.css.
       searchInput.placeholder = "Describe a movie, press Enter…";
     } else {
-      // Back to the normal catalog. Only re-run the feed if AI results are actually
-      // on screen; otherwise the catalog is already showing — don't refresh it.
       searchInput.placeholder = "Search movies...";
       if (aiResultsShowing) {
         aiResultsShowing = false;
@@ -101,21 +76,12 @@ if (aiModeBtn && searchContainer && searchInput) {
   });
 }
 
-// ==========================================
-// 14b. AI NATURAL-LANGUAGE SEARCH  (POST /api/ai/search)
-// ==========================================
-// The text of the last AI search we actually ran. Used to no-op an empty or
-// unchanged submit (Enter on a blank box, or re-submitting the identical query)
-// so it never needlessly re-renders / re-fires the costly request.
+// last AI query run, to no-op an unchanged submit so the costly request doesn't re-fire
 let lastAiQuery = "";
-// Whether the user has already "rerolled" the current AI query (re-submitting the
-// same text once asks for fresh picks excluding what's shown). Reset whenever the
-// query text changes, so each new query gets its own single reroll. (#1/#2)
+// each query gets one reroll; reset when the text changes
 let aiSearchRerolled = false;
 
-// De-dupe a movie list so each TMDB id renders once (#3): the safety net for the
-// soft `exclude_ids` reroll, where the backend may reuse an id to avoid returning
-// too few. Movies without an id are kept (they can't collide).
+// safety net for the soft exclude_ids reroll, where the backend may reuse an id; keep movies without an id
 function dedupeMoviesById(list) {
   const seen = new Set();
   return (Array.isArray(list) ? list : []).filter((m) => {
@@ -126,21 +92,15 @@ function dedupeMoviesById(list) {
   });
 }
 
-// Unlike the live catalog search, this is a single deliberate request (6–9s and
-// a real API call), so it fires on Enter only. It takes over the feed: clear,
-// show skeletons, then render the AI's picks with the SAME card builder. Setting
-// feedDone stops infinite scroll from appending the popular feed underneath.
-// `reroll` re-runs the same query excluding the currently shown ids for a fresh set.
+// reroll re-runs the query excluding shown ids for a fresh set
 async function runAiSearch(query, { reroll = false } = {}) {
     lastAiQuery = query;
-  // Snapshot the current feed so a FAILED search can leave it on screen — a
-  // rate-limit / error should just toast, not dump a wall of error text.
+  // snapshot the feed so a failed search can leave it on screen
   const prev = feedMovies.slice();
-  // On a reroll, ask the AI not to repeat the on-screen picks (soft filter).
   const excludeIds = reroll ? prev.map((m) => m && m.id) : [];
   feedMovies = [];
   feedPage = 0;
-  feedDone = true; // AI results are a fixed set — no paging beneath them
+  feedDone = true; // AI results are a fixed set, no paging
   feedLoading = false;
   const token = ++feedToken; // invalidate any in-flight catalog page load
   const grid = document.getElementById("movieGrid");
@@ -158,7 +118,7 @@ async function runAiSearch(query, { reroll = false } = {}) {
     if (!results.length) {
       if (prev.length) {
         feedMovies = prev;
-        aiResultsShowing = false; // catalog restored — AI no longer owns the grid
+        aiResultsShowing = false;
         insertBeforeSentinel(fragmentFromHTML(prev.map(buildMovieCard).join("")));
         if (window.toast) toast.info("No matches — keeping your previous results.");
       } else {
@@ -167,17 +127,14 @@ async function runAiSearch(query, { reroll = false } = {}) {
       return;
     }
     feedMovies = results;
-    aiResultsShowing = true; // AI results now own the grid
+    aiResultsShowing = true;
     insertBeforeSentinel(fragmentFromHTML(results.map(buildMovieCard).join("")));
   } catch (err) {
     if (token !== feedToken) return;
-    // A failed run shouldn't lock out a retry of the same text (the early-return
-    // guard treats an unchanged query as a no-op), so forget it here.
+    // forget the query so retrying the same text isn't a no-op
     lastAiQuery = "";
     aiSearchRerolled = false; // a failed run doesn't consume the reroll
-    aiResultsShowing = false; // grid fell back to the catalog (or an error message)
-    // Only a short, friendly toast — never the raw upstream error. Keep the feed
-    // as it was: restore the previous cards if we had any.
+    aiResultsShowing = false;
     if (window.toast) toast.error(aiSearchErrorMessage(err));
     clearGridCards();
     if (prev.length) {
@@ -189,11 +146,8 @@ async function runAiSearch(query, { reroll = false } = {}) {
   }
 }
 
-// A SHORT, friendly message for a failed AI search — never the raw upstream error
-// (Gemini's free-tier rate-limit replies are a huge wall of text).
 function aiSearchErrorMessage(err) {
-  // Quota exhausted is a 429 too, but distinguished by the backend's error code —
-  // surface its specific message instead of the generic "AI is busy" line.
+  // quota exhausted is a 429 too, distinguished by the backend's error code
   if (err && err.code === MovieAPI.AI_LIMIT_CODE) return err.message;
   switch (err && err.status) {
     case 400: return (err.message && err.message.length <= 100)
@@ -207,71 +161,44 @@ function aiSearchErrorMessage(err) {
   }
 }
 
-// ==========================================
-// 15. LIVE TEXT SEARCH (debounced -> runSearch)
-// ==========================================
-// Typing just re-runs the consolidated query (text + filters + sort). An empty
-// box is a valid query too — it returns the default feed. Out-of-order responses
-// are handled by the feedToken guard inside loadFeedBatch().
+// live text search (debounced); empty box returns the default feed, feedToken guards order
 if (searchInput) {
   let searchDebounce;
   searchInput.addEventListener("input", () => {
-    // Keep the Filters/Sort controls in sync with whether a text search is active
-    // (they don't apply during a text search). Runs regardless of AI mode.
     updateSearchModeUI();
-    // In AI mode typing is NOT live — the user submits with Enter (handled below),
-    // so don't fire the debounced catalog search.
-    if (aiModeOn()) return;
-    // If the user scrolled down the feed and starts typing again, glide back to
-    // the top so the fresh results aren't hidden below the fold.
+    if (aiModeOn()) return; // in AI mode typing is not live, Enter submits below
     window.scrollTo({ top: 0, behavior: "smooth" });
-    aiResultsShowing = false; // a live catalog search replaces any AI results
+    aiResultsShowing = false;
     clearTimeout(searchDebounce);
     searchDebounce = setTimeout(runSearch, 300);
   });
 
-  // Enter submits an AI search when AI mode is on. (In normal mode the live
-  // input handler already covers it, so Enter is a harmless no-op there.)
   searchInput.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" || !aiModeOn()) return;
     e.preventDefault();
     const q = searchInput.value.trim();
-    if (!q) return; // a blank box does nothing
-    // Guests can't enter AI mode, but guard anyway; and stop here if the daily
-    // quota is spent — instant feedback from the cached count (the backend, which
-    // also counts a reroll as an action, would 429 regardless). Limit/message come
-    // from the backend, never hard-coded here.
+    if (!q) return;
+    // bail early if quota is spent (the backend would 429 anyway)
     if (window.requireAuth && !requireAuth()) return;
     if (window.MovieAPI && MovieAPI.aiActionsRemaining() <= 0) {
       if (window.toast) toast.warn(MovieAPI.aiLimitReachedMessage());
       return;
     }
     if (q === lastAiQuery) {
-      // Re-submitting the SAME query acts as a single "reroll": fresh picks that
-      // exclude what's on screen. Allowed once per query (#2); after that it's a
-      // no-op until the text changes.
+      // re-submitting the same query is one reroll, then a no-op until the text changes
       if (aiSearchRerolled) return;
       aiSearchRerolled = true;
       window.scrollTo({ top: 0, behavior: "smooth" });
       runAiSearch(q, { reroll: true });
       return;
     }
-    // A brand-new query: reset the per-query reroll allowance.
     aiSearchRerolled = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     runAiSearch(q);
   });
 }
 
-// ==========================================
-// 16. SURPRISE ME RANDOMIZER
-// ==========================================
-// Picks a random movie to take over the screen with one result. The SERVER now owns
-// the randomization (GET /api/movies/random returns a random title from a random page
-// of the popular, well-voted feed — the same pool as the default feed), so the
-// "surprise" is always a recognisable pick. Later, account settings will pass a page
-// limit derived from a user preference; for now we call with no params and the server
-// uses its default pool.
+// server owns the randomization (random title from the popular, well-voted feed)
 async function fetchSurpriseMovie() {
   return MovieAPI.getRandomMovie();
 }
@@ -287,13 +214,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!diceOne || !diceTwo) return;
     diceOne.classList.remove("roll-left");
     diceTwo.classList.remove("roll-right");
-    void diceOne.offsetWidth; // force a reflow so the animation replays
+    void diceOne.offsetWidth; // force reflow so the animation replays
     diceOne.classList.add("roll-left");
     diceTwo.classList.add("roll-right");
   }
 
-  // Clear the toss class once the throw finishes, so the dice settle back to their
-  // resting (and hover "wind-up") state and are ready for the next roll.
   if (diceOne) diceOne.addEventListener("animationend", (e) => {
     if (e.animationName === "tossLeft") diceOne.classList.remove("roll-left");
   });
@@ -314,19 +239,15 @@ document.addEventListener("DOMContentLoaded", () => {
           if (window.toast) toast.info("Couldn't find a movie — try again!");
           return;
         }
-        // Take over the grid with just this pick and pause pagination, and
-        // reflect the result in the search bar (without re-triggering a search —
-        // editing/clearing the box later runs a fresh query as usual).
+        // take over the grid with just this pick and pause pagination
         feedQuery = {};
         feedMovies = [movie];
         feedPage = 0;
-        feedDone = true; // no more pages for a single random pick
+        feedDone = true;
         feedToken++; // abandon any in-flight page load
         if (movieSearchInput) {
           movieSearchInput.value = movie.title;
-          // Show the inline clear "X" for the now-populated box (a `change`, not an
-          // `input`, so the live search doesn't re-fire and replace this pick) — the
-          // user can wipe it back to the feed exactly like a typed query.
+          // fire change not input, so the clear "X" shows without the live search re-firing
           movieSearchInput.dispatchEvent(new Event("change"));
         }
         await renderMovieGrid([movie]);

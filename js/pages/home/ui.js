@@ -1,13 +1,7 @@
-// home/ui.js — page chrome around the feed: mobile layout adaptation, the global
-// filter/sort menu toggles + filter-option loading, the invisible keyboard
-// "type-to-jump" search inside open dropdowns, and the injectSearchBar helper.
-// Split out of the former monolithic js/home.js (behaviour unchanged). Loaded
-// AFTER home/feed.js and BEFORE home/filters.js (which reads filterBtn /
-// sortCustomBtn / sortCustomMenu and the all*/...NameToId state declared here).
+// loaded AFTER home/feed.js and BEFORE home/filters.js (which reads filterBtn /
+// sortCustomBtn / sortCustomMenu and the state here).
 
-// ==========================================
-// 2. MOBILE LAYOUT ADAPTATION
-// ==========================================
+// move "Surprise Me" between header and controls bar by viewport
 (function () {
   const surprise = document.querySelector(".surprise-container");
   const controlsBar = document.querySelector(".controls-bar");
@@ -23,9 +17,6 @@
   mq.addEventListener("change", place);
 })();
 
-// ==========================================
-// 3. GLOBAL MENU TOGGLES
-// ==========================================
 const filterBtn = document.getElementById("filterToggleBtn");
 const filterMenu = document.getElementById("filterMenu");
 const sortCustomBtn = document.getElementById("sortCustomBtn");
@@ -33,34 +24,26 @@ const sortCustomMenu = document.getElementById("sortCustomMenu");
 let allGenres = [],
   allAgeRatings = [],
   allPlatforms = [];
-// Name -> TMDB id, so the filters can send ids while the UI shows names.
+// name -> id, so filters send ids while the UI shows names
 let genreNameToId = {},
   platformNameToId = {};
-// The curated "popular" providers shown by default (the rest are revealed by the
-// platform search), plus the director preset — both read from filterMenuData.json
-// and consumed by home/filters.js.
 let popularPlatforms = [];
 let directorDefaults = [];
 
-// Load the static filter-menu data once, then build the dropdowns that depend on
-// it. Genres come from the live backend (with ids for filtering). Age-rating
-// certifications + the popular providers + the director preset come from
-// data/filterMenuData.json; the full provider catalogue is appended from the
-// backend so the platform search can reach beyond the popular few.
+// genres + full provider catalogue from the backend; certifications, popular
+// providers and the director preset from filterMenuData.json.
 (async () => {
   try {
     const res = await fetch("data/filterMenuData.json");
     if (res.ok) {
       const data = await res.json();
-      // TMDB certifications (G / PG / PG-13 / R / …) used by the age-rating filter.
       allAgeRatings = data.certifications || [];
-      // Director preset for the People filter (TMDB person ids for with_crew).
+      // director preset for the People filter (person ids for with_crew)
       directorDefaults = (data.directors || []).map((d) => ({
         id: d.id,
         name: d.name,
         department: d.department || "Directing",
       }));
-      // Popular providers (TMDB provider ids for the `providers` query param).
       const providers = data.providers || [];
       popularPlatforms = providers.map((p) => p.name);
       allPlatforms = providers.map((p) => p.name);
@@ -82,8 +65,7 @@ let directorDefaults = [];
     console.error("Could not load genres:", err);
   }
 
-  // Append the rest of the backend's provider catalogue (anything not already in
-  // the popular list) so the platform search can find it; popular stays first.
+  // append the rest of the provider catalogue for the platform search; popular stay first
   try {
     const providers = await MovieAPI.getProviders();
     providers.forEach((p) => {
@@ -113,7 +95,6 @@ function closeAllInnerDropdowns(exceptMenu = null) {
   });
 }
 
-// Main Filter Menu Toggle (Closes Sort By)
 if (filterBtn && filterMenu) {
   filterBtn.addEventListener("click", function (event) {
     event.stopPropagation();
@@ -122,37 +103,25 @@ if (filterBtn && filterMenu) {
   });
 }
 
-// Filter "Apply" button - closes the panel; the chosen filters stay selected.
 const filterApplyBtn = document.getElementById("filterApplyBtn");
 if (filterApplyBtn && filterMenu) {
   filterApplyBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     closeAllInnerDropdowns();
     filterMenu.classList.remove("show");
-    // Text search + filters + sort all run together through one query now.
     runSearch();
   });
 }
 
-// "Clear Filters" — reset every filter row and the sort back to its default
-// "Any" / "Popular" state. This ONLY clears the filter UI; it does NOT re-fetch
-// the feed. The reset takes effect when the user presses "Apply", same as any
-// other filter change. All the state it touches (activeGenres, activePlatforms,
-// currentRating, the year vars, the person filters) lives at module scope and is
-// initialised by the time this can fire.
+// resets the filter UI only; takes effect on Apply, like any filter change
 const filterClearBtn = document.getElementById("filterClearBtn");
 if (filterClearBtn) {
   filterClearBtn.addEventListener("click", (e) => {
     e.stopPropagation();
-    // Reset every filter row AND the sort back to its default (resetAllFilters
-    // lives in home/filters.js and owns all the filter/sort state).
-    // No runSearch() here on purpose — clearing just resets the controls; the
-    // feed only changes when "Apply" is pressed.
     resetAllFilters({ includeSort: true });
   });
 }
 
-// Main Sort By Toggle (Closes Filter Menu)
 if (sortCustomBtn && sortCustomMenu) {
   sortCustomBtn.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -161,7 +130,7 @@ if (sortCustomBtn && sortCustomMenu) {
   });
 }
 
-// Close everything if clicking off-screen
+// close menus on outside click
 document.addEventListener("click", function (event) {
   if (
     filterMenu &&
@@ -180,38 +149,27 @@ document.addEventListener("click", function (event) {
   closeAllInnerDropdowns();
 });
 
-// ==========================================
-// 4. INVISIBLE KEYBOARD SEARCH
-// ==========================================
+// type-to-jump inside an open dropdown (no visible search box)
 let searchTimeout;
 let typeString = "";
 
 document.addEventListener("keydown", (e) => {
-  // 1. Check if a dropdown is currently open
   const openMenu = document.querySelector(
     ".pill-dropdown.show, .sort-custom-menu.show",
   );
   if (!openMenu) return;
-
-  // 2. Ignore if the user is typing in a real search bar
-  if (e.target.tagName === "INPUT") return;
-
-  // 3. Only accept single character letters/numbers
+  if (e.target.tagName === "INPUT") return; // a real search bar is focused
   if (e.key.length === 1) {
-    // Starting a fresh typing burst while scrolled down the list glides the
-    // dropdown back to the top first (matches the scroll-to-top the search-box
-    // dropdowns do on input), so typing always begins from the top.
+    // fresh burst glides the list back to the top so typing starts from the top
     if (typeString === "") openMenu.scrollTo({ top: 0, behavior: "smooth" });
 
     typeString += e.key.toLowerCase();
 
-    // Reset the typing string after 0.8 seconds of no typing
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       typeString = "";
     }, 800);
 
-    // Find the matching option
     const options = Array.from(
       openMenu.querySelectorAll(".pill-option, .sort-option"),
     );
@@ -220,7 +178,7 @@ document.addEventListener("keydown", (e) => {
     );
 
     if (match) {
-      // Scroll to it and flash the background so the user sees it
+      // scroll to the match and flash it
       match.scrollIntoView({ block: "nearest", behavior: "smooth" });
       const originalBg = match.style.backgroundColor;
       match.style.backgroundColor = "rgba(255, 136, 179, 0.4)";
@@ -231,19 +189,13 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-// ==========================================
-// 5. HELPER FUNCTIONS
-// ==========================================
-// Add an inline "X" clear button to a text input. The "X" shows only when the
-// box has text; clicking it clears the box, refocuses it, and re-runs the same
-// handler an empty box would (by default it dispatches a real `input` event, so
-// whatever live handler is bound to the input fires exactly as if the user had
-// deleted the text). Accessible: type=button (never submits) + aria-label.
+// inline "X" clear button shown only when the box has text; clicking it clears,
+// refocuses, and by default dispatches `input` so the live handler fires.
 function attachClearButton(input, onClear) {
   if (!input || input.dataset.clearBtnAttached) return null;
   input.dataset.clearBtnAttached = "1";
 
-  // Wrap the input so the "X" can be absolutely positioned at its right edge.
+  // wrap so the "X" can be absolutely positioned at the input's right edge
   const wrap = document.createElement("span");
   wrap.className = "input-clear-wrap";
   input.parentNode.insertBefore(wrap, input);
@@ -261,8 +213,7 @@ function attachClearButton(input, onClear) {
     btn.hidden = !input.value;
   };
   input.addEventListener("input", sync);
-  // Also reflect PROGRAMMATIC value changes (e.g. Surprise Me fills the box without
-  // firing `input`): a dispatched `change` shows the "X" without re-running search.
+  // catch programmatic fills (Surprise Me sets value + dispatches `change`)
   input.addEventListener("change", sync);
   sync();
 
@@ -276,10 +227,8 @@ function attachClearButton(input, onClear) {
   return btn;
 }
 
-// Reflect "is the user running a text search?" in the controls bar. A text search
-// is pure relevance — the backend ignores sort + every filter — so the Filters
-// and Sort controls are disabled (and a hover tooltip explains why), instead of
-// letting the user's selections appear silently ignored mid-search.
+// text search is pure relevance (backend ignores sort + filters), so disable
+// the Filters and Sort controls while one is active.
 function updateSearchModeUI() {
   const searchEl = document.getElementById("movieSearch");
   const searching = !!(searchEl && searchEl.value.trim());
@@ -294,16 +243,13 @@ function updateSearchModeUI() {
   });
 
   if (searching) {
-    // Close anything open so a disabled control can't leave a panel hanging.
+    // close open panels so a disabled control can't leave one hanging
     if (filterMenu) filterMenu.classList.remove("show");
     if (sortCustomMenu) sortCustomMenu.classList.remove("show");
     closeAllInnerDropdowns();
   }
 }
 
-// The homepage search bar gets the same inline "X". Clearing it dispatches an
-// `input` event so home/main.js's live-search handler runs exactly as if the box
-// had been emptied by hand (re-running the feed + refreshing the search-mode UI).
 attachClearButton(document.getElementById("movieSearch"));
 updateSearchModeUI();
 
@@ -315,9 +261,7 @@ function injectSearchBar(dropdownElement) {
   searchInput.onclick = (e) => e.stopPropagation();
   searchInput.onkeydown = (e) => e.stopPropagation();
 
-  // Live filter logic
   searchInput.oninput = (e) => {
-    // Typing while scrolled down the list glides the dropdown back to the top.
     dropdownElement.scrollTo({ top: 0, behavior: "smooth" });
     const term = e.target.value.toLowerCase();
     dropdownElement.querySelectorAll(".pill-option").forEach((opt) => {
@@ -327,5 +271,5 @@ function injectSearchBar(dropdownElement) {
     });
   };
   dropdownElement.appendChild(searchInput);
-  attachClearButton(searchInput); // inline "X" — clears + re-runs the filter
+  attachClearButton(searchInput);
 }

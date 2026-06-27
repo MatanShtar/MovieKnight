@@ -1,6 +1,4 @@
-/* error.css — standalone full-bleed error pages (404). No app shell: the Figma
-   "404 Page" frame (87:829) is a centred layout on the app gradient background,
-   with a glitchy "404", a one-liner, and a "Back to Home Page" button. */
+/* standalone full-bleed 404 page, no app shell */
 
 .error-body {
   display: flex;
@@ -19,9 +17,6 @@
   padding: 40px 24px 64px;
 }
 
-/* ---- The big "404" ----
-   Figma uses a stylised glitch wordmark; we reproduce it from the site font with a
-   chromatic-aberration glitch so no stock asset is needed. */
 .error-code {
   position: relative;
   font-size: clamp(160px, 42vw, 560px);
@@ -29,15 +24,14 @@
   font-weight: 400;
   letter-spacing: 0.02em;
   color: #f3f3f3;
-  /* base chromatic aberration: a faint red ghost left, cyan ghost right */
+  /* chromatic aberration: faint red ghost left, cyan right */
   text-shadow:
     0.04em 0 0 rgba(255, 0, 64, 0.5),
     -0.04em 0 0 rgba(0, 255, 224, 0.45);
   user-select: none;
 }
 
-/* Two clipped clones jitter horizontally over the base digits for the "torn slice"
-   glitch. They sit exactly on top via absolute positioning. */
+/* two clipped clones jitter horizontally over the base digits for the torn-slice glitch */
 .glitch::before,
 .glitch::after {
   content: attr(data-text);
@@ -69,7 +63,6 @@
   68% { transform: translateX(0); }
 }
 
-/* ---- Sub-line — Figma: 30px, white, centred (lh 39px) ---- */
 .error-message {
   font-size: clamp(18px, 2.2vw, 30px);
   line-height: 1.3;
@@ -77,8 +70,6 @@
   max-width: 40ch;
 }
 
-/* ---- "Back to Home Page" — styled to match the "Coming Soon" page's pink pill
-   (.cs-back): rounded pink-alt button with a nudging arrow. ---- */
 .error-home-btn {
   display: inline-flex;
   align-items: center;

@@ -1,13 +1,5 @@
-// validation.js — login + signup forms, wired to the real auth API (window.MovieAPI).
-//
-// Replaces the old admin/1234 mock: credentials are now verified by the server,
-// which hashes passwords (bcrypt) and returns a JWT that MovieAPI stores in
-// localStorage. All feedback is in-page (inline message + toast) — never
-// alert/confirm/prompt — and submits show a loading state.
+// login + signup forms, wired to the real auth API (window.MovieAPI).
 
-// Greys out the submit button (unclickable) and shows a status line BENEATH it
-// while a request is in flight. The button label is left unchanged (the pill is
-// too narrow for "Creating account…"). Call with isLoading:false to restore.
 function setLoading(submitBtn, isLoading, message) {
   if (!submitBtn) return;
   submitBtn.disabled = isLoading;
@@ -18,7 +10,7 @@ function setLoading(submitBtn, isLoading, message) {
     line.className = "form-loading";
     line.setAttribute("role", "status");
     line.setAttribute("aria-live", "polite");
-    submitBtn.insertAdjacentElement("afterend", line); // beneath the button
+    submitBtn.insertAdjacentElement("afterend", line);
   }
 
   if (isLoading) {
@@ -29,8 +21,6 @@ function setLoading(submitBtn, isLoading, message) {
   }
 }
 
-// Builds a showError(msg) for a given inline error element: reveals the inline
-// message and mirrors it as a toast. Shared by both the login and signup forms.
 function makeShowError(errorMsg) {
   return (msg) => {
     errorMsg.textContent = msg;
@@ -39,11 +29,8 @@ function makeShowError(errorMsg) {
   };
 }
 
-// On touch devices the native <input type="date"> renders as an oversized, often
-// blank control that pops the OS calendar — jarring next to the other fields. There
-// we swap it for a plain text field with a "DD / MM / YYYY" mask so it matches the
-// rest of the form (and the desktop layout). Desktop keeps the native date picker.
-// Either way the value is normalised to ISO "YYYY-MM-DD" on submit (see readDobIso).
+// touch devices get a "DD / MM / YYYY" text mask instead of the native date picker.
+// either way readDobIso normalises to ISO on submit.
 function setupMobileDob(dobInput) {
   if (!dobInput) return;
   const isTouch = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
@@ -53,9 +40,8 @@ function setupMobileDob(dobInput) {
   dobInput.setAttribute("inputmode", "numeric");
   dobInput.setAttribute("autocomplete", "bday");
   dobInput.placeholder = "DD / MM / YYYY";
-  dobInput.maxLength = 14; // "DD / MM / YYYY"
+  dobInput.maxLength = 14;
 
-  // Auto-format the digits into "DD / MM / YYYY" as the user types.
   dobInput.addEventListener("input", () => {
     const digits = dobInput.value.replace(/\D/g, "").slice(0, 8);
     const parts = [];
@@ -66,12 +52,10 @@ function setupMobileDob(dobInput) {
   });
 }
 
-// The ISO "YYYY-MM-DD" the server expects, read from either the native date input
-// (already ISO) or the mobile "DD / MM / YYYY" text mask. Returns "" when it isn't a
-// complete date so the caller can flag it.
+// ISO "YYYY-MM-DD" from native date input or mobile mask. "" if incomplete.
 function readDobIso(dobInput) {
   if (!dobInput) return "";
-  if (dobInput.type === "date") return dobInput.value; // native → already ISO
+  if (dobInput.type === "date") return dobInput.value;
   const digits = dobInput.value.replace(/\D/g, "");
   if (digits.length !== 8) return "";
   const dd = digits.slice(0, 2), mm = digits.slice(2, 4), yyyy = digits.slice(4, 8);
@@ -79,13 +63,10 @@ function readDobIso(dobInput) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // ==========================================
-  // 1. LOGIN
-  // ==========================================
   const loginForm = document.getElementById("loginForm");
 
   if (loginForm) {
-    const usernameInput = document.getElementById("loginUsername"); // email OR username
+    const usernameInput = document.getElementById("loginUsername"); // email or username
     const passwordInput = document.getElementById("loginPassword");
     const errorMsg = document.getElementById("loginErrorMsg");
     const submitBtn = loginForm.querySelector(".submit-btn");
@@ -114,7 +95,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return showError("Login is unavailable right now. Please try again later.");
       }
 
-      // Loading state — grey out the button (unclickable) + status line beneath it.
       setLoading(submitBtn, true, "Logging in…");
 
       try {
@@ -136,9 +116,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ==========================================
-  // 2. SIGNUP
-  // ==========================================
   const signupForm = document.getElementById("signupForm");
 
   if (signupForm) {
@@ -151,7 +128,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const errorMsg = document.getElementById("signupErrorMsg");
     const submitBtn = signupForm.querySelector(".submit-btn");
 
-    // Touch devices get a masked text field instead of the native calendar.
     setupMobileDob(dobInput);
 
     const allInputs = [
@@ -185,15 +161,14 @@ document.addEventListener("DOMContentLoaded", () => {
         confirmPasswordInput.classList.add("input-error");
         return showError("Passwords do not match.");
       }
-      // Match the server's minimum so the user gets instant feedback.
+      // mirror the server's minimum for instant feedback
       if (passwordInput.value.length < 6) {
         passwordInput.classList.add("input-error");
         confirmPasswordInput.classList.add("input-error");
         return showError("Password must be at least 6 characters.");
       }
 
-      // Normalise the DOB to ISO. On mobile the masked field can be partially typed
-      // and still pass the empty-field check, so verify it's a full date here.
+      // mobile mask can be partially typed and still pass the empty check, so verify full date
       const dobIso = readDobIso(dobInput);
       if (!dobIso) {
         dobInput.classList.add("input-error");
@@ -209,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await MovieAPI.signup({
           name: nameInput.value.trim(),
-          dateOfBirth: dobIso, // ISO "YYYY-MM-DD" (native date input or mobile mask)
+          dateOfBirth: dobIso,
           email: emailInput.value.trim(),
           username: usernameInput.value.trim(),
           password: passwordInput.value,
@@ -218,7 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "profile.html";
       } catch (err) {
         const msg = err.message || "Could not create your account.";
-        // Highlight the field the server complained about, when we can tell.
         const lower = msg.toLowerCase();
         if (lower.includes("email")) emailInput.classList.add("input-error");
         if (lower.includes("username")) usernameInput.classList.add("input-error");
@@ -236,12 +210,9 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// ==========================================
-// 3. GUEST MODE NAVIGATION
-// ==========================================
 function continueAsGuest(e) {
   e.preventDefault();
-  // Clear any saved login + JWT before browsing as a guest.
+  // clear any saved login + JWT before browsing as a guest
   if (window.MovieAPI) MovieAPI.logout();
   else {
     localStorage.removeItem("currentUser");

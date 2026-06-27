@@ -1,11 +1,6 @@
-/* collection/header.css — Collection Page header (title + meta + action pills).
-   The h1 + rename pencil + meta line, the inline rename editor, and the action
-   pills (Add to Collection / Publish / Like / Save) plus the mobile add button.
-   Load after base.css. */
+/* collection/header.css - Collection Page header (title + meta + action pills,
+   inline rename editor). Load after base.css. */
 
-/* ==========================================
-   1. HEADER (title + meta + actions)
-   ========================================== */
 .collection-head {
   width: 100%;
   max-width: var(--content-width);
@@ -13,17 +8,16 @@
 
 .collection-title-row {
   display: flex;
-  align-items: center; /* pencil vertically centred with the title */
-  gap: 30px; /* a bit of breathing room between the title and the edit button */
-  /* shrink-wrap to the title (+ edit button) so the hover dashed box hugs them
-     instead of stretching the full content width */
+  align-items: center;
+  gap: 30px;
+  /* shrink-wrap so the hover dashed box hugs the title + edit button */
   width: fit-content;
   max-width: 100%;
 }
 
 .collection-title {
   font-weight: 400;
-  /* Figma: 80px Lao Sangam MN. Fluid down so it never overflows the rail. */
+  /* fluid so it never overflows the rail */
   font-size: clamp(34px, 4.3vw, 80px);
   line-height: 1.1;
   color: var(--text);
@@ -38,7 +32,6 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* filled box, like the profile bio's edit button */
   width: 40px;
   height: 40px;
   padding: 0;
@@ -46,7 +39,7 @@
   border-radius: 10px;
   background: rgba(var(--pink), 0.2);
   cursor: pointer;
-  /* base (touch + fallback): always visible. Desktop hides it until hover below. */
+  /* always visible on touch/fallback; desktop hides it until hover below */
   opacity: 1;
   transition:
     opacity var(--t-base) ease,
@@ -67,14 +60,13 @@
 .collection-rename-btn:active {
   transform: scale(0.92);
 }
-/* the whole title is clickable to rename (owner's non-default lists only) */
+/* whole title is clickable to rename (owner's non-default lists only) */
 .collection-title-row.is-editable .collection-title {
   cursor: pointer;
 }
 
-/* desktop + real mouse: mirror the profile bio's edit affordance — the pencil
-   (a filled box) stays hidden, keeping its slot so nothing shifts, until you
-   hover the row, which then gets a dashed outline AROUND the title + button. */
+/* desktop + mouse: pencil stays hidden (keeping its slot) until the row is
+   hovered, which then gets a dashed outline around the title + button. */
 @media (hover: hover) and (min-width: 1025px) {
   .collection-title-row.is-editable .collection-rename-btn {
     opacity: 0;
@@ -96,10 +88,8 @@
   color: #afafaf;
 }
 
-/* inline rename editor (swaps in for the <h1> text). main.js pins its width AND
-   height to the title's measured box (border-box) so the title stays put and the
-   pencil never shifts; the font is a touch smaller than the title so the editor
-   doesn't feel oversized. */
+/* inline rename editor (swaps in for the <h1>). main.js pins its width + height
+   to the title's measured box so the title stays put and the pencil never shifts. */
 .collection-title-input {
   max-width: 100%;
   font-family: inherit;
@@ -118,8 +108,7 @@
   background: rgba(var(--pink), 0.16);
 }
 
-/* the "Add to Collection" pill shows a shorter "Add Movies" label while the
-   compact layout is active (up to 1180px) */
+/* compact layout (<=1180px) swaps the pill to the shorter "Add Movies" label */
 .pill-label-short {
   display: none;
 }
@@ -137,7 +126,7 @@
   overflow: hidden;
 }
 
-/* ---- Action pills (Add to Collection / Publish / Like / Save) ---- */
+/* action pills (Add to Collection / Publish / Like / Save) */
 .collection-actions {
   display: flex;
   align-items: center;
@@ -170,7 +159,7 @@
 .action-pill:active {
   transform: translateY(0) scale(0.97);
 }
-/* icon rendered as a mask so it can take the pill's text color */
+/* mask so the icon takes the pill's text color */
 .action-pill .pill-icon {
   width: 20px;
   height: 20px;
@@ -183,7 +172,6 @@
   -webkit-mask-size: contain;
   mask-size: contain;
 }
-/* Like/Save use the rose accent (matches the Figma heart fill #bc6676). */
 .action-pill--like .pill-icon,
 .action-pill--save .pill-icon {
   background-color: rgb(var(--rose));

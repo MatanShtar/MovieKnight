@@ -1,11 +1,5 @@
-/* home/cards.css — the movie grid, poster cards, skeleton loaders, the
-   infinite-scroll sentinel, hover overlay (action buttons), title pill, and
-   rating badge. Split out of the former monolithic css/home.css (section 9,
-   verbatim). Loaded after home/pills.css to preserve the original cascade order. */
+/* movie grid, poster cards, skeletons, infinite-scroll sentinel, hover overlay */
 
-/* ==========================================
-   9. MOVIE GRID & POSTERS
-   ========================================== */
 .movie-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -16,7 +10,6 @@
   padding: 8px;
 }
 
-/* Friendly empty / error state shown in place of the cards */
 .grid-message {
   grid-column: 1 / -1;
   text-align: center;
@@ -25,8 +18,6 @@
   color: var(--text-muted);
 }
 
-/* The "no results" empty state stacks its message + the one-click Clear Filters
-   escape hatch. */
 .grid-empty {
   display: flex;
   flex-direction: column;
@@ -60,9 +51,8 @@
   box-shadow: 0 0 0 2px rgba(var(--pink), 0.8);
 }
 
-/* Infinite-scroll sentinel: a 1px full-row marker the IntersectionObserver
-   watches. `overflow-anchor: none` keeps the browser from ever choosing it as
-   the scroll-anchor element, so appending cards above it can't yank the view. */
+/* 1px sentinel the IntersectionObserver watches. overflow-anchor:none stops the
+   browser picking it as scroll anchor, so appending cards can't yank the view. */
 #infinite-scroll-sentinel {
   grid-column: 1 / -1;
   width: 100%;
@@ -77,8 +67,8 @@
   justify-content: center;
   position: relative;
   overflow: hidden;
-  cursor: pointer; /* the whole card opens the movie details page */
-  aspect-ratio: 2 / 3; /* card fills its grid track; height follows from the 2:3 ratio */
+  cursor: pointer;
+  aspect-ratio: 2 / 3;
   border: 3px solid rgb(var(--rose));
   transition:
     transform var(--t-base) var(--ease-snap),
@@ -136,20 +126,16 @@
 .poster-img {
   width: 100%;
   height: 100%;
-  aspect-ratio: 2 / 3; /* fixed ratio so the box is reserved before the asset loads */
+  aspect-ratio: 2 / 3; /* reserve the box before the asset loads */
   object-fit: cover;
   display: block;
-  /* Skeleton fill shown until the image decodes — no flash of empty space and,
-     with the fixed ratio above, no reflow when the poster paints in. */
+  /* skeleton fill until the image decodes */
   background-color: rgba(255, 255, 255, 0.05);
 }
 
 .movie-card--skeleton {
   cursor: default;
-  /* Reserve the exact same box a real card occupies so the grid never
-     collapses while a page is in flight. width fills the grid track and the
-     inherited aspect-ratio: 2/3 fixes the height off that width — keeping the
-     skeleton identical in size to the card that replaces it (no reflow jump). */
+  /* same box a real card occupies so the grid doesn't reflow when it swaps in */
   width: 100%;
   aspect-ratio: 2 / 3;
   flex: 0 0 auto;
