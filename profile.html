@@ -196,7 +196,7 @@
 
           <div class="profile-badges">
             <h2 class="prog-badges-header">Progression Badges</h2>
-            <!-- shield metal gradients, referenced by the JS-rendered shields in js/profile/badges.js -->
+            <!-- shield metal gradients, referenced by the JS-rendered shields in js/pages/profile/badges.js -->
             <svg width="0" height="0" class="badge-gradient-defs" aria-hidden="true" focusable="false">
               <defs>
                 <linearGradient id="silver-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -210,7 +210,7 @@
                 </linearGradient>
               </defs>
             </svg>
-            <!-- shields rendered from the current user's badges (js/profile/badges.js) -->
+            <!-- shields rendered from the current user's badges (js/pages/profile/badges.js) -->
             <div class="badges-display" id="badgesDisplay"></div>
             <div class="view-badges-container">
               <a class="view-badges-btn" href="coming-soon.html?feature=Badges">
@@ -238,7 +238,7 @@
           <div
             class="user-profile-display"
             id="userProfileDisplay"
-            style="display: none"
+            hidden
           >
             <div class="user-welcome">
               <span class="welcome-text">Good to see you,</span>
@@ -268,7 +268,7 @@
     </div>
 
     <!-- Shared popup menu for the collection cards' 3-dots button.
-    items are built in js/profile/collections.js (renderMenu) per collection -->
+    items are built in js/pages/profile/collections.js (renderMenu) per collection -->
     <div class="collection-menu" id="collectionMenu" hidden></div>
   </body>
 </html>

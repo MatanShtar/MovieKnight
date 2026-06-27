@@ -3,7 +3,7 @@
 // Builds the poster cards and the grid (incl. skeletons + empty states), the
 // header action pills (owner: Add to Collection / Publish-Unpublish · visitor:
 // Like / Save), the Add-to-Collection modal hook, and the per-card remove flow
-// (confirm modal → API/demo). Attaches its functions onto window.CollectionPage
+// (confirm modal → API). Attaches its functions onto window.CollectionPage
 // (CP) so sort.js and main.js can call renderGrid / openAddModal / renderActions.
 //
 // Depends on: collection/shared.js (CP.state, CP.metaLine, CP.sortMovies,
@@ -97,24 +97,10 @@
       state.id,
       (state.collection && state.collection.name) || "Collection",
       {
-        isDemo: state.isDemo,
         initialMovieIds: state.movies.map((m) => m.id),
         onChange: (action, movie, updated) => {
-          if (updated) {
-            state.collection = updated;
-            state.movies = CP.sortMovies(updated.movies, state.sort);
-          } else {
-            // demo mode (no API) — add/remove locally
-            if (action === "add") {
-              if (!state.movies.some((x) => x.id === movie.id)) {
-                state.movies.push({ ...movie, addedAt: new Date().toISOString() });
-              }
-            } else {
-              state.movies = state.movies.filter((x) => x.id !== movie.id);
-            }
-            state.collection.movieCount = state.movies.length;
-            state.movies = CP.sortMovies(state.movies, state.sort);
-          }
+          state.collection = updated;
+          state.movies = CP.sortMovies(updated.movies, state.sort);
           $("colMeta").textContent = CP.metaLine(state.collection, state.isOwner);
           CP.renderGrid();
         },
@@ -256,11 +242,6 @@
     });
     if (!ok) return;
 
-    if (state.isDemo) {
-      removeFromState(m.id);
-      if (window.toast) toast.warn(`Removed “${m.title}”.`);
-      return;
-    }
     try {
       const updated = await MovieAPI.removeMovieFromCollection(state.id, m.id);
       state.collection = updated;
@@ -271,12 +252,5 @@
     } catch (err) {
       if (window.toast) toast.error(err.message || "Couldn't remove the movie.");
     }
-  }
-
-  function removeFromState(movieId) {
-    state.movies = state.movies.filter((x) => x.id !== movieId);
-    state.collection.movieCount = state.movies.length;
-    $("colMeta").textContent = CP.metaLine(state.collection, state.isOwner);
-    CP.renderGrid();
   }
 })();

@@ -4,7 +4,6 @@
 // toggle them in/out of one specific collection, overlaid on the current page.
 //
 //   AddToCollectionModal.open(collectionId, "Favorites", {
-//     isDemo: false,                 // demo/harness: no real API, toggle locally
 //     initialMovieIds: [123, 456],   // pre-flag movies already in the list (optional)
 //     onChange: (action, movie, updatedCollection) => {},  // after add/remove
 //   });
@@ -19,7 +18,7 @@ window.AddToCollectionModal = (function () {
 
   let overlay = null, titleEl = null, input = null, results = null, clearBtn = null;
   let debounce = null, seq = 0;
-  let ctx = null; // { id, name, isDemo, inCollection:Set, onChange }
+  let ctx = null; // { id, name, inCollection:Set, onChange }
 
   function build() {
     overlay = document.createElement("div");
@@ -145,12 +144,9 @@ window.AddToCollectionModal = (function () {
     const adding = !cell.classList.contains("is-added");
     setCell(cell, adding); // optimistic
     try {
-      let updated = null;
-      if (!ctx.isDemo) {
-        updated = adding
-          ? await MovieAPI.addMovieToCollection(ctx.id, m.id)
-          : await MovieAPI.removeMovieFromCollection(ctx.id, m.id);
-      }
+      const updated = adding
+        ? await MovieAPI.addMovieToCollection(ctx.id, m.id)
+        : await MovieAPI.removeMovieFromCollection(ctx.id, m.id);
       if (adding) ctx.inCollection.add(m.id);
       else ctx.inCollection.delete(m.id);
       if (ctx.onChange) ctx.onChange(adding ? "add" : "remove", m, updated);
@@ -169,7 +165,6 @@ window.AddToCollectionModal = (function () {
     ctx = {
       id,
       name: name || "Collection",
-      isDemo: !!opts.isDemo,
       inCollection: new Set(opts.initialMovieIds || []),
       onChange: opts.onChange || null,
     };
@@ -183,8 +178,8 @@ window.AddToCollectionModal = (function () {
 
     // When the caller didn't hand us the current movie ids (e.g. the profile,
     // whose cards only carry the cover posters), fetch them so already-added
-    // movies show a "✓" instead of a "+". Skipped in demo mode.
-    if (!opts.initialMovieIds && !ctx.isDemo && id) {
+    // movies show a "✓" instead of a "+".
+    if (!opts.initialMovieIds && id) {
       try {
         const c = await MovieAPI.getCollection(id);
         (c.movies || []).forEach((mv) => ctx.inCollection.add(mv.id));
@@ -201,5 +196,5 @@ window.AddToCollectionModal = (function () {
     document.body.classList.remove("cm-no-scroll");
   }
 
-  return { open, close };
+  return { open };
 })();

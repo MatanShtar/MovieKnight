@@ -332,5 +332,5 @@ window.EnhanceModal = (function () {
     if (tryAgainBtn) tryAgainBtn.disabled = !!busy;
   }
 
-  return { open, close };
+  return { open };
 })();

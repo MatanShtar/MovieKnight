@@ -207,8 +207,8 @@ try {
 
 if (currentUser) {
   if (loginBtn) loginBtn.style.display = "none";
-  if (userProfileDisplay) userProfileDisplay.style.display = "flex";
-  if (sidebarSettings) sidebarSettings.style.display = "flex";
+  if (userProfileDisplay) userProfileDisplay.hidden = false;
+  if (sidebarSettings) sidebarSettings.hidden = false;
   if (displayUsername) displayUsername.textContent = currentUser.username;
   setupDropdownUserPanel(currentUser);
   // Show the user's uploaded avatar (if any) in every page's header/profile pics.
@@ -219,8 +219,8 @@ if (currentUser) {
   }
 } else {
   if (loginBtn) loginBtn.style.display = "flex";
-  if (userProfileDisplay) userProfileDisplay.style.display = "none";
-  if (sidebarSettings) sidebarSettings.style.display = "none";
+  if (userProfileDisplay) userProfileDisplay.hidden = true;
+  if (sidebarSettings) sidebarSettings.hidden = true;
 }
 
 // ==========================================

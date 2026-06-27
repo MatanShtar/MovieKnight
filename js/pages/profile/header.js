@@ -4,7 +4,7 @@
 // ==========================================
 // 0. LOGGED-IN USER → PROFILE HEADER
 // ==========================================
-// Profile is personal. Read the real signed-in user (stored by js/api.js on
+// Profile is personal. Read the real signed-in user (stored by js/core/api.js on
 // login/signup) and fill the header; guests are bounced to the login page.
 // Wrapped in an IIFE so locals stay off the global scope — common.js (also a
 // classic script on this page) already declares a global `currentUser`.

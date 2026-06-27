@@ -277,5 +277,5 @@ window.CollectionModal = (function () {
     opener = null;
   }
 
-  return { open, close };
+  return { open };
 })();

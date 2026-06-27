@@ -118,12 +118,6 @@
   background: rgba(var(--pink), 0.16);
 }
 
-/* small count chip inside the Like / Save pills (visitor view) */
-.pill-count {
-  font-variant-numeric: tabular-nums;
-  opacity: 0.9;
-}
-
 /* the "Add to Collection" pill shows a shorter "Add Movies" label while the
    compact layout is active (up to 1180px) */
 .pill-label-short {

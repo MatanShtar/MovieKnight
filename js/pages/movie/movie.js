@@ -4,25 +4,6 @@
 // those basics instantly, then fetch the full record (overview, director, cast,
 // genres, trailer) from GET /api/movies/:id and fill the rest in.
 
-// A self-contained demo record (matching the Figma frame) shown when the page is
-// opened directly with no movie selected — e.g. the design/diff harness, or a
-// stray visit to movie.html. Real navigations always arrive with ?id=<tmdbId>.
-const DEMO_MOVIE = {
-  id: 4951,
-  title: "10 Things I Hate About You",
-  releaseYear: 1999,
-  director: "Gil Junger",
-  overview:
-    "As soon as Cameron, a newbie at Padua High School, finds Bianca, he " +
-    "falls in love with her. However, to date Bianca, he must first get her " +
-    "older sister Kate, a mean feminist, to date someone.",
-  cast: ["Heath Ledger", "Julia Stiles", "Joseph Gordon - Levitt", "David Krumholtz"],
-  genres: ["Comedy", "Drama", "Romance"],
-  posterPath: "assets/images/posters/ten-things-i-hate-about-you-poster.webp",
-  backdropPath: "assets/images/posters/ten-things-i-hate-about-you-poster.webp",
-  trailerKey: "GbWQ_VXek6A",
-};
-
 const el = (id) => document.getElementById(id);
 
 // A page that links here can pin where "Back" returns to via a ?back=<relative-url>
@@ -74,7 +55,7 @@ function getMovieId() {
   // Fall back to whatever the home card stashed (if any).
   const cached = readLastMovie();
   if (cached && cached.id) return cached.id;
-  return null; // nothing selected -> show the demo record
+  return null; // nothing selected
 }
 
 function getCachedBasics(id) {
@@ -284,14 +265,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const id = getMovieId();
 
-  // No movie selected — render the built-in demo and skip the network call.
-  if (!id) {
-    paintDetails(DEMO_MOVIE);
-    return;
-  }
-
-  // A malformed id (e.g. ?id=100s) is no movie at all — go straight to the 404 page.
-  if (!/^\d+$/.test(String(id))) {
+  // Nothing selected (opened bare, no ?id) or a malformed id (e.g. ?id=100s) is no
+  // movie at all — go straight to the 404 page rather than a blank/broken card.
+  if (!id || !/^\d+$/.test(String(id))) {
     window.location.replace("404.html");
     return;
   }

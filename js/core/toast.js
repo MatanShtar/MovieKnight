@@ -97,7 +97,6 @@ window.toast = (function () {
   });
 
   return {
-    show,
     success: (m, o) => show(m, "success", o),
     info: (m, o) => show(m, "info", o),
     soon: (m = "Coming Soon!", o) => show(m, "soon", o), // toast.soon() defaults to "Coming Soon!"

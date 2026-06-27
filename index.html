@@ -130,7 +130,7 @@
           <div
             class="settings-container"
             id="sidebarSettings"
-            style="display: none"
+            hidden
           >
             <a href="#" class="nav-link" id="settingsToggleBtn">
               <svg
@@ -431,9 +431,9 @@
         </div>
 
         <section class="movie-grid" id="movieGrid">
-          <!-- movie cards are injected by js/home/feed.js via js/api.js (live backend) -->
+          <!-- movie cards are injected by js/pages/home/feed.js via js/core/api.js (live backend) -->
           <!-- Infinite-scroll sentinel: kept as the last grid child; the
-               IntersectionObserver in js/home/feed.js watches it and new cards are
+               IntersectionObserver in js/pages/home/feed.js watches it and new cards are
                inserted before it. -->
           <div id="infinite-scroll-sentinel" aria-hidden="true"></div>
         </section>
@@ -452,7 +452,7 @@
           <div
             class="user-profile-display"
             id="userProfileDisplay"
-            style="display: none"
+            hidden
           >
             <div class="user-welcome">
               <span class="welcome-text">Good to see you,</span>

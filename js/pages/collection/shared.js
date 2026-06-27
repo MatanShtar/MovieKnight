@@ -38,7 +38,6 @@
     movies: [], // working (sorted) copy
     sort: "added_desc",
     isOwner: false,
-    isDemo: false,
   };
 
   // ---- sorting ----------------------------------------------------------------

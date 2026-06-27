@@ -52,5 +52,5 @@ window.LibraryButtons = (function () {
     }
   }
 
-  return { LABELS, title, load, toggle };
+  return { title, load, toggle };
 })();

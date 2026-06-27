@@ -4,13 +4,13 @@
 // window.MovieAPI instead. Load this file (defer) BEFORE the page script
 // that uses it, the same way toast.js exposes window.toast:
 //
-//   <script src="js/api.js" defer></script>
-//   <script src="js/home.js" defer></script>
+//   <script src="js/core/api.js" defer></script>
+//   <script src="js/pages/home/main.js" defer></script>
 //
 // The backend is expected to proxy TMDB. These functions normalise whatever
 // the backend returns into the shape the rest of the app already uses:
 //   { title, rating, popularity, releaseYear, posterPath }
-// so home.js / wheel.js need almost no other changes.
+// so the page scripts need almost no other changes.
 
 window.MovieAPI = (function () {
     // The backend base URL, chosen by where the client is being served from:
@@ -923,7 +923,6 @@ window.MovieAPI = (function () {
         aiEnhance,
         getAiUsage,
         aiActionsRemaining,
-        aiActionsLimit,
         aiLimitReachedMessage,
         AI_LIMIT_CODE,
         getWheel,
@@ -943,9 +942,7 @@ window.MovieAPI = (function () {
         logout,
         updateProfile,
         isLoggedIn,
-        getToken,
         getCurrentUser,
-        clearSession,
         // collections
         listCollections,
         getCollection,
@@ -955,6 +952,5 @@ window.MovieAPI = (function () {
         addMovieToCollection,
         removeMovieFromCollection,
         getLibrary,
-        toPosterUrl,
     };
 })();

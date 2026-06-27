@@ -2,16 +2,16 @@
 //
 // Reached as collection.html?id=<collectionId>. Owns the whole-page render, the
 // owner-only header actions that live outside the grid (Publish/Unpublish toggle,
-// inline rename), the demo/?demo= harness, and the load/access-control flow
-// (?id, guest→login, 401→login, 404→404.html). init() wires the static controls
-// and kicks off load(); it's the last collection/* file to run.
+// inline rename), and the load/access-control flow (?id, guest→login, 401→login,
+// 404→404.html). init() wires the static controls and kicks off load(); it's the
+// last collection/* file to run.
 //
 // owner  → editable header (rename + publish), per-card remove, Add to Collection,
 //          Movie Picker + Enhance toolbar.
 // visitor (someone else's PUBLIC collection) → read-only header, Like + Save,
 //          no remove, no toolbar (FR-4.7.6).
 // private collection you don't own / missing → backend 404 → redirect to 404.html.
-// Opened with no ?id (e.g. the design/diff harness), it paints a demo owner view.
+// Opened with no ?id → redirect to 404.html.
 //
 // Depends on: collection/shared.js + grid.js + sort.js (all the CP.* helpers),
 //   MovieAPI, window.isGuest, window.toast. Load LAST among collection/*.
@@ -50,10 +50,10 @@
 
   // ---- actions ----------------------------------------------------------------
   // Remember the chosen "Sort by" server-side so it persists across visits.
-  // Owners only, real (non-demo) collections; fire-and-forget — a failed save
-  // just means the next load falls back to the previous sort, no user-facing error.
+  // Owners only; fire-and-forget — a failed save just means the next load falls
+  // back to the previous sort, no user-facing error.
   CP.persistSort = function persistSort(key) {
-    if (!state.isOwner || state.isDemo || !state.id) return;
+    if (!state.isOwner || !state.id) return;
     // Already the stored sort? Skip the round-trip entirely (the server also
     // no-ops an unchanged PATCH, but there's no point making the request).
     if (state.collection && state.collection.sort === key) return;
@@ -69,12 +69,6 @@
   CP.togglePublish = async function togglePublish(btn) {
     const c = state.collection;
     const next = !c.isPublic;
-    if (state.isDemo) {
-      c.isPublic = next;
-      if (window.toast) toast.success(next ? "Collection published" : "Collection unpublished");
-      render();
-      return;
-    }
     btn.disabled = true;
     try {
       const updated = await MovieAPI.updateCollection(state.id, { isPublic: next });
@@ -133,11 +127,6 @@
 
       if (!save || !next || next === prev) return;
 
-      if (state.isDemo) {
-        c.name = next;
-        document.title = `MovieKnight | ${next}`;
-        return;
-      }
       try {
         const updated = await MovieAPI.updateCollection(state.id, { name: next });
         c.name = updated.name;
@@ -156,68 +145,14 @@
     input.addEventListener("blur", () => finish(true));
   }
 
-  // ---- demo (no ?id — design/diff harness) ------------------------------------
-  function demoCollection(mode) {
-    const isVisitor = mode === "visitor";
-    const empty = mode === "empty";
-    const P = "assets/images/posters/";
-    const items = [
-      ["One Battle After Another", 2025, "one-battle-after-another-poster.webp", 8.1],
-      ["The Dark Knight", 2008, "the-dark-knight-poster.webp", 8.5],
-      ["Pulp Fiction", 1994, "pulp-fiction-poster.webp", 8.5],
-      ["Parasite", 2019, "parasite-poster.webp", 8.5],
-      ["Oppenheimer", 2023, "oppenheimer-poster.webp", 8.1],
-      ["Interstellar", 2014, "interstellar-poster.webp", 8.4],
-      ["Whiplash", 2014, "whiplash-poster.webp", 8.4],
-      ["Spider-Man: Into the Spider-Verse", 2018, "spider-man-into-the-spider-verse-poster.webp", 8.4],
-      ["La La Land", 2016, "la-la-land-poster.webp", 7.9],
-      ["Dune: Part Two", 2024, "dune-part-two-poster.webp", 8.2],
-      ["Kill Bill: Vol. 1", 2003, "kill-bill-poster.webp", 8.0],
-      ["Everything Everywhere All at Once", 2022, "everything-everywhere-all-at-once-poster.webp", 7.8],
-      ["10 Things I Hate About You", 1999, "ten-things-i-hate-about-you-poster.webp", 7.7],
-      ["The Substance", 2024, "the-substance-poster.webp", 7.3],
-    ];
-    const movies = empty
-      ? []
-      : items.map(([title, releaseYear, file, rating], i) => ({
-          id: 100000 + i,
-          title,
-          releaseYear,
-          rating,
-          posterPath: P + file,
-          addedAt: new Date(Date.now() - i * 86400000).toISOString(),
-        }));
-    return {
-      id: null,
-      name: "Must Watch Classics",
-      isDefault: false,
-      isPublic: !!isVisitor, // a visitor only ever sees a public collection
-      author: "vova2020",
-      isOwner: !isVisitor,
-      // Keep the meta count in lockstep with the grid (demo harness).
-      movieCount: movies.length,
-      likesCount: isVisitor ? 28 : 0,
-      savesCount: isVisitor ? 4 : 0,
-      movies,
-    };
-  }
-
-  function renderDemo(mode) {
-    state.isDemo = true;
-    state.collection = demoCollection(mode);
-    state.isOwner = mode !== "visitor";
-    state.movies = CP.sortMovies(state.collection.movies, state.sort);
-    render();
-  }
-
   // ---- load -------------------------------------------------------------------
   async function load() {
     const params = new URLSearchParams(location.search);
     const id = params.get("id");
-    const demo = params.get("demo"); // ?demo=visitor / ?demo=empty / ?demo (owner)
     state.id = id;
 
-    if (!id || demo != null) { renderDemo(demo || "owner"); return; }
+    // No collection selected (opened bare, no ?id) — nothing to show.
+    if (!id) { window.location.replace("404.html"); return; }
 
     // Viewing a collection is logged-in only (it's part of Explore). Bounce guests
     // to login rather than showing a visitor view or a 404.
@@ -290,8 +225,8 @@
       window.location.href = `picker.html${q}`;
     });
     $("colEnhanceBtn").addEventListener("click", () => {
-      // Enhance acts on a real, saved collection (the demo harness has no backend).
-      if (state.isDemo || !state.id) {
+      // Enhance acts on a real, saved collection.
+      if (!state.id) {
         if (window.toast) toast.info("Open a saved collection to enhance it.");
         return;
       }
